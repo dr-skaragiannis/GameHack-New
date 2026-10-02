@@ -1,0 +1,316 @@
+@import "tailwindcss";
+
+@theme {
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-forge-bg: #0a0a0b;
+  --color-forge-panel: #101012;
+  --color-forge-panel2: #16161a;
+  --color-forge-border: #26262c;
+  --color-forge-line: #1c1c21;
+
+  --color-ember-50: #fff4ed;
+  --color-ember-100: #ffe6d5;
+  --color-ember-300: #ffb088;
+  --color-ember-400: #ff8a4c;
+  --color-ember-500: #ff6a2b;
+  --color-ember-600: #ed4e0a;
+  --color-ember-700: #c53a06;
+
+  --color-iron-400: #a1a1aa;
+  --color-iron-500: #71717a;
+
+  --color-neon-green: #3ddc84;
+  --color-neon-cyan: #22d3ee;
+}
+
+/* Scale the whole UI up a touch so nothing feels zoomed-out. */
+html {
+  font-size: 17px;
+}
+@media (min-width: 1280px) {
+  html {
+    font-size: 17.5px;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: #0a0a0b;
+  color: #e4e4e7;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.1px;
+}
+
+/* ---------------- Backgrounds ---------------- */
+
+/* Forge grid with a subtle animated drift + radial ember glow */
+.forge-grid {
+  position: relative;
+  background-color: #0a0a0b;
+  background-image:
+    linear-gradient(rgba(255, 106, 43, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 106, 43, 0.045) 1px, transparent 1px);
+  background-size: 46px 46px;
+  animation: grid-drift 40s linear infinite;
+}
+.forge-grid::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(900px 500px at 15% -10%, rgba(255, 106, 43, 0.1), transparent 60%),
+    radial-gradient(800px 600px at 100% 0%, rgba(34, 211, 238, 0.06), transparent 55%);
+}
+@keyframes grid-drift {
+  to {
+    background-position: 46px 46px, 46px 46px;
+  }
+}
+
+/* ---------------- Glow & glass ---------------- */
+
+.forge-glow {
+  box-shadow:
+    0 0 0 1px rgba(255, 106, 43, 0.18),
+    0 10px 40px -12px rgba(255, 106, 43, 0.4);
+}
+
+.glass {
+  background: linear-gradient(180deg, rgba(22, 22, 26, 0.9), rgba(16, 16, 18, 0.85));
+  backdrop-filter: blur(10px);
+}
+
+/* Animated gradient top-strip used on cards */
+.strip-anim {
+  background-size: 200% 100%;
+  animation: strip-slide 4s ease infinite;
+}
+@keyframes strip-slide {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.text-glow {
+  text-shadow: 0 0 24px rgba(255, 106, 43, 0.5);
+}
+
+/* Shiny animated text (gradient sweep) */
+.text-shine {
+  background: linear-gradient(90deg, #ff8a4c 0%, #ffd9bf 25%, #ff8a4c 50%, #ff6a2b 75%, #ff8a4c 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shine 5s linear infinite;
+}
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* ---------------- Card hover lift ---------------- */
+.card-hover {
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s, box-shadow 0.25s;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px -20px rgba(255, 106, 43, 0.4);
+}
+
+/* ---------------- Terminal CRT ---------------- */
+.crt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.02) 0px,
+    rgba(255, 255, 255, 0.02) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  z-index: 5;
+}
+
+/* ---------------- Scrollbars ---------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a42 #0a0a0b;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: #0a0a0b;
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(#3a3a42, #2a2a30);
+  border-radius: 6px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #ff6a2b;
+}
+
+/* ---------------- Keyframe animations ---------------- */
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(255, 106, 43, 0.5); }
+  70% { box-shadow: 0 0 0 14px rgba(255, 106, 43, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 106, 43, 0); }
+}
+.pulse-ring {
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes fadeup {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fadeup {
+  animation: fadeup 0.4s ease-out both;
+}
+
+/* Staggered entrance for grids/lists */
+.enter {
+  opacity: 0;
+  animation: fadeup 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.enter-1 { animation-delay: 0.04s; }
+.enter-2 { animation-delay: 0.10s; }
+.enter-3 { animation-delay: 0.16s; }
+.enter-4 { animation-delay: 0.22s; }
+.enter-5 { animation-delay: 0.28s; }
+.enter-6 { animation-delay: 0.34s; }
+.enter-7 { animation-delay: 0.40s; }
+.enter-8 { animation-delay: 0.46s; }
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+.scale-in {
+  animation: scale-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.slide-in-right {
+  animation: slide-in-right 0.4s ease-out both;
+}
+
+/* Progress / bar fill grow */
+@keyframes bar-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.bar-grow {
+  transform-origin: left;
+  animation: bar-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Soft float for hero accents */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.float {
+  animation: float 5s ease-in-out infinite;
+}
+
+/* Rotating rays for badge medallions */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Horizontal ticker/marquee for the live feed carousel */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: marquee 30s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Icon glow pulse */
+@keyframes glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(255, 106, 43, 0.5)); }
+  50% { filter: drop-shadow(0 0 10px rgba(255, 106, 43, 0.9)); }
+}
+.glow-pulse {
+  animation: glow-pulse 2.6s ease-in-out infinite;
+}
+
+/* Live feed dot ping */
+@keyframes ping-soft {
+  0% { transform: scale(1); opacity: 1; }
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+.ping-dot {
+  position: relative;
+}
+.ping-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: inherit;
+  animation: ping-soft 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Shimmer sweep (used on hover of important CTAs) */
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+.shimmer-hover {
+  background-image: linear-gradient(
+    110deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  background-position: -100% center;
+  transition: background-position 0s;
+}
+.shimmer-hover:hover {
+  animation: shimmer 0.9s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
