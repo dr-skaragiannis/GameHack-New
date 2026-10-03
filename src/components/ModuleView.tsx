@@ -93,7 +93,8 @@ export default function ModuleView({
       module.sshInit?.(st);
       engineRef.current = { term: st, ctx: session, sshSession: session };
     } else {
-      const t = new Terminal();
+      // Campaigns can ship their own virtual filesystem (Sudo_Run does).
+      const t = new Terminal(module.labFS ? module.labFS() : undefined);
       engineRef.current = { term: t, ctx: t };
     }
   }

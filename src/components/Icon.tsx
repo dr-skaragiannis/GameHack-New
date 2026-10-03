@@ -153,6 +153,19 @@ export const MODULE_ICON: Record<string, string> = {
   "ssh-exfil": "folder",
   "ssh-tunnel": "network",
   "ssh-harden": "lock",
+  // Sudo_Run (Linux for Beginners) campaign
+  "sr-boot": "terminal",
+  "sr-search": "radar",
+  "sr-files": "folder",
+  "sr-text": "scale",
+  "sr-apt": "database",
+  "sr-perms": "key",
+  "sr-net": "globe",
+  "sr-proc": "scan",
+  "sr-env": "bulb",
+  "sr-script": "hammer",
+  "sr-cron": "lock",
+  "sr-services": "medal",
 };
 
 export default function Icon({

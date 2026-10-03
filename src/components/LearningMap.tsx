@@ -28,6 +28,7 @@ const HUB_CFG: Record<string, HubCfg> = {
   intro: { x: 215, y: 330, a0: -78, a1: 76, r0: 160, r1: 235 },
   raven: { x: 1075, y: 290, a0: 158, a1: 270, r0: 150, r1: 215 },
   ssh: { x: 640, y: 585, a0: -168, a1: -12, r0: 140, r1: 205 },
+  sudorun: { x: 400, y: 150, a0: 200, a1: 340, r0: 150, r1: 215 },
 };
 const FALLBACK_HUB: HubCfg = { x: 640, y: 140, a0: 20, a1: 160, r0: 150, r1: 215 };
 const HUB_ICON: Record<string, string> = { lab: "terminal", raven: "crown", ssh: "network" };

@@ -121,6 +121,91 @@ export type Badge = {
 };
 
 export const BADGES: Record<string, Badge> = {
+  // ---- Sudo_Run (Linux for Beginners) campaign ----
+  sr_first_boot: {
+    name: "First Boot",
+    desc: "Finished Sudo_Run Boot Camp",
+    icon: "terminal",
+    tier: "bronze",
+    blurb: "Certifies the very first steps on a Linux box: orientation with pwd, whoami, ls and cd.",
+  },
+  sr_finder: {
+    name: "Finder",
+    desc: "Finished Sudo_Run Search Party",
+    icon: "radar",
+    tier: "bronze",
+    blurb: "Earned by mastering the search toolkit: --help, man, locate, whereis, which, find and grep.",
+  },
+  sr_blacksmith: {
+    name: "Blacksmith",
+    desc: "Finished Sudo_Run File Forge",
+    icon: "folder",
+    tier: "bronze",
+    blurb: "Proves command of the file lifecycle: cat, touch, mkdir, cp, mv, rm and rmdir.",
+  },
+  sr_text_smith: {
+    name: "Text Smith",
+    desc: "Finished Sudo_Run Text Smith",
+    icon: "scale",
+    tier: "bronze",
+    blurb: "Awarded for slicing, numbering and rewriting text with head, tail, nl, sed, more and less.",
+  },
+  sr_quartermaster: {
+    name: "Quartermaster",
+    desc: "Finished Sudo_Run Package Ops",
+    icon: "database",
+    tier: "silver",
+    blurb: "Certifies the apt workflow: search the cache, install, remove, purge, update and upgrade.",
+  },
+  sr_keymaster: {
+    name: "Keymaster",
+    desc: "Finished Sudo_Run Permission Forge",
+    icon: "key",
+    tier: "silver",
+    blurb: "Recognises mastery of the Linux permission model: rwx triplets, chmod, chown, chgrp, SUID and SGID.",
+  },
+  sr_signal_rider: {
+    name: "Signal Rider",
+    desc: "Finished Sudo_Run Network Control",
+    icon: "globe",
+    tier: "silver",
+    blurb: "Earned by controlling interfaces, addresses and name resolution: ifconfig, dhclient, dig and the resolver files.",
+  },
+  sr_process_wrangler: {
+    name: "Process Wrangler",
+    desc: "Finished Sudo_Run Process Command",
+    icon: "scan",
+    tier: "silver",
+    blurb: "Certifies process control: ps, top, nice, renice, kill, background jobs and the at scheduler.",
+  },
+  sr_env_shaper: {
+    name: "Env Shaper",
+    desc: "Finished Sudo_Run Environment Shaper",
+    icon: "bulb",
+    tier: "silver",
+    blurb: "Awarded for shaping the shell environment: env, set, HISTSIZE, export, custom variables and unset.",
+  },
+  sr_scriptwright: {
+    name: "Scriptwright",
+    desc: "Finished Sudo_Run Script Forge",
+    icon: "hammer",
+    tier: "gold",
+    blurb: "Proves you can build and run bash programs: shebang, echo, read, chmod +x, ./script and nmap pipelines.",
+  },
+  sr_timekeeper: {
+    name: "Timekeeper",
+    desc: "Finished Sudo_Run Clockwork",
+    icon: "lock",
+    tier: "gold",
+    blurb: "Recognises mastery of scheduling and boot services: cron, the seven crontab fields, runlevels and update-rc.d.",
+  },
+  sr_service_marshal: {
+    name: "Service Marshal",
+    desc: "Finished Sudo_Run Service Ops",
+    icon: "medal",
+    tier: "gold",
+    blurb: "The campaign finale: Apache on localhost, OpenSSH to a remote box, and an anonymous FTP download.",
+  },
   firstblood: {
     name: "First Blood",
     desc: "Completed your first objective",

@@ -237,6 +237,7 @@ export class Terminal {
   grepped = new Set<string>(); // abs file paths where grep returned a match
   curled = new Set<string>(); // hosts successfully fetched with curl
   sshTargets = new Set<string>(); // hosts an ssh session was opened to
+  sshSessions = new Set<string>(); // "user@host" strings an ssh session was opened to
 
   // ---- Sudo_Run campaign engine state ----
   vars: Record<string, string> = {}; // shell/environment variables (HISTSIZE, custom ones)
@@ -251,9 +252,12 @@ export class Terminal {
   jobs: { id: number; pid: number; cmd: string }[] = []; // background jobs (&)
   fgUsed = false;
   killed = new Set<string>(); // pids killed with kill
+  killedPids = new Set<number>(); // pids that no longer show up in ps/top
   niceRan = false;
   reniceRan = false;
   atScheduled = false;
+  awaitingAtJob: string | null = null; // an `at TIME` session waiting for its command
+  atJobs: { time: string; cmd: string }[] = []; // jobs handed to the at daemon
   psRan = false;
   psAux = false;
   topRan = false;
@@ -281,6 +285,7 @@ export class Terminal {
   serviceStates: Record<string, string> = { apache2: "inactive (dead)", ssh: "inactive (dead)", cron: "inactive (dead)", mysql: "active (running)" };
   rcAdded = new Set<string>(); // services added to boot with update-rc.d
   cronListed = false; // crontab -l ran
+  cronEdited = false; // crontab -e ran (editor selection shown)
   ftpGot = new Set<string>(); // files downloaded via ftp get
   ftpDone = false; // ftp session used (get + bye)
   whichFound: string | null = null; // last program successfully resolved by which
@@ -471,6 +476,19 @@ export class Terminal {
     // 2) Inside an FTP session everything routes to the FTP mini-shell.
     if (this.ftp) return this.ftpInput(input);
 
+    // 2b) An `at TIME` session swallows the next line as the job to schedule.
+    if (this.awaitingAtJob) {
+      const time = this.awaitingAtJob;
+      this.awaitingAtJob = null;
+      this.atScheduled = true;
+      this.atJobs.push({ time, cmd: input });
+      return [
+        line(`job 12 at Sat Oct 03 ${time} 2026`, c.ok),
+        line(`scheduled: ${input}`, c.ok),
+        line("(sim) one command per entry — on a real box Ctrl+D closes the at> prompt.", c.dim),
+      ];
+    }
+
     if (!input) return [];
 
     // 3) Shell variable assignment: NAME=value (quotes stripped)
@@ -502,18 +520,12 @@ export class Terminal {
     }
 
     // 7) Pipelines: a | b | c  (stderr marker 2>&1 tolerated anywhere)
-    const stages = input
-      .split("|")
-      .map((s) => s.replace(/2>&1/g, "").trim())
-      .filter(Boolean);
-
-    let out = this.dispatch(stages[0] || "");
-    for (const stage of stages.slice(1)) out = this.pipeStage(stage, out);
+    let out = this.execPipeline(input);
 
     if (background) {
       const id = this.jobs.length + 1;
       const pid = 7800 + id * 137;
-      this.jobs.push({ id, pid, cmd: stages.join(" | ") });
+      this.jobs.push({ id, pid, cmd: input });
       out = [line(`[${id}] ${pid}`, c.ok)];
     }
 
@@ -534,6 +546,43 @@ export class Terminal {
     return out;
   }
 
+  // Run one pipeline ("a | b | c"). Shared by interactive input and by the
+  // bash-script interpreter, so scripts can pipe exactly like the shell does.
+  private execPipeline(input: string): OutLine[] {
+    const stages = this.splitPipeline(input);
+    let out = this.dispatch(stages[0] || "");
+    for (const stage of stages.slice(1)) out = this.pipeStage(stage, out);
+    return out;
+  }
+
+  // Split on '|' but NOT inside quotes, so `echo 'a | b' > f` writes the text.
+  private splitPipeline(input: string): string[] {
+    const stages: string[] = [];
+    let cur = "";
+    let quote: string | null = null;
+    for (let i = 0; i < input.length; i++) {
+      const ch = input[i];
+      if (quote) {
+        cur += ch;
+        if (ch === quote) quote = null;
+        continue;
+      }
+      if (ch === '"' || ch === "'") {
+        quote = ch;
+        cur += ch;
+        continue;
+      }
+      if (ch === "|") {
+        stages.push(cur);
+        cur = "";
+        continue;
+      }
+      cur += ch;
+    }
+    stages.push(cur);
+    return stages.map((st) => st.replace(/2>&1/g, "").trim()).filter(Boolean);
+  }
+
   // Handle one stage of a pipeline against the previous stage's output.
   private pipeStage(stage: string, lines: OutLine[]): OutLine[] {
     const parts = stage.split(/\s+/);
@@ -543,7 +592,10 @@ export class Terminal {
     const texts = lines.map((l) => l.text);
     switch (cmd) {
       case "grep": {
-        const pattern = (args[0] || "").replace(/^["']|["']$/g, "");
+        // Quoted patterns may contain spaces: grep "scan report", grep -v "Permission denied"
+        const raw = stage.replace(/^\s*grep\s+/, "");
+        const quoted = raw.match(/^(?:-\S+\s+)*("[^"]*"|'[^']*')/);
+        const pattern = quoted ? quoted[1].slice(1, -1) : (args[0] || "").replace(/^["']|["']$/g, "");
         if (!pattern) return [line("usage: grep PATTERN", c.err)];
         const invert = flags.includes("v");
         const ci = flags.includes("i");
@@ -557,13 +609,51 @@ export class Terminal {
       case "cat":
         return lines;
       case "head":
-        return lines.slice(0, Number(args[0]) || 10);
-      case "tail":
-        return lines.slice(-(Number(args[0]) || 10));
+      case "tail": {
+        // head [-n] N | head -n -N (everything BUT the last N lines)
+        let n = 10;
+        for (let i = 1; i < parts.length; i++) {
+          const a = parts[i];
+          if (a === "-n" || a === "--lines") n = Number(parts[++i]);
+          else if (/^-?\d+$/.test(a)) n = Number(a);
+        }
+        if (cmd === "head") {
+          return n < 0 ? lines.slice(0, n) : lines.slice(0, n || 10);
+        }
+        return n < 0 ? lines.slice(-n) : lines.slice(-(n || 10));
+      }
+      case "cut": {
+        // cut -d " " -f 5   |   cut -f 1-3   (delimiter may be quoted)
+        const raw = stage.replace(/^\s*cut\s+/, "");
+        const dm = raw.match(/-d\s*("[^"]*"|'[^']*'|\S+)/);
+        const fm = raw.match(/-f\s*("[^"]*"|'[^']*'|\S+)/);
+        if (!fm) return [line("cut: usage: cut -d DELIM -f FIELDS", c.err)];
+        let delim = dm ? dm[1].replace(/^["']|["']$/g, "") : "\t";
+        if (delim === "") delim = " ";
+        const spec = fm[1].replace(/^["']|["']$/g, "");
+        const picks: number[] = [];
+        for (const chunk of spec.split(",")) {
+          const range = chunk.split("-");
+          const from = Number(range[0]) || 1;
+          const to = range.length > 1 ? Number(range[1]) || from : from;
+          for (let i = from; i <= to; i++) picks.push(i);
+        }
+        return texts.map((tx) => {
+          const fields = tx.split(delim);
+          return line(picks.map((i) => fields[i - 1] ?? "").join(delim), c.ok);
+        });
+      }
+      case "sort":
+        return texts.slice().sort().map((tx) => line(tx));
+      case "uniq": {
+        const uniq: string[] = [];
+        for (const tx of texts) if (uniq[uniq.length - 1] !== tx) uniq.push(tx);
+        return uniq.map((tx) => line(tx));
+      }
       case "wc":
         return [line(`${texts.filter((tx) => tx.trim()).length}`, c.ok)];
       default:
-        return [line(`(sim) pipe to '${cmd}' is not supported — try grep, head, tail, more, less`, c.dim), ...lines];
+        return [line(`(sim) pipe to '${cmd}' is not supported — try grep, head, tail, cut, sort, uniq, more, less`, c.dim), ...lines];
     }
   }
 
@@ -573,6 +663,11 @@ export class Terminal {
     const args = parts.slice(1);
     const flags = args.filter((a) => a.startsWith("-")).join("").replace(/-/g, "");
     const pos = args.filter((a) => !a.startsWith("-"));
+
+    // Every command answers "--help" with its manual page (like real tools:
+    // `volatility --help`, `nmap --help`). Handled before the per-command
+    // switch so no command has to remember to implement it.
+    if (cmd !== "help" && (args.includes("--help") || args.includes("-h"))) return this.man(cmd);
 
     switch (cmd) {
       case "help":
@@ -612,10 +707,12 @@ export class Terminal {
       case "cat":
       case "less":
       case "more":
-      case "head":
-      case "tail":
       case "bat":
         return this.cat(pos);
+      case "head":
+        return this.headTail(args, "head");
+      case "tail":
+        return this.headTail(args, "tail");
       case "mkdir":
         return this.mkdir(pos);
       case "touch":
@@ -640,7 +737,7 @@ export class Terminal {
       case "mv":
         return this.mv(pos);
       case "find":
-        return this.find(pos);
+        return this.find(args);
       case "grep":
         return this.grep(args);
       case "chmod":
@@ -721,7 +818,7 @@ export class Terminal {
       case "fg":
         return this.fg(pos[0]);
       case "at":
-        return this.atCmd(pos[0]);
+        return this.atCmd(pos);
       case "env":
       case "set":
         this.envViewed = true;
@@ -940,14 +1037,41 @@ export class Terminal {
     return this.rm("r", [pos[0]]);
   }
 
-  private find(pos: string[]): OutLine[] {
-    const start = pos[0] || ".";
-    const nameIdx = pos.indexOf("-name");
-    const pattern = nameIdx >= 0 ? pos[nameIdx + 1]?.replace(/["'*]/g, "") : "";
+  private find(args: string[]): OutLine[] {
+    // Parse the real option grammar: find PATH [-type f|d] [-name PATTERN]
+    const rest: string[] = [];
+    let pattern = "";
+    let typeFilter = "";
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      if (a === "-name" || a === "-iname") {
+        pattern = (args[++i] || "").replace(/^["']|["']$/g, "");
+        continue;
+      }
+      if (a === "-type") {
+        typeFilter = args[++i] || "";
+        continue;
+      }
+      if (a.startsWith("-")) continue; // -print, -exec ... tolerated
+      rest.push(a);
+    }
+    const start = rest[0] || ".";
     const base = this.resolvePath(start.startsWith("-") ? "." : start) || this.cwd;
     const node = this.nodeAt(base);
     if (!node) return [line(`find: '${start}': No such file or directory`, c.err)];
     this.ranFindCmd = true; // outcome: a find actually ran over a valid path
+    // Shell globs: * → anything, ? → one char. Anchored on the base NAME, like
+    // real find, so "*.sh" matches only entries whose whole name ends in .sh.
+    const glob = pattern
+      ? new RegExp(
+          "^" +
+            pattern
+              .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+              .replace(/\*/g, "[^/]*")
+              .replace(/\?/g, "[^/]") +
+            "$"
+        )
+      : null;
     const out: OutLine[] = [];
     const prefix = start === "." ? "." : start.replace(/\/$/, "");
     const walk = (n: FileNode, path: string) => {
@@ -966,12 +1090,57 @@ export class Terminal {
             out.push(line(`find: '${prefix}/${p}': Permission denied`, c.err));
             continue;
           }
-          if (!pattern || k.includes(pattern)) out.push(line(`${prefix}/${p}`));
+          const typeOk = typeFilter === "f" ? v.type === "file" : typeFilter === "d" ? v.type === "dir" : true;
+          if (typeOk && (!glob || glob.test(k))) out.push(line(`${prefix}/${p}`));
           walk(v, p);
         }
       }
     };
     walk(node, "");
+    return out;
+  }
+
+  // head / tail — real line-window semantics: head [-n] N FILE, tail -f FILE.
+  private headTail(args: string[], which: "head" | "tail"): OutLine[] {
+    const files: string[] = [];
+    let count = 10;
+    let follow = false;
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      if (a === "-n" || a === "--lines") {
+        count = Number(args[++i]);
+        continue;
+      }
+      if (/^-\d+$/.test(a)) {
+        count = Number(a.slice(1));
+        continue;
+      }
+      if (a === "-f") {
+        follow = true;
+        continue;
+      }
+      if (a.startsWith("-")) continue;
+      files.push(a);
+    }
+    if (!files.length) return [line(`${which}: missing file operand`, c.err)];
+    const out: OutLine[] = [];
+    for (const p of files) {
+      const segs = this.resolvePath(p);
+      const node = segs && this.nodeAt(segs);
+      if (!node || node.type !== "file") {
+        out.push(line(`${which}: cannot open '${p}' for reading: No such file or directory`, c.err));
+        continue;
+      }
+      const abs = "/" + segs!.join("/");
+      this.readFiles.add(abs);
+      if (this.user === "root") this.sudoReadFiles.add(abs);
+      let rows = (node.content || "").split("\n");
+      if (rows.length && rows[rows.length - 1] === "") rows = rows.slice(0, -1);
+      const window = Math.abs(count);
+      const slice = which === "head" ? rows.slice(0, window) : rows.slice(-window);
+      slice.forEach((l) => out.push(line(l)));
+      if (which === "tail" && follow) out.push(line(`(following ${p} — new lines appear here as they are written; Ctrl+C stops)`, c.dim));
+    }
     return out;
   }
 
@@ -1026,6 +1195,7 @@ export class Terminal {
     if (!node) return [line(`chmod: cannot access '${pos[1]}': No such file or directory`, c.err)];
     if (/^[0-7]{3,4}$/.test(mode)) {
       node.perms = octalToPerms(mode.slice(-3));
+      if (node.perms.includes("x")) this.chmodX.add("/" + segs!.join("/"));
       if (mode.length === 4) {
         const special = parseInt(mode[0], 8);
         node.setuid = (special & 4) !== 0;
@@ -1046,6 +1216,7 @@ export class Terminal {
       perms = applySymbolic(perms, cl);
     }
     node.perms = perms;
+    if (perms.includes("x")) this.chmodX.add("/" + segs!.join("/"));
     return [];
   }
 
@@ -1103,6 +1274,36 @@ export class Terminal {
       ssh: "ssh - openssh client: ssh user@host",
       dig: "dig - DNS lookup: dig domain [mx|ns]",
       ifconfig: "ifconfig - configure network interfaces: ifconfig eth0 [up|down|ip|hw ether MAC]",
+      volatility: "volatility - memory forensics framework. volatility --help lists plugins: imageinfo, pslist, netscan, memdump.",
+      head: "head - output the first lines of a file. head FILE (10), head -n 5 FILE, head -5 FILE.",
+      tail: "tail - output the last lines of a file. tail FILE, tail -3 FILE, tail -f LOG follows a growing log.",
+      nl: "nl - number the lines of a file: nl FILE",
+      more: "more - page through a file forward only: more FILE (space = next page, q = quit).",
+      less: "less - page both ways and search: less FILE ( /pattern searches, n next match, q quits).",
+      cut: "cut - slice columns out of lines: cut -d \" \" -f 5  (-d delimiter, -f fields)",
+      locate: "locate - find paths by name from the on-disk index: locate PATTERN (updatedb refreshes it).",
+      whereis: "whereis - locate the binary, source and manual page of a command: whereis git",
+      which: "which - show the exact binary your PATH would execute: which git",
+      env: "env - print the environment variables: env | grep HISTSIZE (set works the same way)",
+      export: "export - mark a variable as an environment variable so child processes inherit it: export NAME",
+      unset: "unset - delete a variable: unset NAME",
+      at: "at - run a job once at a given time: at 9:00pm  then type the command (Ctrl+D ends it).",
+      jobs: "jobs - list background jobs started with '&' in this shell.",
+      fg: "fg - bring a background job to the foreground: fg %1 or fg PID",
+      iwconfig: "iwconfig - configure wireless interfaces: iwconfig shows ESSID, mode, bit rate.",
+      dhclient: "dhclient - ask the DHCP daemon for a lease: dhclient eth0",
+      "update-rc.d": "update-rc.d - add/remove a service from the boot runlevels: update-rc.d mysql defaults",
+      nano: "nano - small terminal text editor: nano FILE (^O save, ^X exit).",
+      touch: "touch - create an empty file or refresh its timestamp: touch FILE",
+      mkdir: "mkdir - create a directory: mkdir DIR (mkdir -p a/b/c creates parents too).",
+      rmdir: "rmdir - remove an EMPTY directory (use rm -r for non-empty trees).",
+      cp: "cp - copy files: cp SRC DST  (cp -r for directories).",
+      mv: "mv - move OR rename: mv OLD NEW",
+      rm: "rm - delete files: rm FILE, rm -r DIR (no trash bin — permanent).",
+      cat: "cat - print whole files: cat FILE1 FILE2",
+      whoami: "whoami - print the effective user name.",
+      id: "id - print uid, gid and every group you belong to.",
+      curl: "curl - transfer a URL: curl http://host/ (add -o FILE to save the body).",
     };
     this.manRan = true;
     if (name) this.manViewed.add(name);
@@ -1350,6 +1551,21 @@ export class Terminal {
     if (!url) return [line("curl: try 'curl <url>'", c.err)];
     const hostMatch = url.match(/^https?:\/\/([^/]+)/);
     if (hostMatch) this.curled.add(hostMatch[1]); // outcome: fetched this host
+    // Loopback = YOUR OWN apache2 service: it answers only when the service is
+    // running, and it serves the real /var/www/html/index.html of this box.
+    if (hostMatch && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(hostMatch[1])) {
+      if (!(this.serviceStates.apache2 || "").startsWith("active"))
+        return [line("curl: (7) Failed to connect to localhost port 80: Connection refused", c.err), line("(is the web server up?  service apache2 start)", c.dim)];
+      // Debian/Kali serve /var/www/html, older layouts serve /var/www.
+      const html = this.fileContent("/var/www/html/index.html") ?? this.fileContent("/var/www/index.html") ?? "";
+      return [
+        line("HTTP/1.1 200 OK", c.dim),
+        line("Server: Apache/2.4.52 (Kali)", c.dim),
+        line("Content-Type: text/html", c.dim),
+        line(""),
+        ...html.split("\n").filter((l) => l !== "").map((l) => line(l, c.ok)),
+      ];
+    }
     if (url.includes("login") && args.join(" ").includes("' OR '1'='1")) {
       return [
         line("HTTP/1.1 200 OK", c.dim),
@@ -1416,13 +1632,15 @@ export class Terminal {
     // outcome: opened a session to this host (requires user@host form + known host)
     const at = tgt.split("@");
     const host = at.length > 1 ? at[1] : tgt;
+    const who = at.length > 1 ? at[0] : this.user;
     const hip = resolve(host) || (/^\d+\.\d+\.\d+\.\d+$/.test(host) ? host : null);
     if (at.length > 1 && hip && NETWORK[hip]) this.sshTargets.add(hip);
+    if (at.length > 1) this.sshSessions.add(tgt); // outcome: a user@host session was opened
     return [
-      line(`The authenticity of host can't be established.`, c.dim),
+      line(`The authenticity of host '${host}' can't be established.`, c.dim),
       line("Warning: Permanently added to the list of known hosts.", c.dim),
-      line("operator@target's password: ********", c.dim),
-      line("Welcome to Ubuntu 22.04 LTS (simulated)", c.ok),
+      line(`${who}@${host}'s password: ********`, c.dim),
+      line(`Welcome to Ubuntu 22.04 LTS (simulated) — logged in as ${who}@${host}`, c.ok),
       line("You are now on the remote box. (In this sim, keep working locally.)", c.info),
     ];
   }
@@ -1485,12 +1703,15 @@ export class Terminal {
   private sed(args: string[]): OutLine[] {
     this.sedRan = true;
     const edit = args.includes("-i");
-    const expr = args.find((a) => /^s\//.test(a));
-    if (!expr) return [line("sed: usage: sed [options] 's/old/new/[g]' FILE", c.err)];
+    const strip = (a: string) => a.replace(/^["']|["']$/g, "");
+    // The expression is usually quoted: sed -i 's/WWW/www/g' file
+    const exprRaw = args.find((a) => /^["']?s\//.test(a));
+    if (!exprRaw) return [line("sed: usage: sed [options] 's/old/new/[g]' FILE", c.err)];
+    const expr = strip(exprRaw);
     const m = expr.match(/^s\/([\s\S]*?)\/([\s\S]*?)\/(g|gi)?$/);
     if (!m) return [line("sed: unsupported expression (this sim supports s/old/new/g)", c.err)];
     const [, from, to, mod] = m;
-    const fileArg = args[args.indexOf(expr) + 1];
+    const fileArg = strip(args[args.indexOf(exprRaw) + 1] || "");
     if (!fileArg) return [line("sed: no input file", c.err)];
     const segs = this.resolvePath(fileArg);
     const node = segs && this.nodeAt(segs);
@@ -1636,8 +1857,11 @@ export class Terminal {
   }
 
   private psList(): { pid: number; name: string; cpu: string; mem: string; state: string }[] {
-    const rows = [...PROC_TABLE];
+    const rows = PROC_TABLE.filter((p) => !this.killedPids.has(p.pid));
     if ((this.serviceStates.apache2 || "").startsWith("active")) rows.push({ pid: 8021, name: "apache2", cpu: "0.0", mem: "0.9", state: "S" });
+    if ((this.serviceStates.mysql || "").startsWith("active")) rows.push({ pid: 889, name: "mysqld", cpu: "0.1", mem: "3.4", state: "S" });
+    if ((this.serviceStates.cron || "").startsWith("active")) rows.push({ pid: 731, name: "cron", cpu: "0.0", mem: "0.1", state: "S" });
+    if ((this.serviceStates.ssh || "").startsWith("active")) rows.push({ pid: 640, name: "sshd", cpu: "0.0", mem: "0.2", state: "S" });
     return rows;
   }
 
@@ -1701,6 +1925,7 @@ export class Terminal {
     const sig = flags || "15";
     this.killed.add(`${sig}:${pid}`);
     if (sig === "9") this.killed.add(`any:${pid}`);
+    if (/^\d+$/.test(pid)) this.killedPids.add(Number(pid));
     return [line(`sent signal ${sig} to ${pid} ${sig === "9" ? "(SIGKILL — forced)" : sig === "1" ? "(SIGHUP — hangup/reload)" : "(SIGTERM)"}`, c.dim)];
   }
 
@@ -1714,13 +1939,22 @@ export class Terminal {
     return [line(`fg %${j.id}`), line(`${j.cmd} — now running in the foreground.`, c.ok)];
   }
 
-  private atCmd(time?: string): OutLine[] {
+  private atCmd(pos: string[]): OutLine[] {
+    const time = pos[0];
     if (!time) return [line("at: usage: at TIME  (e.g. at 9:00pm)", c.err)];
+    const jobCmd = pos.slice(1).join(" ");
+    if (!jobCmd) {
+      // Real `at` drops you into its own "at>" prompt to type the command.
+      this.awaitingAtJob = time;
+      return [
+        line("warning: commands will be executed using /bin/sh", c.dim),
+        line(`job 12 at Sat Oct 03 ${time} 2026`, c.ok),
+        line("at>  (type the command to schedule, then Enter)", c.info),
+      ];
+    }
     this.atScheduled = true;
-    return [
-      line(`job 12 at Sat Oct 03 ${time} 2026`, c.ok),
-      line("job scheduled. View with 'atq' style tools on a real system.", c.dim),
-    ];
+    this.atJobs.push({ time, cmd: jobCmd });
+    return [line(`job 12 at Sat Oct 03 ${time} 2026`, c.ok), line(`scheduled: ${jobCmd}`, c.dim)];
   }
 
   private service(pos: string[]): OutLine[] {
@@ -1762,9 +1996,16 @@ export class Terminal {
       ];
     }
     if (args.includes("-e")) {
+      this.cronEdited = true;
       return [
-        line("Select an editor — nano (sim) opening /etc/crontab ...", c.dim),
-        line("(sim) editor view — append lines with:  echo \"55 23 * * * /root/scanner\" >> /etc/crontab", c.info),
+        line("Select an editor.  To change later, run 'select-editor'.", c.dim),
+        line("  1. /bin/nano        <---- easiest", c.info),
+        line("  2. /usr/bin/vim.basic", c.dim),
+        line("  3. /usr/bin/vim.tiny", c.dim),
+        line("Choose 1-3 [1]: 1  →  /etc/crontab opened in nano (sim)", c.dim),
+        line("(sim) append a schedule with:", c.dim),
+        line(`  echo "55 23 * * * operator /home/operator/scanner.sh" >> /etc/crontab`, c.info),
+        line("  then verify with:  crontab -l", c.info),
       ];
     }
     return [line("crontab: usage: crontab -l (list) | crontab -e (edit)", c.dim)];
@@ -1774,11 +2015,35 @@ export class Terminal {
     const name = pos[0];
     const action = pos[1] || "defaults";
     if (!name) return [line("update-rc.d: usage: update-rc.d <service> defaults|enable|disable|remove", c.err)];
+    if (!this.fileContent(`/etc/init.d/${name}`)) return [line(`update-rc.d: /etc/init.d/${name}: file not found`, c.err)];
     this.rcAdded.add(`${name}:${action}`);
+    const remove = action === "remove" || action === "disable";
+    const linkName = remove ? `K01${name}` : `S01${name}`;
+    // Materialize the boot links in the runlevel directories so `ls /etc/rc3.d`
+    // shows exactly what the tool claims to have done.
+    for (const rl of ["rc2.d", "rc3.d", "rc4.d", "rc5.d"]) {
+      const dirNode = this.mkdirTree(["etc", rl]);
+      if (!dirNode || !dirNode.children) continue;
+      for (const old of Object.keys(dirNode.children)) if (old.endsWith(name)) delete dirNode.children[old];
+      if (!remove) dirNode.children[linkName] = { type: "file", content: `#!/bin/sh\n# HackForge sim: boot link → /etc/init.d/${name}\n`, perms: "rwxr-xr-x", owner: "root", group: "root", size: 40 };
+    }
     return [
       line(`update-rc.d: ${name} ${action}`, c.dim),
-      line(`Adding autostart links for /etc/init.d/${name} (runlevels 2 3 4 5)`, c.ok),
+      remove
+        ? line(`Removing autostart links for /etc/init.d/${name} (runlevels 2 3 4 5)`, c.warn)
+        : line(`Adding autostart links for /etc/init.d/${name} (runlevels 2 3 4 5)`, c.ok),
     ];
+  }
+
+  // Create a directory path (and its parents) inside the VFS; returns the node.
+  private mkdirTree(segs: string[]): FileNode | null {
+    let node: FileNode = this.fs;
+    for (const s of segs) {
+      if (node.type !== "dir" || !node.children) return null;
+      if (!node.children[s]) node.children[s] = { type: "dir", children: {}, perms: "rwxr-xr-x", owner: "root", group: "root", size: 4096 };
+      node = node.children[s];
+    }
+    return node;
   }
 
   private ftp: { stage: "name" | "pass" | "cmd"; cwd: string[]; host: string } | null = null;
@@ -1890,9 +2155,13 @@ export class Terminal {
         return out; // pause — next input line becomes the variable's value
       } else if (/^(exit|cd\b)/.test(l)) {
         continue;
+      } else if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(l)) {
+        // in-script variable assignment: NAME=value
+        const eq = l.indexOf("=");
+        this.vars[l.slice(0, eq)] = l.slice(eq + 1).replace(/^["']|["']$/g, "");
       } else {
         const expanded = l.replace(/\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?/g, (_m, v) => this.vars[v] ?? "");
-        out.push(...this.dispatch(expanded));
+        out.push(...this.execPipeline(expanded));
       }
     }
     return out;
@@ -1904,7 +2173,7 @@ export const COMMANDS = [
   "help", "clear", "cls", "pwd", "whoami", "id", "hostname", "echo", "date", "history",
   "ls", "cd", "cat", "less", "more", "head", "tail", "bat", "mkdir", "rmdir", "touch", "rm", "cp", "mv",
   "find", "grep", "chmod", "chown", "chgrp", "sudo", "man",
-  "nl", "sed", "nano", "locate", "whereis", "which",
+  "nl", "sed", "nano", "locate", "whereis", "which", "cut", "sort", "uniq",
   "apt-cache", "apt-get",
   "ip", "ifconfig", "iwconfig", "dhclient", "ping", "netstat", "ss", "nslookup", "host", "resolvectl", "dig", "whois",
   "ps", "top", "nice", "renice", "kill", "jobs", "fg", "at",

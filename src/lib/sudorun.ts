@@ -26,6 +26,24 @@ const dir = (children: Record<string, FileNode>, perms = "rwxr-xr-x", owner = "o
 // simulated config layouts matching how real Linux systems are arranged.
 // ============================================================================
 
+const BASHRC = `# ~/.bashrc - executed by bash for non-login shells (HackForge lab)
+HISTSIZE=1000
+HISTFILESIZE=2000
+alias ll='ls -la'
+alias ..='cd ..'
+export PATH="/usr/local/bin:/usr/bin:/bin"
+`;
+
+const PROFILE = `# ~/.profile - executed by the command interpreter for login shells
+if [ -f "$HOME/.bashrc" ]; then . "$HOME/.bashrc"; fi
+`;
+
+const BASH_HISTORY = `pwd
+ls -la
+cat /etc/passwd
+ifconfig
+`;
+
 const README_DESKTOP = `Welcome to the HackForge training lab.
 This desktop is your launchpad for the Sudo_Run campaign.
 Work through the modules, keep notes in ~/Documents, and remember:
@@ -68,9 +86,11 @@ echo "You used the read built-in to capture input."
 `;
 
 const SCANNER_SH = `#!/bin/bash
+# HackForge network scanner — find every live host on a network.
+# nmap -sP performs a ping sweep (host discovery, no port scan).
 echo "Enter the network you want to scan (e.g. 10.10.10.0/24):"
 read ip
-nmap -sP $ip
+nmap -sP $ip | grep "scan report" | cut -d " " -f 5 | head -n -1
 echo "Scan complete."
 `;
 
@@ -176,6 +196,12 @@ Oct  1 10:05:07 kali sudo: operator : TTY=pts/0 ; PWD=/home/operator ; USER=root
 Oct  1 10:05:30 kali sshd[4801]: reverse mapping checking getaddrinfo for files.hackforge.lab [10.10.10.9] failed
 `;
 
+const CTF_NOTE = `HackForge CTF night - writeup notes.
+Box 1: web flag hidden in the page source.
+Box 2: cron job ran a world-writable script (classic privesc).
+Box 3: the answer was in /etc/passwd all along.
+`;
+
 const IGNITE_NOTE = `Notes from the HackForge trainee session.
 The instructor asked us to practice moving, copying and renaming files in this folder.
 Nothing in this tree is real - practice freely, break things, rebuild them.
@@ -210,7 +236,13 @@ export function buildSudoRunFS(): FileNode {
                 ignite_screenshots: dir({
                   "about.md": file(SCREENSHOTS_NOTE),
                 }),
+                ctf: dir({
+                  "ctf_writeups.txt": file(CTF_NOTE),
+                }),
               }),
+              ".bashrc": file(BASHRC),
+              ".profile": file(PROFILE),
+              ".bash_history": file(BASH_HISTORY, "rw-------"),
               "hackforge.txt": file(HACKFORGE_TXT),
               "hackforge.in": file(HACKFORGE_IN),
               "simple_bash.sh": file(SIMPLE_BASH, "rwxr-xr-x"),
@@ -260,9 +292,33 @@ export function buildSudoRunFS(): FileNode {
             "root",
             "root"
           ),
+          "rc2.d": dir(
+            {
+              README: file("Runlevel 2 boot links. S-files start a service, K-files stop it,\nthe number sets the order. update-rc.d manages these links for you.\n", "rw-r--r--", "root", "root"),
+            },
+            "rwxr-xr-x",
+            "root",
+            "root"
+          ),
           "rc3.d": dir(
             {
               README: file("Boot-time symlinks to /etc/init.d scripts live here on a real system.\nS-files start services, K-files stop them, numbers set the order.", "rw-r--r--", "root", "root"),
+            },
+            "rwxr-xr-x",
+            "root",
+            "root"
+          ),
+          "rc4.d": dir(
+            {
+              README: file("Runlevel 4 boot links (see /etc/rc3.d/README).\n", "rw-r--r--", "root", "root"),
+            },
+            "rwxr-xr-x",
+            "root",
+            "root"
+          ),
+          "rc5.d": dir(
+            {
+              README: file("Runlevel 5 boot links (see /etc/rc3.d/README).\n", "rw-r--r--", "root", "root"),
             },
             "rwxr-xr-x",
             "root",
