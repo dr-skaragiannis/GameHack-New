@@ -1,0 +1,76 @@
+#################################################################
+# HACKFORGE — Ethical Hacking Lab · Render Blueprint
+#
+# Deploy: Render Dashboard → New → Blueprint → pick this repo.
+# Docs:   https://render.com/docs/blueprint-spec
+#
+# The app is a fully client-side React SPA (state lives in
+# localStorage), so a single free Static Site is all it needs —
+# no web service, no database.
+#################################################################
+
+services:
+  - type: web
+    runtime: static
+    name: hackforge-lab
+
+    # `repo`/`branch` are omitted on purpose: Render defaults to the
+    # repository that contains this file and its default branch, so a
+    # fork deploys without editing anything. Pin them here if you want
+    # to lock the deploy to one branch, e.g.:
+    #   repo: https://github.com/<you>/GameHack-New
+    #   branch: main
+
+    # Vite + vite-plugin-singlefile inline the JS/CSS into dist/index.html.
+    buildCommand: npm ci --include=dev && npm run build
+    staticPublishPath: ./dist
+
+    # Redeploy on every push to the linked branch.
+    autoDeploy: true
+
+    # Build-time only. Nothing here reaches the browser unless the code
+    # reads it, and Vite only inlines variables prefixed with VITE_.
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+
+    # Preview deploys for pull requests: manual, so no surprise builds.
+    # Switch to `automatic` to get a URL per PR.
+    previews:
+      generation: manual
+
+    # Hardening headers. No Cache-Control on purpose: dist/index.html is a
+    # single file with no content hash in its name, so caching it would
+    # serve stale bundles after a deploy.
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: geolocation=(), microphone=(), camera=()
+
+    # SPA fallback. This app has no client-side router today, so nothing
+    # breaks without it — it is here so future deep links keep working.
+    #
+    # If Render ever rejects the Blueprint with "routes is not allowed"
+    # (a known validator quirk), delete this block and add the rule in the
+    # dashboard instead: Settings → Redirects/Rewrites →
+    #   Source /* · Destination /index.html · Action Rewrite
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+    # Skip rebuilds for docs-only changes.
+    buildFilter:
+      ignoredPaths:
+        - docs/**
+        - "*.md"
+        - test/**

@@ -9,7 +9,15 @@ const dom = new JSDOM("<!doctype html><html><body><div id='root'></div></body></
 const g = globalThis as any;
 g.window = dom.window;
 g.document = dom.window.document;
-g.navigator = dom.window.navigator;
+// Node >=21 exposes a getter-only globalThis.navigator, so plain assignment throws.
+const defineGlobal = (name: string, value: unknown) => {
+  try {
+    (g as any)[name] = value;
+  } catch {
+    Object.defineProperty(g, name, { value, configurable: true, writable: true });
+  }
+};
+defineGlobal("navigator", dom.window.navigator);
 g.localStorage = dom.window.localStorage;
 g.HTMLElement = dom.window.HTMLElement;
 g.SVGElement = dom.window.SVGElement;

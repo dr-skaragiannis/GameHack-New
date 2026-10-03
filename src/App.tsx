@@ -31,6 +31,19 @@ const MODULE_BADGE: Record<string, string> = {
   "raven-foothold": "lockbreaker",
   "raven-web": "query_bender",
   "raven-root": "raven",
+  // Sudo_Run (Linux for Beginners)
+  "sr-boot": "sr_first_boot",
+  "sr-search": "sr_finder",
+  "sr-files": "sr_blacksmith",
+  "sr-text": "sr_text_smith",
+  "sr-apt": "sr_quartermaster",
+  "sr-perms": "sr_keymaster",
+  "sr-net": "sr_signal_rider",
+  "sr-proc": "sr_process_wrangler",
+  "sr-env": "sr_env_shaper",
+  "sr-script": "sr_scriptwright",
+  "sr-cron": "sr_timekeeper",
+  "sr-services": "sr_service_marshal",
 };
 
 export default function App() {

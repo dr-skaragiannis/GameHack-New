@@ -1,6 +1,9 @@
 import type { Terminal } from "../lib/terminal";
 import { RAVEN_MODULES } from "./raven-lessons";
 import { SSH_MODULES } from "./ssh-lessons";
+import { SUDO_MODULES_A } from "./sudorun-lessons-a";
+import { SUDO_MODULES_B } from "./sudorun-lessons-b";
+import { SUDO_MODULES_C } from "./sudorun-lessons-c";
 
 export type Bi = { en: string; el: string };
 
@@ -1044,5 +1047,15 @@ export const CAMPAIGNS: Campaign[] = [
     },
     scenario: "ssh",
     modules: SSH_MODULES,
+  },
+  {
+    id: "sudorun",
+    title: { en: "Sudo_Run — Linux for Beginners", el: "Sudo_Run — Linux για Αρχάριους" },
+    subtitle: {
+      en: "Twelve hands-on labs: navigation, search, files, text, packages, permissions, networks, processes, variables, scripting, cron and services.",
+      el: "Δώδεκα πρακτικά labs: πλοήγηση, αναζήτηση, αρχεία, κείμενο, πακέτα, δικαιώματα, δίκτυα, διεργασίες, μεταβλητές, scripting, cron και υπηρεσίες.",
+    },
+    scenario: "lab",
+    modules: [...SUDO_MODULES_A, ...SUDO_MODULES_B, ...SUDO_MODULES_C],
   },
 ];
