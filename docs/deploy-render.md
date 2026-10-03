@@ -53,12 +53,18 @@ The Blueprint defaults to the repository's **default branch**. Two options:
    one resource:
 
    ```
-   hackforge-lab   Static Site
+   gamehack-new   Static Site
      Build Command      npm ci --include=dev && npm run build
      Publish Directory  ./dist
    ```
 
 6. Optionally set a **Blueprint branch** if you did not merge to `main`.
+
+   > **Already have a service on this name?** An `onrender.com` subdomain can only
+   > belong to one service. If an earlier web service is holding
+   > `gamehack-new.onrender.com`, delete it first (or the Blueprint deploy will
+   > not be able to claim the address).
+
 7. **Apply**.
 
 Render creates the static site and immediately runs the first deploy. Watch the
@@ -68,7 +74,7 @@ build log; a successful run ends with a line like:
 ==> Building...
 ==> Installing dependencies...
 ==> Building static site...
-==> Your site is live at https://hackforge-lab.onrender.com
+==> Your site is live at https://gamehack-new.onrender.com
 ```
 
 The first build takes roughly a minute. Later deploys are incremental.
@@ -76,7 +82,7 @@ The first build takes roughly a minute. Later deploys are incremental.
 ## Step 3 — Verify
 
 ```bash
-curl -I https://<your-service>.onrender.com
+curl -I https://gamehack-new.onrender.com
 ```
 
 Expect `HTTP/2 200`, `content-type: text/html`, and the four security headers the
