@@ -2720,7 +2720,7 @@ body {
   height: 24px;
 }
 
-/* Keep module navigation and status in a compact, sticky toolbar above the lab. */
+/* Keep module identity and player HUD above the lab; navigation stays grouped on the left. */
 .module-topbar {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(10, 10, 11, 0.96);
@@ -2731,7 +2731,14 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 7px 10px;
+  gap: 8px 16px;
+}
+.module-topbar__identity {
+  display: flex;
+  min-width: 250px;
+  flex: 0 1 360px;
+  align-items: center;
+  gap: 10px;
 }
 .module-topbar__back {
   flex: 0 0 auto;
@@ -2752,8 +2759,9 @@ body {
   color: #ffad83;
 }
 .module-topbar__lab {
-  min-width: 180px;
-  flex: 1 1 210px;
+  min-width: 0;
+  max-width: 320px;
+  flex: 1 1 180px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2790,11 +2798,12 @@ body {
 }
 .module-topbar__difficulty,
 .module-topbar__progress-copy {
+  min-height: 32px;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 8px;
+  padding: 5px 8px;
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.025);
@@ -2820,13 +2829,14 @@ body {
   font-size: 16px;
   font-variant-numeric: tabular-nums;
 }
-.module-topbar__navigation {
-  min-width: 0;
-  flex: 0 0 auto;
+.module-topbar__controls {
   display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-left: auto;
+  justify-content: flex-start;
+  gap: 6px 8px;
+  margin-top: 7px;
 }
 .module-topbar__app-tools,
 .module-topbar__account-tools {
@@ -2838,15 +2848,18 @@ body {
 .module-topbar__meta-row {
   display: flex;
   min-width: 0;
+  flex: 1 1 520px;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  padding-top: 5px;
+  justify-content: flex-end;
+  gap: 6px 8px;
 }
 .player-quick-stats {
   display: flex;
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   align-items: center;
+  justify-content: flex-end;
   gap: 4px;
   overflow-x: auto;
   padding: 2px 0;
@@ -2904,6 +2917,11 @@ button.player-quick-stats__item:hover {
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 9px;
   background: rgba(255, 255, 255, 0.025);
+}
+.module-topbar__width-control {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
 }
 .module-topbar__tab {
   flex: 0 0 auto;
@@ -2990,8 +3008,24 @@ button.player-quick-stats__item:hover {
     padding-top: 6px;
     padding-bottom: 6px;
   }
+  .module-topbar__row {
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .module-topbar__identity {
+    min-width: 0;
+    flex: 1 1 100%;
+    gap: 8px;
+  }
+  .module-topbar__lab {
+    max-width: none;
+    flex: 1 1 140px;
+  }
   .module-topbar__meta-row {
+    flex: 1 1 100%;
     flex-wrap: wrap;
+    gap: 4px 8px;
+    padding-top: 0;
   }
   .module-topbar__meta-row > .module-topbar__app-tools {
     order: 0;
@@ -3003,30 +3037,14 @@ button.player-quick-stats__item:hover {
     order: 1;
     flex: 1 0 100%;
     flex-wrap: wrap;
+    justify-content: flex-end;
     overflow: visible;
     white-space: normal;
   }
-  .module-topbar__row {
+  .module-topbar__controls {
+    justify-content: flex-start;
     gap: 6px;
-  }
-  .module-topbar__back {
-    order: 0;
-  }
-  .module-topbar__app-tools {
-    order: 0;
-    margin-left: auto;
-  }
-  .module-topbar__difficulty {
-    order: 1;
-  }
-  .module-topbar__progress-copy {
-    order: 2;
-    margin-left: auto;
-  }
-  .module-topbar__lab {
-    order: 3;
-    flex: 0 0 100%;
-    min-width: 0;
+    margin-top: 6px;
   }
   .module-topbar__icon {
     width: 30px;
@@ -3035,15 +3053,8 @@ button.player-quick-stats__item:hover {
   .module-topbar__subtitle {
     display: none;
   }
-  .module-topbar__navigation {
-    order: 4;
-    flex: 1 1 100%;
-    justify-content: space-between;
-    gap: 6px;
-    margin-left: 0;
-  }
   .module-topbar__tabs {
-    flex: 1 1 auto;
+    max-width: 100%;
     overflow-x: auto;
     scrollbar-width: none;
   }

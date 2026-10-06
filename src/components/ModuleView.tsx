@@ -271,49 +271,55 @@ export default function ModuleView({
     <div ref={moduleViewRef} className="space-y-3">
       <div ref={moduleTopbarRef} className="module-topbar sticky top-0 z-10 -mx-4 -mt-4 px-4 py-2 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8">
         <div className="module-topbar__row">
-          <button type="button" onClick={onBack} className="module-topbar__back">
-            ← {t("backToMap", lang)}
-          </button>
+          <div className="module-topbar__identity">
+            <button type="button" onClick={onBack} className="module-topbar__back">
+              ← {t("backToMap", lang)}
+            </button>
 
-          <div className="module-topbar__lab">
-            <div className={`module-topbar__icon bg-gradient-to-br ${module.color}`}>
-              <Icon name={module.icon} className="w-5 h-5 text-white" />
-            </div>
-            <div className="module-topbar__copy">
-              <h1 className="module-topbar__title">{bi(module.title, lang)}</h1>
-              <p className="module-topbar__subtitle">{bi(module.subtitle, lang)}</p>
+            <div className="module-topbar__lab">
+              <div className={`module-topbar__icon bg-gradient-to-br ${module.color}`}>
+                <Icon name={module.icon} className="w-5 h-5 text-white" />
+              </div>
+              <div className="module-topbar__copy">
+                <h1 className="module-topbar__title">{bi(module.title, lang)}</h1>
+                <p className="module-topbar__subtitle">{bi(module.subtitle, lang)}</p>
+              </div>
             </div>
           </div>
 
+          {topbarTools}
+        </div>
+
+        <div className="module-topbar__controls" role="group" aria-label={lang === "el" ? "Πλοήγηση μαθήματος" : "Lesson navigation"}>
           <div className="module-topbar__difficulty" aria-label={`${t("difficulty", lang)} ${module.difficulty} of 5`}>
             <span>{t("difficulty", lang)}</span>
-            <b>{"▲".repeat(module.difficulty)}<i>{"△".repeat(5 - module.difficulty)}</i></b>
+            <b aria-hidden="true">{"▲".repeat(module.difficulty)}<i>{"△".repeat(5 - module.difficulty)}</i></b>
           </div>
 
-          <div className="module-topbar__progress-copy">
+          <div className="module-topbar__progress-copy" aria-label={`${t("progress", lang)} ${progress}%`}>
             <b>{progress}%</b>
             <span>{t("progress", lang)}</span>
           </div>
 
-          <div className="module-topbar__navigation">
-            <nav className="module-topbar__tabs" aria-label={lang === "el" ? "Ενότητες μαθήματος" : "Module sections"}>
-              {(["theory", "guide", "lab"] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  aria-current={tab === k ? "page" : undefined}
-                  onClick={() => setTab(k)}
-                  className={cn("module-topbar__tab", tab === k && "is-active")}
-                >
-                  {t(k, lang)}
-                </button>
-              ))}
-            </nav>
+          <nav className="module-topbar__tabs" aria-label={lang === "el" ? "Ενότητες μαθήματος" : "Module sections"}>
+            {(["theory", "guide", "lab"] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                aria-current={tab === k ? "page" : undefined}
+                onClick={() => setTab(k)}
+                className={cn("module-topbar__tab", tab === k && "is-active")}
+              >
+                {t(k, lang)}
+              </button>
+            ))}
+          </nav>
+
+          <div className="module-topbar__width-control" title={lang === "el" ? "Πλάτος περιεχομένου" : "Content width"}>
             <WidthControl value={activeContentWidth} onChange={onWidth} />
           </div>
-
         </div>
-        {topbarTools}
+
         <div className="module-topbar__track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
           <div className="h-full bg-gradient-to-r from-ember-600 to-ember-400 bar-grow" style={{ width: `${progress}%` }} />
         </div>

@@ -1092,9 +1092,9 @@ export const MODULES: Module[] = [
 export const CAMPAIGNS: Campaign[] = [
   {
     id: "forge",
-    pathNumber: 2,
-    title: { en: "The Forge", el: "Το Καμίνι" },
-    subtitle: { en: "Foundations of the operator", el: "Θεμέλια του χειριστή" },
+    pathNumber: 1,
+    title: { en: "In the Beginning... Linux Was Born", el: "Στην αρχή... γεννήθηκε το Linux" },
+    subtitle: { en: "Linux foundations: from your first command to root", el: "Θεμέλια Linux: από την πρώτη εντολή ως το root" },
     blurb: {
       en: "Nine sequenced labs from first prompt to root. Linux, recon, scanning, credentials, SQLi, privesc — all simulated.",
       el: "Εννέα εργαστήρια από το πρώτο prompt ως το root. Όλα προσομοιωμένα.",
@@ -1133,7 +1133,7 @@ export const CAMPAIGNS: Campaign[] = [
   },
   {
     id: "sudorun",
-    pathNumber: 1,
+    pathNumber: 2,
     title: { en: "Sudo_Run", el: "Sudo_Run" },
     subtitle: { en: "Linux for Beginners", el: "Linux για αρχάριους" },
     blurb: {
