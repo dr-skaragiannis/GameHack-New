@@ -300,6 +300,7 @@ body {
 
 /* Interactive campaign map */
 .interactive-map {
+  --type-small: 0.825rem;
   position: relative;
   isolation: isolate;
   overflow: visible;
@@ -338,7 +339,7 @@ body {
 .interactive-map__title h2 {
   margin-top: 2px;
   color: #f4f4f5;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1.15;
