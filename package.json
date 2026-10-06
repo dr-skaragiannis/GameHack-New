@@ -9,6 +9,8 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "vite build",
+    "test:linux": "node scripts/test-linux-sandbox.mjs",
+    "test:progression": "node scripts/test-progress-rules.mjs",
     "preview": "npm start",
     "start": "node server/index.mjs"
   },

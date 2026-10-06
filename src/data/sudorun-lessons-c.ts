@@ -1,6 +1,5 @@
 import type { Module } from "./lessons";
 import { usedCmd } from "../lib/terminal";
-import { sudoRunFS } from "../lib/sudorun";
 
 const lab = "sudorun" as const;
 const shot = (cmd: string, lines: string[]) => ({ cmd, lines });
@@ -13,7 +12,6 @@ export const SUDO_RUN_MODULES_C: Module[] = [
     color: "from-emerald-400 to-green-900",
     difficulty: 3,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "Bash scripting basics", el: "Βασικά bash scripts" },
     subtitle: { en: "shebang, echo, chmod +x, read, scanner", el: "shebang, echo, chmod +x, read, scanner" },
     badge: { en: "Scripter", el: "Σκριπτάς" },
@@ -100,7 +98,6 @@ export const SUDO_RUN_MODULES_C: Module[] = [
     color: "from-amber-300 to-stone-800",
     difficulty: 3,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "Scheduling & rc scripts", el: "Χρονοπρογραμματισμός & rc" },
     subtitle: { en: "cron, crontab -e, update-rc.d", el: "cron, crontab -e, update-rc.d" },
     badge: { en: "Clockwork", el: "Ρολόι" },
@@ -169,7 +166,6 @@ export const SUDO_RUN_MODULES_C: Module[] = [
     color: "from-ember-400 to-rose-900",
     difficulty: 4,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "Linux services — Apache, SSH, FTP", el: "Υπηρεσίες — Apache, SSH, FTP" },
     subtitle: { en: "start/stop/status + a tiny web, ssh, ftp get", el: "start/stop/status + web, ssh, ftp" },
     badge: { en: "Sudo_Run Complete", el: "Sudo_Run Complete" },

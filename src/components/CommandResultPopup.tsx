@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import type { CommandExplanation } from "../data/commandGuide";
-import { t, type Lang } from "../i18n";
+import { t, uppercaseLabel, type Lang } from "../i18n";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
 
@@ -90,7 +90,7 @@ export default function CommandResultPopup({
             <div className="command-explanation__output-heading">
               <div className="command-explanation__section-label">{lang === "en" ? "TERMINAL OUTPUT" : "ΕΞΟΔΟΣ ΤΕΡΜΑΤΙΚΟΥ"}</div>
               <span className={cn("command-explanation__exit", hasError && "has-error")}>
-                {hasError ? `exit ${result.exitCode || 1}` : (lang === "en" ? "completed" : "ολοκληρώθηκε")}
+                {hasError ? `exit ${result.exitCode || 1}` : (lang === "en" ? "completed" : uppercaseLabel("ολοκληρώθηκε", lang))}
               </span>
             </div>
             <pre className="command-explanation__output" aria-label={lang === "en" ? "Command output" : "Έξοδος εντολής"}>

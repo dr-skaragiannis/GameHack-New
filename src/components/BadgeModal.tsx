@@ -1,6 +1,6 @@
 import { BADGES } from "../lib/db";
 import Icon from "./Icon";
-import { t, type Lang } from "../i18n";
+import { t, uppercaseLabel, type Lang } from "../i18n";
 
 const TIER: Record<string, string> = {
   bronze: "from-amber-700 to-amber-500",
@@ -34,7 +34,7 @@ export default function BadgeModal({
             <Icon name={b.icon} className="w-10 h-10" />
           </div>
         </div>
-        <div className="text-sm uppercase tracking-[0.25em] text-ember-400 mb-1">{b.tier}</div>
+        <div className="text-sm uppercase tracking-[0.25em] text-ember-400 mb-1">{uppercaseLabel(b.tier, lang)}</div>
         <h3 className="text-xl font-bold text-shine mb-1">{b.name}</h3>
         <p className="text-sm text-iron-400 mb-3">{b.desc}</p>
         <p className="text-sm text-zinc-300 leading-relaxed">{b.blurb}</p>

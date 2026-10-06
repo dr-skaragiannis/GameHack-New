@@ -1,4 +1,5 @@
 import {
+  displayPath,
   file,
   getNode,
   normalize,
@@ -229,7 +230,7 @@ tmpfs           512M     0  512M   0% /tmp`);
       return true;
     }
     case "journalctl": {
-      const log = getNode(t.fs, "/var/log/syslog");
+      const log = getNode(t.fs, resolvePath(t, "/var/log/syslog"));
       const lines = (log?.type === "file" ? log.content || "" : "Apr 12 08:00:01 kali systemd[1]: Started HACKFORGE lab services.").trim().split(/\r?\n/);
       const limit = optionValue(rest, "n", 50);
       print(lines.slice(-Math.max(1, Math.min(100, limit))).join("\n"));
@@ -299,7 +300,7 @@ tmpfs           512M     0  512M   0% /tmp`);
         print("COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME\nsshd      412 root    3u  IPv4  10240      0t0  TCP *:22 (LISTEN)\napache2   808 root    4u  IPv4  10241      0t0  TCP *:80 (LISTEN)\n# Simulated sockets only; no host descriptors are exposed.");
       } else {
         const opened = [...new Set(t.filesRead)].slice(-10);
-        print("COMMAND  PID USER   FD   NAME\n" + (opened.map((path, index) => `bash     ${1000 + index} ${t.user}   3r   ${path}`).join("\n") || "bash     1000 operator cwd  /home/operator"));
+        print("COMMAND  PID USER   FD   NAME\n" + (opened.map((path, index) => `bash     ${1000 + index} ${t.user}   3r   ${displayPath(t, path)}`).join("\n") || `bash     1000 ${t.user} cwd  ${t.cwd}`));
       }
       return true;
     }
@@ -327,9 +328,18 @@ tmpfs           512M     0  512M   0% /tmp`);
         print(`ln: failed to create link '${linkName}': File exists`, "err");
         return true;
       }
-      if (symbolic) directory.children[name] = { ...file(name, target, "lrwxrwxrwx", t.user, t.user), linkTarget: target };
-      else directory.children[name] = { ...getNode(t.fs, targetPath)!, name };
-      print("");
+      if (symbolic) {
+        const storedTarget = target.startsWith("/") ? targetPath : target;
+        directory.children[name] = {
+          ...file(name, storedTarget, "lrwxrwxrwx", t.user, t.user),
+          linkTarget: storedTarget,
+          linkDisplayTarget: target,
+        };
+        print(`Created virtual symbolic link: ${linkName} -> ${target}`);
+      } else {
+        directory.children[name] = { ...getNode(t.fs, targetPath)!, name };
+        print(`Created virtual hard link: ${linkName} -> ${target}`);
+      }
       return true;
     }
     case "mount": {
@@ -399,8 +409,8 @@ tmpfs           512M     0  512M   0% /tmp`);
       }
       const resolved = resolvePath(t, first);
       const node = getNode(t.fs, resolved, false);
-      if (node?.linkTarget) print(node.linkTarget);
-      else if ((rest.includes("-f") || rest.includes("--canonicalize")) && getNode(t.fs, resolved)) print(resolved);
+      if (node?.linkTarget) print(node.linkDisplayTarget || (node.linkTarget.startsWith("/") ? displayPath(t, node.linkTarget) : node.linkTarget));
+      else if ((rest.includes("-f") || rest.includes("--canonicalize")) && getNode(t.fs, resolved)) print(first.startsWith("/labs") ? resolved : displayPath(t, resolved));
       else print(`readlink: ${first}: Invalid argument`, "err");
       return true;
     }
@@ -467,7 +477,10 @@ tmpfs           512M     0  512M   0% /tmp`);
         return true;
       }
       const size = nodeBytes(node);
-      print(`  File: ${first}${node.linkTarget ? ` -> ${node.linkTarget}` : ""}\n  Size: ${size}\tBlocks: ${Math.ceil(size / 512)}\tIO Block: 4096 ${node.type === "dir" ? "directory" : "regular file"}\nDevice: virtual\tInode: 1000\tLinks: 1\nAccess: (${node.mode || (node.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--")})\nUid: (${node.owner || t.user})\tGid: (${node.group || t.user})`);
+      const linkTarget = node.linkTarget
+        ? node.linkDisplayTarget || (node.linkTarget.startsWith("/") ? displayPath(t, node.linkTarget) : node.linkTarget)
+        : "";
+      print(`  File: ${first}${linkTarget ? ` -> ${linkTarget}` : ""}\n  Size: ${size}\tBlocks: ${Math.ceil(size / 512)}\tIO Block: 4096 ${node.type === "dir" ? "directory" : "regular file"}\nDevice: virtual\tInode: 1000\tLinks: 1\nAccess: (${node.mode || (node.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--")})\nUid: (${node.owner || t.user})\tGid: (${node.group || t.user})`);
       return true;
     }
     case "strings": {

@@ -54,7 +54,6 @@ export type Module = {
   challenges: [Challenge, Challenge];
   tool?: "terminal" | "browser" | "both";
   scenario?: "lab" | "raven" | "ssh" | "sudorun" | "dfir";
-  labFS?: () => import("../lib/terminal").FileNode;
 };
 
 export type Campaign = {

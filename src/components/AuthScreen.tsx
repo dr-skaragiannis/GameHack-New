@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../lib/useAuth";
-import { t, type Lang } from "../i18n";
+import { t, uppercaseLabel, type Lang } from "../i18n";
 import { sound } from "../lib/sound";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
@@ -263,7 +263,7 @@ export default function AuthScreen() {
 
           {mode === "in" && (
             <div className="mt-5 pt-4 border-t border-forge-line text-sm text-iron-500 space-y-1">
-              <div className="uppercase tracking-widest text-iron-400 mb-1">{t("demoHint", lang)}</div>
+              <div className="uppercase tracking-widest text-iron-400 mb-1">{uppercaseLabel(t("demoHint", lang), lang)}</div>
               <div>
                 player — <span className="text-zinc-400 font-mono">nova / demo</span>
               </div>

@@ -1,6 +1,5 @@
 import type { Module } from "./lessons";
 import { usedCmd } from "../lib/terminal";
-import { sudoRunFS } from "../lib/sudorun";
 
 const lab = "sudorun" as const;
 const shot = (cmd: string, lines: string[]) => ({ cmd, lines });
@@ -13,7 +12,6 @@ export const SUDO_RUN_MODULES_B: Module[] = [
     color: "from-orange-400 to-red-800",
     difficulty: 2,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "Installing & removing software", el: "Εγκατάσταση & αφαίρεση λογισμικού" },
     subtitle: { en: "apt-cache, apt-get, sources.list", el: "apt-cache, apt-get, sources.list" },
     badge: { en: "Packager", el: "Συσκευαστής" },
@@ -104,7 +102,6 @@ export const SUDO_RUN_MODULES_B: Module[] = [
     color: "from-violet-400 to-purple-900",
     difficulty: 3,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "Playing with permissions", el: "Δικαιώματα" },
     subtitle: { en: "ls -l, chown, chgrp, chmod, SUID, SGID", el: "ls -l, chown, chgrp, chmod, SUID, SGID" },
     badge: { en: "Mode Bender", el: "Λυγιστής mode" },
@@ -187,7 +184,6 @@ export const SUDO_RUN_MODULES_B: Module[] = [
     color: "from-cyan-400 to-blue-900",
     difficulty: 3,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "Managing networks", el: "Διαχείριση δικτύων" },
     subtitle: { en: "ifconfig, iwconfig, DHCP, dig, DNS, hosts", el: "ifconfig, iwconfig, DHCP, dig, DNS, hosts" },
     badge: { en: "Net Rider", el: "Αναβάτης δικτύου" },
@@ -303,7 +299,6 @@ export const SUDO_RUN_MODULES_B: Module[] = [
     color: "from-rose-400 to-red-900",
     difficulty: 3,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "Process management", el: "Διαχείριση διεργασιών" },
     subtitle: { en: "ps, top, nice, kill, jobs, at", el: "ps, top, nice, kill, jobs, at" },
     badge: { en: "Process Whisperer", el: "Ψίθυρος διεργασιών" },
@@ -409,7 +404,6 @@ export const SUDO_RUN_MODULES_B: Module[] = [
     color: "from-zinc-300 to-slate-800",
     difficulty: 2,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "Environment variables", el: "Μεταβλητές περιβάλλοντος" },
     subtitle: { en: "set, HISTSIZE, export, unset", el: "set, HISTSIZE, export, unset" },
     badge: { en: "Env Smith", el: "Σιδεράς env" },

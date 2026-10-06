@@ -7,7 +7,7 @@ import {
   userById,
   type User,
 } from "../lib/db";
-import { bi, t, type Lang } from "../i18n";
+import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import Icon, { MODULE_ICON } from "./Icon";
 import Avatar from "./Avatar";
 import { cn } from "../utils/cn";
@@ -166,7 +166,7 @@ export default function InteractiveMap({
     <section className={cn("interactive-map", embedded && "interactive-map--embedded")} aria-label={t("map", lang)}>
       <header className="interactive-map__header">
         <div className="interactive-map__title">
-          <div className="map-eyebrow">{t("map", lang)}</div>
+          <div className="map-eyebrow">{uppercaseLabel(t("map", lang), lang)}</div>
           <h2>{t("map", lang)}</h2>
           <p>{t("mapExplore", lang)}</p>
         </div>
@@ -229,7 +229,7 @@ export default function InteractiveMap({
                           </span>
                         </span>
                         <span className={cn("map-presence-label", entry.online ? "is-online" : "is-offline")}>
-                          {entry.online ? t("online", lang) : t("offline", lang)}
+                          {uppercaseLabel(entry.online ? t("online", lang) : t("offline", lang), lang)}
                         </span>
                       </button>
                     );
@@ -443,7 +443,7 @@ function CampaignUniverse({
                       <span className="map-node-progress">{percentDone}%</span>
                     </button>
                     <button type="button" disabled={!clickable} className="map-node-label" onClick={() => clickable && onOpen(campaign.id, module.id)}>
-                      <span className="map-node-label__state">{stateText}</span>
+                      <span className="map-node-label__state">{uppercaseLabel(stateText, lang)}</span>
                       <span className="map-node-label__name">{bi(module.title, lang)}</span>
                       <span className="map-node-label__tasks">{module.tasks.length} {t("objectives", lang).toLowerCase()}</span>
                     </button>
@@ -454,7 +454,7 @@ function CampaignUniverse({
                             key={entry.player.id}
                             type="button"
                             className={cn("map-player-pin", entry.online ? "is-online" : "is-offline", entry.player.id === viewer.id && "is-self", entry.player.id === focusedPlayerId && "is-focused")}
-                            title={`${entry.player.displayName} · ${entry.online ? t("online", lang) : t("offline", lang)} · ${bi(module.title, lang)}`}
+                            title={`${entry.player.displayName} · ${uppercaseLabel(entry.online ? t("online", lang) : t("offline", lang), lang)} · ${bi(module.title, lang)}`}
                             onClick={() => onOpen(campaign.id, module.id)}
                           >
                             <span className="map-pin-avatar"><Avatar src={entry.player.avatar} name={entry.player.displayName} size={22} /><i className={cn("map-status-dot", entry.online ? "is-online" : "is-offline")} /></span>

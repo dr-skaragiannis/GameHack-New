@@ -9,7 +9,7 @@ import {
   sendMessage,
   type User,
 } from "../lib/db";
-import { t, type Lang } from "../i18n";
+import { t, uppercaseLabel, type Lang } from "../i18n";
 import Avatar from "./Avatar";
 import { cn } from "../utils/cn";
 
@@ -66,7 +66,7 @@ export default function Messages({
               }}
               className="glass rounded-2xl border border-forge-border p-4 space-y-2"
             >
-              <div className="text-sm uppercase tracking-widest text-iron-400">{t("broadcast", lang)}</div>
+              <div className="text-sm uppercase tracking-widest text-iron-400">{uppercaseLabel(t("broadcast", lang), lang)}</div>
               <textarea
                 value={broadcast}
                 onChange={(e) => setBroadcast(e.target.value)}

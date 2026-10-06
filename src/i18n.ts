@@ -189,6 +189,8 @@ export const UI: Dict = {
   streak: { en: "Streak", el: "Σερί" },
   days: { en: "days", el: "ημέρες" },
   leaderboard: { en: "Leaderboard", el: "Κατάταξη" },
+  overallScoreboard: { en: "Overall Scoreboard", el: "Συνολικό Scoreboard" },
+  position: { en: "Position", el: "Θέση" },
   continueLearning: { en: "Continue learning", el: "Συνέχεια μάθησης" },
   openInbox: { en: "Inbox", el: "Εισερχόμενα" },
   newTicket: { en: "New ticket", el: "Νέο αίτημα" },
@@ -244,4 +246,13 @@ export function t(key: string, lang: Lang): string {
 
 export function bi(v: { en: string; el: string }, lang: Lang): string {
   return v[lang] || v.en;
+}
+
+/** Greek capitals omit tonos; use this only for text rendered with uppercase styling. */
+export function uppercaseLabel(text: string, lang: Lang): string {
+  if (lang !== "el") return text;
+  return text
+    .normalize("NFD")
+    .replace(/([\u0370-\u03ff]\u0308?)[\u0301\u0341]/gu, "$1")
+    .normalize("NFC");
 }

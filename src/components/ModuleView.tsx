@@ -1,17 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Module, Task } from "../data/lessons";
-import { bi, t, type Lang } from "../i18n";
-import {
-  createTerminal,
-  defaultFS,
-  ravenFS,
-  runCommand,
-  sshFS,
-  type Terminal,
-} from "../lib/terminal";
-import { sudoRunFS } from "../lib/sudorun";
-import { dfirFS } from "../lib/dfir";
+import { bi, t, uppercaseLabel, type Lang } from "../i18n";
+import { runCommand, type Terminal } from "../lib/terminal";
+import { activateTerminalForModule, loadPlayerTerminal, savePlayerTerminal } from "../lib/playerTerminal";
 import TerminalView from "./TerminalView";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
@@ -29,6 +21,7 @@ import { findLinuxCommand } from "../lib/linuxCommandCatalog";
 import CommandStudyGuide from "./CommandStudyGuide";
 import CommandResultPopup from "./CommandResultPopup";
 import DfirVisual from "./DfirVisual";
+import WhyHowPopup from "./WhyHowPopup";
 
 type StudyItem = ReturnType<typeof studyItemsForModule>[number];
 
@@ -164,22 +157,7 @@ export default function ModuleView({
   const [tab, setTab] = useState<"theory" | "guide" | "lab">(initialTab || (done.length ? "lab" : "theory"));
   const theoryCommands = useMemo(() => theoryItemsForModule(module), [module]);
   const [term, setTerm] = useState<Terminal>(() =>
-    createTerminal({
-      fs: module.labFS
-        ? module.labFS()
-        : module.scenario === "raven"
-          ? ravenFS()
-          : module.scenario === "ssh"
-            ? sshFS()
-            : module.scenario === "sudorun"
-              ? sudoRunFS()
-              : module.scenario === "dfir"
-                ? dfirFS()
-              : defaultFS(),
-      user: module.scenario === "sudorun" ? "root" : module.scenario === "dfir" ? "analyst" : "operator",
-      host: module.scenario === "dfir" ? "forensics-workstation" : undefined,
-      scenario: module.scenario || "lab",
-    })
+    activateTerminalForModule(loadPlayerTerminal(userId), module.id, module.scenario || "lab")
   );
   const hintStorageKey = `hackforge.hints.v1:${userId}:${module.id}`;
   const [hints, setHints] = useState<Record<string, boolean>>(() => {
@@ -207,6 +185,10 @@ export default function ModuleView({
   const [, bump] = useState(0);
   const moduleViewRef = useRef<HTMLDivElement>(null);
   const moduleTopbarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    savePlayerTerminal(userId, term);
+  }, [userId]);
 
   useEffect(() => {
     const root = moduleViewRef.current;
@@ -244,6 +226,7 @@ export default function ModuleView({
   }, [allTasks, tasksDone.length, ch1, ch2, module.tasks.length]);
   const defaultContentWidth: ContentWidth = tab === "theory" ? "wide" : "full";
   const activeContentWidth = contentWidth ?? defaultContentWidth;
+  const whyHowTask = module.tasks.find((task) => task.id === explain) || null;
 
   const revealHint = (taskId: string) => {
     if (hints[taskId]) return;
@@ -329,8 +312,8 @@ export default function ModuleView({
             <WidthControl value={activeContentWidth} onChange={onWidth} />
           </div>
 
-          {topbarTools}
         </div>
+        {topbarTools}
         <div className="module-topbar__track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
           <div className="h-full bg-gradient-to-r from-ember-600 to-ember-400 bar-grow" style={{ width: `${progress}%` }} />
         </div>
@@ -339,30 +322,6 @@ export default function ModuleView({
       <div className={contentWidthClass(activeContentWidth)}>
         {tab === "theory" && (
           <div className="space-y-6 enter">
-            {module.theory.map((s, i) => (
-              <section key={i} className="glass rounded-2xl border border-forge-border p-5">
-                <h2 className="text-lg font-semibold text-zinc-100 mb-2">{bi(s.heading, lang)}</h2>
-                <p className="text-sm text-zinc-300 leading-relaxed">{bi(s.body, lang)}</p>
-                {s.tip && (
-                  <p className="mt-3 text-sm text-neon-cyan/90 border-l-2 border-neon-cyan/40 pl-3">{bi(s.tip, lang)}</p>
-                )}
-                {s.shots?.map((sh, si) => (
-                  <div key={si} className="mt-4 rounded-xl border border-forge-border bg-black/70 overflow-hidden font-mono text-sm">
-                    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 text-sm text-iron-500">
-                      <span className="h-2 w-2 rounded-full bg-rose-500/80" />
-                      <span className="h-2 w-2 rounded-full bg-amber-400/80" />
-                      <span className="h-2 w-2 rounded-full bg-neon-green/80" />
-                      <span className="ml-2 tracking-wider text-iron-400">screenshot · HackForge lab</span>
-                    </div>
-                    <pre className="px-3 py-3 text-zinc-200 whitespace-pre-wrap leading-relaxed">
-                      {sh.cmd && <span className="text-ember-400">root@kali:~# {sh.cmd}{"\n"}</span>}
-                      {sh.lines.join("\n")}
-                    </pre>
-                  </div>
-                ))}
-                {s.visual && <DfirVisual visual={s.visual} lang={lang} />}
-              </section>
-            ))}
             {theoryCommands.length > 0 && (
               <section className="glass rounded-2xl border border-forge-border p-5">
                 <header className="mb-4">
@@ -400,6 +359,30 @@ export default function ModuleView({
                 </div>
               </section>
             )}
+            {module.theory.map((s, i) => (
+              <section key={i} className="glass rounded-2xl border border-forge-border p-5">
+                <h2 className="text-lg font-semibold text-zinc-100 mb-2">{bi(s.heading, lang)}</h2>
+                <p className="text-sm text-zinc-300 leading-relaxed">{bi(s.body, lang)}</p>
+                {s.tip && (
+                  <p className="mt-3 text-sm text-neon-cyan/90 border-l-2 border-neon-cyan/40 pl-3">{bi(s.tip, lang)}</p>
+                )}
+                {s.shots?.map((sh, si) => (
+                  <div key={si} className="mt-4 rounded-xl border border-forge-border bg-black/70 overflow-hidden font-mono text-sm">
+                    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 text-sm text-iron-500">
+                      <span className="h-2 w-2 rounded-full bg-rose-500/80" />
+                      <span className="h-2 w-2 rounded-full bg-amber-400/80" />
+                      <span className="h-2 w-2 rounded-full bg-neon-green/80" />
+                      <span className="ml-2 tracking-wider text-iron-400">screenshot · HackForge lab</span>
+                    </div>
+                    <pre className="px-3 py-3 text-zinc-200 whitespace-pre-wrap leading-relaxed">
+                      {sh.cmd && <span className="text-ember-400">root@kali:~# {sh.cmd}{"\n"}</span>}
+                      {sh.lines.join("\n")}
+                    </pre>
+                  </div>
+                ))}
+                {s.visual && <DfirVisual visual={s.visual} lang={lang} />}
+              </section>
+            ))}
             <button
               type="button"
               onClick={() => {
@@ -462,13 +445,14 @@ export default function ModuleView({
                 const typo = term.lastExit === 127;
                 onCommandMetric(pasted, typo);
                 applyChecks(term);
+                savePlayerTerminal(userId, term);
                 setTerm(term);
                 bump((x) => x + 1);
               }}
             />
             <aside className="module-objectives space-y-4">
               <div className="glass rounded-2xl border border-forge-border p-4">
-                <div className="text-sm uppercase tracking-widest text-ember-400 mb-3">{t("objectives", lang)}</div>
+                <div className="text-sm uppercase tracking-widest text-ember-400 mb-3">{uppercaseLabel(t("objectives", lang), lang)}</div>
                 <ol className="space-y-3">
                   {module.tasks.map((task, idx) => {
                     const ok = done.includes(task.id) || task.check(term);
@@ -502,7 +486,7 @@ export default function ModuleView({
                                 type="button"
                                 onClick={() => setExplain(explain === task.id ? null : task.id)}
                                 aria-expanded={explain === task.id}
-                                aria-controls={`why-${module.id}-${task.id}`}
+                                aria-controls="why-how-popup"
                                 className="text-sm text-neon-cyan hover:underline"
                               >
                                 {t("whyHow", lang)}
@@ -518,13 +502,6 @@ export default function ModuleView({
                                 </pre>
                               </div>
                             )}
-                            {explain === task.id && (
-                              <div id={`why-${module.id}-${task.id}`} className="mt-2 space-y-2 border-l-2 border-neon-cyan/30 pl-3 text-sm text-zinc-300 leading-relaxed">
-                                {taskWhyHow(task, lang).map((paragraph, paragraphIndex) => (
-                                  <p key={paragraphIndex}>{paragraph}</p>
-                                ))}
-                              </div>
-                            )}
                           </div>
                         </div>
                       </li>
@@ -534,7 +511,7 @@ export default function ModuleView({
               </div>
 
               <div className="glass rounded-2xl border border-forge-border p-4">
-                <div className="text-sm uppercase tracking-widest text-ember-400 mb-2">{t("finalChallenges", lang)}</div>
+                <div className="text-sm uppercase tracking-widest text-ember-400 mb-2">{uppercaseLabel(t("finalChallenges", lang), lang)}</div>
                 {!allTasks ? (
                   <p className="text-sm text-iron-500">{t("challengeLocked", lang)}</p>
                 ) : (
@@ -567,6 +544,16 @@ export default function ModuleView({
           result={commandResult}
           lang={lang}
           onClose={() => setCommandResult(null)}
+        />
+      )}
+      {whyHowTask && (
+        <WhyHowPopup
+          moduleTitle={bi(module.title, lang)}
+          objective={bi(whyHowTask.instruction, lang)}
+          context={taskObjectiveContext(whyHowTask, lang)}
+          details={taskWhyHow(whyHowTask, lang)}
+          lang={lang}
+          onClose={() => setExplain(null)}
         />
       )}
     </div>

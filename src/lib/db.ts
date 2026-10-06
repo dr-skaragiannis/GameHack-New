@@ -366,15 +366,18 @@ export function xpRate(m: Metrics): number {
 }
 
 export function levelFromXp(xp: number): { level: number; into: number; span: number; pct: number } {
+  const safeXp = Math.max(0, Math.floor(Number.isFinite(xp) ? xp : 0));
   let level = 1;
-  let remaining = xp;
-  let span = 10;
-  while (remaining >= span) {
-    remaining -= span;
+  let previousThreshold = 0;
+  let nextThreshold = 500;
+  while (safeXp >= nextThreshold) {
+    previousThreshold = nextThreshold;
     level++;
-    span = 10 + (level - 1) * 5;
+    nextThreshold *= 2;
   }
-  return { level, into: remaining, span, pct: Math.round((remaining / span) * 100) };
+  const span = nextThreshold - previousThreshold;
+  const into = safeXp - previousThreshold;
+  return { level, into, span, pct: Math.min(100, Math.round((into / span) * 100)) };
 }
 
 let cache: DB | null = null;
@@ -615,6 +618,13 @@ export function updateUser(id: string, patch: Partial<User>) {
 
 export function allPlayers(): User[] {
   return getDB().users.filter((u) => u.role === "player");
+}
+
+export function overallScoreboard(): { user: User; rank: number }[] {
+  return allPlayers()
+    .slice()
+    .sort((a, b) => b.metrics.xp - a.metrics.xp || a.displayName.localeCompare(b.displayName) || a.id.localeCompare(b.id))
+    .map((user, index) => ({ user, rank: index + 1 }));
 }
 
 export function allEducators(): User[] {

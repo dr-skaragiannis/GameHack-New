@@ -16,6 +16,7 @@ export type FileNode = {
   owner?: string;
   group?: string;
   linkTarget?: string;
+  linkDisplayTarget?: string;
   children?: Record<string, FileNode>;
 };
 
@@ -61,6 +62,7 @@ export type Terminal = {
   packages: Set<string>;
   ftp: { host: string; user: string | null; cwd: string } | null;
   crontab: string[];
+  activeModuleId?: string;
 };
 
 export function dir(name: string, children: FileNode[] = [], mode = "drwxr-xr-x", owner = "root", group = "root"): FileNode {
@@ -121,7 +123,7 @@ export function defaultFS(): FileNode {
         ]),
       ]),
     ]),
-    dir("tmp", [file(".keep", "")]),
+    dir("tmp", [file(".keep", ""), dir("empty", [])]),
     dir("root", [file("flag.txt", "FLAG{root_of_the_forge}\n", "-rw-------")], "drwx------"),
     dir("opt", [
       dir("raven", [
@@ -332,11 +334,41 @@ export function normalize(path: string): string {
   return "/" + parts.join("/");
 }
 
-export function resolvePath(t: Terminal, p: string): string {
-  if (!p || p === "~") return t.env.HOME || "/home/operator";
-  if (p.startsWith("~/")) return normalize((t.env.HOME || "/home/operator") + p.slice(1));
+export function resolveLogicalPath(t: Terminal, p: string): string {
+  const home = t.env.HOME || "/home/operator";
+  if (!p || p === "~") return normalize(home);
+  if (p.startsWith("~/")) return normalize(home + p.slice(1));
   if (p.startsWith("/")) return normalize(p);
   return normalize(t.cwd + "/" + p);
+}
+
+/** Every scenario resolves paths against the same player-owned Linux root. */
+export function resolvePath(t: Terminal, p: string): string {
+  return resolveLogicalPath(t, p);
+}
+
+export function displayPath(_t: Terminal, path: string): string {
+  return normalize(path);
+}
+
+export function setTerminalScenario(
+  t: Terminal,
+  scenario: string,
+  overrides: { user?: string; host?: string; cwd?: string; home?: string; isRoot?: boolean } = {},
+): void {
+  const defaults = scenario === "sudorun"
+    ? { user: "root", host: "kali", cwd: "/root", home: "/root", isRoot: true }
+    : scenario === "dfir"
+      ? { user: "analyst", host: "forensics-workstation", cwd: "/cases/IR-2404/evidence", home: "/cases/IR-2404", isRoot: false }
+      : { user: "operator", host: "kali", cwd: "/home/operator", home: "/home/operator", isRoot: false };
+  t.scenario = scenario;
+  t.user = overrides.user ?? defaults.user;
+  t.host = overrides.host ?? defaults.host;
+  t.cwd = normalize(overrides.cwd ?? defaults.cwd);
+  t.env.HOME = normalize(overrides.home ?? defaults.home);
+  t.env.USER = t.user;
+  t.isRoot = overrides.isRoot ?? defaults.isRoot;
+  t.ftp = null;
 }
 
 export function getNode(root: FileNode, path: string, followLinks = true): FileNode | null {
@@ -488,7 +520,7 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
 
   if (!capturing && input.includes("|") && !input.includes("||")) {
     const stages = splitPipes(input);
-    let stdin = "";
+    let stdin: string | null = null;
     for (const st of stages) {
       const part = runCommand(t, st, { capture: true, stdin });
       stdin = part
@@ -503,7 +535,7 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
     if (/locate/.test(input)) t.flags.add("locate");
     if (/find/.test(input)) t.flags.add("find");
     if (/set/.test(input) && /HISTSIZE/.test(input)) t.flags.add("grep-hist");
-    for (const line of stdin.split("\n")) out.push({ kind: "out", text: line });
+    if (stdin) for (const line of stdin.split("\n")) out.push({ kind: "out", text: line });
     t.lastExit = 0;
     return out;
   }
@@ -665,7 +697,10 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
             if (n === "." || n === "..") return `drwxr-xr-x 2 ${t.user} ${t.user}    4 ${n}`;
             const c = node.children![n];
             const sz = c.type === "file" ? String(c.content?.length || 0).padStart(4) : "   4";
-            const label = c.linkTarget ? `${n} -> ${c.linkTarget}` : n;
+            const linkTarget = c.linkTarget
+              ? c.linkDisplayTarget || (c.linkTarget.startsWith("/") ? displayPath(t, c.linkTarget) : c.linkTarget)
+              : "";
+            const label = linkTarget ? `${n} -> ${linkTarget}` : n;
             return `${lsMode(c)} 1 ${c.owner || t.user} ${c.group || t.user} ${sz} ${label}`;
           });
           print("total " + shown.length + "\n" + rows.join("\n"));
@@ -673,10 +708,12 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
         break;
       }
       case "cd": {
-        const dest = resolvePath(t, pos[0] || "~");
+        const requestedPath = pos[0] || "~";
+        const dest = resolvePath(t, requestedPath);
+        const logicalDest = resolveLogicalPath(t, requestedPath);
         const node = getNode(t.fs, dest);
         if (!node) {
-          print(`bash: cd: ${pos[0]}: No such file or directory`, "err");
+          print(`bash: cd: ${pos[0] || "~"}: No such file or directory`, "err");
           t.lastExit = 1;
           break;
         }
@@ -690,14 +727,15 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
           t.lastExit = 1;
           break;
         }
-        t.cwd = dest;
+        t.cwd = logicalDest;
         t.flags.add("cd");
-        if (dest.includes("documents") || dest.includes("Documents")) t.flags.add("cd-documents");
-        if (dest.endsWith("/Desktop") || dest.endsWith("/Desktop/")) t.flags.add("cd-desktop");
-        if (dest.includes("/opt/raven")) t.flags.add("cd-raven");
-        if (dest.includes("/home/raven")) t.flags.add("cd-home-raven");
-        if (dest.includes("/var/www")) t.flags.add("cd-www");
-        if (dest.includes("/root")) t.flags.add("cd-root");
+        if (logicalDest.includes("documents") || logicalDest.includes("Documents")) t.flags.add("cd-documents");
+        if (logicalDest.endsWith("/Desktop") || logicalDest.endsWith("/Desktop/")) t.flags.add("cd-desktop");
+        if (logicalDest.includes("/opt/raven")) t.flags.add("cd-raven");
+        if (logicalDest.includes("/home/raven")) t.flags.add("cd-home-raven");
+        if (logicalDest.includes("/var/www")) t.flags.add("cd-www");
+        if (logicalDest.includes("/root")) t.flags.add("cd-root");
+        print(`Changed directory to ${logicalDest}`);
         break;
       }
       case "cat":
@@ -821,7 +859,10 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
         const re = globToRe(pat || "*");
         const acc: { path: string; node: FileNode }[] = [];
         walk(node, start, acc);
-        const hits = acc.filter((a) => re.test(a.node.name)).map((a) => a.path);
+        const includeMountPaths = (pos[0] || "").startsWith("/labs");
+        const hits = acc
+          .filter((a) => re.test(a.node.name))
+          .map((a) => includeMountPaths ? a.path : displayPath(t, a.path));
         print(hits.join("\n") || "");
         t.flags.add("find");
         if (hits.some((h) => h.includes(".secret") || h.includes("flag") || h.includes("id_rsa"))) t.flags.add("find-secret");
@@ -967,7 +1008,7 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
         }
         if (/localhost|127\.0\.0\.1/.test(url)) {
           t.flags.add("curl-local");
-          const page = getNode(t.fs, "/var/www/html/index.html");
+          const page = getNode(t.fs, resolvePath(t, "/var/www/html/index.html"));
           print(page?.content || "<h1>It works!</h1>");
           break;
         }
@@ -1004,39 +1045,31 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
         const key = rest.includes("-i") || /id_/.test(input);
         if (/ignite@|192\.168\.0\.11/.test(dest) || /ignite@/.test(input)) {
           print("Welcome to ubuntu (HackForge lab host)\nLast login: simulated\nignite@ubuntu:~$");
+          setTerminalScenario(t, "sudorun", { user: "ignite", host: "ubuntu", cwd: "/home/ignite", home: "/home/ignite", isRoot: false });
           t.flags.add("ssh-ignite");
-          t.user = "ignite";
-          t.host = "ubuntu";
           break;
         }
         if (/labuser@10\.10\.10\.12|labuser@ssh/.test(dest) || (/10\.10\.10\.12/.test(dest) && t.flags.has("hydra-win"))) {
           print("Welcome to Ubuntu 20.04 LTS (ssh.lab)\nLast login: simulated");
-          t.user = "labuser";
-          t.host = "ssh";
-          t.cwd = "/home/operator";
+          setTerminalScenario(t, "ssh", { user: "labuser", host: "ssh", cwd: "/home/operator", home: "/home/operator", isRoot: false });
           t.flags.add("ssh-labuser");
           break;
         }
         if (/raven@10\.10\.10\.5|raven@raven/.test(dest) || (key && /10\.10\.10\.5|raven/.test(dest))) {
           print("Welcome to raven.lab — nevermore\nuser.txt awaits in ~");
-          t.user = "raven";
-          t.host = "raven";
-          t.fs = ravenFS();
-          t.cwd = "/home/raven";
-          t.env.HOME = "/home/raven";
+          setTerminalScenario(t, "raven", { user: "raven", host: "raven", cwd: "/home/raven", home: "/home/raven", isRoot: false });
           t.flags.add("ssh-raven");
           break;
         }
         if (/jump|10\.10\.20\.2/.test(dest)) {
           print("Welcome to jump.lab bastion. Use ProxyJump to reach dev.");
-          t.host = "jump";
+          setTerminalScenario(t, "ssh", { user: "operator", host: "jump", cwd: "/home/operator", home: "/home/operator", isRoot: false });
           t.flags.add("ssh-jump");
           break;
         }
         if (/dev@|10\.10\.20\.14|ProxyJump| -J /.test(input)) {
           print("Welcome to dev.lab via jump host.\nInternal db is at 10.10.20.30");
-          t.host = "dev";
-          t.user = "dev";
+          setTerminalScenario(t, "ssh", { user: "dev", host: "dev", cwd: "/home/operator", home: "/home/operator", isRoot: false });
           t.flags.add("ssh-dev");
           t.flags.add("ssh-hop");
           break;
@@ -1153,29 +1186,100 @@ Table: users
         print("scp: simulated transfer complete.");
         break;
       case "touch": {
-        const p = resolvePath(t, pos[0] || "");
-        if (!pos[0]) {
+        if (!pos.length) {
           print("touch: missing file operand", "err");
+          t.lastExit = 1;
           break;
         }
-        const { parent, name } = parentAndName(p);
-        const dirn = getNode(t.fs, parent);
-        if (dirn && dirn.type === "dir" && dirn.children) {
-          if (!dirn.children[name]) dirn.children[name] = file(name, "");
+        let failed = false;
+        for (const operand of pos) {
+          const path = resolvePath(t, operand);
+          const existing = getNode(t.fs, path, false);
+          if (existing?.type === "dir") {
+            print(`touch: cannot touch '${operand}': Is a directory`, "err");
+            failed = true;
+            continue;
+          }
+          if (!existing) {
+            const { parent, name } = parentAndName(path);
+            const parentNode = getNode(t.fs, parent);
+            if (!parentNode || parentNode.type !== "dir" || !parentNode.children || !name) {
+              print(`touch: cannot touch '${operand}': No such file or directory`, "err");
+              failed = true;
+              continue;
+            }
+            parentNode.children[name] = file(name, "");
+          }
           t.flags.add("touch");
-          if (/hackforge-2/.test(name)) t.flags.add("touch-hf2");
+          if (/hackforge-2/.test(operand)) t.flags.add("touch-hf2");
+          print(`${existing ? "Updated" : "Created"} virtual file: ${operand}`);
         }
+        if (failed) t.lastExit = 1;
         break;
       }
       case "mkdir": {
-        const p = resolvePath(t, pos[0] || "");
-        const { parent, name } = parentAndName(p);
-        const dirn = getNode(t.fs, parent);
-        if (dirn && dirn.type === "dir" && dirn.children && name) {
-          dirn.children[name] = dir(name);
+        if (!pos.length) {
+          print("mkdir: missing operand", "err");
+          t.lastExit = 1;
+          break;
+        }
+        const recursive = flags.has("p") || rest.includes("--parents");
+        let failed = false;
+        for (const operand of pos) {
+          const target = resolvePath(t, operand);
+          const existing = getNode(t.fs, target, false);
+          if (existing) {
+            if (existing.type === "dir" && recursive) {
+              print(`Directory already exists: ${operand}`);
+              continue;
+            }
+            print(`mkdir: cannot create directory '${operand}': File exists`, "err");
+            failed = true;
+            continue;
+          }
+          if (recursive) {
+            const components = target.split("/").filter(Boolean);
+            let current = "/";
+            let created = 0;
+            for (const component of components) {
+              current = normalize(`${current}/${component}`);
+              const node = getNode(t.fs, current, false);
+              if (node?.type === "dir") continue;
+              if (node) {
+                print(`mkdir: cannot create directory '${operand}': Not a directory`, "err");
+                failed = true;
+                break;
+              }
+              const { parent, name } = parentAndName(current);
+              const parentNode = getNode(t.fs, parent, false);
+              if (!parentNode || parentNode.type !== "dir" || !parentNode.children || !name) {
+                print(`mkdir: cannot create directory '${operand}': No such file or directory`, "err");
+                failed = true;
+                break;
+              }
+              parentNode.children[name] = dir(name);
+              created += 1;
+            }
+            if (!failed && created) {
+              t.flags.add("mkdir");
+              if (operand.endsWith("/ignite")) t.flags.add("mkdir-ignite");
+              print(`Created directory tree: ${operand}`);
+            }
+            continue;
+          }
+          const { parent, name } = parentAndName(target);
+          const parentNode = getNode(t.fs, parent, false);
+          if (!parentNode || parentNode.type !== "dir" || !parentNode.children || !name) {
+            print(`mkdir: cannot create directory '${operand}': No such file or directory`, "err");
+            failed = true;
+            continue;
+          }
+          parentNode.children[name] = dir(name);
           t.flags.add("mkdir");
           if (name === "ignite") t.flags.add("mkdir-ignite");
+          print(`Created virtual directory: ${operand}`);
         }
+        if (failed) t.lastExit = 1;
         break;
       }
       case "nano":

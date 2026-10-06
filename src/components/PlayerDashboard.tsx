@@ -6,7 +6,7 @@ import {
   levelFromXp,
   type User,
 } from "../lib/db";
-import { bi, t, type Lang } from "../i18n";
+import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import Icon, { MODULE_ICON } from "./Icon";
 import LiveFeed from "./LiveFeed";
 import Avatar from "./Avatar";
@@ -41,7 +41,7 @@ export default function PlayerDashboard({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="text-sm uppercase tracking-[0.25em] text-ember-400">{t("dashboard", lang)}</div>
+          <div className="text-sm uppercase tracking-[0.25em] text-ember-400">{uppercaseLabel(t("dashboard", lang), lang)}</div>
           <h1 className="text-3xl font-bold text-zinc-50 mt-1">
             {t("welcomeBack", lang)}, {user.displayName.split(" ")[0]}
           </h1>
@@ -75,7 +75,7 @@ export default function PlayerDashboard({
           <div key={s.k} className={cn("glass rounded-2xl border border-forge-border p-4 enter", `enter-${i + 1}`)}>
             <div className="flex items-center gap-2 text-iron-400 text-sm uppercase tracking-widest">
               <Icon name={s.ic} className="w-4 h-4 text-ember-400" />
-              {s.k}
+              {uppercaseLabel(s.k, lang)}
             </div>
             <div className="text-2xl font-bold mt-2 text-zinc-100">{s.v}</div>
           </div>
@@ -92,7 +92,7 @@ export default function PlayerDashboard({
             <Icon name={MODULE_ICON[next.m.id] || next.m.icon} className="w-7 h-7 text-white" />
           </div>
           <div className="flex-1">
-            <div className="text-sm uppercase tracking-widest text-ember-400">{t("continueLearning", lang)}</div>
+            <div className="text-sm uppercase tracking-widest text-ember-400">{uppercaseLabel(t("continueLearning", lang), lang)}</div>
             <div className="text-lg font-bold text-zinc-100">{bi(next.m.title, lang)}</div>
             <div className="text-sm text-iron-400">
               {bi(next.c.title, lang)} · {bi(next.m.subtitle, lang)}

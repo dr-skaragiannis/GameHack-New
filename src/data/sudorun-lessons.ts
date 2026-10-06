@@ -1,6 +1,5 @@
 import type { Module } from "./lessons";
 import { usedCmd } from "../lib/terminal";
-import { sudoRunFS } from "../lib/sudorun";
 import { SUDO_RUN_MODULES_B } from "./sudorun-lessons-b";
 import { SUDO_RUN_MODULES_C } from "./sudorun-lessons-c";
 
@@ -18,7 +17,6 @@ export const SUDO_RUN_MODULES: Module[] = [
     color: "from-lime-500 to-emerald-800",
     difficulty: 1,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "Sudo_Run — Why Linux?", el: "Sudo_Run — Γιατί Linux;" },
     subtitle: { en: "Pentesting OS, pwd, whoami, cd, ls", el: "OS pentest, pwd, whoami, cd, ls" },
     badge: { en: "Sudo Initiate", el: "Μύηση Sudo" },
@@ -128,7 +126,6 @@ export const SUDO_RUN_MODULES: Module[] = [
     color: "from-sky-400 to-indigo-800",
     difficulty: 1,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "Help, man, locate, whereis, which", el: "Help, man, locate, whereis, which" },
     subtitle: { en: "How operators look things up", el: "Πώς ψάχνουν οι χειριστές" },
     badge: { en: "Page Turner", el: "Αναγνώστης man" },
@@ -235,7 +232,6 @@ export const SUDO_RUN_MODULES: Module[] = [
     color: "from-cyan-500 to-teal-900",
     difficulty: 2,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "grep & find", el: "grep & find" },
     subtitle: { en: "Filter output and hunt files", el: "Φίλτραρε έξοδο και κυνήγα αρχεία" },
     badge: { en: "Needle Finder", el: "Ευρετής" },
@@ -318,7 +314,6 @@ export const SUDO_RUN_MODULES: Module[] = [
     color: "from-amber-400 to-orange-800",
     difficulty: 2,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "Files & directories", el: "Αρχεία & φάκελοι" },
     subtitle: { en: "cat, touch, mkdir, cp, mv, rm, rmdir", el: "cat, touch, mkdir, cp, mv, rm, rmdir" },
     badge: { en: "File Clerk", el: "Αρχειοθέτης" },
@@ -442,7 +437,6 @@ export const SUDO_RUN_MODULES: Module[] = [
     color: "from-fuchsia-400 to-purple-900",
     difficulty: 2,
     scenario: lab,
-    labFS: sudoRunFS,
     title: { en: "Text manipulation", el: "Χειρισμός κειμένου" },
     subtitle: { en: "head, tail, nl, sed, more, less", el: "head, tail, nl, sed, more, less" },
     badge: { en: "Text Smith", el: "Σιδεράς κειμένου" },

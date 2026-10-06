@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CAMPAIGNS, LEARNING_PATHS, campaignById, moduleById } from "./data/lessons";
-import { t, type Lang } from "./i18n";
+import { t, uppercaseLabel, type Lang } from "./i18n";
 import * as db from "./lib/db";
 import { useAuth } from "./lib/useAuth";
 import { sound } from "./lib/sound";
@@ -18,6 +18,9 @@ import Icon from "./components/Icon";
 import Avatar from "./components/Avatar";
 import BadgeModal from "./components/BadgeModal";
 import QuizPopup from "./components/QuizPopup";
+import PlayerQuickStats from "./components/PlayerQuickStats";
+import OverallScoreboardPopup from "./components/OverallScoreboardPopup";
+import type { User } from "./lib/db";
 
 
 type View = "dashboard" | "educator" | "campaigns" | "map" | "module" | "messages" | "tickets" | "profile";
@@ -46,6 +49,38 @@ const MODULE_BADGE: Record<string, string> = {
   "dfir-container": "container_examiner",
   "dfir-passwords": "hash_examiner",
 };
+
+type LearningTarget = { campaignId: string; moduleId: string };
+
+function continueLearningTarget(user: User): LearningTarget {
+  const activeCampaign = campaignById(user.activeCampaignId || "");
+  if (activeCampaign) {
+    const ordered = [...activeCampaign.modules].sort((a, b) => a.order - b.order);
+    const activeIndex = ordered.findIndex((module) => module.id === user.activeModuleId);
+    const activeModule = activeIndex >= 0 ? ordered[activeIndex] : null;
+    if (activeModule && !user.progress[activeModule.id]?.completed) {
+      return { campaignId: activeCampaign.id, moduleId: activeModule.id };
+    }
+    const next = ordered.slice(Math.max(0, activeIndex + 1)).find((module, offset) => {
+      const index = Math.max(0, activeIndex + 1) + offset;
+      return !user.progress[module.id]?.completed && (index === 0 || !!user.progress[ordered[index - 1]?.id]?.completed);
+    });
+    if (next) return { campaignId: activeCampaign.id, moduleId: next.id };
+  }
+
+  for (const campaign of LEARNING_PATHS) {
+    const ordered = [...campaign.modules].sort((a, b) => a.order - b.order);
+    const next = ordered.find((module, index) =>
+      !user.progress[module.id]?.completed &&
+      (index === 0 || !!user.progress[ordered[index - 1].id]?.completed)
+    );
+    if (next) return { campaignId: campaign.id, moduleId: next.id };
+  }
+
+  const fallbackCampaign = activeCampaign || LEARNING_PATHS[0];
+  const fallbackModule = [...fallbackCampaign.modules].sort((a, b) => a.order - b.order).at(-1);
+  return { campaignId: fallbackCampaign.id, moduleId: fallbackModule?.id || LEARNING_PATHS[0].modules[0].id };
+}
 
 function EthicsGate({ lang, onAccept }: { lang: Lang; onAccept: () => void }) {
   return (
@@ -81,6 +116,7 @@ export default function App() {
   const [mobile, setMobile] = useState(false);
   const [badgeId, setBadgeId] = useState<string | null>(null);
   const [quizFor, setQuizFor] = useState<string | null>(null);
+  const [scoreboardOpen, setScoreboardOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -239,7 +275,7 @@ export default function App() {
     <button
       type="button"
       aria-label="Open navigation"
-      className="lg:hidden text-iron-300"
+      className="app-topbar__menu lg:hidden text-iron-300"
       onClick={() => setMobile(true)}
     >
       <Icon name="git" className="w-5 h-5" />
@@ -260,10 +296,22 @@ export default function App() {
       </button>
     </div>
   );
+  const continueTarget = continueLearningTarget(user);
+  const quickStats = (
+    <PlayerQuickStats
+      user={user}
+      lang={lang}
+      onContinue={() => openModule(continueTarget.campaignId, continueTarget.moduleId)}
+      onOpenScoreboard={() => setScoreboardOpen(true)}
+    />
+  );
   const moduleTopbarTools = (
-    <div className="module-topbar__app-tools">
-      {mobileMenuButton}
-      {accountTools}
+    <div className="module-topbar__meta-row">
+      {quickStats}
+      <div className="module-topbar__app-tools">
+        {mobileMenuButton}
+        {accountTools}
+      </div>
     </div>
   );
 
@@ -352,9 +400,9 @@ export default function App() {
 
       <div className="flex-1 min-w-0 flex flex-col relative z-10">
         {view !== "module" && (
-          <header className="sticky top-0 z-20 flex items-center gap-3 h-16 px-4 border-b border-forge-border bg-forge-bg/80 backdrop-blur">
+          <header className="app-topbar sticky top-0 z-20 flex min-h-16 items-center gap-2 px-3 py-2 sm:gap-3 sm:px-4 border-b border-forge-border bg-forge-bg/80 backdrop-blur">
             {mobileMenuButton}
-            <div className="flex-1" />
+            {quickStats}
             {accountTools}
           </header>
         )}
@@ -394,7 +442,7 @@ export default function App() {
           {view === "campaigns" && (
             <div className="space-y-6">
               <div>
-                <div className="text-sm uppercase tracking-[0.25em] text-ember-400">{t("campaigns", lang)}</div>
+                <div className="text-sm uppercase tracking-[0.25em] text-ember-400">{uppercaseLabel(t("campaigns", lang), lang)}</div>
                 <h1 className="text-3xl font-bold mt-1">{t("chooseCampaign", lang)}</h1>
               </div>
               <div className="grid md:grid-cols-3 gap-4">
@@ -409,7 +457,7 @@ export default function App() {
                     >
                       <div className="h-1.5 rounded-full bg-gradient-to-r from-ember-500 via-amber-300 to-ember-700 strip-anim mb-4" />
                       <div className="text-sm uppercase tracking-widest text-ember-400">
-                        {c.scenario === "lab" || c.scenario === "sudorun" ? t("courseLabel", lang) : t("ctfLabel", lang)}
+                        {uppercaseLabel(c.scenario === "lab" || c.scenario === "sudorun" ? t("courseLabel", lang) : t("ctfLabel", lang), lang)}
                       </div>
                       <h2 className="flex items-baseline gap-2 text-xl font-bold mt-1">
                         <span className="font-mono text-sm tracking-widest text-ember-400">{String(c.pathNumber).padStart(2, "0")}.</span>
@@ -474,6 +522,13 @@ export default function App() {
         </main>
       </div>
 
+      {scoreboardOpen && (
+        <OverallScoreboardPopup
+          viewerId={user.id}
+          lang={lang}
+          onClose={() => setScoreboardOpen(false)}
+        />
+      )}
       {badgeId && <BadgeModal badgeId={badgeId} lang={lang} onClose={() => setBadgeId(null)} />}
       {quizFor && (
         <QuizPopup

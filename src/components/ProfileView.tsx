@@ -8,7 +8,7 @@ import {
   updateUser,
   type User,
 } from "../lib/db";
-import { t, type Lang } from "../i18n";
+import { t, uppercaseLabel, type Lang } from "../i18n";
 import Avatar from "./Avatar";
 import AvatarPicker from "./AvatarPicker";
 import Icon from "./Icon";
@@ -103,7 +103,7 @@ export default function ProfileView({
         {mine ? (
           <div className="space-y-4">
             <label className="block space-y-2">
-              <span className="text-sm uppercase tracking-widest text-iron-400">{t("nickname", lang)}</span>
+              <span className="text-sm uppercase tracking-widest text-iron-400">{uppercaseLabel(t("nickname", lang), lang)}</span>
               <input
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
@@ -113,7 +113,7 @@ export default function ProfileView({
               />
             </label>
             <label className="block space-y-2">
-              <span className="text-sm uppercase tracking-widest text-iron-400">{t("bio", lang)}</span>
+              <span className="text-sm uppercase tracking-widest text-iron-400">{uppercaseLabel(t("bio", lang), lang)}</span>
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
@@ -133,14 +133,14 @@ export default function ProfileView({
           </div>
         ) : (
           <>
-            <div className="text-sm uppercase tracking-widest text-iron-400 mb-2">{t("bio", lang)}</div>
+            <div className="text-sm uppercase tracking-widest text-iron-400 mb-2">{uppercaseLabel(t("bio", lang), lang)}</div>
             <p className="text-sm text-zinc-300">{user.bio || "—"}</p>
           </>
         )}
       </div>
 
       <div className="glass rounded-2xl border border-forge-border p-5">
-        <div className="text-sm uppercase tracking-widest text-iron-400 mb-3">{t("interests", lang)}</div>
+        <div className="text-sm uppercase tracking-widest text-iron-400 mb-3">{uppercaseLabel(t("interests", lang), lang)}</div>
         <div className="flex flex-wrap gap-2">
           {(mine ? INTERESTS_POOL : user.interests).map((i) => {
             const on = user.interests.includes(i);
@@ -163,7 +163,7 @@ export default function ProfileView({
       </div>
 
       <div className="glass rounded-2xl border border-forge-border p-5">
-        <div className="text-sm uppercase tracking-widest text-iron-400 mb-3">{t("badges", lang)}</div>
+        <div className="text-sm uppercase tracking-widest text-iron-400 mb-3">{uppercaseLabel(t("badges", lang), lang)}</div>
         <div className="grid sm:grid-cols-2 gap-3">
           {user.badges.map((id) => {
             const b = BADGES[id];

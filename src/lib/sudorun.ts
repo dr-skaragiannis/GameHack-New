@@ -1,5 +1,6 @@
 import {
   dir,
+  displayPath,
   file,
   getNode,
   parentAndName,
@@ -216,10 +217,12 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
     case "locate": {
       const q = pos[0] || "";
       t.flags.add("locate");
+      const rootPath = resolvePath(t, "/");
+      const root = getNode(t.fs, rootPath);
       const acc: { path: string; node: FileNode }[] = [];
-      walk(t.fs, "/", acc);
+      if (root) walk(root, rootPath, acc);
       const hits = acc.filter((a) => a.path.toLowerCase().includes(q.toLowerCase()) || a.node.name.toLowerCase().includes(q.toLowerCase()));
-      print(hits.map((h) => h.path).join("\n") || "");
+      print(hits.map((h) => displayPath(t, h.path)).join("\n") || `locate: no matches for '${q}'`);
       if (/ctf/i.test(q)) t.flags.add("locate-ctf");
       return true;
     }
@@ -271,18 +274,33 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
       return true;
     }
     case "cut": {
+      const delimiterOption = rest.find((value) => value.startsWith("-d") && value !== "-d");
+      const delimiterIndex = rest.indexOf("-d");
+      const fieldOption = rest.find((value) => value.startsWith("-f") && value !== "-f");
+      const fieldIndex = rest.indexOf("-f");
+      const delimiter = (delimiterOption?.slice(2) || (delimiterIndex >= 0 ? rest[delimiterIndex + 1] : ":"))
+        .replace(/^["']|["']$/g, "") || ":";
+      const fieldSpec = fieldOption?.slice(2) || (fieldIndex >= 0 ? rest[fieldIndex + 1] : "1") || "1";
+      const field = Math.max(1, Number.parseInt(fieldSpec.split(",")[0], 10) || 1);
+      const path = pos.find((value) => !/^\d+$/.test(value));
+      let source = stdin;
+      if (source == null && path) {
+        const resolved = resolvePath(t, path);
+        const node = getNode(t.fs, resolved);
+        if (!node || node.type !== "file") {
+          print(`cut: ${path}: No such file or not a regular file`, "err");
+          return true;
+        }
+        source = node.content || "";
+        t.filesRead.push(resolved);
+      }
+      if (source == null) {
+        print("cut: missing input (provide a file or pipeline)", "err");
+        return true;
+      }
+      const selected = source.split(/\r?\n/).map((line) => line.split(delimiter)[field - 1] || "");
+      print(selected.join("\n"));
       t.flags.add("cut");
-      const dIdx = rest.indexOf("-d");
-      const fIdx = rest.indexOf("-f");
-      const delim = dIdx >= 0 ? rest[dIdx + 1].replace(/^["']|["']$/g, "") : " ";
-      const field = fIdx >= 0 ? parseInt(rest[fIdx + 1], 10) : 1;
-      const src = stdin || "";
-      print(
-        src
-          .split("\n")
-          .map((l) => l.split(delim)[field - 1] || "")
-          .join("\n")
-      );
       return true;
     }
     case "cp": {
@@ -298,13 +316,19 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
       }
       const { parent, name } = parentAndName(destPath);
       let dirn = getNode(t.fs, destPath);
+      let destinationName = name;
       if (dirn && dirn.type === "dir" && dirn.children) {
-        dirn.children[src.name] = copyNode(src);
+        destinationName = src.name;
       } else {
         dirn = getNode(t.fs, parent);
-        if (dirn && dirn.type === "dir" && dirn.children) dirn.children[name] = { ...copyNode(src), name };
       }
+      if (!dirn || dirn.type !== "dir" || !dirn.children || !destinationName) {
+        print(`cp: cannot create '${pos[1]}': No such directory`, "err");
+        return true;
+      }
+      dirn.children[destinationName] = { ...copyNode(src), name: destinationName };
       t.flags.add("cp");
+      print(`Copied ${pos[0]} to ${pos[1]} in the virtual filesystem.`);
       return true;
     }
     case "mv": {
@@ -322,15 +346,20 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
       const { parent: sp, name: sn } = parentAndName(srcP);
       const sdir = getNode(t.fs, sp);
       let destDir = getNode(t.fs, destP);
-      if (destDir && destDir.type === "dir" && destDir.children) {
-        destDir.children[src.name] = copyNode(src);
-      } else {
+      let destinationName = src.name;
+      if (!(destDir && destDir.type === "dir" && destDir.children)) {
         const { parent, name } = parentAndName(destP);
         destDir = getNode(t.fs, parent);
-        if (destDir && destDir.type === "dir" && destDir.children) destDir.children[name] = { ...copyNode(src), name };
+        destinationName = name;
       }
-      if (sdir && sdir.children) delete sdir.children[sn];
+      if (!sdir?.children || !destDir || destDir.type !== "dir" || !destDir.children || !destinationName) {
+        print(`mv: cannot move '${pos[0]}' to '${pos[1]}': No such directory`, "err");
+        return true;
+      }
+      destDir.children[destinationName] = { ...copyNode(src), name: destinationName };
+      delete sdir.children[sn];
       t.flags.add("mv");
+      print(`Moved ${pos[0]} to ${pos[1]} in the virtual filesystem.`);
       return true;
     }
     case "rm": {
@@ -349,6 +378,7 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
       }
       delete dirn.children[name];
       t.flags.add("rm");
+      print(`Removed virtual ${node.type}: ${pos[0]}`);
       return true;
     }
     case "rmdir": {
@@ -367,57 +397,57 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
       }
       if (dirn?.children) delete dirn.children[name];
       t.flags.add("rmdir");
+      print(`Removed empty virtual directory: ${pos[0]}`);
       return true;
     }
     case "chown": {
       const who = pos[0];
-      const p = resolvePath(t, pos[1] || "");
+      const target = pos[1] || "";
+      const p = resolvePath(t, target);
       const n = getNode(t.fs, p);
-      if (!n || !who) {
-        print("chown: usage: chown USER FILE", "err");
+      if (!n || !who || !target) {
+        print("chown: usage: chown USER[:GROUP] FILE", "err");
         return true;
       }
-      n.owner = who;
+      const [owner, group] = who.split(":");
+      n.owner = owner;
+      if (group) n.group = group;
       t.flags.add("chown");
-      if (who === "Raj") t.flags.add("chown-raj");
+      if (owner === "Raj") t.flags.add("chown-raj");
+      print(`Changed ownership of ${target} to ${who}.`);
       return true;
     }
     case "chgrp": {
       const g = pos[0];
-      const p = resolvePath(t, pos[1] || "");
+      const target = pos[1] || "";
+      const p = resolvePath(t, target);
       const n = getNode(t.fs, p);
-      if (!n || !g) {
+      if (!n || !g || !target) {
         print("chgrp: usage: chgrp GROUP FILE", "err");
         return true;
       }
       n.group = g;
       t.flags.add("chgrp");
       if (g === "ignite") t.flags.add("chgrp-ignite");
+      print(`Changed group of ${target} to ${g}.`);
       return true;
     }
     case "chmod": {
-      const spec = pos[0] || rest.find((a) => a.startsWith("+") || /^\d/.test(a)) || "";
-      const p = resolvePath(t, pos[1] || pos[0] || "");
-      const n = getNode(t.fs, p);
-      if (!n) {
-        const n2 = getNode(t.fs, resolvePath(t, pos[pos.length - 1] || ""));
-        if (!n2) {
-          print("chmod: no such file", "err");
-          return true;
-        }
-        chmodMode(n2, spec.replace(/^\+/, "+") === spec && spec.startsWith("+") ? spec : spec);
-        t.flags.add("chmod");
-        if (spec.includes("4644") || spec.startsWith("4")) t.flags.add("suid");
-        if (spec.includes("2466") || spec.startsWith("2")) t.flags.add("sgid");
-        if (spec.includes("+x")) t.flags.add("chmod-x");
+      const modeIndex = pos.findIndex((value) => /^\d{3,4}$/.test(value) || /^[ugoa]*[+-=][rwxXstugo]+$/.test(value) || /^[+-][rwxXstugo]+$/.test(value));
+      const spec = modeIndex >= 0 ? pos[modeIndex] : rest.find((value) => value.startsWith("+") || /^\d/.test(value)) || "";
+      const target = pos.filter((_value, index) => index !== modeIndex).pop() || "";
+      const p = resolvePath(t, target);
+      const node = getNode(t.fs, p, false);
+      if (!node || !spec || !target) {
+        print("chmod: usage: chmod MODE FILE", "err");
         return true;
       }
-      const realSpec = /^\d|^[ugoa]*[-+=]/.test(pos[0] || "") || (pos[0] || "").startsWith("+") ? pos[0] : spec;
-      chmodMode(n, realSpec);
+      chmodMode(node, spec);
       t.flags.add("chmod");
-      if (/4644/.test(input)) t.flags.add("suid");
-      if (/2466/.test(input)) t.flags.add("sgid");
-      if (/\+x/.test(input)) t.flags.add("chmod-x");
+      if (/4644/.test(spec)) t.flags.add("suid");
+      if (/2466/.test(spec)) t.flags.add("sgid");
+      if (/\+x/.test(spec)) t.flags.add("chmod-x");
+      print(`Mode of ${target} changed to ${node.mode || spec}.`);
       return true;
     }
     case "apt-cache":
@@ -430,6 +460,12 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
         print(`hydra - very fast network logon cracker
 libhydra - hydra library (lab)
 qhydra - qt frontend`);
+        return true;
+      }
+      if (cmd === "apt-cache" && sub === "show") {
+        const packageName = pos[1] || "";
+        if (!packageName) print("E: apt-cache show requires a package name", "err");
+        else print(`Package: ${packageName}\nVersion: 1.0-lab\nArchitecture: all\nDescription: Fictional HackForge training package ${packageName}.`);
         return true;
       }
       const action = pos[0];
@@ -503,11 +539,13 @@ wlan0     IEEE 802.11  ESSID:off/any
       if (pos[0] === "eth0" && pos[1] === "down") {
         t.net.up = false;
         t.flags.add("if-down");
+        print("eth0: interface is down (simulated)");
         return true;
       }
       if (pos[0] === "eth0" && pos[1] === "up") {
         t.net.up = true;
         t.flags.add("if-up");
+        print("eth0: interface is up (simulated)");
         return true;
       }
       if (pos[0] === "eth0" && pos[1] === "hw" && pos[2] === "ether") {
@@ -605,7 +643,7 @@ ${t.procs
     }
     case "jobs": {
       t.flags.add("jobs");
-      print(t.jobs.map((j, i) => `[${i + 1}]  Running  ${j.cmd} &`).join("\n") || "");
+      print(t.jobs.map((j, i) => `[${i + 1}]  Running  ${j.cmd} &`).join("\n") || "No active simulated background jobs.");
       return true;
     }
     case "fg": {
@@ -631,16 +669,30 @@ job 1 at ${pos.join(" ") || "now"}`);
       t.flags.add("export");
       const kv = pos[0] || "";
       if (kv.includes("=")) {
-        const [k, v] = kv.split("=");
-        t.env[k] = v;
+        const separator = kv.indexOf("=");
+        const key = kv.slice(0, separator);
+        const value = kv.slice(separator + 1);
+        t.env[key] = value;
+        print(`${key} exported for this virtual shell.`);
       } else if (pos[0] && t.env[pos[0]] !== undefined) {
         t.flags.add("export-hist");
+        print(`${pos[0]}=${t.env[pos[0]]} exported for this virtual shell.`);
+      } else if (pos[0]) {
+        print(`export: ${pos[0]} is not set`, "err");
+      } else {
+        print(Object.entries(t.env).map(([key, value]) => `declare -x ${key}="${value}"`).join("\n"));
       }
       return true;
     }
     case "unset": {
+      if (!pos[0]) {
+        print("unset: missing variable name", "err");
+        return true;
+      }
       t.flags.add("unset");
-      if (pos[0]) delete t.env[pos[0]];
+      const existed = Object.prototype.hasOwnProperty.call(t.env, pos[0]);
+      delete t.env[pos[0]];
+      print(existed ? `Removed ${pos[0]} from the virtual shell environment.` : `${pos[0]} was not set.`);
       return true;
     }
     case "service": {

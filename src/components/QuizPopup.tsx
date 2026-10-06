@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { QUIZZES } from "../data/quizzes";
-import { bi, t, type Lang } from "../i18n";
+import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import { sound } from "../lib/sound";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
@@ -31,7 +31,7 @@ export default function QuizPopup({
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
       <div className="w-full max-w-lg rounded-2xl border border-forge-border bg-forge-panel p-6 scale-in">
-        <div className="text-sm uppercase tracking-[0.2em] text-ember-400 mb-1">{t("quickQuiz", lang)}</div>
+        <div className="text-sm uppercase tracking-[0.2em] text-ember-400 mb-1">{uppercaseLabel(t("quickQuiz", lang), lang)}</div>
         <div className="text-sm text-iron-400 mb-4">
           {i + 1} {t("of", lang)} {qs.length}
         </div>
