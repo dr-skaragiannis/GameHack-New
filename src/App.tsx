@@ -215,12 +215,12 @@ export default function App() {
     <div className="forge-grid min-h-full flex">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 flex flex-col border-r border-forge-border bg-forge-panel/95 backdrop-blur-md transition-all lg:static",
+          "fixed inset-y-0 left-0 z-30 flex flex-col border-r border-forge-border bg-forge-panel/95 backdrop-blur-md transition-all lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:self-start",
           collapsed ? "w-[72px]" : "w-60",
           mobile ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        <div className={cn("flex items-center gap-2 px-3 h-16 border-b border-forge-border", collapsed && "justify-center")}>
+        <div className={cn("relative flex h-16 items-center border-b border-forge-border", collapsed ? "justify-center px-2 pt-5" : "gap-2 px-3")}>
           <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-ember-500 to-ember-700 grid place-items-center shrink-0">
             <Icon name="hammer" className="w-4 h-4 text-white" />
           </div>
@@ -230,8 +230,23 @@ export default function App() {
               <div className="text-sm text-iron-500 truncate">{t("tagline", lang)}</div>
             </div>
           )}
+          <button
+            type="button"
+            onClick={() => {
+              db.updateUser(user.id, { sidebarCollapsed: !collapsed });
+              refresh();
+            }}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={cn(
+              "grid shrink-0 place-items-center rounded-lg text-iron-500 hover:bg-white/5 hover:text-iron-200 transition",
+              collapsed ? "absolute right-1 top-1 h-5 w-5 text-sm" : "ml-auto h-8 w-8 text-lg"
+            )}
+          >
+            {collapsed ? "»" : "«"}
+          </button>
         </div>
-        <nav className="flex-1 p-2 space-y-1">
+        <nav className="min-h-0 flex-1 overflow-y-auto p-2 space-y-1">
           {nav
             .filter((n) => n.show)
             .map((n) => (
@@ -265,17 +280,7 @@ export default function App() {
               </button>
             ))}
         </nav>
-        <div className="p-2 border-t border-forge-border space-y-2">
-          <button
-            type="button"
-            onClick={() => {
-              db.updateUser(user.id, { sidebarCollapsed: !collapsed });
-              refresh();
-            }}
-            className="w-full text-sm text-iron-500 hover:text-iron-300 py-1"
-          >
-            {collapsed ? "»" : "«"}
-          </button>
+        <div className="mt-auto p-2 border-t border-forge-border">
           <button
             type="button"
             onClick={logout}

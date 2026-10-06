@@ -401,11 +401,10 @@ function CampaignUniverse({
                 onClick={() => onToggle(campaign.id)}
                 style={{ left: cardCenterX, top: y }}
               >
-                <span className="map-path-number" aria-hidden="true">{String(campaign.pathNumber).padStart(2, "0")}</span>
                 <span className="map-campaign-card__icon"><Icon name={campaignIcon(campaign)} className="h-5 w-5" /></span>
                 <span className="map-campaign-card__copy">
                   <span className="map-campaign-card__kicker">{campaignKicker(campaign)}</span>
-                  <span className="map-campaign-card__name">{bi(campaign.title, lang)}</span>
+                  <span className="map-campaign-card__name">{String(campaign.pathNumber).padStart(2, "0")}. {bi(campaign.title, lang)}</span>
                   <span className="map-campaign-card__progress">{completed}/{ordered.length} labs <i>·</i> {percent}%</span>
                   <span className="map-campaign-card__bar"><i style={{ width: `${percent}%` }} /></span>
                 </span>

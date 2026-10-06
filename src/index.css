@@ -2506,7 +2506,7 @@ body {
 .map-campaign-card--linear {
   width: 336px;
   min-height: 92px;
-  grid-template-columns: 32px 36px minmax(0, 1fr) 44px 14px;
+  grid-template-columns: 36px minmax(0, 1fr) 44px 14px;
   gap: 6px;
   padding: 9px;
 }
@@ -2521,28 +2521,14 @@ body {
   outline: 2px solid var(--lane-color, #ff8a4c);
   outline-offset: 3px;
 }
-.map-path-number {
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--lane-color) 48%, transparent);
-  border-radius: 9px;
-  background: var(--lane-soft);
-  color: var(--lane-color);
-  font-family: var(--font-mono);
-  font-size: var(--type-small);
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
 .map-campaign-card--linear .map-campaign-card__presence {
-  grid-column: 4;
+  grid-column: 3;
   grid-row: 1;
   align-self: center;
   font-size: var(--type-small);
 }
 .map-campaign-card--linear .map-campaign-card__chevron {
-  grid-column: 5;
+  grid-column: 4;
 }
 .map-collapsed-route {
   z-index: 2;
@@ -2635,9 +2621,6 @@ body {
   font-size: var(--type-small);
 }
 .map-campaign-card--linear .map-campaign-card__presence {
-  font-size: var(--type-small);
-}
-.map-path-number {
   font-size: var(--type-small);
 }
 .map-node-progress {
