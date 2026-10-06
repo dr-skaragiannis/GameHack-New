@@ -371,9 +371,9 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "at", aliases: ["at"], title: both("Schedule a one-time job", "Προγραμματισμός εφάπαξ εργασίας"),
     purpose: both("Queue a command to run once at a future time.", "Προγραμμάτισε εντολή να τρέξει μία φορά στο μέλλον."),
-    mechanics: both("at accepts a time and then commands through an interactive prompt. Repeating schedules are normally handled by cron.", "Το at δέχεται ώρα και εντολές σε διαδραστικό prompt. Επαναλαμβανόμενες εργασίες συνήθως ανήκουν στο cron."),
-    output: both("The simulator prints a queue preview only; it does not run or schedule a command on the host.", "Ο προσομοιωτής εμφανίζει μόνο προεπισκόπηση ουράς· δεν προγραμματίζει ούτε εκτελεί εντολή στο σύστημα υποδοχής."),
-    syntax: "at TIME", example: "at 9:00pm",
+    mechanics: both("A real interactive at prompt accepts a time first and then reads commands until Ctrl-D. In this lab you can queue one command on the same line, as in at 21:30 /root/scanning_script.sh, or enter at 21:30 and type one command on the next line. Both forms only record a per-player job; repeating schedules are normally handled by cron.", "Σε πραγματικό διαδραστικό prompt, η at δέχεται πρώτα ώρα και μετά διαβάζει εντολές μέχρι το Ctrl-D. Εδώ μπορείς να καταχωρίσεις μία εντολή στην ίδια γραμμή, όπως στο at 21:30 /root/scanning_script.sh, ή να γράψεις at 21:30 και την εντολή στην επόμενη γραμμή. Και οι δύο μορφές αποθηκεύουν μόνο εικονική εργασία του παίκτη· οι επαναλαμβανόμενες εργασίες συνήθως ανήκουν στο cron."),
+    output: both("The simulator stores a per-player queue entry as a VFS-backed training record. It never runs the command later or schedules work on the host.", "Ο προσομοιωτής αποθηκεύει εγγραφή στην προσωπική εικονική ουρά εκπαίδευσης. Δεν εκτελεί αργότερα την εντολή ούτε προγραμματίζει εργασία στο σύστημα υποδοχής."),
+    syntax: "at TIME COMMAND", example: "at 21:30 /root/scanning_script.sh",
   },
   {
     key: "env", aliases: ["env", "set", "histsize="], title: both("Inspect shell variables", "Έλεγχος μεταβλητών shell"),
@@ -406,9 +406,9 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "crontab", aliases: ["crontab"], title: both("Edit or list scheduled jobs", "Επεξεργασία προγραμματισμένων εργασιών"),
     purpose: both("Manage recurring commands for the current account.", "Διαχειρίσου επαναλαμβανόμενες εντολές του λογαριασμού."),
-    mechanics: both("crontab -e opens an editor for the user's crontab; crontab -l lists it. A schedule has minute, hour, day-of-month, month, and day-of-week fields before the command.", "Το crontab -e ανοίγει editor και το -l εμφανίζει εγγραφές. Το πρόγραμμα έχει λεπτό, ώρα, ημέρα μήνα, μήνα και ημέρα εβδομάδας πριν την εντολή."),
-    output: both("The editor preview shows the schedule file. A five-field schedule followed by a command is one job definition.", "Το preview δείχνει το αρχείο schedule. Πέντε πεδία και μετά εντολή ορίζουν ένα job."),
-    syntax: "crontab -e | crontab -l", example: "crontab -e",
+    mechanics: both("crontab -e opens a simulated editor and crontab -l lists the current user's table. In this line-based lab, pipe a line into crontab - to install a recurring entry without interactive keystrokes. A schedule has minute, hour, day-of-month, month, and day-of-week fields before the command.", "Το crontab -e ανοίγει εικονικό editor και το crontab -l εμφανίζει τον πίνακα του χρήστη. Σε αυτό το εργαστήριο μίας γραμμής, στείλε μια γραμμή με pipe στο crontab - για να αποθηκεύσεις επαναλαμβανόμενη εγγραφή χωρίς διαδραστική επεξεργασία. Το πρόγραμμα έχει πεδία λεπτού, ώρας, ημέρας μήνα, μήνα και ημέρας εβδομάδας πριν από την εντολή."),
+    output: both("The simulator updates only the virtual crontab and prints its entry when listed. It never launches the scheduled command; use the VFS to inspect scripts before recording them.", "Ο προσομοιωτής αλλάζει μόνο το εικονικό crontab και εμφανίζει την εγγραφή όταν τη ζητήσεις. Δεν ξεκινά ποτέ την προγραμματισμένη εντολή· έλεγξε τα scripts στο VFS πριν τα καταγράψεις."),
+    syntax: "crontab -e | crontab -l | crontab -", example: "crontab -l",
   },
   {
     key: "update-rc.d", aliases: ["update-rc.d"], title: both("Configure boot services", "Ρύθμιση υπηρεσιών εκκίνησης"),

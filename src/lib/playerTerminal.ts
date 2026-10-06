@@ -379,11 +379,19 @@ export function loadPlayerTerminal(userId: string): Terminal {
     const shellVars = parsed.shellVars && typeof parsed.shellVars === "object"
       ? parsed.shellVars
       : { ...fresh.shellVars, ...env };
+    const atQueue = Array.isArray(parsed.atQueue)
+      ? parsed.atQueue.filter((job) =>
+          job && typeof job === "object" && Number.isFinite(job.id) && typeof job.time === "string" && typeof job.command === "string",
+        )
+      : fresh.atQueue;
+    const atPendingTime = typeof parsed.atPendingTime === "string" ? parsed.atPendingTime : fresh.atPendingTime;
     return {
       ...fresh,
       ...parsed,
       fs,
       shellVars,
+      atQueue,
+      atPendingTime,
       flags: new Set(Array.isArray(parsed.flags) ? parsed.flags.filter((value): value is string => typeof value === "string") : []),
       packages: new Set(Array.isArray(parsed.packages) ? parsed.packages.filter((value): value is string => typeof value === "string") : []),
       history: Array.isArray(parsed.history) ? parsed.history.filter((value): value is string => typeof value === "string").slice(-MAX_SAVED_HISTORY) : fresh.history,

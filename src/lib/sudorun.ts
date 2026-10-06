@@ -92,7 +92,7 @@ export function sudoRunFS(): FileNode {
           ),
           file(
             "schedule-notes.txt",
-            "at TIME queues one command for one future run.\ncrontab uses minute hour day-of-month month day-of-week command fields for recurring work.\nThis simulator previews jobs; it never schedules work on the host.\n"
+            "Use at 21:30 /root/scanning_script.sh to record a one-time virtual job; the script is never run.\nUse echo '30 21 * * * /root/scanning_script.sh' | crontab - to record a recurring entry, then inspect it with crontab -l.\nCrontab fields are minute hour day-of-month month day-of-week followed by the command.\nAll schedule changes remain in this player's simulated workspace and never run on the host.\n"
           ),
           file("notes.txt", "Training editor fixture. No host process is started.\n"),
         ]),
@@ -648,14 +648,33 @@ ${target}.    300 IN A 10.10.10.8`);
     }
     case "top": {
       t.flags.add("top");
+      const processes = t.procs.filter((process) => process.alive);
+      const zombies = processes.filter((process) => /\[zombie/i.test(process.cmd)).length;
+      const running = processes.length > zombies ? 1 : 0;
+      const sleeping = Math.max(0, processes.length - running - zombies);
+      let markedRunning = false;
+      const rows = processes
+        .sort((a, b) => parseFloat(b.cpu) - parseFloat(a.cpu))
+        .map((process) => {
+          const isZombie = /\[zombie/i.test(process.cmd);
+          const state = isZombie ? "Z" : markedRunning ? "S" : "R";
+          if (!isZombie && !markedRunning) markedRunning = true;
+          return `${String(process.pid).padStart(5)} ${process.user.padEnd(8)} 20 ${String(process.nice).padStart(2)}  64M   8M   4M ${state} ${String(process.cpu).padStart(4)} ${String(process.mem).padStart(4)} 0:00.08 ${process.cmd}`;
+        });
       print(
-        `top - HackForge lab (refreshes conceptually)
-PID USER      %CPU %MEM COMMAND
-${t.procs
-  .filter((p) => p.alive)
-  .sort((a, b) => parseFloat(b.cpu) - parseFloat(a.cpu))
-  .map((p) => `${p.pid} ${p.user}  ${p.cpu}  ${p.mem}  ${p.cmd}`)
-  .join("\n")}`
+        `top - 09:00:00 up 2 days, 1 user, load average: 0.04, 0.08, 0.09 — HackForge virtual snapshot
+` +
+          `Tasks: ${processes.length} total, ${running} running, ${sleeping} sleeping, 0 stopped, ${zombies} zombie${zombies === 1 ? "" : "s"}
+` +
+          `%Cpu(s): 2.1 us, 0.7 sy, 0.0 ni, 97.2 id
+` +
+          `MiB Mem : 1024.0 total, 384.0 used, 512.0 free, 128.0 buff/cache
+` +
+          `MiB Swap: 0.0 total, 0.0 used, 0.0 free
+` +
+          `PID USER     PR NI VIRT RES SHR S %CPU %MEM TIME+ COMMAND
+` +
+          rows.join("\n"),
       );
       return true;
     }
@@ -725,15 +744,31 @@ ${t.procs
     }
     case "fg": {
       t.flags.add("fg");
-      const j = t.jobs[0];
-      print(j ? j.cmd : "fg: current: no such job");
+      const requestedJob = pos[0] || "%1";
+      const requestedIndex = Number.parseInt(requestedJob.replace(/^%/, ""), 10);
+      const index = Number.isFinite(requestedIndex) && requestedIndex > 0 ? requestedIndex - 1 : t.jobs.length - 1;
+      const [job] = index >= 0 ? t.jobs.splice(index, 1) : [];
+      print(job
+        ? `${job.cmd}\n[foreground job resumed in the simulator; no host process was started]`
+        : `fg: ${requestedJob === "%1" ? "current" : requestedJob}: no such job`);
       return true;
     }
     case "at": {
       t.flags.add("at");
-      print(`warning: commands will be executed using /bin/sh
-at> (type a command then Ctrl-D in a real shell)
-job 1 at ${pos.join(" ") || "now"}`);
+      const time = pos[0] || "";
+      const command = pos.slice(1).join(" ").trim();
+      if (!time) {
+        print("usage: at TIME COMMAND... (simulated; command is recorded, never run on the host)", "err");
+        return true;
+      }
+      if (!command) {
+        t.atPendingTime = time;
+        print(`at ${time}> enter one command on the next line; the simulator will queue it and return to the prompt without running it. Type Ctrl-D to cancel in a real interactive shell.`);
+        return true;
+      }
+      const id = t.atQueue.length + 1;
+      t.atQueue.push({ id, time, command });
+      print(`job ${id} queued for ${time}: ${command} (simulated; not executed)`);
       return true;
     }
     case "set": {
@@ -799,22 +834,27 @@ job 1 at ${pos.join(" ") || "now"}`);
     }
     case "crontab": {
       t.flags.add("crontab");
+      if (rest.includes("-") && stdin !== null) {
+        const entries = stdin.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+        if (!entries.length) {
+          print("crontab: refusing to install an empty simulated table", "err");
+          return true;
+        }
+        t.crontab = ["# m h dom mon dow command", ...entries];
+        t.flags.add("crontab-install");
+        print(`installed ${entries.length} recurring entry${entries.length === 1 ? "" : "ies"} in the virtual crontab (not executed)`);
+        return true;
+      }
       if (rest.includes("-e") || flags.has("e")) {
         t.flags.add("crontab-e");
-        print(`# editing crontab with nano (simulated)
-# add a line like:
-# 55 23 * * * /root/scanner
-${t.crontab.join("\n")}`);
-        if (/55\s+23/.test(input) || true) {
-          /* student may type crontab then later echo */
-        }
+        print(`# simulated crontab editor\n${t.crontab.join("\n")}\n# Use a safe VFS pipeline such as: echo \"30 21 * * * /root/scanning_script.sh\" | crontab -`);
         return true;
       }
       if (rest.includes("-l")) {
         print(t.crontab.join("\n"));
         return true;
       }
-      print("usage: crontab -e | crontab -l");
+      print("usage: crontab -e | crontab -l | crontab - (read entries from a simulated pipe)");
       return true;
     }
     case "update-rc.d": {
@@ -884,8 +924,17 @@ Plugins: pslist, netscan, filescan (lab stub)`);
       if (p) {
         t.flags.add("nano");
         const n = getNode(t.fs, p);
-        if (!n) writeFile(t, p, "");
-        print(`(simulated editor) opened ${p} — contents saved.`);
+        if (!n) {
+          writeFile(t, p, "");
+          print(`(simulated editor) created ${p} in the virtual filesystem.`);
+          return true;
+        }
+        if (n.type === "file") {
+          t.filesRead.push(p);
+          print(`(simulated editor preview) ${p}\n${n.content || ""}\nUse supported VFS redirection commands to save changes.`);
+        } else {
+          print(`nano: ${p}: Is a directory`, "err");
+        }
         return true;
       }
       return false;

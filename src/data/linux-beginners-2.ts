@@ -256,11 +256,21 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       section(
         bi("top: compare resource use", "top: σύγκριση χρήσης πόρων"),
         bi(
-          "top sorts a live process display by resource use and, on a real system, refreshes it repeatedly. It helps you notice which processes currently consume the most CPU or memory, but a high percentage alone does not explain why the process is busy.",
-          "Η top ταξινομεί μια ζωντανή προβολή διεργασιών με βάση τη χρήση πόρων και, σε πραγματικό σύστημα, την ανανεώνει επανειλημμένα. Σε βοηθά να εντοπίσεις ποιες διεργασίες καταναλώνουν αυτή τη στιγμή περισσότερη CPU ή μνήμη, αλλά ένα υψηλό ποσοστό από μόνο του δεν εξηγεί γιατί η διεργασία είναι απασχολημένη.\n\nΓια να κρίνεις αν κάτι είναι ασυνήθιστο, σύγκρινε τη χρήση με τον ρόλο της διεργασίας και επανέλεγξε τα στοιχεία με ps. Το HackForge εμφανίζει ένα στατικό στιγμιότυπο, ώστε η εντολή να επιστρέφει κανονικά στο prompt και να μη δημιουργεί ατέρμονο τερματικό.",
+          "top normally shows a live summary of uptime and load, task states, CPU and memory/swap use, followed by a process table. The rows are usually ordered by resource use, so compare the %CPU and %MEM columns to see which processes are busiest; those figures describe a moment, not a diagnosis.",
+          "Η εντολή top εμφανίζει συνήθως μια ζωντανή σύνοψη με τον χρόνο λειτουργίας και το load average, τις καταστάσεις των εργασιών, τη χρήση CPU και μνήμης/swap και, στη συνέχεια, έναν πίνακα διεργασιών. Οι γραμμές ταξινομούνται συνήθως με βάση τη χρήση πόρων, ώστε να συγκρίνεις τις στήλες %CPU και %MEM και να εντοπίσεις τις πιο απασχολημένες διεργασίες· τα ποσοστά περιγράφουν μια στιγμή, δεν εξηγούν από μόνα τους την αιτία.\n\nΣε πραγματικό τερματικό, πάτησε q για έξοδο από τη ζωντανή προβολή. Το HackForge δείχνει ένα σταθερό, εικονικό στιγμιότυπο και επιστρέφει αμέσως στο prompt· δεν παρακολουθεί ούτε επηρεάζει διεργασίες του υπολογιστή σου.",
         ),
         "top",
-        ["top - HackForge lab (single snapshot)", "PID USER      %CPU %MEM COMMAND", "7440 root      0.4   0.2  training-worker --batch"],
+        [
+          "top - 09:00:00 up 2 days, 1 user, load average: 0.04, 0.08, 0.09 — HackForge virtual snapshot",
+          "Tasks: 9 total, 1 running, 7 sleeping, 0 stopped, 1 zombie",
+          "%Cpu(s): 2.1 us, 0.7 sy, 0.0 ni, 97.2 id",
+          "MiB Mem : 1024.0 total, 384.0 used, 512.0 free, 128.0 buff/cache",
+          "MiB Swap: 0.0 total, 0.0 used, 0.0 free",
+          "PID USER PR NI VIRT RES SHR S %CPU %MEM TIME+ COMMAND",
+          "4378 root 20 5 124M 12M 6M Z 8.4 6.2 0:00.53 [zombie-lab]",
+          " 880 root 20 0 128M 24M 8M R 1.2 2.1 0:01.27 msfconsole",
+          "7440 root 20 0  64M  8M 4M S 0.4 0.2 0:00.08 training-worker --batch",
+        ],
       ),
       section(
         bi("nice and renice: set scheduling niceness", "nice και renice: ρύθμιση προτεραιότητας scheduler"),
@@ -292,11 +302,15 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       section(
         bi("at for one time; cron for repeated work", "at για μία φορά· cron για επανάληψη"),
         bi(
-          "at queues a command to run once at a future time. In a real shell, at 21:30 opens an input prompt; you type the command and finish the entry with Ctrl-D. The at daemon executes the queued item later, provided the service is installed and running.",
-          "Η at προγραμματίζει μια εντολή να εκτελεστεί μία φορά στο μέλλον. Σε πραγματικό shell, η at 21:30 ανοίγει prompt· πληκτρολογείς την εντολή και ολοκληρώνεις την καταχώριση με Ctrl-D. Το daemon at θα την εκτελέσει αργότερα, εφόσον είναι εγκατεστημένο και ενεργό.\n\nΓια επαναλαμβανόμενες εργασίες, το cron χρησιμοποιεί χρονοπρόγραμμα. Η crontab -l εμφανίζει τον πίνακα του χρήστη, ενώ η crontab -e τον ανοίγει για επεξεργασία. Το /etc/crontab είναι πίνακας συστήματος και περιλαμβάνει επιπλέον πεδίο για τον χρήστη που θα εκτελέσει κάθε εντολή.",
+          "The at command queues one command for a single future run. In a real interactive shell, `at 21:30` opens an input prompt and Ctrl-D closes it. In this lab you can either use `at 21:30 /root/scanning_script.sh` or enter `at 21:30` followed by the script path on the next line; the simulator queues that one line and returns to the prompt. The queue is only a VFS-backed training record: nothing is launched later on the host.",
+          "Η εντολή at προγραμματίζει μία εντολή για μία μελλοντική εκτέλεση. Σε πραγματικό διαδραστικό shell, η `at 21:30` ανοίγει prompt και το Ctrl-D ολοκληρώνει την καταχώριση. Εδώ μπορείς είτε να γράψεις `at 21:30 /root/scanning_script.sh` είτε να δώσεις πρώτα `at 21:30` και τη διαδρομή του script στην επόμενη γραμμή· ο προσομοιωτής αποθηκεύει αυτή τη μία γραμμή και επιστρέφει στο prompt. Η ουρά είναι μόνο εγγραφή εκπαίδευσης στο VFS· καμία εντολή δεν θα εκτελεστεί αργότερα στον υπολογιστή σου.\n\nΤο cron προορίζεται για επαναλαμβανόμενες εργασίες. Η `crontab -l` εμφανίζει τον πίνακα του χρήστη, ενώ η `crontab -e` ανοίγει τον εικονικό editor. Στο HackForge μπορείς επίσης να προσθέσεις μία γραμμή με `echo \"30 21 * * * /root/scanning_script.sh\" | crontab -` και να την επαληθεύσεις με `crontab -l`· το σύστημα καταγράφει το χρονοπρόγραμμα, δεν εκτελεί το script.",
         ),
-        "crontab -l",
-        ["# m h  dom mon dow   command", "17 * * * * root    run-parts --report /etc/cron.hourly"],
+        "at 21:30 /root/scanning_script.sh\ncrontab -l",
+        [
+          "job 1 queued for 21:30: /root/scanning_script.sh (simulated; not executed)",
+          "# m h dom mon dow command",
+          "17 * * * * root cd / && run-parts --report /etc/cron.hourly",
+        ],
       ),
     ],
     cheats: [
@@ -310,7 +324,7 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       { cmd: "kill -1 PID / kill -9 PID", desc: bi("Send SIGHUP / force with SIGKILL", "Αποστολή SIGHUP / αναγκαστικός τερματισμός με SIGKILL") },
       { cmd: "COMMAND &", desc: bi("Run a shell job in the background", "Εκτέλεση εργασίας στο παρασκήνιο") },
       { cmd: "jobs / fg", desc: bi("List jobs / return one to foreground", "Λίστα εργασιών / επαναφορά στο προσκήνιο") },
-      { cmd: "at TIME / crontab -l", desc: bi("One-time / recurring schedule", "Εφάπαξ / επαναλαμβανόμενος προγραμματισμός") },
+      { cmd: "at TIME COMMAND / crontab -e / -l", desc: bi("Queue once / edit or inspect recurring work", "Εφάπαξ εργασία / επεξεργασία ή έλεγχος επανάληψης") },
     ],
     tasks: [
       task(
@@ -327,17 +341,30 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
         (term) => term.flags.has("ps-aux") && term.flags.has("ps-grep"),
       ),
       task(
+        "top-snapshot",
+        bi(
+          "Run top by itself. Read the summary lines and identify the process at the top of the resource-sorted table; compare its PID and command with ps aux.",
+          "Τρέξε την top μόνη της. Διάβασε τις γραμμές σύνοψης και εντόπισε τη διεργασία στην κορυφή του ταξινομημένου πίνακα· σύγκρινε το PID και την εντολή της με την ps aux.",
+        ),
+        bi("top", "top"),
+        bi(
+          "Why: A process snapshot can help you spot unusual CPU or memory use before you investigate further. How: inspect the summary, read the %CPU and %MEM columns, and verify the selected row with ps; the terminal returns to the prompt because this lab uses a fixed snapshot.",
+          "Γιατί: Ένα στιγμιότυπο διεργασιών μπορεί να σε βοηθήσει να εντοπίσεις ασυνήθιστη χρήση CPU ή μνήμης πριν συνεχίσεις τη διερεύνηση. Πώς: διάβασε τη σύνοψη και τις στήλες %CPU και %MEM και επιβεβαίωσε τη γραμμή με την ps· το εργαστήριο επιστρέφει στο prompt επειδή χρησιμοποιεί σταθερό στιγμιότυπο.",
+        ),
+        (term) => term.flags.has("top") && usedCmd(term, /^\s*top\s*$/),
+      ),
+      task(
         "priority",
         bi(
-          "Inspect the resource snapshot, start the example with a positive nice value, and set PID 7440 to niceness 10 with renice. Compare the old and new value.",
-          "Έλεγξε το στιγμιότυπο πόρων, ξεκίνα το παράδειγμα με θετική τιμή nice και όρισε niceness 10 στο PID 7440 με renice. Σύγκρινε την παλιά και τη νέα τιμή.",
+          "Start the example with a positive nice value, then set PID 7440 to niceness 10 with renice. Compare the old and new values.",
+          "Ξεκίνα το παράδειγμα με θετική τιμή nice και έπειτα όρισε niceness 10 στο PID 7440 με renice. Σύγκρινε την παλιά και τη νέα τιμή.",
         ),
-        bi("top\nnice -n 10 /usr/bin/ssh-agent\nrenice 10 7440", "top\nnice -n 10 /usr/bin/ssh-agent\nrenice 10 7440"),
+        bi("nice -n 10 /usr/bin/ssh-agent\nrenice 10 7440", "nice -n 10 /usr/bin/ssh-agent\nrenice 10 7440"),
         bi(
           "Why: Niceness helps the scheduler share CPU when processes compete. How: a positive value lowers a process's relative priority; renice applies an absolute value to the selected PID. The simulator changes only its in-memory process table and never starts ssh-agent on the host.",
           "Γιατί: Η niceness βοηθά τον scheduler να μοιράζει την CPU όταν ανταγωνίζονται διεργασίες. Πώς: μια θετική τιμή μειώνει τη σχετική προτεραιότητα· η renice εφαρμόζει απόλυτη τιμή στο επιλεγμένο PID. Ο προσομοιωτής αλλάζει μόνο τον εικονικό πίνακα διεργασιών και δεν ξεκινά ssh-agent στον υπολογιστή σου.",
         ),
-        (term) => term.flags.has("top") && term.flags.has("nice") && term.flags.has("renice"),
+        (term) => term.flags.has("nice") && term.flags.has("renice"),
       ),
       task(
         "signals",
@@ -355,18 +382,18 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       task(
         "jobs-and-schedules",
         bi(
-          "Open the prepared notes file in the simulated editor in the background, inspect it with jobs, and return with fg. Then preview a one-time at job and list the recurring crontab.",
-          "Άνοιξε το αρχείο σημειώσεων στον εικονικό editor στο παρασκήνιο, έλεγξέ το με jobs και επανάφερέ το με fg. Έπειτα δες την προεπισκόπηση μιας εφάπαξ εργασίας at και εμφάνισε το επαναλαμβανόμενο crontab.",
+          "Open the prepared notes file in the simulated editor in the background, inspect it with jobs, and return it with fg %1. Queue the training script once with at, then add and inspect a recurring cron entry.",
+          "Άνοιξε το αρχείο σημειώσεων στον εικονικό editor στο παρασκήνιο, έλεγξέ το με jobs και επανάφερέ το με fg %1. Προγραμμάτισε μία εκτέλεση με at και έπειτα πρόσθεσε και έλεγξε μια επαναλαμβανόμενη εγγραφή cron.",
         ),
         bi(
-          "nano /root/linux-beginners-2/processes/notes.txt &\njobs\nfg\nat 21:30\ncrontab -l",
-          "nano /root/linux-beginners-2/processes/notes.txt &\njobs\nfg\nat 21:30\ncrontab -l",
+          'nano /root/linux-beginners-2/processes/notes.txt &\njobs\nfg %1\nat 21:30 /root/scanning_script.sh\necho "30 21 * * * /root/scanning_script.sh" | crontab -\ncrontab -l',
+          'nano /root/linux-beginners-2/processes/notes.txt &\njobs\nfg %1\nat 21:30 /root/scanning_script.sh\necho "30 21 * * * /root/scanning_script.sh" | crontab -\ncrontab -l',
         ),
         bi(
           "Why: Background jobs free the prompt, while schedulers handle work that should run later. How: use & for the shell job, jobs to find it, and fg to bring it back; at is one-time and cron is recurring. This sandbox only records and previews these actions.",
           "Γιατί: Οι εργασίες παρασκηνίου αφήνουν διαθέσιμο το prompt, ενώ οι schedulers αναλαμβάνουν εργασίες για αργότερα. Πώς: βάλε & για εργασία του shell, χρησιμοποίησε jobs για να τη βρεις και fg για να την επαναφέρεις· το at είναι εφάπαξ και το cron επαναλαμβανόμενο. Το sandbox καταγράφει και προβάλλει τις ενέργειες χωρίς να τις εκτελεί στο σύστημα υποδοχής.",
         ),
-        (term) => term.flags.has("bg") && term.flags.has("jobs") && term.flags.has("fg") && term.flags.has("at") && term.flags.has("crontab"),
+        (term) => term.flags.has("bg") && term.flags.has("jobs") && term.flags.has("fg") && term.flags.has("at") && term.flags.has("crontab-install") && term.flags.has("crontab"),
       ),
     ],
     challenges: [

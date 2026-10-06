@@ -45,13 +45,42 @@ try {
     }
   }
   assert.deepEqual(failedCommands, [], "every advertised Linux command should produce visible output");
+  const catalogNames = new Set(ALL_LINUX_COMMANDS.map((command) => command.name));
+  for (const name of [
+    "ifconfig", "ip", "iwconfig", "dhclient", "dig", "echo", "nano", "cat", "grep",
+    "ps", "top", "nice", "renice", "kill", "jobs", "fg", "at", "crontab",
+    "set", "more", "env", "export", "unset",
+  ]) {
+    assert.ok(catalogNames.has(name), `source command ${name} should be in the shared command catalog`);
+  }
+
+  const topTerm = playerTerminal.createPlayerTerminal();
+  playerTerminal.activateTerminalForModule(topTerm, "sr-proc", "sudorun");
+  const topOutput = terminal.runCommand(topTerm, "top").map((line) => line.text).join("\n");
+  assert.match(topOutput, /Tasks: .*running.*sleeping/);
+  assert.match(topOutput, /%CPU.*%MEM.*COMMAND/);
+  assert.match(topOutput, /up .*load average/);
+  assert.match(topOutput, /training-worker/);
+  assert.ok(topTerm.flags.has("top"), "top should be an executable simulated command in Path 03");
+
+  const interactiveAtTerm = playerTerminal.createPlayerTerminal();
+  playerTerminal.activateTerminalForModule(interactiveAtTerm, "sr-proc", "sudorun");
+  terminal.runCommand(interactiveAtTerm, "at 21:30");
+  assert.equal(interactiveAtTerm.atPendingTime, "21:30");
+  const atQueueOutput = terminal.runCommand(interactiveAtTerm, "/root/scanning_script.sh").map((line) => line.text).join("\n");
+  assert.match(atQueueOutput, /queued for 21:30/);
+  assert.equal(interactiveAtTerm.atQueue[0]?.command, "/root/scanning_script.sh");
+  assert.ok(!interactiveAtTerm.flags.has("run-script"), "at must queue its input without executing the script");
 
   const backgroundTerm = playerTerminal.createPlayerTerminal();
   playerTerminal.activateTerminalForModule(backgroundTerm, "sr-proc", "sudorun");
   terminal.runCommand(backgroundTerm, "sleep 10 &");
-  const backgroundList = terminal.runCommand(backgroundTerm, "jobs").map((line) => line.text).join("\\n");
+  const backgroundList = terminal.runCommand(backgroundTerm, "jobs").map((line) => line.text).join("\n");
   assert.match(backgroundList, /sleep 10/);
   assert.ok(backgroundTerm.flags.has("bg"));
+  const foregroundOutput = terminal.runCommand(backgroundTerm, "fg %1").map((line) => line.text).join("\n");
+  assert.match(foregroundOutput, /foreground job resumed/);
+  assert.equal(backgroundTerm.jobs.length, 0, "fg should remove the selected job from the background list");
 
   const learningPath = lessons.campaignById("linux-beginners-2");
   assert.ok(learningPath, "Linux for Beginners #2 should be registered as a learning path");
@@ -97,6 +126,11 @@ try {
     }
   }
   assert.equal(courseTerm.net.ip, "10.10.10.42", "the simulated DHCP lease should replace the temporary interface address");
+  assert.equal(courseTerm.atQueue.length, 1, "at should record a one-time simulated job");
+  assert.deepEqual(courseTerm.atQueue[0], { id: 1, time: "21:30", command: "/root/scanning_script.sh" });
+  assert.equal(courseTerm.jobs.length, 0, "fg should return the background editor to the foreground");
+  assert.ok(courseTerm.flags.has("crontab-install"), "crontab - should accept a recurring entry from the virtual pipe");
+  assert.match(courseTerm.crontab.join("\n"), /30 21 \* \* \* \/root\/scanning_script\.sh/);
   assert.equal(courseTerm.procs.find((process) => process.pid === 7440)?.nice, 10, "renice should update the simulated process");
   assert.equal(courseTerm.procs.find((process) => process.pid === 7440)?.alive, false, "SIGTERM should stop only the selected virtual process");
   assert.equal(courseTerm.procs.find((process) => process.pid === 7441)?.alive, true, "SIGHUP should be recorded without assuming every program exits");
@@ -169,8 +203,10 @@ try {
       removeItem: (key) => storageValues.delete(key),
     },
   });
+  term.atQueue = [{ id: 1, time: "21:30", command: "/root/scanning_script.sh" }];
   playerTerminal.savePlayerTerminal("student@example.ionio.gr", term);
   const restored = playerTerminal.loadPlayerTerminal("student@example.ionio.gr");
+  assert.deepEqual(restored.atQueue, term.atQueue, "simulated one-time schedule records should persist per player");
   assert.ok(terminal.getNode(restored.fs, "/root/persistent-note.txt"));
   assert.equal(restored.activeModuleId, term.activeModuleId);
   assert.deepEqual(restored.history, term.history);

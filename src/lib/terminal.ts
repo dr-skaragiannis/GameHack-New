@@ -59,6 +59,8 @@ export type Terminal = {
   net: { ip: string; mask: string; bcast: string; mac: string; up: boolean };
   procs: Proc[];
   jobs: { pid: number; cmd: string }[];
+  atQueue: { id: number; time: string; command: string }[];
+  atPendingTime: string | null;
   services: Record<string, "running" | "stopped" | "inactive">;
   packages: Set<string>;
   ftp: { host: string; user: string | null; cwd: string } | null;
@@ -327,6 +329,8 @@ export function createTerminal(opts?: { fs?: FileNode; user?: string; host?: str
     net: { ip: "10.10.10.2", mask: "255.255.255.0", bcast: "10.10.10.255", mac: "08:00:27:12:34:56", up: true },
     procs: defaultProcs(),
     jobs: [],
+    atQueue: [],
+    atPendingTime: null,
     services: { apache2: "stopped", ssh: "stopped", cron: "inactive", mysql: "stopped" },
     packages: new Set(["git", "nmap", "hydra", "apache2", "cron", "openssh-server"]),
     ftp: null,
@@ -525,6 +529,20 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
   }
   const out: TermLine[] = capturing ? [] : [{ kind: "in", text: `${promptOf(t)} ${input}` }];
   const stdin = inner?.stdin ?? null;
+
+  if (!capturing && t.atPendingTime) {
+    const time = t.atPendingTime;
+    t.atPendingTime = null;
+    if (/^(?:ctrl[-+]?d|\u0004)$/i.test(input.trim())) {
+      out.push({ kind: "out", text: `at: queue entry for ${time} cancelled (simulated).` });
+      return out;
+    }
+    const id = t.atQueue.length + 1;
+    t.atQueue.push({ id, time, command: input.trim() });
+    t.flags.add("at");
+    out.push({ kind: "out", text: `job ${id} queued for ${time}: ${input.trim()} (simulated; not executed)` });
+    return out;
+  }
 
   if (!capturing && !input.includes("|") && /(^|[^&])&\s*$/.test(input)) {
     const command = input.slice(0, input.lastIndexOf("&")).trim();
