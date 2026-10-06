@@ -256,8 +256,8 @@ export default function ModuleView({
   };
 
   return (
-    <div className="space-y-5">
-      <div className="module-topbar sticky top-16 z-10 -mx-4 -mt-4 px-4 py-3 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8">
+    <div className="space-y-3">
+      <div className="module-topbar sticky top-16 z-10 -mx-4 -mt-4 px-4 py-2 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8">
         <div className="module-topbar__row">
           <button type="button" onClick={onBack} className="module-topbar__back">
             ← {t("backToMap", lang)}
@@ -283,7 +283,22 @@ export default function ModuleView({
             <span>{t("progress", lang)}</span>
           </div>
 
-          <WidthControl value={activeContentWidth} onChange={onWidth} />
+          <div className="module-topbar__navigation">
+            <nav className="module-topbar__tabs" aria-label={lang === "el" ? "Ενότητες μαθήματος" : "Module sections"}>
+              {(["theory", "guide", "lab"] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  aria-current={tab === k ? "page" : undefined}
+                  onClick={() => setTab(k)}
+                  className={cn("module-topbar__tab", tab === k && "is-active")}
+                >
+                  {t(k, lang)}
+                </button>
+              ))}
+            </nav>
+            <WidthControl value={activeContentWidth} onChange={onWidth} />
+          </div>
         </div>
         <div className="module-topbar__track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
           <div className="h-full bg-gradient-to-r from-ember-600 to-ember-400 bar-grow" style={{ width: `${progress}%` }} />
@@ -291,22 +306,6 @@ export default function ModuleView({
       </div>
 
       <div className={contentWidthClass(activeContentWidth)}>
-        <div className="flex rounded-xl bg-forge-panel border border-forge-border p-1 mb-6 w-fit">
-          {(["theory", "guide", "lab"] as const).map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setTab(k)}
-              className={cn(
-                "px-4 py-2 rounded-lg text-sm font-semibold",
-                tab === k ? "bg-ember-600 text-white" : "text-iron-400"
-              )}
-            >
-              {t(k, lang)}
-            </button>
-          ))}
-        </div>
-
         {tab === "theory" && (
           <div className="space-y-6 enter">
             {module.theory.map((s, i) => (
