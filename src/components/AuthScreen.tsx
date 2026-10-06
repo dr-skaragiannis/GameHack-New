@@ -12,7 +12,7 @@ export default function AuthScreen() {
   const [lang, setLang] = useState<Lang>("en");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [role, setRole] = useState<Role>("player");
   const [error, setError] = useState("");
 
@@ -20,10 +20,9 @@ export default function AuthScreen() {
     e.preventDefault();
     sound.unlock();
     sound.enter();
-    const res =
-      mode === "in" ? login(username, password) : register(username, password, role, displayName || username);
+    const res = mode === "in" ? login(username, password) : register(username, password, role, nickname);
     if (!res.ok) {
-      setError(res.error || "Error");
+      setError(t(res.error || "Error", lang));
       sound.error();
     }
   };
@@ -63,25 +62,37 @@ export default function AuthScreen() {
                   mode === m ? "bg-ember-600 text-white" : "text-iron-400 hover:text-zinc-200"
                 )}
               >
-                {m === "in" ? t("signIn", lang) : t("createAccount", lang)}
+                {m === "in" ? t("signIn", lang) : t("register", lang)}
               </button>
             ))}
           </div>
 
+          {mode === "up" && (
+            <div className="mb-4 rounded-xl border border-ember-500/25 bg-ember-500/5 p-3 text-sm leading-relaxed text-zinc-300">
+              <p>{t("registrationNotice", lang)}</p>
+              <p className="mt-1 text-iron-400">{t("registrationCompleteProfile", lang)}</p>
+            </div>
+          )}
+
           <form onSubmit={submit} className="space-y-3">
             {mode === "up" && (
               <input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder={t("displayName", lang)}
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder={t("nickname", lang)}
+                autoComplete="nickname"
+                maxLength={32}
+                required
                 className="w-full rounded-xl bg-forge-bg border border-forge-border px-3 py-2.5 text-sm outline-none focus:border-ember-500"
               />
             )}
             <input
+              type={mode === "up" ? "email" : "text"}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder={t("username", lang)}
-              autoComplete="username"
+              placeholder={mode === "up" ? t("universityEmail", lang) : t("usernameOrEmail", lang)}
+              autoComplete={mode === "in" ? "username" : "email"}
+              required
               className="w-full rounded-xl bg-forge-bg border border-forge-border px-3 py-2.5 text-sm outline-none focus:border-ember-500"
             />
             <input
@@ -90,6 +101,7 @@ export default function AuthScreen() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder={t("password", lang)}
               autoComplete={mode === "in" ? "current-password" : "new-password"}
+              required
               className="w-full rounded-xl bg-forge-bg border border-forge-border px-3 py-2.5 text-sm outline-none focus:border-ember-500"
             />
             {mode === "up" && (
@@ -116,7 +128,7 @@ export default function AuthScreen() {
               type="submit"
               className="w-full rounded-xl bg-gradient-to-r from-ember-600 to-ember-500 py-2.5 font-bold text-white shimmer-hover"
             >
-              {mode === "in" ? t("start", lang) : t("createAccount", lang)}
+              {mode === "in" ? t("start", lang) : t("register", lang)}
             </button>
           </form>
 
@@ -124,9 +136,6 @@ export default function AuthScreen() {
             <div className="uppercase tracking-widest text-iron-400 mb-1">{t("demoHint", lang)}</div>
             <div>
               player — <span className="text-zinc-400 font-mono">nova / demo</span>
-            </div>
-            <div>
-              educator — <span className="text-zinc-400 font-mono">educator / teach123</span>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   accuracyScore,
   BADGES,
@@ -29,8 +29,21 @@ export default function ProfileView({
 }) {
   const mine = viewer.id === user.id;
   const lv = levelFromXp(user.metrics.xp);
+  const [nickname, setNickname] = useState(user.displayName);
   const [bio, setBio] = useState(user.bio);
   const [picker, setPicker] = useState(false);
+
+  useEffect(() => {
+    setNickname(user.displayName);
+    setBio(user.bio);
+  }, [user.id, user.displayName, user.bio]);
+
+  const saveProfile = () => {
+    const nextNickname = nickname.trim();
+    if (!nextNickname || nextNickname.length > 32) return;
+    updateUser(user.id, { displayName: nextNickname, bio: bio.trim() });
+    onChange();
+  };
 
   const toggleInterest = (i: string) => {
     const next = user.interests.includes(i) ? user.interests.filter((x) => x !== i) : [...user.interests, i];
@@ -41,13 +54,26 @@ export default function ProfileView({
   return (
     <div className="w-full space-y-6">
       <div className="glass rounded-2xl border border-forge-border p-6 flex flex-wrap gap-5 items-start">
-        <button type="button" disabled={!mine} onClick={() => mine && setPicker(true)} className="relative">
+        <button
+          type="button"
+          disabled={!mine}
+          onClick={() => mine && setPicker(true)}
+          title={mine ? t("chooseAvatar", lang) : undefined}
+          aria-label={mine ? t("chooseAvatar", lang) : user.displayName}
+          className="relative rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-ember-400 disabled:cursor-default"
+        >
           <Avatar src={user.avatar} name={user.displayName} size={88} />
+          {mine && (
+            <span className="absolute bottom-0 right-0 grid h-7 w-7 place-items-center rounded-full border border-forge-border bg-forge-panel text-ember-400">
+              <Icon name="settings" className="h-4 w-4" />
+            </span>
+          )}
         </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold">{user.displayName}</h1>
           <div className="text-iron-400 text-sm">
-            @{user.username} · {t(user.role, lang)} · {t("level", lang)} {lv.level}
+            {user.username.includes("@") ? null : `@${user.username} · `}
+            {t(user.role, lang)} · {t("level", lang)} {lv.level}
           </div>
           <div className="flex gap-4 mt-3 text-sm">
             <span className="text-ember-400 font-semibold">{user.metrics.xp} XP</span>
@@ -74,28 +100,42 @@ export default function ProfileView({
       </div>
 
       <div className="glass rounded-2xl border border-forge-border p-5">
-        <div className="text-sm uppercase tracking-widest text-iron-400 mb-2">{t("bio", lang)}</div>
         {mine ? (
-          <>
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={3}
-              className="w-full rounded-xl bg-forge-bg border border-forge-border p-3 text-sm outline-none focus:border-ember-500"
-            />
+          <div className="space-y-4">
+            <label className="block space-y-2">
+              <span className="text-sm uppercase tracking-widest text-iron-400">{t("nickname", lang)}</span>
+              <input
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                maxLength={32}
+                required
+                className="w-full rounded-xl bg-forge-bg border border-forge-border px-3 py-2.5 text-sm outline-none focus:border-ember-500"
+              />
+            </label>
+            <label className="block space-y-2">
+              <span className="text-sm uppercase tracking-widest text-iron-400">{t("bio", lang)}</span>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                rows={4}
+                maxLength={500}
+                className="w-full rounded-xl bg-forge-bg border border-forge-border p-3 text-sm outline-none focus:border-ember-500"
+              />
+            </label>
             <button
               type="button"
-              onClick={() => {
-                updateUser(user.id, { bio });
-                onChange();
-              }}
-              className="mt-2 rounded-lg bg-forge-panel2 border border-forge-border px-3 py-1.5 text-sm"
+              onClick={saveProfile}
+              disabled={!nickname.trim() || nickname.trim().length > 32}
+              className="rounded-lg bg-forge-panel2 border border-forge-border px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {t("save", lang)}
+              {t("saveProfile", lang)}
             </button>
-          </>
+          </div>
         ) : (
-          <p className="text-sm text-zinc-300">{user.bio || "—"}</p>
+          <>
+            <div className="text-sm uppercase tracking-widest text-iron-400 mb-2">{t("bio", lang)}</div>
+            <p className="text-sm text-zinc-300">{user.bio || "—"}</p>
+          </>
         )}
       </div>
 

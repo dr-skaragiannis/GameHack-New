@@ -532,22 +532,33 @@ export function saveDB() {
 }
 
 export function register(
-  username: string,
+  email: string,
   password: string,
   role: Role,
-  displayName: string
+  nickname: string
 ): { ok: boolean; error?: string; user?: User } {
   const db = getDB();
-  const uname = username.trim().toLowerCase();
-  if (!uname || !password) return { ok: false, error: "Username and password required" };
-  if (uname.length < 3) return { ok: false, error: "Username too short" };
-  if (db.users.find((x) => x.username === uname)) return { ok: false, error: "Username already taken" };
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedNickname = nickname.trim();
+  if (!password.trim()) return { ok: false, error: "passwordRequired" };
+  if (!/^[^\s@]+@ionio\.gr$/.test(normalizedEmail)) {
+    return { ok: false, error: "universityEmailOnly" };
+  }
+  if (!normalizedNickname) return { ok: false, error: "nicknameRequired" };
+  if (normalizedNickname.length > 32) return { ok: false, error: "nicknameTooLong" };
+  const duplicate = db.users.some(
+    (user) =>
+      user.id.trim().toLowerCase() === normalizedEmail ||
+      user.username.trim().toLowerCase() === normalizedEmail
+  );
+  if (duplicate) return { ok: false, error: "emailAlreadyRegistered" };
+
   const user: User = {
-    id: uid(),
-    username: uname,
+    id: normalizedEmail,
+    username: normalizedEmail,
     password,
     role,
-    displayName: displayName.trim() || username,
+    displayName: normalizedNickname,
     avatar: randomIconAvatar(),
     bio: "",
     interests: [],
@@ -570,8 +581,11 @@ export function register(
 
 export function login(username: string, password: string): { ok: boolean; error?: string; user?: User } {
   const db = getDB();
-  const u = db.users.find((x) => x.username === username.trim().toLowerCase());
-  if (!u || u.password !== password) return { ok: false, error: "Invalid username or password" };
+  const identity = username.trim().toLowerCase();
+  const u =
+    db.users.find((user) => user.id.trim().toLowerCase() === identity) ||
+    db.users.find((user) => user.username.trim().toLowerCase() === identity);
+  if (!u || u.password !== password) return { ok: false, error: "Invalid username or email, or password" };
   db.sessionUserId = u.id;
   touchStreak(u);
   u.lastSeen = Date.now();

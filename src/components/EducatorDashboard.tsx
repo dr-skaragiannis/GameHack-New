@@ -128,7 +128,9 @@ export default function EducatorDashboard({
                           <Avatar src={p.avatar} name={p.displayName} size={28} />
                           <div>
                             <div className="font-medium">{p.displayName}</div>
-                            <div className="text-sm text-iron-500">@{p.username}</div>
+                            <div className="text-sm text-iron-500">
+                              {p.username.includes("@") ? t("player", lang) : `@${p.username}`}
+                            </div>
                           </div>
                         </div>
                       </td>
