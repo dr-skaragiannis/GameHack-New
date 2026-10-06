@@ -10,6 +10,7 @@ const KIND_ICON: Record<FeedEvent["kind"], string> = {
   badge: "medal",
   levelup: "crown",
   login: "user",
+  broadcast: "mail",
 };
 
 function ago(ts: number) {

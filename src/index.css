@@ -5012,3 +5012,657 @@ button.player-quick-stats__item:hover {
   .player-team-panel__option > div { flex-basis: calc(100% - 50px); }
   .player-team-panel__apply { margin-left: 42px; }
 }
+
+/* Player network constellation: a graph-grid view with live presence and milestone signals. */
+.player-constellation {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  border-color: rgba(92, 194, 213, 0.22);
+  background:
+    radial-gradient(ellipse at 50% 15%, rgba(20, 94, 113, 0.14), transparent 50%),
+    linear-gradient(155deg, rgba(14, 19, 23, 0.98), rgba(10, 12, 15, 0.98));
+  box-shadow: 0 20px 54px -38px rgba(0, 0, 0, 0.92), inset 0 1px rgba(154, 236, 245, 0.045);
+}
+.player-constellation::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(100, 220, 237, 0.58), rgba(255, 138, 76, 0.34), transparent);
+  content: "";
+}
+.player-constellation__header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 19px 20px 15px;
+}
+.player-constellation__title-group {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.player-constellation__title-icon {
+  width: 43px;
+  height: 43px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(68, 211, 232, 0.3);
+  border-radius: 13px;
+  background: linear-gradient(145deg, rgba(28, 124, 147, 0.2), rgba(22, 45, 57, 0.12));
+  color: #68e5f2;
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.08), inset 0 1px rgba(255, 255, 255, 0.06);
+}
+.player-constellation__header .player-dashboard__eyebrow { color: #65d8e5; font-size: 0.61rem; }
+.player-constellation__header h2 {
+  margin-top: 2px;
+  color: #f0f8fa;
+  font-size: 1.17rem;
+  font-weight: 780;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+.player-constellation__header p {
+  margin-top: 4px;
+  color: #8b9ca2;
+  font-size: 0.73rem;
+}
+.player-constellation__header-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: #a4b2b7;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.025em;
+}
+.player-constellation__online-count,
+.player-constellation__player-count {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid rgba(164, 195, 201, 0.13);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.025);
+  white-space: nowrap;
+}
+.player-constellation__online-count { color: #7be1a7; border-color: rgba(61, 220, 132, 0.2); }
+.player-constellation__online-count i,
+.player-constellation__signal-dot {
+  width: 6px;
+  height: 6px;
+  display: inline-block;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #45e58c;
+  box-shadow: 0 0 9px rgba(69, 229, 140, 0.76);
+}
+.player-constellation__toolbar {
+  position: relative;
+  z-index: 8;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 19px;
+  border-top: 1px solid rgba(169, 220, 227, 0.07);
+  border-bottom: 1px solid rgba(169, 220, 227, 0.1);
+  background: rgba(12, 16, 19, 0.84);
+}
+.player-constellation__filters {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.player-constellation__filter {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: #a7b3b8;
+  font-size: 0.68rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.player-constellation__filter small {
+  min-width: 16px;
+  color: #6e7f85;
+  font-family: var(--font-mono);
+  font-size: 0.59rem;
+  text-align: center;
+}
+.player-constellation__filter:hover,
+.player-constellation__filter.is-active {
+  border-color: rgba(70, 213, 231, 0.27);
+  background: rgba(36, 156, 177, 0.12);
+  color: #a9f1f5;
+}
+.player-constellation__filter.is-active small { color: #7de4ee; }
+.player-constellation__interest-control { position: relative; }
+.player-constellation__interest-toggle { max-width: 190px; }
+.player-constellation__interest-toggle > span { overflow: hidden; text-overflow: ellipsis; }
+.player-constellation__interest-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(260px, calc(100vw - 48px));
+  max-height: 290px;
+  overflow: auto;
+  padding: 7px;
+  border: 1px solid rgba(79, 197, 218, 0.3);
+  border-radius: 12px;
+  background: rgba(12, 17, 21, 0.98);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.56), 0 0 24px rgba(34, 211, 238, 0.07);
+  backdrop-filter: blur(14px);
+}
+.player-constellation__interest-menu-heading {
+  padding: 6px 8px 8px;
+  color: #79dce9;
+  font-family: var(--font-mono);
+  font-size: 0.59rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.player-constellation__interest-option {
+  width: 100%;
+  min-height: 31px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  color: #b7c3c7;
+  font-size: 0.7rem;
+  text-align: left;
+}
+.player-constellation__interest-option:hover,
+.player-constellation__interest-option.is-selected { background: rgba(34, 211, 238, 0.1); color: #9cf1f5; }
+.player-constellation__interest-option small { color: #71848a; font-family: var(--font-mono); font-size: 0.62rem; }
+.player-constellation__rank-update {
+  min-height: 27px;
+  max-width: min(330px, 45%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  color: #718187;
+  font-family: var(--font-mono);
+  font-size: 0.61rem;
+  text-align: right;
+}
+.player-constellation__rank-update.is-shaking {
+  color: #ffd0ad;
+  transform-origin: center;
+  animation: constellation-rank-status-shake 1s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+.player-constellation__rank-update.is-shaking svg { color: #ff9a58; }
+.player-constellation__signal-dot { width: 5px; height: 5px; background: #67dce7; box-shadow: 0 0 8px rgba(103, 220, 231, 0.55); }
+.player-constellation__viewport {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #080d11;
+  scrollbar-color: #24515b #0a0e11;
+  scrollbar-width: thin;
+}
+.player-constellation__stage {
+  position: relative;
+  width: 100%;
+  min-width: 1040px;
+  height: clamp(430px, 42vw, 560px);
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 50% 56%, rgba(19, 72, 88, 0.24), transparent 54%),
+    linear-gradient(180deg, rgba(12, 21, 27, 0.98), rgba(7, 11, 15, 0.98));
+}
+.player-constellation__stage::before,
+.player-constellation__stage::after {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+}
+.player-constellation__stage::before {
+  opacity: 0.36;
+  background-image:
+    linear-gradient(rgba(90, 179, 197, 0.075) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(90, 179, 197, 0.075) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(180deg, transparent, #000 12%, #000 92%, transparent);
+}
+.player-constellation__stage::after {
+  inset: 9px;
+  border: 1px solid rgba(100, 206, 222, 0.055);
+  background: linear-gradient(90deg, rgba(69, 202, 221, 0.11), transparent 18% 82%, rgba(69, 202, 221, 0.1)) top / 100% 1px no-repeat;
+}
+.player-constellation__svg {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.player-constellation__link {
+  stroke: rgba(83, 175, 194, 0.37);
+  stroke-width: 1.15;
+  stroke-dasharray: 4 8;
+  opacity: 0.72;
+  animation: constellation-link-flow 9s linear infinite;
+}
+.player-constellation__link.is-online { stroke: rgba(89, 221, 234, 0.65); opacity: 0.86; }
+.player-constellation__point { fill: #74dce6; opacity: 0.82; }
+.player-constellation__point-halo { fill: none; stroke: rgba(86, 216, 231, 0.22); stroke-width: 1; animation: constellation-point-ping 3.8s ease-out infinite; }
+@keyframes constellation-link-flow { to { stroke-dashoffset: -48; } }
+@keyframes constellation-point-ping { 0% { opacity: 0.55; r: 3px; } 100% { opacity: 0; r: 18px; } }
+.player-constellation__bubbles {
+  position: absolute;
+  z-index: 4;
+  inset: 13px 18px auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22px;
+  pointer-events: none;
+}
+.player-constellation__bubble {
+  position: relative;
+  width: min(31%, 300px);
+  min-height: 76px;
+  padding: 9px 11px 10px;
+  border: 1px solid rgba(255, 151, 87, 0.36);
+  border-radius: 11px 11px 11px 3px;
+  background: linear-gradient(145deg, rgba(43, 26, 19, 0.96), rgba(19, 19, 20, 0.96));
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.26), 0 0 20px rgba(255, 106, 43, 0.07);
+  color: #e6ded9;
+  animation: constellation-bubble-in 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.player-constellation__bubble.is-path { border-color: rgba(77, 209, 225, 0.34); border-radius: 11px 11px 3px 11px; background: linear-gradient(145deg, rgba(15, 38, 45, 0.97), rgba(15, 19, 22, 0.97)); animation-delay: 100ms; }
+.player-constellation__bubble::after {
+  position: absolute;
+  bottom: -6px;
+  left: 17px;
+  width: 10px;
+  height: 10px;
+  border-right: 1px solid rgba(255, 151, 87, 0.36);
+  border-bottom: 1px solid rgba(255, 151, 87, 0.36);
+  background: #211914;
+  content: "";
+  transform: rotate(45deg);
+}
+.player-constellation__bubble.is-path::after { right: 17px; left: auto; border-color: rgba(77, 209, 225, 0.34); background: #11232a; }
+.player-constellation__bubble-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffac79;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.085em;
+}
+.player-constellation__bubble.is-path .player-constellation__bubble-heading { color: #77dbe5; }
+.player-constellation__bubble-heading span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player-constellation__bubble-heading time { margin-left: auto; color: #727b7e; font-size: 0.52rem; font-weight: 500; letter-spacing: 0; white-space: nowrap; }
+.player-constellation__bubble > strong { display: block; overflow: hidden; margin-top: 5px; color: #f1f0ee; font-size: 0.69rem; font-weight: 730; text-overflow: ellipsis; white-space: nowrap; }
+.player-constellation__bubble > p { display: -webkit-box; overflow: hidden; margin-top: 2px; color: #aaa6a2; font-size: 0.61rem; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+@keyframes constellation-bubble-in { from { opacity: 0; transform: translateY(-7px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.player-constellation__idle-bubble {
+  position: absolute;
+  z-index: 4;
+  top: 19px;
+  left: 50%;
+  width: min(320px, 35%);
+  min-height: 67px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 13px;
+  border: 1px dashed rgba(83, 170, 187, 0.29);
+  border-radius: 11px 11px 11px 3px;
+  background: rgba(9, 18, 22, 0.82);
+  color: #7e979d;
+  transform: translateX(-50%);
+}
+.player-constellation__idle-orbit {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(80, 204, 221, 0.3);
+  border-radius: 50%;
+  color: #65d7e2;
+  box-shadow: 0 0 0 5px rgba(48, 160, 178, 0.06);
+}
+.player-constellation__idle-bubble strong { display: block; color: #a9dfe3; font-family: var(--font-mono); font-size: 0.57rem; letter-spacing: 0.09em; }
+.player-constellation__idle-bubble small { display: block; margin-top: 3px; color: #809095; font-size: 0.6rem; line-height: 1.35; }
+.player-constellation__node {
+  position: absolute;
+  z-index: 5;
+  width: 120px;
+  height: 124px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+}
+.player-constellation__node-content {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+  transform-origin: 50% 47%;
+}
+.player-constellation__node-content.is-rank-shaking { animation: constellation-rank-shake 1s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+@keyframes constellation-rank-shake {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0); }
+  5%, 25%, 45%, 65% { transform: translate3d(-8px, 0, 0) rotate(-4deg); }
+  15%, 35%, 55%, 75% { transform: translate3d(8px, 0, 0) rotate(4deg); }
+  10%, 30%, 50%, 70% { transform: translate3d(-6px, 0, 0) rotate(-3deg); }
+  20%, 40%, 60%, 80% { transform: translate3d(6px, 0, 0) rotate(3deg); }
+  90% { transform: translate3d(-2px, 0, 0) rotate(-1deg); }
+  95% { transform: translate3d(2px, 0, 0) rotate(1deg); }
+}
+@keyframes constellation-rank-status-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  8%, 28%, 48%, 68% { transform: translateX(-5px) rotate(-1.5deg); }
+  18%, 38%, 58%, 78% { transform: translateX(5px) rotate(1.5deg); }
+  90% { transform: translateX(-2px); }
+  95% { transform: translateX(2px); }
+}
+.player-constellation__node-rank {
+  position: absolute;
+  z-index: 2;
+  top: 1px;
+  right: 8px;
+  min-width: 33px;
+  height: 19px;
+  display: grid;
+  place-items: center;
+  padding: 0 5px;
+  border: 1px solid rgba(238, 174, 102, 0.3);
+  border-radius: 999px;
+  background: rgba(24, 20, 17, 0.95);
+  color: #efb56f;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 800;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.38);
+}
+.player-constellation__node.is-self .player-constellation__node-rank { border-color: rgba(113, 221, 233, 0.48); color: #9ff3f1; }
+.player-constellation__avatar-orbit {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(100, 216, 228, 0.46);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(41, 91, 101, 0.66), rgba(7, 16, 21, 0.98) 72%);
+  box-shadow: 0 0 0 4px rgba(70, 177, 190, 0.08), 0 0 21px rgba(75, 217, 230, 0.16), inset 0 0 12px rgba(85, 211, 226, 0.1);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+.player-constellation__node:hover .player-constellation__avatar-orbit { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(70, 177, 190, 0.11), 0 0 28px rgba(75, 217, 230, 0.3); }
+.player-constellation__node.is-self .player-constellation__avatar-orbit { border-color: rgba(255, 161, 98, 0.7); box-shadow: 0 0 0 4px rgba(255, 138, 76, 0.09), 0 0 25px rgba(255, 138, 76, 0.22); }
+.player-constellation__avatar { border: 2px solid #0e1b21; }
+.player-constellation__node-pulse {
+  position: absolute;
+  z-index: 0;
+  inset: -7px;
+  border: 1px solid rgba(72, 223, 159, 0.45);
+  border-radius: 50%;
+  animation: constellation-node-pulse 2.7s ease-out infinite;
+}
+@keyframes constellation-node-pulse { 0% { transform: scale(0.85); opacity: 0.75; } 100% { transform: scale(1.35); opacity: 0; } }
+.player-constellation__status-dot {
+  position: absolute;
+  right: 0;
+  bottom: 2px;
+  width: 11px;
+  height: 11px;
+  border: 2px solid #0c1418;
+  border-radius: 50%;
+  background: #61696c;
+}
+.player-constellation__node.is-online .player-constellation__status-dot { background: #47e590; box-shadow: 0 0 8px rgba(71, 229, 144, 0.8); }
+.player-constellation__node-name {
+  max-width: 116px;
+  overflow: hidden;
+  margin-top: 5px;
+  padding: 2px 7px;
+  border: 1px solid rgba(133, 180, 187, 0.13);
+  border-radius: 999px;
+  background: rgba(8, 13, 16, 0.88);
+  color: #e0e8e9;
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1.28;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: 0 4px 13px rgba(0, 0, 0, 0.36);
+}
+.player-constellation__node.is-self .player-constellation__node-name { border-color: rgba(255, 153, 92, 0.3); color: #ffc399; }
+.player-constellation__node-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #7e9298;
+  font-family: var(--font-mono);
+  font-size: 0.53rem;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.player-constellation__node-meta i { width: 2px; height: 2px; border-radius: 50%; background: #58757b; }
+.player-constellation__rank-delta {
+  position: absolute;
+  z-index: 4;
+  top: 31px;
+  right: -4px;
+  min-width: 28px;
+  height: 23px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 5px;
+  border: 1px solid currentColor;
+  border-radius: 7px;
+  background: rgba(7, 15, 17, 0.97);
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  font-weight: 850;
+  box-shadow: 0 3px 11px rgba(0, 0, 0, 0.45);
+}
+.player-constellation__rank-delta.is-up { color: #66e49b; }
+.player-constellation__rank-delta.is-down { color: #ff947d; }
+.player-constellation__rank-delta b { font-size: 0.78rem; }
+.player-constellation__empty-state {
+  position: absolute;
+  z-index: 7;
+  top: 59%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  color: #82959a;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+.player-constellation__empty-state svg { color: #5da9b2; }
+.player-constellation__empty-state strong { font-size: 0.78rem; font-weight: 600; }
+.player-constellation__empty-state button { color: #76dce7; font-size: 0.69rem; text-decoration: underline; text-underline-offset: 3px; }
+.player-constellation__stage-coordinates {
+  position: absolute;
+  z-index: 3;
+  right: 18px;
+  bottom: 11px;
+  left: 18px;
+  display: flex;
+  justify-content: space-between;
+  color: rgba(121, 156, 161, 0.55);
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+.player-constellation__scroll-hint {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 10px 7px;
+  color: #647a80;
+  font-size: 0.62rem;
+}
+.player-constellation__scroll-hint svg:first-child { transform: rotate(180deg); }
+.player-constellation__objectives {
+  position: relative;
+  z-index: 1;
+  padding: 13px 18px 16px;
+  border-top: 1px solid rgba(168, 217, 222, 0.1);
+  background: linear-gradient(180deg, rgba(13, 18, 21, 0.96), rgba(11, 14, 17, 0.98));
+}
+.player-constellation__objectives-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+.player-constellation__objectives-heading .player-dashboard__eyebrow { color: #71ccd4; font-size: 0.55rem; }
+.player-constellation__objectives-heading h3 { margin-top: 2px; color: #e3eaeb; font-size: 0.82rem; font-weight: 730; }
+.player-constellation__objective-count {
+  min-width: 26px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(100, 201, 214, 0.2);
+  border-radius: 7px;
+  color: #8adce3;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+}
+.player-constellation__objective-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 1px 1px 5px;
+  scrollbar-color: #24515b transparent;
+}
+.player-constellation__objective-card {
+  min-width: 215px;
+  max-width: 285px;
+  min-height: 62px;
+  flex: 1 0 18%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 9px;
+  border: 1px solid rgba(149, 193, 198, 0.11);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.022);
+  transition: border-color 180ms ease, background 180ms ease;
+}
+.player-constellation__objective-card:hover { border-color: rgba(92, 207, 218, 0.26); background: rgba(53, 153, 168, 0.06); }
+.player-constellation__objective-mark {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(83, 219, 151, 0.25);
+  border-radius: 8px;
+  background: rgba(61, 220, 132, 0.09);
+  color: #6ee3a1;
+}
+.player-constellation__objective-copy { min-width: 0; flex: 1; }
+.player-constellation__objective-copy > p {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #bec9cb;
+  font-size: 0.63rem;
+  font-weight: 560;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.player-constellation__objective-copy > div { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.player-constellation__objective-copy strong { overflow: hidden; color: #8eaaae; font-size: 0.57rem; font-weight: 690; text-overflow: ellipsis; white-space: nowrap; }
+.player-constellation__objective-copy > div span { flex: 0 0 auto; color: #d4a778; font-family: var(--font-mono); font-size: 0.52rem; }
+.player-constellation__objective-card time { align-self: flex-start; flex: 0 0 auto; padding-top: 2px; color: #62767b; font-family: var(--font-mono); font-size: 0.51rem; }
+.player-constellation__objective-empty { min-height: 48px; display: flex; align-items: center; gap: 9px; color: #7f9297; font-size: 0.68rem; }
+.player-constellation__objective-empty .player-constellation__objective-mark { border-color: rgba(82, 191, 207, 0.2); background: rgba(34, 211, 238, 0.055); color: #6bbfcc; }
+
+@media (max-width: 760px) {
+  .player-constellation__header { align-items: flex-start; padding: 16px 13px 12px; }
+  .player-constellation__title-icon { width: 37px; height: 37px; border-radius: 11px; }
+  .player-constellation__header h2 { font-size: 1rem; }
+  .player-constellation__header p { max-width: 260px; font-size: 0.66rem; }
+  .player-constellation__header-status { gap: 5px; font-size: 0.57rem; }
+  .player-constellation__online-count,
+  .player-constellation__player-count { min-height: 24px; padding: 0 7px; }
+  .player-constellation__toolbar { align-items: flex-start; flex-direction: column; padding: 8px 12px; }
+  .player-constellation__filters { gap: 5px; }
+  .player-constellation__filter { min-height: 29px; padding: 0 7px; font-size: 0.63rem; }
+  .player-constellation__rank-update { min-height: 20px; max-width: 100%; align-self: flex-end; font-size: 0.56rem; }
+  .player-constellation__stage { height: 430px; min-width: 1040px; }
+  .player-constellation__bubbles { inset: 12px 12px auto; gap: 10px; }
+  .player-constellation__bubble { width: 34%; min-height: 70px; padding: 8px; }
+  .player-constellation__bubble > p { font-size: 0.57rem; }
+  .player-constellation__idle-bubble { width: 310px; max-width: 38%; }
+  .player-constellation__scroll-hint { display: flex; }
+  .player-constellation__objectives { padding: 12px 12px 14px; }
+  .player-constellation__objective-card { min-width: 230px; flex-basis: 230px; }
+}
+@media (max-width: 480px) {
+  .player-constellation__header { gap: 8px; }
+  .player-constellation__title-group { gap: 8px; }
+  .player-constellation__title-icon { width: 32px; height: 32px; }
+  .player-constellation__header-status { flex-direction: column; align-items: flex-end; }
+  .player-constellation__header .player-dashboard__eyebrow { font-size: 0.53rem; }
+  .player-constellation__header p { max-width: 210px; }
+  .player-constellation__filter svg { display: none; }
+  .player-constellation__interest-toggle svg { display: block; }
+  .player-constellation__filter small { min-width: 12px; }
+  .player-constellation__rank-update { font-size: 0.53rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-constellation__link,
+  .player-constellation__point-halo,
+  .player-constellation__node-pulse,
+  .player-constellation__bubble,
+  .player-constellation__node-content.is-rank-shaking,
+  .player-constellation__rank-update.is-shaking {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

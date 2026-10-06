@@ -211,20 +211,27 @@ export default function App() {
     db.updateUser(user.id, {
       progress: { ...u.progress, [moduleId]: { ...mp, done: [...mp.done, taskId] } },
     });
-    const objective = moduleById(moduleId)?.tasks.find((task) => task.id === taskId);
+    const objectiveModule = moduleById(moduleId);
+    const objective = objectiveModule?.tasks.find((task) => task.id === taskId);
+    const objectiveCampaign = CAMPAIGNS.find((campaign) => campaign.modules.some((module) => module.id === moduleId));
     const baseReward = objective?.reward ?? 5;
     const hintPenalty = hintUsed && objective ? Math.min(db.HINT_XP_PENALTY, baseReward) : 0;
     const { gained, leveledUp } = db.awardXp(user.id, Math.max(0, baseReward - hintPenalty));
     const rewardNote = hintPenalty > 0
       ? `(+${gained} XP after -${hintPenalty} XP hint penalty)`
       : `(+${gained} XP)`;
-    db.pushFeed(db.userById(user.id)!, "task", `${u.displayName} solved an objective ${rewardNote}`);
+    db.pushFeed(db.userById(user.id)!, "task", `${u.displayName} solved an objective ${rewardNote}`, {
+      campaignId: objectiveCampaign?.id,
+      moduleId,
+      objectiveId: taskId,
+    });
     if (leveledUp) {
       db.pushFeed(db.userById(user.id)!, "levelup", `${u.displayName} reached a new level!`);
       setTimeout(() => sound.levelUp(), 700);
     }
     if (firstEver) maybeBadge("firstblood");
     awardMetricBadges();
+    db.saveDB();
     refresh();
   };
 
@@ -248,7 +255,12 @@ export default function App() {
       });
     }
     const { gained } = db.awardXp(user.id, 15);
-    db.pushFeed(db.userById(user.id)!, "module", `${u.displayName} completed a module (+${gained} XP)`);
+    const pathCompleted = !!currentCampaign && currentCampaign.modules.every((module) => nextProgress[module.id]?.completed);
+    db.pushFeed(db.userById(user.id)!, "module", `${u.displayName} completed a module (+${gained} XP)`, {
+      campaignId: currentCampaign?.id,
+      moduleId,
+      pathCompleted,
+    });
     const badge = MODULE_BADGE[moduleId];
     if (badge) maybeBadge(badge);
     if (
@@ -258,6 +270,7 @@ export default function App() {
       maybeBadge("incident_reporter");
     }
     awardMetricBadges();
+    db.saveDB();
     refresh();
     setQuizFor(moduleId);
   };

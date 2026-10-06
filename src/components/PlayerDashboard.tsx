@@ -15,6 +15,7 @@ import Avatar from "./Avatar";
 import { cn } from "../utils/cn";
 import InteractiveMap from "./InteractiveMap";
 import PlayerTeamPanel from "./PlayerTeamPanel";
+import PlayerConstellation from "./PlayerConstellation";
 
 function nextUnlockedModule(campaign: (typeof LEARNING_PATHS)[number], user: User, preferActive: boolean) {
   const ordered = [...campaign.modules].sort((a, b) => a.order - b.order);
@@ -257,6 +258,8 @@ export default function PlayerDashboard({
           </div>
         </div>
       </header>
+
+      <PlayerConstellation user={user} lang={lang} />
 
       <div className="player-dashboard__layout">
         <div className="player-dashboard__main">

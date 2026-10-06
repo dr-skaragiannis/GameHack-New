@@ -90,8 +90,12 @@ export type FeedEvent = {
   ts: number;
   userId: string;
   username: string;
-  kind: "join" | "task" | "module" | "challenge" | "badge" | "levelup" | "login";
+  kind: "join" | "task" | "module" | "challenge" | "badge" | "levelup" | "login" | "broadcast";
   text: string;
+  campaignId?: string;
+  moduleId?: string;
+  objectiveId?: string;
+  pathCompleted?: boolean;
 };
 
 export type Ticket = {
@@ -878,9 +882,11 @@ export function userById(id: string): User | undefined {
   return getDB().users.find((u) => u.id === id);
 }
 
-export function pushFeed(user: User, kind: FeedEvent["kind"], text: string) {
+export type FeedEventDetails = Pick<FeedEvent, "campaignId" | "moduleId" | "objectiveId" | "pathCompleted">;
+
+export function pushFeed(user: User, kind: FeedEvent["kind"], text: string, details?: FeedEventDetails) {
   const db = getDB();
-  db.feed.unshift({ id: uid(), ts: Date.now(), userId: user.id, username: user.displayName, kind, text });
+  db.feed.unshift({ id: uid(), ts: Date.now(), userId: user.id, username: user.displayName, kind, text, ...details });
   db.feed = db.feed.slice(0, 80);
 }
 
@@ -1023,6 +1029,7 @@ export function sendMessage(from: User, toId: string | "broadcast", text: string
         broadcast: true,
       });
     }
+    pushFeed(from, "broadcast", text);
   } else {
     db.messages.unshift({
       id: uid(),
