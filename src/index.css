@@ -2836,6 +2836,10 @@ body {
   min-height: min(90vh, 560px);
   max-height: 90vh;
 }
+.terminal-window__input {
+  position: relative;
+  z-index: 6;
+}
 .terminal-window__scroll {
   min-height: 0;
   overflow-x: hidden;

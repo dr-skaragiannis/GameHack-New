@@ -19,6 +19,7 @@ export default function TerminalView({
 }) {
   const [buf, setBuf] = useState("");
   const [histIdx, setHistIdx] = useState(-1);
+  const [inputFocused, setInputFocused] = useState(false);
   const [, bumpScreen] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -97,11 +98,15 @@ export default function TerminalView({
           e.preventDefault();
           submit(buf);
         }}
-        className="terminal-window__input flex shrink-0 items-center gap-2 border-t border-white/5 bg-zinc-950/80 px-3 py-3"
+        className="terminal-window__input flex min-w-0 shrink-0 items-center gap-2 border-t border-white/5 bg-zinc-950/80 px-3 py-3"
       >
-        <span className="text-ember-400 shrink-0">{prompt(term)}</span>
+        <span className="min-w-0 max-w-[55%] shrink truncate text-ember-400" title={prompt(term)}>{prompt(term)}</span>
+        {!inputFocused && !buf && (
+          <span className="inline-block h-[1.1em] w-[0.55em] shrink-0 bg-ember-400 cursor-blink" aria-hidden="true" />
+        )}
         <input
           ref={input}
+          type="text"
           value={buf}
           autoFocus
           autoComplete="off"
@@ -109,6 +114,8 @@ export default function TerminalView({
           autoCapitalize="off"
           autoCorrect="off"
           aria-label={t("typeCommand", lang)}
+          onFocus={() => setInputFocused(true)}
+          onBlur={() => setInputFocused(false)}
           onChange={(e) => setBuf(e.target.value)}
           onPaste={() => {
             pasteRef.current = true;
@@ -148,7 +155,7 @@ export default function TerminalView({
               }
             } else if (e.key.length === 1) sound.key();
           }}
-          className="flex-1 bg-transparent outline-none text-zinc-100 placeholder:text-zinc-600 caret-ember-400"
+          className="min-w-0 flex-1 bg-transparent text-base text-zinc-100 outline-none caret-ember-400"
         />
       </form>
     </div>
