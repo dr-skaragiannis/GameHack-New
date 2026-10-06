@@ -488,6 +488,7 @@ export default function App() {
               key={`${user.id}:${active.id}:${moduleInitialTab || "auto"}`}
               module={active}
               userId={user.id}
+              campaignId={campaign.id}
               lang={lang}
               initialTab={moduleInitialTab}
               topbarTools={moduleTopbarTools}
@@ -498,8 +499,8 @@ export default function App() {
                 refresh();
               }}
               onTask={(taskId, hintUsed) => markTaskDone(active.id, taskId, hintUsed)}
-              onCommandMetric={(pasted, typo) => {
-                db.recordCommand(user.id, { pasted, typo });
+              onCommandMetric={(pasted, typo, execution) => {
+                db.recordCommand(user.id, { pasted, typo }, execution);
               }}
               onHint={() => {
                 const u = db.userById(user.id)!;

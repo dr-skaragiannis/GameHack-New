@@ -14,6 +14,7 @@ import LiveFeed from "./LiveFeed";
 import Avatar from "./Avatar";
 import { cn } from "../utils/cn";
 import InteractiveMap from "./InteractiveMap";
+import PlayerTeamPanel from "./PlayerTeamPanel";
 
 function nextUnlockedModule(campaign: (typeof LEARNING_PATHS)[number], user: User, preferActive: boolean) {
   const ordered = [...campaign.modules].sort((a, b) => a.order - b.order);
@@ -424,6 +425,8 @@ export default function PlayerDashboard({
           </div>
         )}
       </section>
+
+      <PlayerTeamPanel user={user} lang={lang} />
 
       <section className="player-dashboard__card player-dashboard__activity" aria-labelledby="player-activity-title">
         <div className="player-dashboard__section-heading">

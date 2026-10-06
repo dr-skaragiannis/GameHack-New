@@ -34,6 +34,7 @@ export type User = {
   lastSeen?: number;
   activeCampaignId?: string;
   activeModuleId?: string;
+  teamId?: string;
   lang: Lang;
   accepted: boolean;
   contentWidth?: ContentWidth;
@@ -41,6 +42,47 @@ export type User = {
   progress: Record<string, ModProgress>;
   metrics: Metrics;
   badges: string[];
+};
+
+export type Team = {
+  id: string;
+  name: string;
+  description: string;
+  educatorId: string;
+  createdAt: number;
+};
+
+export type TeamApplication = {
+  id: string;
+  teamId: string;
+  playerId: string;
+  requestedAt: number;
+  respondedAt?: number;
+  status: "pending" | "accepted" | "declined" | "withdrawn";
+};
+
+export type CommandExecution = {
+  id: string;
+  userId: string;
+  ts: number;
+  command: string;
+  campaignId: string;
+  moduleId: string;
+  cwd: string;
+  exitCode: number;
+  pasted: boolean;
+  typo: boolean;
+  output: string;
+  outputTruncated: boolean;
+};
+
+export type CommandExecutionInput = {
+  command: string;
+  campaignId: string;
+  moduleId: string;
+  cwd: string;
+  exitCode: number;
+  output: string;
 };
 
 export type FeedEvent = {
@@ -85,6 +127,9 @@ export type DB = {
   tickets: Ticket[];
   messages: Message[];
   chats: ChatThread[];
+  teams: Team[];
+  teamApplications: TeamApplication[];
+  commandLog: CommandExecution[];
 };
 
 const KEY = "hackforge.platform.v1";
@@ -414,7 +459,17 @@ export function isOnline(user: User, now = Date.now()) {
 }
 
 function seed(): DB {
-  const db: DB = { users: [], sessionUserId: null, feed: [], tickets: [], messages: [], chats: [] };
+  const db: DB = {
+    users: [],
+    sessionUserId: null,
+    feed: [],
+    tickets: [],
+    messages: [],
+    chats: [],
+    teams: [],
+    teamApplications: [],
+    commandLog: [],
+  };
 
   const edu: User = {
     id: uid(),
@@ -477,6 +532,36 @@ function seed(): DB {
       text: `${dn} completed a module`,
     });
   }
+
+  const signalTeam: Team = {
+    id: uid(),
+    name: "Signal & Shield",
+    description: "Blue-team investigation and evidence-driven defense.",
+    educatorId: edu.id,
+    createdAt: Date.now() - 86400000 * 5,
+  };
+  const packetTeam: Team = {
+    id: uid(),
+    name: "Packet Forge",
+    description: "Network reconnaissance and offensive-security practice.",
+    educatorId: edu.id,
+    createdAt: Date.now() - 86400000 * 3,
+  };
+  db.teams.push(signalTeam, packetTeam);
+  const nova = db.users.find((item) => item.username === "nova");
+  const byte = db.users.find((item) => item.username === "byte");
+  const cipher = db.users.find((item) => item.username === "cipher");
+  if (nova) nova.teamId = signalTeam.id;
+  if (byte) byte.teamId = packetTeam.id;
+  if (cipher) {
+    db.teamApplications.push({
+      id: uid(),
+      teamId: signalTeam.id,
+      playerId: cipher.id,
+      requestedAt: Date.now() - 1000 * 60 * 18,
+      status: "pending",
+    });
+  }
   return db;
 }
 
@@ -508,15 +593,34 @@ function enrichDemoPresence(db: DB) {
   (db as unknown as Record<string, unknown>)[DEMO_MAP_MARK] = 1;
 }
 
+function normalizeStoredDB(value: unknown): DB | null {
+  if (!value || typeof value !== "object") return null;
+  const stored = value as Partial<DB>;
+  if (!Array.isArray(stored.users)) return null;
+  return {
+    users: stored.users,
+    sessionUserId: typeof stored.sessionUserId === "string" ? stored.sessionUserId : null,
+    feed: Array.isArray(stored.feed) ? stored.feed : [],
+    tickets: Array.isArray(stored.tickets) ? stored.tickets : [],
+    messages: Array.isArray(stored.messages) ? stored.messages : [],
+    chats: Array.isArray(stored.chats) ? stored.chats : [],
+    teams: Array.isArray(stored.teams) ? stored.teams : [],
+    teamApplications: Array.isArray(stored.teamApplications) ? stored.teamApplications : [],
+    commandLog: Array.isArray(stored.commandLog) ? stored.commandLog : [],
+  };
+}
+
 export function getDB(): DB {
   if (cache) return cache;
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
-      cache = JSON.parse(raw);
-      enrichDemoPresence(cache!);
-      saveDB();
-      return cache!;
+      cache = normalizeStoredDB(JSON.parse(raw));
+      if (cache) {
+        enrichDemoPresence(cache);
+        saveDB();
+        return cache;
+      }
     }
   } catch {
     /* ignore */
@@ -627,6 +731,145 @@ export function overallScoreboard(): { user: User; rank: number }[] {
     .map((user, index) => ({ user, rank: index + 1 }));
 }
 
+export type TeamApplicationSummary = { application: TeamApplication; team: Team; player: User };
+export type TeamApplicationFailure = "invalidPlayer" | "teamNotFound" | "alreadyInTeam" | "pendingElsewhere";
+export type TeamApplicationResult = { ok: true; application: TeamApplication } | { ok: false; reason: TeamApplicationFailure };
+
+export function allTeams(): Team[] {
+  return getDB().teams.slice().sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function teamsForEducator(educatorId: string): Team[] {
+  return allTeams().filter((team) => team.educatorId === educatorId);
+}
+
+export function teamById(teamId: string): Team | undefined {
+  return getDB().teams.find((team) => team.id === teamId);
+}
+
+export function teamForPlayer(playerId: string): Team | undefined {
+  const player = userById(playerId);
+  return player?.teamId ? teamById(player.teamId) : undefined;
+}
+
+export function teamMembers(teamId: string): User[] {
+  return allPlayers().filter((player) => player.teamId === teamId).sort((a, b) => a.displayName.localeCompare(b.displayName));
+}
+
+export function createTeam(educatorId: string, name: string, description = ""): Team | null {
+  const educator = userById(educatorId);
+  const cleanName = name.trim().replace(/\s+/g, " ");
+  const cleanDescription = description.trim().slice(0, 180);
+  if (educator?.role !== "educator" || !cleanName || cleanName.length > 40) return null;
+  if (teamsForEducator(educatorId).some((team) => team.name.toLowerCase() === cleanName.toLowerCase())) return null;
+  const team: Team = { id: uid(), name: cleanName, description: cleanDescription, educatorId, createdAt: Date.now() };
+  getDB().teams.push(team);
+  saveDB();
+  return team;
+}
+
+export function applyForTeam(playerId: string, teamId: string): TeamApplicationResult {
+  const db = getDB();
+  const player = db.users.find((item) => item.id === playerId && item.role === "player");
+  if (!player) return { ok: false, reason: "invalidPlayer" };
+  const team = db.teams.find((item) => item.id === teamId);
+  if (!team) return { ok: false, reason: "teamNotFound" };
+  if (player.teamId) return { ok: false, reason: "alreadyInTeam" };
+  const pending = db.teamApplications.find((application) => application.playerId === playerId && application.status === "pending");
+  if (pending) return { ok: false, reason: "pendingElsewhere" };
+  const application: TeamApplication = { id: uid(), teamId, playerId, requestedAt: Date.now(), status: "pending" };
+  db.teamApplications.unshift(application);
+  saveDB();
+  return { ok: true, application };
+}
+
+export function withdrawTeamApplication(playerId: string, applicationId: string): boolean {
+  const application = getDB().teamApplications.find((item) =>
+    item.id === applicationId && item.playerId === playerId && item.status === "pending"
+  );
+  if (!application) return false;
+  application.status = "withdrawn";
+  application.respondedAt = Date.now();
+  saveDB();
+  return true;
+}
+
+export function teamApplicationsForPlayer(playerId: string): TeamApplicationSummary[] {
+  const db = getDB();
+  return db.teamApplications
+    .filter((application) => application.playerId === playerId && application.status === "pending")
+    .map((application) => ({
+      application,
+      team: db.teams.find((team) => team.id === application.teamId)!,
+      player: db.users.find((player) => player.id === playerId)!,
+    }))
+    .filter((entry) => entry.team && entry.player);
+}
+
+export function pendingTeamApplications(educatorId: string): TeamApplicationSummary[] {
+  const db = getDB();
+  const ownedTeams = new Set(db.teams.filter((team) => team.educatorId === educatorId).map((team) => team.id));
+  return db.teamApplications
+    .filter((application) => application.status === "pending" && ownedTeams.has(application.teamId))
+    .map((application) => ({
+      application,
+      team: db.teams.find((team) => team.id === application.teamId)!,
+      player: db.users.find((player) => player.id === application.playerId)!,
+    }))
+    .filter((entry) => entry.team && entry.player)
+    .sort((a, b) => a.application.requestedAt - b.application.requestedAt);
+}
+
+export function reviewTeamApplication(educatorId: string, applicationId: string, accept: boolean): boolean {
+  const db = getDB();
+  const educator = db.users.find((item) => item.id === educatorId && item.role === "educator");
+  const application = db.teamApplications.find((item) => item.id === applicationId && item.status === "pending");
+  const team = application ? db.teams.find((item) => item.id === application.teamId && item.educatorId === educatorId) : undefined;
+  const player = application ? db.users.find((item) => item.id === application.playerId && item.role === "player") : undefined;
+  if (!educator || !application || !team || !player) return false;
+  if (accept && player.teamId && player.teamId !== team.id) return false;
+  application.status = accept ? "accepted" : "declined";
+  application.respondedAt = Date.now();
+  if (accept) {
+    player.teamId = team.id;
+    db.teamApplications.forEach((other) => {
+      if (other.playerId === player.id && other.id !== application.id && other.status === "pending") {
+        other.status = "declined";
+        other.respondedAt = Date.now();
+      }
+    });
+  }
+  saveDB();
+  return true;
+}
+
+export function assignPlayerToTeam(educatorId: string, playerId: string, teamId: string | null): boolean {
+  const db = getDB();
+  const educator = db.users.find((item) => item.id === educatorId && item.role === "educator");
+  const player = db.users.find((item) => item.id === playerId && item.role === "player");
+  const team = teamId ? db.teams.find((item) => item.id === teamId && item.educatorId === educatorId) : undefined;
+  const currentTeam = player?.teamId ? db.teams.find((item) => item.id === player.teamId) : undefined;
+  if (!educator || !player || (teamId && !team)) return false;
+  if (!teamId && currentTeam?.educatorId !== educatorId) return false;
+  if (teamId) player.teamId = teamId;
+  else delete player.teamId;
+  db.teamApplications.forEach((application) => {
+    if (application.playerId === playerId && application.status === "pending") {
+      application.status = teamId && application.teamId === teamId ? "accepted" : "declined";
+      application.respondedAt = Date.now();
+    }
+  });
+  saveDB();
+  return true;
+}
+
+export function commandExecutions(playerId?: string): CommandExecution[] {
+  return getDB().commandLog
+    .filter((entry) => !playerId || entry.userId === playerId)
+    .slice()
+    .sort((a, b) => b.ts - a.ts);
+}
+
 export function allEducators(): User[] {
   return getDB().users.filter((u) => u.role === "educator");
 }
@@ -653,7 +896,21 @@ function touchStreak(u: User) {
   u.metrics.lastActiveDay = t;
 }
 
-export function recordCommand(userId: string, opts: { pasted: boolean; typo: boolean }) {
+function redactCommandSecrets(command: string): string {
+  return command
+    .replace(/(\b(?:--password|--token|--secret|--api[-_]?key)\s+)(?:"[^"]*"|'[^']*'|[^\s]+)/gi, "$1[REDACTED]")
+    .replace(/(\b(?:password|token|secret|api[_-]?key)\s*=\s*)(?:"[^"]*"|'[^']*'|[^\s;&]+)/gi, "$1[REDACTED]")
+    .replace(/(\bsshpass\s+-p\s+)(?:"[^"]*"|'[^']*'|[^\s]+)/gi, "$1[REDACTED]");
+}
+
+const MAX_COMMAND_LOG_ENTRIES = 500;
+const MAX_COMMAND_OUTPUT_CHARS = 2400;
+
+export function recordCommand(
+  userId: string,
+  opts: { pasted: boolean; typo: boolean },
+  execution?: CommandExecutionInput,
+) {
   const db = getDB();
   const u = db.users.find((x) => x.id === userId);
   if (!u) return;
@@ -661,6 +918,24 @@ export function recordCommand(userId: string, opts: { pasted: boolean; typo: boo
   if (opts.pasted) u.metrics.pasteCount++;
   else u.metrics.typedCount++;
   if (opts.typo) u.metrics.typoCount++;
+  if (execution && execution.command.trim()) {
+    const fullOutput = execution.output || "(no output)";
+    db.commandLog.unshift({
+      id: uid(),
+      userId,
+      ts: Date.now(),
+      command: redactCommandSecrets(execution.command.trim()).slice(0, 500),
+      campaignId: execution.campaignId,
+      moduleId: execution.moduleId,
+      cwd: execution.cwd.slice(0, 256),
+      exitCode: execution.exitCode,
+      pasted: opts.pasted,
+      typo: opts.typo,
+      output: fullOutput.slice(0, MAX_COMMAND_OUTPUT_CHARS),
+      outputTruncated: fullOutput.length > MAX_COMMAND_OUTPUT_CHARS,
+    });
+    db.commandLog = db.commandLog.slice(0, MAX_COMMAND_LOG_ENTRIES);
+  }
   saveDB();
 }
 

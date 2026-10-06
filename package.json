@@ -11,6 +11,7 @@
     "build": "vite build",
     "test:linux": "node scripts/test-linux-sandbox.mjs",
     "test:progression": "node scripts/test-progress-rules.mjs",
+    "test:educator": "node scripts/test-educator-features.mjs",
     "preview": "npm start",
     "start": "node server/index.mjs"
   },

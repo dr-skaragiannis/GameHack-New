@@ -7,7 +7,7 @@ import { activateTerminalForModule, loadPlayerTerminal, savePlayerTerminal } fro
 import TerminalView from "./TerminalView";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
-import { contentWidthClass, HINT_XP_PENALTY, type ContentWidth } from "../lib/db";
+import { contentWidthClass, HINT_XP_PENALTY, type CommandExecutionInput, type ContentWidth } from "../lib/db";
 import WidthControl from "./WidthControl";
 import { sound } from "../lib/sound";
 import {
@@ -128,6 +128,7 @@ function commandTheoryParagraphs(item: StudyItem, lang: Lang): string[] {
 export default function ModuleView({
   module,
   userId,
+  campaignId,
   lang,
   initialTab,
   topbarTools,
@@ -142,6 +143,7 @@ export default function ModuleView({
 }: {
   module: Module;
   userId: string;
+  campaignId: string;
   lang: Lang;
   initialTab?: "theory" | "guide" | "lab";
   topbarTools: ReactNode;
@@ -149,7 +151,7 @@ export default function ModuleView({
   contentWidth?: ContentWidth;
   onWidth: (w: ContentWidth) => void;
   onTask: (taskId: string, hintUsed: boolean) => void;
-  onCommandMetric: (pasted: boolean, typo: boolean) => void;
+  onCommandMetric: (pasted: boolean, typo: boolean, execution: CommandExecutionInput) => void;
   onHint: () => void;
   onComplete: () => void;
   onBack: () => void;
@@ -423,6 +425,7 @@ export default function ModuleView({
               onSuggestionConsumed={() => setCommandSuggestion(null)}
               onCommand={(raw, pasted) => {
                 if (!raw.trim()) return;
+                const cwd = term.cwd;
                 const lines = runCommand(term, raw);
                 if (raw.trim() === "clear") {
                   term.lines = [];
@@ -449,7 +452,14 @@ export default function ModuleView({
                   setCommandResult(null);
                 }
                 const typo = term.lastExit === 127;
-                onCommandMetric(pasted, typo);
+                onCommandMetric(pasted, typo, {
+                  command: raw,
+                  campaignId,
+                  moduleId: module.id,
+                  cwd,
+                  exitCode: term.lastExit,
+                  output: lines.filter((line) => line.kind !== "in").map((line) => line.text).join("\n"),
+                });
                 applyChecks(term);
                 savePlayerTerminal(userId, term);
                 setTerm(term);
@@ -459,6 +469,10 @@ export default function ModuleView({
             <aside className="module-objectives space-y-4">
               <div className="glass rounded-2xl border border-forge-border p-4">
                 <div className="text-sm uppercase tracking-widest text-ember-400 mb-3">{uppercaseLabel(t("objectives", lang), lang)}</div>
+                <p className="mb-3 flex items-start gap-2 rounded-lg border border-neon-cyan/15 bg-neon-cyan/5 p-2.5 text-sm leading-5 text-iron-300">
+                  <Icon name="shield" className="mt-0.5 h-4 w-4 shrink-0 text-neon-cyan" />
+                  <span>{t("commandAuditNotice", lang)}</span>
+                </p>
                 <ol className="space-y-3">
                   {module.tasks.map((task, idx) => {
                     const ok = done.includes(task.id) || task.check(term);
