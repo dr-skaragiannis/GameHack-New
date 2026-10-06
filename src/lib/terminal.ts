@@ -62,9 +62,12 @@ export type Terminal = {
   atQueue: { id: number; time: string; command: string }[];
   atPendingTime: string | null;
   services: Record<string, "running" | "stopped" | "inactive">;
+  bootServices: Record<string, "enabled" | "disabled">;
   packages: Set<string>;
-  ftp: { host: string; user: string | null; cwd: string } | null;
+  ftp: { host: string; user: string | null; cwd: string; authenticated?: boolean } | null;
   crontab: string[];
+  crontabEditorPending: boolean;
+  sshReturn: { user: string; host: string; cwd: string; home: string; isRoot: boolean; scenario: string } | null;
   activeModuleId?: string;
 };
 
@@ -332,9 +335,12 @@ export function createTerminal(opts?: { fs?: FileNode; user?: string; host?: str
     atQueue: [],
     atPendingTime: null,
     services: { apache2: "stopped", ssh: "stopped", cron: "inactive", mysql: "stopped" },
+    bootServices: {},
     packages: new Set(["git", "nmap", "hydra", "apache2", "cron", "openssh-server"]),
     ftp: null,
-    crontab: ["# m h  dom mon dow   command", "17 * * * * root    cd / && run-parts --report /etc/cron.hourly"],
+    crontab: ["# m h dom mon dow command"],
+    crontabEditorPending: false,
+    sshReturn: null,
   };
 }
 
@@ -518,6 +524,35 @@ export function complete(t: Terminal, partial: string): string[] {
     .map((n) => (base || "") + n + (node.children![n].type === "dir" ? "/" : ""));
 }
 
+function selectHeadLines(value: string, count: number): string {
+  const lines = value.replace(/\r/g, "").split("\n");
+  if (lines.length > 1 && lines.at(-1) === "") lines.pop();
+  const end = count < 0 ? Math.max(0, lines.length + count) : Math.max(0, count);
+  return lines.slice(0, end).join("\n");
+}
+
+function parseRedirect(input: string): { left: string; operator: ">" | ">>"; destination: string } | null {
+  let quote: string | null = null;
+  for (let index = 0; index < input.length; index += 1) {
+    const character = input[index];
+    if (quote) {
+      if (character === quote) quote = null;
+      continue;
+    }
+    if (character === "'" || character === "\"") {
+      quote = character;
+      continue;
+    }
+    if (character !== ">") continue;
+    const operator = input[index + 1] === ">" ? ">>" : ">";
+    const left = input.slice(0, index).trim();
+    const destination = input.slice(index + operator.length).trim();
+    if (!left || !destination || /\s/.test(destination)) return null;
+    return { left, operator, destination };
+  }
+  return null;
+}
+
 export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean; stdin?: string | null }): TermLine[] {
   let input = raw.replace(/\s+$/, "");
   if (!input.trim()) return [];
@@ -541,6 +576,27 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
     t.atQueue.push({ id, time, command: input.trim() });
     t.flags.add("at");
     out.push({ kind: "out", text: `job ${id} queued for ${time}: ${input.trim()} (simulated; not executed)` });
+    return out;
+  }
+
+  if (!capturing && t.crontabEditorPending) {
+    const choice = input.trim();
+    if (choice === "1" || choice === "2") {
+      t.crontabEditorPending = false;
+      const editor = choice === "1" ? "nano" : "vim.tiny";
+      t.flags.add(`crontab-editor-${choice === "1" ? "nano" : "vim"}`);
+      out.push({
+        kind: "out",
+        text: `Selected editor: ${editor} (simulated).\n${t.crontab.join("\n")}\nUse echo "55 23 * * * /root/scanner" | crontab - to record a safe virtual schedule.`,
+      });
+      return out;
+    }
+    if (/^(?:q|cancel)$/i.test(choice)) {
+      t.crontabEditorPending = false;
+      out.push({ kind: "out", text: "Editor selection cancelled." });
+      return out;
+    }
+    out.push({ kind: "out", text: "Choose 1 for nano or 2 for vim.tiny, or type q to cancel." });
     return out;
   }
 
@@ -579,11 +635,11 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
     return out;
   }
 
-  const redir = input.match(/^(.*?)(>>?)(\s*)(\S+)$/);
-  if (!capturing && redir && /echo|cat|printf/.test(redir[1]) && !redir[1].includes("|")) {
-    const left = redir[1].trim();
-    const append = redir[2] === ">>";
-    const dest = redir[4];
+  const redir = parseRedirect(input);
+  if (!capturing && redir && /echo|cat|printf/.test(redir.left) && !redir.left.includes("|")) {
+    const left = redir.left;
+    const append = redir.operator === ">>";
+    const dest = redir.destination;
     const innerOut = runCommand(t, left, { capture: true });
     const text = innerOut
       .filter((l) => l.kind === "out" || l.kind === "ok")
@@ -783,12 +839,13 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
       case "less":
       case "more": {
         const fileArg = pos.find((value) => !/^\d+$/.test(value));
-        const lineMatch = input.match(/(?:^|\s)-n\s*(\d+)|(?:^|\s)-([0-9]+)/);
-        const lineCount = Math.min(100, Math.max(1, Number(lineMatch?.[1] || lineMatch?.[2] || 10)));
+        const lineMatch = input.match(/(?:^|\s)-n\s*(-?\d+)|(?:^|\s)-(-?\d+)/);
+        const requestedLines = Number(lineMatch?.[1] ?? lineMatch?.[2] ?? 10);
+        const lineCount = Math.max(-100, Math.min(100, requestedLines));
         if (!fileArg && stdin != null) {
           let content = stdin;
-          if (cmd === "head") content = content.split("\n").slice(0, lineCount).join("\n");
-          if (cmd === "tail") content = content.split("\n").slice(-lineCount).join("\n");
+          if (cmd === "head") content = selectHeadLines(content, lineCount);
+          if (cmd === "tail") content = content.split("\n").slice(-Math.max(1, lineCount)).join("\n");
           print(content);
           t.flags.add(cmd);
           break;
@@ -815,8 +872,8 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
           break;
         }
         let content = node.content || "";
-        if (cmd === "head") content = content.split("\n").slice(0, lineCount).join("\n");
-        if (cmd === "tail") content = content.split("\n").slice(-lineCount).join("\n");
+        if (cmd === "head") content = selectHeadLines(content, lineCount);
+        if (cmd === "tail") content = content.split("\n").slice(-Math.max(1, lineCount)).join("\n");
         print(content.replace(/\n$/, ""));
         t.filesRead.push(p);
         t.flags.add("cat");
@@ -1046,6 +1103,11 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
           break;
         }
         if (/localhost|127\.0\.0\.1/.test(url)) {
+          if (t.services.apache2 !== "running") {
+            print("curl: (7) Failed to connect to localhost port 80: Connection refused (Apache is stopped in the simulated lab).", "err");
+            t.lastExit = 7;
+            break;
+          }
           t.flags.add("curl-local");
           const page = getNode(t.fs, resolvePath(t, "/var/www/html/index.html"));
           print(page?.content || "<h1>It works!</h1>");
@@ -1083,6 +1145,21 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
         const dest = pos.find((p) => p.includes("@") || p.includes(".")) || pos[0] || "";
         const key = rest.includes("-i") || /id_/.test(input);
         if (/ignite@|192\.168\.0\.11/.test(dest) || /ignite@/.test(input)) {
+          if (t.services.ssh !== "running") {
+            print("ssh: connect to host ubuntu.lab port 22: Connection refused; start the simulated service with service ssh start.", "err");
+            t.lastExit = 1;
+            break;
+          }
+          if (!t.sshReturn) {
+            t.sshReturn = {
+              user: t.user,
+              host: t.host,
+              cwd: t.cwd,
+              home: t.env.HOME || t.cwd,
+              isRoot: t.isRoot,
+              scenario: t.scenario,
+            };
+          }
           print("Welcome to ubuntu (HackForge lab host)\nLast login: simulated\nignite@ubuntu:~$");
           setTerminalScenario(t, "sudorun", { user: "ignite", host: "ubuntu", cwd: "/home/ignite", home: "/home/ignite", isRoot: false });
           t.flags.add("ssh-ignite");
@@ -1120,6 +1197,24 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
         }
         print(`ssh: connect to host ${dest || "?"} port 22: Connection refused (try a lab host)`, "err");
         t.lastExit = 1;
+        break;
+      }
+      case "exit": {
+        if (!t.sshReturn) {
+          print("exit: no simulated remote session is open.");
+          break;
+        }
+        const returnContext = t.sshReturn;
+        t.sshReturn = null;
+        setTerminalScenario(t, returnContext.scenario, {
+          user: returnContext.user,
+          host: returnContext.host,
+          cwd: returnContext.cwd,
+          home: returnContext.home,
+          isRoot: returnContext.isRoot,
+        });
+        t.flags.add("ssh-return");
+        print(`Connection closed; returned to ${t.user}@${t.host}:${t.cwd}.`);
         break;
       }
       case "sudo": {

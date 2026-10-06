@@ -385,10 +385,18 @@ export function loadPlayerTerminal(userId: string): Terminal {
         )
       : fresh.atQueue;
     const atPendingTime = typeof parsed.atPendingTime === "string" ? parsed.atPendingTime : fresh.atPendingTime;
+    const savedCrontab = Array.isArray(parsed.crontab)
+      ? parsed.crontab.filter((line): line is string => typeof line === "string")
+      : fresh.crontab;
+    const hadSystemTableInPerUserCrontab =
+      savedCrontab.length === 2 &&
+      /^#\s*m\s+h\s+dom\s+mon\s+dow\s+command$/.test(savedCrontab[0].trim()) &&
+      savedCrontab[1].trim().replace(/\s+/g, " ") === "17 * * * * root cd / && run-parts --report /etc/cron.hourly";
     return {
       ...fresh,
       ...parsed,
       fs,
+      crontab: hadSystemTableInPerUserCrontab ? fresh.crontab : savedCrontab,
       shellVars,
       atQueue,
       atPendingTime,

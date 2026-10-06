@@ -49,7 +49,7 @@ try {
   for (const name of [
     "ifconfig", "ip", "iwconfig", "dhclient", "dig", "echo", "nano", "cat", "grep",
     "ps", "top", "nice", "renice", "kill", "jobs", "fg", "at", "crontab",
-    "set", "more", "env", "export", "unset",
+    "set", "more", "env", "export", "unset", "read", "reboot", "exit", "telnet", "ftp", "update-rc.d",
   ]) {
     assert.ok(catalogNames.has(name), `source command ${name} should be in the shared command catalog`);
   }
@@ -83,21 +83,31 @@ try {
   assert.equal(backgroundTerm.jobs.length, 0, "fg should remove the selected job from the background list");
 
   const learningPath = lessons.campaignById("linux-beginners-2");
+  const linuxPart3 = lessons.campaignById("linux-beginners-3");
   assert.ok(learningPath, "Linux for Beginners #2 should be registered as a learning path");
+  assert.ok(linuxPart3, "Linux for Beginners #3 should be registered as a learning path");
   assert.equal(learningPath.pathNumber, 3);
-  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.pathNumber), [1, 2, 3, 4, 5, 6]);
+  assert.equal(linuxPart3.pathNumber, 4);
+  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.pathNumber), [1, 2, 3, 4, 5, 6, 7]);
   assert.deepEqual(learningPath.modules.map((module) => module.id), ["sr-net", "sr-proc", "sr-env"]);
+  assert.deepEqual(linuxPart3.modules.map((module) => module.id), ["sr-bash", "sr-cron", "sr-svc"]);
+  assert.equal(lessons.campaignById("wirewalk")?.pathNumber, 5);
+  assert.equal(lessons.campaignById("raven")?.pathNumber, 6);
+  assert.equal(lessons.campaignById("dfir-fieldwork")?.pathNumber, 7);
   const allPathModuleIds = lessons.LEARNING_PATHS.flatMap((path) => path.modules.map((module) => module.id));
   assert.equal(new Set(allPathModuleIds).size, allPathModuleIds.length, "reused modules should appear in exactly one learning path");
-  assert.equal(lessons.campaignById("sudorun")?.modules.length, 10, "the existing path should retain its other modules without duplicates");
+  assert.equal(lessons.campaignById("sudorun")?.modules.length, 7, "the existing path should retain its other modules without duplicates");
   assert.equal(lessons.moduleById("sr-net")?.title.en, learningPath.modules[0].title.en, "existing network module progress should route to the updated lesson");
-  const courseText = JSON.stringify(learningPath);
-  assert.doesNotMatch(courseText, /hackingarticles|author|publisher/i, "the course must not retain source branding");
-  for (const module of learningPath.modules) {
-    for (const section of module.theory) {
-      for (const language of ["en", "el"]) {
-        const paragraphs = section.body[language].split(/\n\s*\n/).filter((paragraph) => paragraph.trim());
-        assert.ok(paragraphs.length >= 2, `${module.id}/${section.heading[language]} should have two readable ${language} paragraphs`);
+  assert.equal(lessons.moduleById("sr-bash")?.title.en, linuxPart3.modules[0].title.en, "existing Bash module progress should route to the updated lesson");
+  for (const path of [learningPath, linuxPart3]) {
+    const courseText = JSON.stringify(path);
+    assert.doesNotMatch(courseText, /hackingarticles|hacking articles|publisher/i, "the course must not retain source branding");
+    for (const module of path.modules) {
+      for (const section of module.theory) {
+        for (const language of ["en", "el"]) {
+          const paragraphs = section.body[language].split(/\n\s*\n/).filter((paragraph) => paragraph.trim());
+          assert.ok(paragraphs.length >= 2, `${module.id}/${section.heading[language]} should have two readable ${language} paragraphs`);
+        }
       }
     }
   }
@@ -113,7 +123,22 @@ try {
     "/root/linux-beginners-2/processes/notes.txt",
     "/root/linux-beginners-2/environment/variable-notes.txt",
     "/root/linux-beginners-2/environment/defaults.txt",
+    "/root/linux-beginners-3/README.txt",
+    "/root/linux-beginners-3/first_script",
+    "/root/linux-beginners-3/welcome.sh",
+    "/root/linux-beginners-3/scanner",
+    "/root/linux-beginners-3/runlevels.txt",
+    "/root/linux-beginners-3/cron-reference.txt",
+    "/root/linux-beginners-3/service-reference.txt",
+    "/root/linux-beginners-3/head-fixture.txt",
+    "/root/scanner",
     "/root/.bashrc",
+    "/etc/crontab",
+    "/etc/init.d/mysql",
+    "/etc/rc0.d",
+    "/etc/rc6.d",
+    "/var/www/html/index.html",
+    "/srv/ftp/ubuntu/release/favicon.ico",
   ];
   for (const path of courseFixtures) {
     assert.ok(terminal.getNode(courseTerm.fs, path), `missing virtual course fixture: ${path}`);
@@ -139,6 +164,68 @@ try {
   assert.equal(terminal.getNode(courseTerm.fs, "/root/linux-beginners-2/environment/histsize-before-change.txt")?.content?.trim(), "1000");
   assert.match(terminal.getNode(courseTerm.fs, "/etc/hosts")?.content || "", /docs\.hackforge\.lab/);
   assert.match(terminal.getNode(courseTerm.fs, "/etc/resolv.conf")?.content || "", /10\.10\.10\.53/);
+
+  for (const module of linuxPart3.modules) {
+    playerTerminal.activateTerminalForModule(courseTerm, module.id, "sudorun");
+    for (const objective of module.tasks) {
+      for (const command of objective.hint.en.split(/\r?\n/).filter(Boolean)) terminal.runCommand(courseTerm, command);
+      assert.ok(objective.check(courseTerm), `${module.id}/${objective.id} should complete from its exact hint`);
+    }
+  }
+  assert.ok(courseTerm.flags.has("hello-script"));
+  assert.ok(courseTerm.flags.has("read-script"));
+  assert.ok(courseTerm.flags.has("run-scanner"));
+  assert.ok(courseTerm.flags.has("nmap-sn"));
+  const pipelineTerm = playerTerminal.createPlayerTerminal();
+  playerTerminal.activateTerminalForModule(pipelineTerm, "sr-bash", "sudorun");
+  const pipelineOutput = terminal.runCommand(
+    pipelineTerm,
+    'nmap -sn 10.10.10.0/24 | grep scan | cut -d " " -f 5 | head -n -1',
+  ).filter((line) => line.kind === "out").map((line) => line.text);
+  assert.deepEqual(pipelineOutput, ["10.10.10.5", "10.10.10.8", "10.10.10.12", "10.10.10.21"],
+    "the negative head count should remove the Nmap summary row, not a discovered host");
+  const scriptTerm = playerTerminal.createPlayerTerminal();
+  playerTerminal.activateTerminalForModule(scriptTerm, "sr-bash", "sudorun");
+  terminal.runCommand(scriptTerm, "cd /root/linux-beginners-3");
+  terminal.runCommand(scriptTerm, "chmod +x scanner");
+  const scannerOutput = terminal.runCommand(scriptTerm, "./scanner").filter((line) => line.kind === "out").map((line) => line.text);
+  assert.ok(scannerOutput.includes("10.10.10.21"), "the scripted scanner should show the same four fixture hosts");
+  assert.ok(courseTerm.flags.has("crontab-editor-nano"));
+  assert.match(courseTerm.crontab.join("\n"), /55 23 \* \* \* \/root\/scanner/);
+  assert.equal(courseTerm.services.cron, "running");
+  assert.equal(courseTerm.services.apache2, "running", "the final Apache restart should restore its virtual running state");
+  assert.equal(courseTerm.services.ssh, "running");
+  assert.equal(courseTerm.bootServices.mysql, "enabled");
+  assert.ok(terminal.getNode(courseTerm.fs, "/etc/rc2.d/S01mysql"), "update-rc.d defaults should create virtual runlevel links");
+  assert.ok(courseTerm.procs.some((process) => process.alive && /mysqld/.test(process.cmd)), "the simulated boot should start the virtual MySQL process");
+  assert.ok(courseTerm.flags.has("ssh-return") && courseTerm.flags.has("telnet-blocked"));
+  assert.ok(courseTerm.flags.has("ftp-login") && courseTerm.flags.has("ftp-get") && courseTerm.flags.has("ftp-bye"));
+  assert.equal(courseTerm.ftp, null, "bye should close the fictional FTP session");
+  const downloadedFavicon = terminal.getNode(courseTerm.fs, "/root/linux-beginners-3/favicon.ico");
+  assert.match(downloadedFavicon?.content || "", /HACKFORGE-FAKE-FAVICON/);
+  assert.match(terminal.getNode(courseTerm.fs, "/var/www/html/index.html")?.content || "", /HackForge/);
+  const stoppedApacheTerm = playerTerminal.createPlayerTerminal();
+  playerTerminal.activateTerminalForModule(stoppedApacheTerm, "sr-svc", "sudorun");
+  const refusedLocalCurl = terminal.runCommand(stoppedApacheTerm, "curl http://localhost").map((line) => line.text).join("\n");
+  assert.match(refusedLocalCurl, /Connection refused/);
+  const blockedFtpTerm = playerTerminal.createPlayerTerminal();
+  playerTerminal.activateTerminalForModule(blockedFtpTerm, "sr-svc", "sudorun");
+  const blockedFtpOutput = terminal.runCommand(blockedFtpTerm, "ftp ftp.cesca.es").map((line) => line.text).join("\n");
+  assert.match(blockedFtpOutput, /external host .* is blocked/);
+  assert.ok(blockedFtpTerm.flags.has("ftp-external-blocked"));
+  const unstartedSshTerm = playerTerminal.createPlayerTerminal();
+  playerTerminal.activateTerminalForModule(unstartedSshTerm, "sr-svc", "sudorun");
+  const unstartedSshOutput = terminal.runCommand(unstartedSshTerm, "ssh ignite@192.168.0.11").map((line) => line.text).join("\n");
+  assert.match(unstartedSshOutput, /Connection refused/);
+  assert.equal(unstartedSshTerm.sshReturn, null, "a refused connection must not create a remote-session context");
+  const traversalFtpTerm = playerTerminal.createPlayerTerminal();
+  playerTerminal.activateTerminalForModule(traversalFtpTerm, "sr-svc", "sudorun");
+  terminal.runCommand(traversalFtpTerm, "ftp ftp.forge.lab");
+  terminal.runCommand(traversalFtpTerm, "anonymous");
+  terminal.runCommand(traversalFtpTerm, "anonymous");
+  const traversalOutput = terminal.runCommand(traversalFtpTerm, "get ../../../../etc/passwd").map((line) => line.text).join("\n");
+  assert.match(traversalOutput, /outside the FTP fixture root/);
+  assert.ok(!traversalFtpTerm.flags.has("ftp-get"), "FTP paths must not escape the fixture tree");
 
   const aptTerm = playerTerminal.createPlayerTerminal();
   const aptOutput = terminal.runCommand(aptTerm, "apt install hydra").map((line) => line.text).join("\n");
@@ -204,12 +291,41 @@ try {
     },
   });
   term.atQueue = [{ id: 1, time: "21:30", command: "/root/scanning_script.sh" }];
+  term.services.apache2 = "running";
+  term.bootServices.mysql = "enabled";
+  term.crontab = ["# m h dom mon dow command", "55 23 * * * /root/scanner"];
+  term.sshReturn = { user: "analyst", host: "forensics-workstation", cwd: "/cases/IR-2404/evidence", home: "/cases/IR-2404", isRoot: false, scenario: "dfir" };
   playerTerminal.savePlayerTerminal("student@example.ionio.gr", term);
   const restored = playerTerminal.loadPlayerTerminal("student@example.ionio.gr");
   assert.deepEqual(restored.atQueue, term.atQueue, "simulated one-time schedule records should persist per player");
+  assert.deepEqual(restored.crontab, term.crontab);
+  assert.equal(restored.services.apache2, "running");
+  assert.equal(restored.bootServices.mysql, "enabled");
+  assert.deepEqual(restored.sshReturn, term.sshReturn);
   assert.ok(terminal.getNode(restored.fs, "/root/persistent-note.txt"));
   assert.equal(restored.activeModuleId, term.activeModuleId);
   assert.deepEqual(restored.history, term.history);
+
+  const preCourseTerm = playerTerminal.createPlayerTerminal();
+  const preCourseRoot = terminal.getNode(preCourseTerm.fs, "/root");
+  assert.ok(preCourseRoot?.children);
+  delete preCourseRoot.children["linux-beginners-3"];
+  preCourseRoot.children["learner-note.txt"] = terminal.file("learner-note.txt", "keep this saved player file\n");
+  preCourseTerm.activeModuleId = "sr-bash";
+  preCourseTerm.flags.add("saved-progress-marker");
+  const preCourseKey = `hackforge.player-terminal.v2:${encodeURIComponent("upgrade@example.ionio.gr")}`;
+  storageValues.set(preCourseKey, JSON.stringify({
+    version: 2,
+    ...preCourseTerm,
+    flags: [...preCourseTerm.flags],
+    packages: [...preCourseTerm.packages],
+  }));
+  const upgradedPlayer = playerTerminal.loadPlayerTerminal("upgrade@example.ionio.gr");
+  assert.ok(terminal.getNode(upgradedPlayer.fs, "/root/linux-beginners-3/scanner"),
+    "an existing VFS should receive new missing course fixtures after load");
+  assert.equal(terminal.getNode(upgradedPlayer.fs, "/root/learner-note.txt")?.content, "keep this saved player file\n");
+  assert.ok(upgradedPlayer.flags.has("saved-progress-marker"));
+  assert.equal(upgradedPlayer.activeModuleId, "sr-bash");
 
   const legacyFs = terminal.defaultFS();
   const mounted = (name, source) => terminal.dir(name, Object.values(source.children || {}), source.mode, source.owner, source.group);
@@ -221,6 +337,10 @@ try {
   legacyFs.children.home.children.operator.children["legacy-root-note.txt"] = terminal.file("legacy-root-note.txt", "saved from the shared root\n");
   const legacyTerm = terminal.createTerminal({ fs: legacyFs, scenario: "sudorun" });
   legacyTerm.activeModuleId = "sr-files";
+  legacyTerm.crontab = [
+    "# m h  dom mon dow   command",
+    "17 * * * * root    cd / && run-parts --report /etc/cron.hourly",
+  ];
   const legacyKey = `hackforge.player-terminal.v1:${encodeURIComponent("legacy@example.ionio.gr")}`;
   storageValues.set(legacyKey, JSON.stringify({
     version: 1,
@@ -229,6 +349,8 @@ try {
     packages: [...legacyTerm.packages],
   }));
   const migrated = playerTerminal.loadPlayerTerminal("legacy@example.ionio.gr");
+  assert.deepEqual(migrated.crontab, ["# m h dom mon dow command"],
+    "the legacy system table should not remain in the per-user crontab state");
   assert.ok(terminal.getNode(migrated.fs, "/root/persistent-note.txt"), "legacy challenge files should migrate into the unified root");
   assert.match(terminal.getNode(migrated.fs, "/root/hackforge.txt")?.content || "", /player edit from the legacy workspace/);
   assert.ok(terminal.getNode(migrated.fs, "/home/operator/legacy-root-note.txt"));

@@ -3,6 +3,7 @@ import { usedCmd } from "../lib/terminal";
 import { SUDO_RUN_ALL } from "./sudorun-lessons";
 import { DFIR_MODULES } from "./dfir-lessons";
 import { LINUX_BEGINNERS_2_MODULES } from "./linux-beginners-2";
+import { LINUX_BEGINNERS_3_MODULES } from "./linux-beginners-3";
 
 export type Bi = { en: string; el: string };
 
@@ -1090,7 +1091,10 @@ export const MODULES: Module[] = [
   },
 ];
 
-const LINUX_BEGINNERS_2_REUSED_MODULE_IDS = new Set(["sr-net", "sr-proc", "sr-env"]);
+const REHOMED_LINUX_BEGINNERS_MODULE_IDS = new Set([
+  "sr-net", "sr-proc", "sr-env",
+  "sr-bash", "sr-cron", "sr-svc",
+]);
 
 export const CAMPAIGNS: Campaign[] = ([
   {
@@ -1110,7 +1114,7 @@ export const CAMPAIGNS: Campaign[] = ([
   },
   {
     id: "raven",
-    pathNumber: 5,
+    pathNumber: 6,
     title: { en: "Operation Raven", el: "Επιχείρηση Raven" },
     subtitle: { en: "A boot2root CTF box", el: "Ένα κουτί boot2root CTF" },
     blurb: {
@@ -1123,7 +1127,7 @@ export const CAMPAIGNS: Campaign[] = ([
   },
   {
     id: "wirewalk",
-    pathNumber: 4,
+    pathNumber: 5,
     title: { en: "Wirewalk", el: "Wirewalk" },
     subtitle: { en: "SSH labyrinth", el: "Λαβύρινθος SSH" },
     blurb: {
@@ -1140,13 +1144,13 @@ export const CAMPAIGNS: Campaign[] = ([
     title: { en: "Sudo_Run", el: "Sudo_Run" },
     subtitle: { en: "Linux for Beginners", el: "Linux για αρχάριους" },
     blurb: {
-      en: "Ten practical labs from pwd to Apache, SSH and FTP, all simulated in a safe, persistent virtual filesystem.",
-      el: "Δέκα πρακτικά εργαστήρια από το pwd μέχρι Apache, SSH και FTP, όλα σε ασφαλές και μόνιμο εικονικό σύστημα αρχείων.",
+      en: "Foundational Sudo_Run labs from pwd onward, followed by dedicated sequels for networking, processes, Bash automation and services. Everything runs in a safe, persistent virtual filesystem.",
+      el: "Βασικά labs Sudo_Run από το pwd και μετά, με ξεχωριστές συνέχειες για δίκτυα, διεργασίες, αυτοματοποίηση Bash και υπηρεσίες. Όλα εκτελούνται σε ασφαλές, μόνιμο εικονικό σύστημα αρχείων.",
     },
     scenario: "sudorun",
     accent: "lime",
     modules: SUDO_RUN_ALL
-      .filter((module) => !LINUX_BEGINNERS_2_REUSED_MODULE_IDS.has(module.id))
+      .filter((module) => !REHOMED_LINUX_BEGINNERS_MODULE_IDS.has(module.id))
       .map((module, index) => ({ ...module, order: index + 1 })),
   },
   {
@@ -1166,8 +1170,24 @@ export const CAMPAIGNS: Campaign[] = ([
     modules: LINUX_BEGINNERS_2_MODULES,
   },
   {
+    id: "linux-beginners-3",
+    pathNumber: 4,
+    title: { en: "Linux for Beginners #3", el: "Linux για αρχάριους #3" },
+    subtitle: {
+      en: "Bash scripting, cron, boot services, Apache, SSH and FTP",
+      el: "Bash scripting, cron, υπηρεσίες εκκίνησης, Apache, SSH και FTP",
+    },
+    blurb: {
+      en: "Continue the Linux series with readable Bash scripts, a fixture-only Nmap pipeline, recurring schedules, SysV boot links, and safe simulations of Apache, OpenSSH and FTP. Every file and service stays in the player’s persistent VFS.",
+      el: "Συνέχισε τη σειρά Linux με κατανοητά Bash scripts, εικονικό pipeline Nmap, επαναλαμβανόμενα προγράμματα, SysV συνδέσμους εκκίνησης και ασφαλείς προσομοιώσεις Apache, OpenSSH και FTP. Όλα τα αρχεία και οι υπηρεσίες μένουν στο μόνιμο VFS του παίκτη.",
+    },
+    scenario: "sudorun",
+    accent: "lime",
+    modules: LINUX_BEGINNERS_3_MODULES,
+  },
+  {
     id: "dfir-fieldwork",
-    pathNumber: 6,
+    pathNumber: 7,
     title: { en: "DFIR Fieldwork", el: "Επιτόπια Ψηφιακή Εγκληματολογία" },
     subtitle: { en: "Digital Forensics & Incident Response", el: "Digital Forensics & Incident Response" },
     blurb: {
@@ -1188,6 +1208,7 @@ export function moduleById(id: string): Module | undefined {
     CAMPAIGNS.flatMap((campaign) => campaign.modules).find((module) => module.id === id) ||
     SUDO_RUN_ALL.find((module) => module.id === id) ||
     LINUX_BEGINNERS_2_MODULES.find((module) => module.id === id) ||
+    LINUX_BEGINNERS_3_MODULES.find((module) => module.id === id) ||
     DFIR_MODULES.find((module) => module.id === id)
   );
 }

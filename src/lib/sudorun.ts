@@ -3,6 +3,7 @@ import {
   displayPath,
   file,
   getNode,
+  normalize,
   parentAndName,
   resolvePath,
   type FileNode,
@@ -51,6 +52,11 @@ export function sudoRunFS(): FileNode {
       file(
         "simple_bash.sh",
         "#!/bin/bash\necho \"HackForge scanner starting\"\necho \"Sudo_Run lab — simulated only\"\n# echo is here so grep can find it\n"
+      ),
+      file(
+        "scanner",
+        "#!/bin/bash\necho \"Enter the lab IP address (10.10.10.2)\"\nread ip\necho \"HackForge uses only its fixed fictional subnet.\"\n# Authorized real-world pattern: nmap -sn \"$ip\"/24 after read ip.\n# HackForge runs only the fixed fixture subnet below.\nnmap -sn 10.10.10.0/24 | grep scan | cut -d \" \" -f 5 | head -n -1\n",
+        "-rwxr-xr-x",
       ),
       file("scanning_script.sh", "#!/bin/bash\necho \"scheduled scan at HackForge\"\n"),
       file("first_script", "#!/bin/bash\necho \"Hello World\"\n"),
@@ -104,6 +110,34 @@ export function sudoRunFS(): FileNode {
           file("defaults.txt", "LAB_MODE is unset until the learner creates it.\n"),
         ]),
       ]),
+      dir("linux-beginners-3", [
+        file(
+          "README.txt",
+          "Linux for Beginners #3 fixtures\nAll Bash, cron, boot-service, Apache, SSH, and FTP behavior in this course is simulated in this player’s one persistent virtual filesystem.\nThe only scan target is the fictional 10.10.10.0/24 subnet. Public FTP hosts and real host services are blocked.\n"
+        ),
+        file("first_script", "#!/bin/bash\necho \"Hello World\"\n"),
+        file(
+          "welcome.sh",
+          "#!/bin/bash\necho \"What is your name?\"\nread name\necho \"Welcome, $name\"\n"
+        ),
+        file(
+          "scanner",
+          "#!/bin/bash\necho \"Enter the lab IP address (10.10.10.2)\"\nread ip\necho \"HackForge uses only its fixed fictional subnet.\"\n# Authorized real-world pattern: nmap -sn \"$ip\"/24 expands the value read above.\n# The simulator ignores user input and runs only the fixed fixture subnet below.\nnmap -sn 10.10.10.0/24 | grep scan | cut -d \" \" -f 5 | head -n -1\n"
+        ),
+        file(
+          "runlevels.txt",
+          "Traditional SysV runlevel reference (the exact meaning can vary by distribution):\n0  halt / stop the system\n1  single-user or rescue mode\n2  multi-user mode\n3  multi-user mode\n4  multi-user mode\n5  multi-user mode\n6  reboot\n\nThese are teaching notes only; HackForge never changes the host boot mode.\n"
+        ),
+        file(
+          "cron-reference.txt",
+          "Per-user crontab: minute hour day-of-month month day-of-week command\nExample: 55 23 * * * /root/scanner  (every day at 23:55; six parts total)\n/etc/crontab adds a username between the five time fields and the command (seven columns).\nThe simulator records rows per player but never executes scheduled commands.\n"
+        ),
+        file(
+          "service-reference.txt",
+          "Apache page: /var/www/html/index.html\nSSH fixture: ignite@192.168.0.11 (fictional ubuntu.lab)\nFTP fixture: ftp.forge.lab -> /ubuntu/release/favicon.ico\nPublic FTP hosts and telnet connections are blocked by the simulator.\n"
+        ),
+        file("head-fixture.txt", "first\nsecond\nlast\n"),
+      ]),
       dir("Desktop", [
         file("CTF-notes.txt", "CTF lab notes for Sudo_Run.\nFLAG{sudo_run_desktop}\n"),
         file("todo.txt", "1. Learn pwd/whoami/ls\n2. Never test systems you do not own\n"),
@@ -115,6 +149,18 @@ export function sudoRunFS(): FileNode {
       dir("Raj", [file(".keep", "")], "drwxr-xr-x", "Raj", "ignite"),
       dir("ignite", [file("readme.txt", "ignite team home on the Sudo_Run box.\n")], "drwxr-xr-x", "ignite", "ignite"),
       dir("operator", [file("welcome.txt", "You can also work from /home/operator.\n")]),
+    ]),
+    dir("srv", [
+      dir("ftp", [
+        file("welcome.txt", "HackForge FTP fixture. Files here are fictional text examples.\n"),
+        dir("ubuntu", [
+          file("readme.txt", "Browse into release for the training download.\n"),
+          dir("release", [
+            file("favicon.ico", "HACKFORGE-FAKE-FAVICON\nBinary image data is not stored or served.\n"),
+            file("release-notes.txt", "Fictional FTP release fixture for Linux for Beginners #3.\n"),
+          ]),
+        ]),
+      ]),
     ]),
     dir("etc", [
       file("hostname", "kali\n"),
@@ -138,8 +184,18 @@ export function sudoRunFS(): FileNode {
         ),
       ]),
       dir("ssh", [file("sshd_config", "Port 22\nPermitRootLogin no\nPasswordAuthentication yes\n")]),
-      dir("init.d", [file("mysql", "#!/bin/sh\n# mysql init script (simulated)\n"), file("apache2", "#!/bin/sh\n")]),
+      dir("init.d", [
+        file("mysql", "#!/bin/sh\n# mysql init script (simulated; never executed on the host)\n"),
+        file("apache2", "#!/bin/sh\n# apache2 init script (simulated; never executed on the host)\n"),
+        file("cron", "#!/bin/sh\n# cron init script (simulated; never executed on the host)\n"),
+      ]),
+      dir("rc0.d", []),
+      dir("rc1.d", []),
       dir("rc2.d", []),
+      dir("rc3.d", []),
+      dir("rc4.d", []),
+      dir("rc5.d", []),
+      dir("rc6.d", []),
     ]),
     dir("opt", [
       dir("labs", [file("hackforge", "HackForge marker file used by find / -type f -name hackforge\nFLAG{sudo_run_find}\n")]),
@@ -246,6 +302,42 @@ type Ctx = {
   print: (text: string, kind?: TermLine["kind"]) => void;
   stdin?: string | null;
 };
+
+function setVirtualServiceProcess(t: Terminal, service: string, running: boolean): void {
+  if (service !== "mysql") return;
+  let process = t.procs.find((candidate) => candidate.cmd.startsWith("mysqld "));
+  if (running) {
+    if (process) process.alive = true;
+    else {
+      process = { pid: 3410, user: "mysql", cpu: "0.1", mem: "1.2", cmd: "mysqld --defaults-file=/etc/mysql/my.cnf", nice: 0, alive: true };
+      t.procs.push(process);
+    }
+  } else if (process) {
+    process.alive = false;
+  }
+}
+
+function setVirtualRcLinks(t: Terminal, service: string, action: "defaults" | "enable" | "disable" | "remove"): void {
+  const startLevels = action === "defaults" || action === "enable" ? [2, 3, 4, 5] : [];
+  const stopLevels = action === "disable" ? [0, 1, 2, 3, 4, 5, 6] : [0, 1, 6];
+  for (let level = 0; level <= 6; level += 1) {
+    const directory = getNode(t.fs, `/etc/rc${level}.d`);
+    if (!directory || directory.type !== "dir" || !directory.children) continue;
+    for (const name of Object.keys(directory.children)) {
+      if (/^[SK]\d{2}/.test(name) && name.endsWith(service)) delete directory.children[name];
+    }
+    if (action === "remove") continue;
+    const startsHere = startLevels.includes(level);
+    const stopsHere = stopLevels.includes(level);
+    if (!startsHere && !stopsHere) continue;
+    const prefix = startsHere ? "S" : "K";
+    const linkName = `${prefix}01${service}`;
+    const link = file(linkName, `../init.d/${service}`, "lrwxrwxrwx", "root", "root");
+    link.linkTarget = `../init.d/${service}`;
+    link.linkDisplayTarget = `../init.d/${service}`;
+    directory.children[linkName] = link;
+  }
+}
 
 export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
   const { cmd, pos, rest, flags, input, print } = ctx;
@@ -817,19 +909,25 @@ ${target}.    300 IN A 10.10.10.8`);
     case "service": {
       const name = pos[0];
       const act = pos[1];
-      if (!name || !act) {
+      if (!name || !act || !["start", "stop", "status", "restart"].includes(act)) {
         print("usage: service NAME start|stop|status|restart", "err");
         return true;
       }
       t.flags.add("service");
       t.flags.add("service-" + name + "-" + act);
-      if (act === "start" || act === "restart") t.services[name] = "running";
-      if (act === "stop") t.services[name] = "stopped";
+      if (act === "start" || act === "restart") {
+        t.services[name] = "running";
+        setVirtualServiceProcess(t, name, true);
+      }
+      if (act === "stop") {
+        t.services[name] = "stopped";
+        setVirtualServiceProcess(t, name, false);
+      }
       if (act === "status") {
         const st = t.services[name] || "inactive";
         print(`● ${name}.service — ${st}
    Active: ${st === "running" ? "active (running)" : st}`);
-      } else print(`${act}ing ${name} (simulated).`);
+      } else print(`${act === "restart" ? "restarting" : act === "stop" ? "stopping" : "starting"} ${name} (simulated).`);
       return true;
     }
     case "crontab": {
@@ -847,7 +945,8 @@ ${target}.    300 IN A 10.10.10.8`);
       }
       if (rest.includes("-e") || flags.has("e")) {
         t.flags.add("crontab-e");
-        print(`# simulated crontab editor\n${t.crontab.join("\n")}\n# Use a safe VFS pipeline such as: echo \"30 21 * * * /root/scanning_script.sh\" | crontab -`);
+        t.crontabEditorPending = true;
+        print(`Select an editor:\n1. /bin/nano\n2. /usr/bin/vim.tiny\nChoose 1-2 [1]:`);
         return true;
       }
       if (rest.includes("-l")) {
@@ -858,17 +957,76 @@ ${target}.    300 IN A 10.10.10.8`);
       return true;
     }
     case "update-rc.d": {
+      const service = pos[0];
+      const action = pos[1] as "defaults" | "enable" | "disable" | "remove" | undefined;
+      if (!service || !action || !["defaults", "enable", "disable", "remove"].includes(action)) {
+        print("usage: update-rc.d SERVICE defaults|enable|disable|remove", "err");
+        return true;
+      }
+      const initScript = getNode(t.fs, `/etc/init.d/${service}`);
+      if (!initScript || initScript.type !== "file") {
+        print(`update-rc.d: unknown virtual init script '${service}'`, "err");
+        return true;
+      }
       t.flags.add("update-rc");
-      print(`update-rc.d: enabling ${pos[0]} defaults (simulated)`);
-      if (pos[0] === "mysql") t.flags.add("rc-mysql");
+      t.flags.add(`rc-${service}-${action}`);
+      if (action === "defaults" || action === "enable") {
+        t.bootServices[service] = "enabled";
+        t.flags.add(`rc-${service}`);
+        setVirtualRcLinks(t, service, action);
+        print(`update-rc.d: ${service} enabled for the simulated default runlevels 2, 3, 4 and 5.`);
+      } else if (action === "disable") {
+        t.bootServices[service] = "disabled";
+        setVirtualRcLinks(t, service, action);
+        print(`update-rc.d: ${service} disabled for future simulated boots.`);
+      } else {
+        delete t.bootServices[service];
+        setVirtualRcLinks(t, service, action);
+        print(`update-rc.d: removed virtual rc links for ${service}; the init script and installed service remain.`);
+      }
+      return true;
+    }
+    case "reboot": {
+      t.flags.add("reboot");
+      const started: string[] = [];
+      for (const [service, bootState] of Object.entries(t.bootServices)) {
+        const running = bootState === "enabled";
+        t.services[service] = running ? "running" : "stopped";
+        setVirtualServiceProcess(t, service, running);
+        if (running) started.push(service);
+      }
+      const syslog = getNode(t.fs, "/var/log/syslog");
+      if (syslog?.type === "file") {
+        syslog.content = `${syslog.content || ""}HackForge: simulated reboot; virtual services updated (${started.join(", ") || "none"}).\n`;
+      }
+      print(`HackForge reboot simulated; only virtual boot-enabled services were updated.\nStarted: ${started.join(", ") || "none"}. No host reboot occurred.`);
+      return true;
+    }
+    case "read": {
+      const variable = pos[0] || "REPLY";
+      const value = variable === "ip" ? "10.10.10.2" : "operator";
+      t.shellVars[variable] = value;
+      t.flags.add("read");
+      print(`${variable}=${value} (simulated input)`);
+      return true;
+    }
+    case "telnet": {
+      t.flags.add("telnet-blocked");
+      print("telnet is plaintext and disabled for connections; use the simulated SSH lesson instead.");
       return true;
     }
     case "ftp": {
-      t.ftp = { host: pos[0] || "ftp.forge.lab", user: null, cwd: "/" };
+      const host = (pos[0] || "ftp.forge.lab").toLowerCase();
+      if (host !== "ftp.forge.lab") {
+        t.flags.add("ftp-external-blocked");
+        print(`ftp: external host '${host}' is blocked in this lab. Use ftp ftp.forge.lab; no connection was attempted.`, "err");
+        return true;
+      }
+      t.ftp = { host, user: null, cwd: "/", authenticated: false };
       t.flags.add("ftp");
-      print(`Connected to ${t.ftp.host}.
+      print(`Connected to ${host}.
 220 HackForge FTP server (simulated)
-Name (${t.ftp.host}:root):`);
+Name (${host}:root):`);
       return true;
     }
     case "volatility": {
@@ -885,7 +1043,7 @@ Plugins: pslist, netscan, filescan (lab stub)`);
         print("bash: interactive shell not needed in this lab");
         return true;
       }
-      return runScript(t, resolvePath(t, script), print);
+      return runScript(t, resolvePath(t, script), print, true);
     }
     case "nano":
     case "vi":
@@ -944,7 +1102,7 @@ Plugins: pslist, netscan, filescan (lab stub)`);
   }
 
   if (cmd.startsWith("./") || cmd.startsWith("/")) {
-    return runScript(t, resolvePath(t, cmd), print);
+    return runScript(t, resolvePath(t, cmd), print, false);
   }
 
   if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(input.trim()) && !input.includes(" ")) {
@@ -961,29 +1119,53 @@ Plugins: pslist, netscan, filescan (lab stub)`);
   return false;
 }
 
-function runScript(t: Terminal, p: string, print: Ctx["print"]): boolean {
+function runScript(t: Terminal, p: string, print: Ctx["print"], viaBash = false): boolean {
   const n = getNode(t.fs, p);
   if (!n || n.type !== "file") return false;
+  if (!viaBash && !/[xst]/i.test(n.mode || "")) {
+    print(`bash: ${p}: Permission denied (use chmod +x first)`, "err");
+    t.lastExit = 126;
+    return true;
+  }
+
   t.flags.add("run-script");
   const c = n.content || "";
-  if (/Hello World/i.test(c)) {
+  const executableText = c.split(/\r?\n/).filter((line) => !line.trim().startsWith("#")).join("\n");
+  if (/Hello World/i.test(executableText)) {
     print("Hello World");
     t.flags.add("hello-script");
   }
-  if (/What is your name/i.test(c) || /read name/.test(c)) {
+  if (/What is your name/i.test(executableText) || /read name/.test(executableText)) {
+    t.shellVars.name = "operator";
     print("What is your name?\nWelcome, operator");
     t.flags.add("read-script");
   }
-  if (/nmap|scanner| -s[nP] /i.test(c) || p.endsWith("scanner")) {
+  if (/nmap|scanner| -s[nP] /i.test(executableText) || p.endsWith("/scanner")) {
     t.flags.add("run-scanner");
-    print(`Starting Nmap 7.94 ( simulated ping scan )
-Nmap scan report for 10.10.10.1
-Nmap scan report for 10.10.10.5
-Nmap scan report for 10.10.10.8
-Nmap scan report for 10.10.10.12`);
+    t.flags.add("nmap");
+    t.flags.add("nmap-sn");
+    t.flags.add("nmap-sweep");
+    if (/echo\s+"Enter/i.test(executableText)) print("Enter the lab IP address (10.10.10.2)");
+    if (/read\s+ip/.test(executableText)) {
+      t.shellVars.ip = "10.10.10.2";
+      print("Simulated input: 10.10.10.2");
+    }
+    const hasPipeline = /grep\s+scan/.test(executableText) && /cut\s+-d/.test(executableText) && /head\s+-n\s+-1/.test(executableText);
+    if (hasPipeline) {
+      t.flags.add("grep");
+      t.flags.add("cut");
+      t.flags.add("head");
+      print("10.10.10.5\n10.10.10.8\n10.10.10.12\n10.10.10.21");
+    } else {
+      print(`Starting Nmap 7.94 ( simulated ping scan )
+Nmap scan report for 10.10.10.5 (raven.lab)
+Nmap scan report for 10.10.10.8 (web.lab)
+Nmap scan report for 10.10.10.12 (ssh.lab)
+Nmap scan report for 10.10.10.21 (db.lab)`);
+    }
   }
-  if (/echo /.test(c) && !t.flags.has("hello-script")) {
-    const m = c.match(/echo\s+"([^"]+)"/);
+  if (/echo /.test(executableText) && !t.flags.has("hello-script") && !/What is your name/i.test(executableText)) {
+    const m = executableText.match(/echo\s+"([^"]+)"/);
     if (m) print(m[1]);
   }
   return true;
@@ -991,36 +1173,78 @@ Nmap scan report for 10.10.10.12`);
 
 function handleFtp(t: Terminal, input: string, print: Ctx["print"]): boolean {
   const line = input.trim();
-  if (!t.ftp) return false;
-  if (!t.ftp.user) {
-    t.ftp.user = line || "anonymous";
+  const session = t.ftp;
+  if (!session) return false;
+
+  if (!session.user) {
+    session.user = line || "anonymous";
     print("331 Please specify the password.");
     t.flags.add("ftp-user");
     return true;
   }
-  if (!t.flags.has("ftp-pass")) {
+  if (!session.authenticated) {
+    if (session.user !== "anonymous" || line !== "anonymous") {
+      t.ftp = null;
+      print("530 Login incorrect. The fixture accepts only its anonymous training account.", "err");
+      return true;
+    }
+    session.authenticated = true;
     t.flags.add("ftp-pass");
+    t.flags.add("ftp-login");
     print("230 Login successful. Use ls, cd, get, bye.");
     return true;
   }
+
   if (line === "ls" || line === "dir") {
-    print(`drwxr-xr-x  ubuntu
--rw-r--r--  welcome.txt
-drwxr-xr-x  release`);
+    const remotePath = normalize(`/srv/ftp/${session.cwd}`);
+    const directory = getNode(t.fs, remotePath);
+    if (!directory || directory.type !== "dir") {
+      print("550 Failed to list directory.", "err");
+      return true;
+    }
+    const rows = Object.values(directory.children || {}).map((node) =>
+      `${node.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--"}  ${node.name}`
+    );
+    print(rows.join("\n") || "(empty directory)");
     t.flags.add("ftp-ls");
     return true;
   }
   if (line.startsWith("cd ")) {
-    t.ftp.cwd += "/" + line.slice(3);
+    const requested = line.slice(3).trim();
+    const remotePath = normalize(`/srv/ftp/${session.cwd}/${requested}`);
+    if (remotePath !== "/srv/ftp" && !remotePath.startsWith("/srv/ftp/")) {
+      print("550 Directory is outside the FTP fixture root.", "err");
+      return true;
+    }
+    const destination = getNode(t.fs, remotePath);
+    if (!destination || destination.type !== "dir") {
+      print("550 Directory not found.", "err");
+      return true;
+    }
+    session.cwd = remotePath.slice("/srv/ftp".length) || "/";
     print("250 Directory successfully changed.");
     return true;
   }
   if (line.startsWith("get ")) {
-    const name = line.slice(4).trim();
-    writeFile(t, "/root/" + name.replace(/^.*\//, ""), "HackForge FTP souvenir\n");
+    const requested = line.slice(4).trim();
+    const remotePath = normalize(`/srv/ftp/${session.cwd}/${requested}`);
+    if (!remotePath.startsWith("/srv/ftp/")) {
+      print("550 File path is outside the FTP fixture root.", "err");
+      return true;
+    }
+    const remoteFile = getNode(t.fs, remotePath);
+    if (!remoteFile || remoteFile.type !== "file") {
+      print(`550 ${requested}: File not found in the FTP fixture.`, "err");
+      return true;
+    }
+    const localName = requested.split("/").filter(Boolean).at(-1) || "download";
+    const localPath = normalize(`${t.cwd}/${localName}`);
+    if (!writeFile(t, localPath, remoteFile.content || "")) {
+      print(`550 ${requested}: Could not write into the virtual working directory.`, "err");
+      return true;
+    }
     t.flags.add("ftp-get");
-    print(`local: ${name} remote: ${name}
-226 Transfer complete.`);
+    print(`local: ${localName} remote: ${requested}\n226 Transfer complete.`);
     return true;
   }
   if (line === "bye" || line === "quit" || line === "exit") {
@@ -1029,7 +1253,7 @@ drwxr-xr-x  release`);
     print("221 Goodbye.");
     return true;
   }
-  print("ftp> (try ls, cd ubuntu/release, get favicon.ico, bye)");
+  print("ftp> (try ls, cd ubuntu, cd release, get favicon.ico, bye)");
   return true;
 }
 
