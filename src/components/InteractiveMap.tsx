@@ -285,14 +285,15 @@ function CampaignUniverse({
   onToggle: (campaignId: string) => void;
   onOpen: (campaignId: string, moduleId: string) => void;
 }) {
-  const cardCenterX = 180;
-  const cardRight = 348;
-  const firstNodeX = 426;
-  const nodeSpacing = 148;
-  const rowHeight = 182;
+  const cardCenterX = 184;
+  const cardRight = 352;
+  const firstNodeX = 442;
+  const nodeSpacing = 168;
+  const nodeWidth = 148;
+  const rowHeight = 214;
   const topPadding = 28;
   const maxModules = Math.max(1, ...campaigns.map((campaign) => campaign.modules.length));
-  const width = Math.max(1500, firstNodeX + (maxModules - 1) * nodeSpacing + 88);
+  const width = Math.max(1500, firstNodeX + (maxModules - 1) * nodeSpacing + nodeWidth / 2 + 24);
   const height = topPadding + campaigns.length * rowHeight + 28;
 
   const lanes = campaigns.map((campaign, campaignIndex) => {
@@ -429,7 +430,7 @@ function CampaignUniverse({
                     key={module.id}
                     id={`map-node-${campaign.id}-${module.id}`}
                     className={cn("map-node", `map-node--${state}`, `map-node--${accent}`, current && "is-current", `map-node-enter-${Math.min(index + 1, 8)}`)}
-                    style={{ left: x, top: nodeY, width: 134 }}
+                    style={{ left: x, top: nodeY, width: nodeWidth }}
                   >
                     <button
                       type="button"
@@ -442,7 +443,7 @@ function CampaignUniverse({
                       {state === "done" ? <Icon name="check" className="h-6 w-6" /> : <Icon name={state === "locked" ? "lock" : MODULE_ICON[module.id] || module.icon} className="h-6 w-6" />}
                       <span className="map-node-progress">{percentDone}%</span>
                     </button>
-                    <button type="button" disabled={!clickable} className="map-node-label" onClick={() => clickable && onOpen(campaign.id, module.id)}>
+                    <button type="button" disabled={!clickable} title={bi(module.title, lang)} className="map-node-label" onClick={() => clickable && onOpen(campaign.id, module.id)}>
                       <span className="map-node-label__state">{uppercaseLabel(stateText, lang)}</span>
                       <span className="map-node-label__name">{bi(module.title, lang)}</span>
                       <span className="map-node-label__tasks">{module.tasks.length} {t("objectives", lang).toLowerCase()}</span>

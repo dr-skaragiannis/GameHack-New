@@ -851,22 +851,26 @@ body {
 }
 .map-node-label {
   width: 100%;
-  min-height: 47px;
+  min-height: 76px;
   display: grid;
   align-content: start;
-  gap: 2px;
-  margin-top: 7px;
+  gap: 3px;
+  margin-top: 9px;
+  padding: 0 4px;
   text-align: center;
 }
 .map-node-label:disabled {
   cursor: not-allowed;
 }
 .map-node-label__state {
-  color: #a3a3aa;
+  min-width: 0;
+  color: #c0c0c8;
   font-family: var(--font-mono);
   font-size: var(--type-small);
   font-weight: 700;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
   text-transform: uppercase;
 }
 .map-node--done .map-node-label__state,
@@ -876,22 +880,26 @@ body {
 }
 .map-node-label__name {
   display: -webkit-box;
+  min-width: 0;
   overflow: hidden;
   color: #e4e4e7;
   font-size: var(--type-small);
   font-weight: 650;
-  line-height: 1.25;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
   text-overflow: ellipsis;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
 }
 .map-node--locked .map-node-label__name {
   color: #6a6a72;
 }
 .map-node-label__tasks {
-  color: #63636b;
+  color: #96969e;
   font-family: var(--font-mono);
   font-size: var(--type-small);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 .map-node-players {
   max-width: 160px;
@@ -2218,7 +2226,7 @@ body {
 }
 .map-campaign-card__kicker {
   overflow: hidden;
-  color: #77777f;
+  color: #a0a0a8;
   font-family: var(--font-mono);
   font-size: var(--type-small);
   font-weight: 700;
@@ -2227,16 +2235,22 @@ body {
   white-space: nowrap;
 }
 .map-campaign-card__name {
+  display: -webkit-box;
+  min-width: 0;
   overflow: hidden;
   color: #f1f1f3;
   font-size: var(--type-small);
   font-weight: 750;
   letter-spacing: -0.025em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .map-campaign-card__progress {
-  color: #85858c;
+  color: #a0a0a8;
   font-family: var(--font-mono);
   font-size: var(--type-small);
   white-space: nowrap;
@@ -2505,7 +2519,7 @@ body {
 .map-lane-backdrop--dfir { --lane-color: #b8a0ff; --lane-soft: rgba(167, 139, 250, 0.09); }
 .map-campaign-card--linear {
   width: 336px;
-  min-height: 92px;
+  min-height: 100px;
   grid-template-columns: 36px minmax(0, 1fr) 44px 14px;
   gap: 6px;
   padding: 9px;
