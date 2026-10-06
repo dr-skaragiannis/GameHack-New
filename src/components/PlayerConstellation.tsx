@@ -21,19 +21,23 @@ type GraphLink = { from: PlayerEntry; to: PlayerEntry; online: boolean; index: n
 
 const MAX_VISIBLE_PLAYERS = 32;
 
-function arrangePlayers(players: { user: User; rank: number; online: boolean }[]): PlayerEntry[] {
+function arrangePlayers(players: { user: User; rank: number; online: boolean }[], compact: boolean, top10: boolean): PlayerEntry[] {
   if (!players.length) return [];
-  const columns = Math.min(8, players.length);
+  const columns = Math.min(compact ? (top10 ? 5 : 4) : 8, players.length);
   const rows = Math.ceil(players.length / columns);
   return players.map((player, index) => {
     const row = Math.floor(index / columns);
     const firstInRow = row * columns;
     const rowLength = Math.min(columns, players.length - firstInRow);
     const column = index - firstInRow;
-    const x = rowLength === 1 ? 50 : 8.5 + (column * 83) / (rowLength - 1);
-    const y = rows === 1 ? 64 : 38 + (row * 43) / (rows - 1);
-    const jitterX = Math.sin(index * 2.17) * 1.1;
-    const jitterY = Math.cos(index * 1.43) * 1.5;
+    const x = compact
+      ? (rowLength === 1 ? 50 : (top10 ? 12 : 13) + (column * (top10 ? 76 : 74)) / (rowLength - 1))
+      : (rowLength === 1 ? 50 : 8.5 + (column * 83) / (rowLength - 1));
+    const y = compact
+      ? (rows === 1 ? 67 : (top10 ? 50 + row * 32 : 48 + row * 36))
+      : (rows === 1 ? 64 : 38 + (row * 43) / (rows - 1));
+    const jitterX = Math.sin(index * 2.17) * (compact ? 0.7 : 1.1);
+    const jitterY = Math.cos(index * 1.43) * (compact ? 0.8 : 1.5);
     return { ...player, x: x + jitterX, y: y + jitterY };
   });
 }
@@ -87,7 +91,7 @@ function objectiveLabel(event: FeedEvent, lang: Lang) {
   return objective ? bi(objective.instruction, lang) : event.text;
 }
 
-export default function PlayerConstellation({ user, lang }: { user: User; lang: Lang }) {
+export default function PlayerConstellation({ user, lang, compact = false }: { user: User; lang: Lang; compact?: boolean }) {
   const [revision, setRevision] = useState(0);
   const [filter, setFilter] = useState<PlayerFilter>("all");
   const [interestFilter, setInterestFilter] = useState<string | null>(null);
@@ -176,8 +180,9 @@ export default function PlayerConstellation({ user, lang }: { user: User; lang: 
     if (interestFilter && !player.interests.includes(interestFilter)) return false;
     return true;
   });
-  const visiblePlayers = filteredPlayers.slice(0, filter === "top10" ? 10 : MAX_VISIBLE_PLAYERS);
-  const graphPlayers = useMemo(() => arrangePlayers(visiblePlayers), [visiblePlayers]);
+  const visibleLimit = compact ? (filter === "top10" ? 10 : 8) : (filter === "top10" ? 10 : MAX_VISIBLE_PLAYERS);
+  const visiblePlayers = filteredPlayers.slice(0, visibleLimit);
+  const graphPlayers = useMemo(() => arrangePlayers(visiblePlayers, compact, compact && filter === "top10"), [visiblePlayers, compact, filter]);
   const links = useMemo(() => buildLinks(graphPlayers), [graphPlayers]);
   const feed = useMemo(() => getFeed().slice().sort((a, b) => b.ts - a.ts), [revision]);
   const allInterests = useMemo(() => [...new Set(ranked.flatMap(({ user: player }) => player.interests))].sort((a, b) => a.localeCompare(b)), [ranked]);
@@ -204,7 +209,7 @@ export default function PlayerConstellation({ user, lang }: { user: User; lang: 
 
   const recentObjectives = feed
     .filter((event) => event.kind === "task" && event.objectiveId)
-    .slice(0, 5)
+    .slice(0, compact ? 2 : 5)
     .map((event) => {
       const player = ranked.find(({ user: candidate }) => candidate.id === event.userId)?.user;
       return {
@@ -226,7 +231,7 @@ export default function PlayerConstellation({ user, lang }: { user: User; lang: 
     : `${visiblePlayers.length} / ${ranked.length}`;
 
   return (
-    <section className="player-constellation player-dashboard__card" aria-labelledby="player-constellation-title">
+    <section className={cn("player-constellation player-dashboard__card", compact && "player-constellation--compact", compact && filter === "top10" && "player-constellation--top10")} aria-labelledby="player-constellation-title">
       <header className="player-constellation__header">
         <div className="player-constellation__title-group">
           <span className="player-constellation__title-icon"><Icon name="radar" className="h-5 w-5" /></span>
@@ -387,7 +392,7 @@ export default function PlayerConstellation({ user, lang }: { user: User; lang: 
                   <span className="player-constellation__node-rank">#{String(player.rank).padStart(2, "0")}</span>
                   <div className="player-constellation__avatar-orbit">
                     {player.online && <i className="player-constellation__node-pulse" />}
-                    <Avatar src={player.user.avatar} name={player.user.displayName} size={42} className="player-constellation__avatar" />
+                    <Avatar src={player.user.avatar} name={player.user.displayName} size={compact ? 30 : 42} className="player-constellation__avatar" />
                     <span className="player-constellation__status-dot" />
                   </div>
                   <span className="player-constellation__node-name">{player.user.displayName}</span>
