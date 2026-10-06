@@ -4,7 +4,7 @@ import type { User } from "./db";
 
 type AuthCtx = {
   user: User | null;
-  version: number; // bump to force consumers to re-read derived data
+  version: number;
   refresh: () => void;
   login: (u: string, p: string) => { ok: boolean; error?: string };
   register: (u: string, p: string, role: db.Role, dn: string) => { ok: boolean; error?: string };
@@ -20,8 +20,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [version, setVersion] = useState(0);
 
-  // Always hand components a fresh snapshot so React reliably re-renders with the
-  // latest persisted state (db mutates its cached object in place).
   const snapshot = () => {
     const u = db.currentUser();
     return u ? { ...u } : null;
@@ -57,7 +55,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <Ctx.Provider value={{ user, version, refresh, login: doLogin, register: doRegister, logout: doLogout }}>
+    <Ctx.Provider
+      value={{
+        user,
+        version,
+        refresh,
+        login: doLogin,
+        register: doRegister,
+        logout: doLogout,
+      }}
+    >
       {children}
     </Ctx.Provider>
   );

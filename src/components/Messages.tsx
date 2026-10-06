@@ -1,169 +1,152 @@
-import { useState, useEffect } from "react";
-import * as db from "../lib/db";
-import { timeAgo } from "./PlayerDashboard";
+import { useState } from "react";
+import {
+  allEducators,
+  allPlayers,
+  getThread,
+  inboxFor,
+  markMessagesRead,
+  sendChat,
+  sendMessage,
+  type User,
+} from "../lib/db";
+import { t, type Lang } from "../i18n";
 import Avatar from "./Avatar";
-import Icon from "./Icon";
 import { cn } from "../utils/cn";
 
 export default function Messages({
   user,
-  initialChatId,
-  onOpenProfile,
+  lang,
+  withId,
+  onChange,
 }: {
-  user: db.User;
-  initialChatId?: string | null;
-  onOpenProfile: (id: string) => void;
+  user: User;
+  lang: Lang;
+  withId?: string | null;
+  onChange: () => void;
 }) {
-  const [, force] = useState(0);
-  const refresh = () => force((x) => x + 1);
-  const [tab, setTab] = useState<"inbox" | "chat">(initialChatId ? "chat" : "inbox");
-  const [peerId, setPeerId] = useState<string | null>(initialChatId || null);
+  const inbox = inboxFor(user.id);
+  const [tab, setTab] = useState<"inbox" | "chat">(withId ? "chat" : "inbox");
   const [text, setText] = useState("");
+  const [to, setTo] = useState(withId || "");
+  const [broadcast, setBroadcast] = useState("");
 
-  useEffect(() => {
-    db.markMessagesRead(user.id);
-  }, [user.id]);
-
-  const inbox = db.inboxFor(user.id);
-  // people you can chat with: all other players (+ educators appear in inbox)
-  const people = db.allPlayers().filter((p) => p.id !== user.id);
-  const peer = peerId ? db.userById(peerId) : null;
-  const thread = peer ? db.getThread(user.id, peer.id) : null;
-
-  const send = () => {
-    if (!text.trim() || !peer) return;
-    db.sendChat(user.id, peer.id, text.trim());
-    setText("");
-    refresh();
-  };
+  const peers = user.role === "educator" ? allPlayers() : [...allPlayers().filter((p) => p.id !== user.id), ...allEducators()];
+  const peer = peers.find((p) => p.id === to) || peers.find((p) => p.id === withId);
+  const thread = peer ? getThread(user.id, peer.id) : null;
 
   return (
-    <div className="w-full">
-      <div className="enter enter-1 mb-5">
-        <div className="font-mono text-xs uppercase tracking-[0.35em] text-ember-500">Communications</div>
-        <h2 className="text-3xl font-black text-shine">Messages</h2>
-      </div>
-
-      <div className="mb-4 flex rounded-lg border border-forge-border bg-forge-bg p-1">
+    <div className="max-w-3xl mx-auto space-y-4">
+      <h1 className="text-2xl font-bold">{t("messages", lang)}</h1>
+      <div className="flex gap-2">
         {(["inbox", "chat"] as const).map((k) => (
           <button
             key={k}
+            type="button"
             onClick={() => setTab(k)}
             className={cn(
-              "flex-1 rounded-md py-2 font-mono text-xs font-bold uppercase transition",
-              tab === k ? "bg-ember-600 text-white" : "text-iron-400 hover:text-zinc-200"
+              "rounded-lg px-3 py-1.5 text-sm font-semibold border",
+              tab === k ? "border-ember-500 bg-ember-500/15 text-ember-300" : "border-forge-border text-iron-400"
             )}
           >
-            {k === "inbox" ? `Inbox (${inbox.filter((m) => !m.read).length})` : "Chat"}
+            {k === "inbox" ? t("openInbox", lang) : t("chat", lang)}
           </button>
         ))}
       </div>
 
-      {tab === "inbox" ? (
-        <div className="space-y-2">
-          {inbox.length === 0 && (
-            <div className="rounded-xl border border-forge-border bg-forge-panel p-8 text-center text-sm text-iron-500">
-              No messages from educators yet.
-            </div>
+      {tab === "inbox" && (
+        <div className="space-y-3">
+          {user.role === "educator" && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!broadcast.trim()) return;
+                sendMessage(user, "broadcast", broadcast.trim());
+                setBroadcast("");
+                onChange();
+              }}
+              className="glass rounded-2xl border border-forge-border p-4 space-y-2"
+            >
+              <div className="text-xs uppercase tracking-widest text-iron-400">{t("broadcast", lang)}</div>
+              <textarea
+                value={broadcast}
+                onChange={(e) => setBroadcast(e.target.value)}
+                className="w-full rounded-xl bg-forge-bg border border-forge-border p-3 text-sm"
+                rows={3}
+              />
+              <button type="submit" className="rounded-lg bg-ember-600 px-3 py-1.5 text-sm font-semibold">
+                {t("send", lang)}
+              </button>
+            </form>
           )}
-          {inbox.map((msg) => (
-            <div key={msg.id} className="rounded-xl border border-forge-border bg-forge-panel p-4">
-              <div className="mb-1 flex items-center gap-2">
-                <Icon name={msg.broadcast ? "radar" : "crown"} className="h-4 w-4 text-ember-400" />
-                <span className="font-mono text-sm font-bold text-ember-400">{msg.fromName}</span>
-                {msg.broadcast && (
-                  <span className="rounded-full bg-ember-500/15 px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-ember-400">
-                    Broadcast
-                  </span>
-                )}
-                <span className="ml-auto font-mono text-[10px] text-iron-500">{timeAgo(msg.ts)}</span>
+          <button
+            type="button"
+            onClick={() => {
+              markMessagesRead(user.id);
+              onChange();
+            }}
+            className="text-xs text-iron-400 hover:text-ember-400"
+          >
+            mark read
+          </button>
+          {inbox.length === 0 && <p className="text-sm text-iron-500">{t("noMessages", lang)}</p>}
+          {inbox.map((m) => (
+            <div
+              key={m.id}
+              className={cn("glass rounded-xl border p-3 text-sm", m.read ? "border-forge-border" : "border-ember-600/40")}
+            >
+              <div className="text-[11px] text-iron-400">
+                {m.fromName} {m.broadcast ? `· ${t("broadcast", lang)}` : ""} · {new Date(m.ts).toLocaleString()}
               </div>
-              <p className="text-sm text-zinc-200">{msg.text}</p>
+              <div className="mt-1 text-zinc-200">{m.text}</div>
             </div>
           ))}
         </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-[1fr_1.6fr]">
-          {/* people list */}
-          <div className="space-y-1.5">
-            {people.map((p) => {
-              const th = db.getThread(user.id, p.id);
-              const last = th.messages[th.messages.length - 1];
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => setPeerId(p.id)}
-                  className={cn(
-                    "flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition",
-                    peerId === p.id ? "border-ember-500/60 bg-ember-500/5" : "border-forge-border bg-forge-panel hover:border-ember-500/40"
-                  )}
-                >
-                  <Avatar name={p.displayName} src={p.avatar} size={36} />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-bold text-zinc-100">{p.displayName}</div>
-                    <div className="truncate font-mono text-[10px] text-iron-500">
-                      {last ? last.text : "Start a conversation"}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+      )}
 
-          {/* conversation */}
-          <div className="flex flex-col rounded-xl border border-forge-border bg-forge-panel">
-            {peer ? (
-              <>
-                <button
-                  onClick={() => onOpenProfile(peer.id)}
-                  className="flex items-center gap-3 border-b border-forge-border px-4 py-3 text-left hover:bg-forge-bg/50"
-                >
-                  <Avatar name={peer.displayName} src={peer.avatar} size={32} />
-                  <span className="text-sm font-bold text-zinc-100">{peer.displayName}</span>
-                  <span className="ml-auto font-mono text-[10px] text-iron-500">View profile →</span>
-                </button>
-                <div className="flex max-h-80 min-h-56 flex-1 flex-col gap-2 overflow-y-auto p-4">
-                  {thread!.messages.length === 0 && (
-                    <div className="m-auto text-sm text-iron-500">Say hello 👋</div>
-                  )}
-                  {thread!.messages.map((msg) => {
-                    const mine = msg.fromId === user.id;
-                    return (
-                      <div key={msg.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
-                        <div
-                          className={cn(
-                            "max-w-[75%] rounded-2xl px-3 py-2 text-sm",
-                            mine ? "bg-ember-600 text-white" : "bg-forge-bg text-zinc-200"
-                          )}
-                        >
-                          {msg.text}
-                          <div className={cn("mt-0.5 font-mono text-[9px]", mine ? "text-white/60" : "text-iron-600")}>
-                            {timeAgo(msg.ts)}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex gap-2 border-t border-forge-border p-3">
-                  <input
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && send()}
-                    placeholder="Type a message…"
-                    className="flex-1 rounded-lg border border-forge-border bg-forge-bg px-3 py-2 text-sm text-zinc-100 outline-none focus:border-ember-500"
-                  />
-                  <button onClick={send} className="rounded-lg bg-ember-600 px-4 py-2 font-mono text-xs font-bold text-white hover:bg-ember-500">
-                    Send
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="flex min-h-56 items-center justify-center text-sm text-iron-500">
-                Pick someone to chat with.
-              </div>
-            )}
+      {tab === "chat" && (
+        <div className="glass rounded-2xl border border-forge-border overflow-hidden">
+          <div className="p-3 border-b border-forge-border flex gap-2 overflow-auto">
+            {peers.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setTo(p.id)}
+                className={cn("flex items-center gap-2 rounded-full border px-2 py-1 text-xs", to === p.id ? "border-ember-500" : "border-forge-border")}
+              >
+                <Avatar src={p.avatar} name={p.displayName} size={18} />
+                {p.displayName.split(" ")[0]}
+              </button>
+            ))}
           </div>
+          <div className="h-72 overflow-auto p-4 space-y-2">
+            {thread?.messages.map((m) => (
+              <div key={m.id} className={cn("text-sm max-w-[80%] rounded-xl px-3 py-2", m.fromId === user.id ? "ml-auto bg-ember-600/30" : "bg-forge-bg")}>
+                {m.text}
+              </div>
+            ))}
+          </div>
+          {peer && (
+            <form
+              className="flex gap-2 p-3 border-t border-forge-border"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!text.trim()) return;
+                sendChat(user.id, peer.id, text.trim());
+                setText("");
+                onChange();
+              }}
+            >
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={t("writeMessage", lang)}
+                className="flex-1 rounded-lg bg-forge-bg border border-forge-border px-3 py-2 text-sm"
+              />
+              <button type="submit" className="rounded-lg bg-ember-600 px-3 py-2 text-sm font-semibold">
+                {t("send", lang)}
+              </button>
+            </form>
+          )}
         </div>
       )}
     </div>

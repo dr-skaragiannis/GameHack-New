@@ -1,9 +1,3 @@
-// Tiny synthesized sound engine for HACKFORGE.
-// Every sound is a mechanical "tick" (old typewriter style) generated at runtime
-// with the Web Audio API — no audio files, no external assets, no music. Just
-// short filtered-noise clicks of varying weight. A global mute flag persists in
-// localStorage and is broadcast to listeners (for the mute button UI).
-
 const KEY = "hackforge.muted.v1";
 
 let ctx: AudioContext | null = null;
@@ -21,7 +15,7 @@ const listeners = new Set<(m: boolean) => void>();
 function ensure(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (!ctx) {
-    const AC = window.AudioContext || (window as any).webkitAudioContext;
+    const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AC) return null;
     ctx = new AC();
     master = ctx.createGain();
@@ -32,22 +26,17 @@ function ensure(): AudioContext | null {
   return ctx;
 }
 
-// A single mechanical tick: a very short decaying noise burst passed through a
-// band of filters so it sounds like a typewriter key striking. `weight` scales
-// loudness/length/tone so different events feel heavier or lighter, but they're
-// all the same family of click.
 function tickSound(weight = 1) {
   if (muted) return;
   const ac = ensure();
   if (!ac || !master) return;
   const now = ac.currentTime;
 
-  const dur = 0.012 + 0.006 * weight; // 12–~24ms
+  const dur = 0.012 + 0.006 * weight;
   const frames = Math.max(1, Math.floor(ac.sampleRate * dur));
   const buf = ac.createBuffer(1, frames, ac.sampleRate);
   const data = buf.getChannelData(0);
   for (let i = 0; i < frames; i++) {
-    // sharp attack, fast exponential-ish decay
     const env = Math.pow(1 - i / frames, 2.2);
     data[i] = (Math.random() * 2 - 1) * env;
   }
@@ -55,7 +44,6 @@ function tickSound(weight = 1) {
   const src = ac.createBufferSource();
   src.buffer = buf;
 
-  // body resonance of the "strike"
   const bp = ac.createBiquadFilter();
   bp.type = "bandpass";
   bp.frequency.value = 1700 - weight * 120 + (Math.random() * 500 - 250);
@@ -76,16 +64,12 @@ function tickSound(weight = 1) {
   src.stop(now + dur + 0.02);
 }
 
-// A short run of ticks — used to make "events" feel bigger while staying on the
-// same typewriter palette (like a carriage of keys striking in sequence).
 function tickRun(count: number, weight = 1, gap = 55) {
   if (muted) return;
   for (let i = 0; i < count; i++) {
     setTimeout(() => tickSound(weight), i * gap);
   }
 }
-
-// ---------------- public API ----------------
 
 export const sound = {
   isMuted: () => muted,
@@ -114,7 +98,6 @@ export const sound = {
     ensure();
   },
 
-  // ---- keystrokes & terminal ----
   key() {
     tickSound(1);
   },
@@ -122,12 +105,10 @@ export const sound = {
     tickSound(1.3);
   },
   enter() {
-    // carriage-return: a slightly heavier double tick
     tickSound(1.6);
     setTimeout(() => tickSound(1.2), 40);
   },
   tick() {
-    // per-output-line, light
     tickSound(0.7);
   },
   tab() {
@@ -137,11 +118,8 @@ export const sound = {
     tickSound(0.9);
   },
   error() {
-    // low, dull single clack
     tickSound(1.8);
   },
-
-  // ---- events (all rendered as tick runs, no melody) ----
   taskDone() {
     tickRun(2, 1.2, 60);
   },

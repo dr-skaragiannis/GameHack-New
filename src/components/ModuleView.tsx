@@ -1,582 +1,365 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Module } from "../data/lessons";
-import type { Lang } from "../i18n";
-import { t } from "../i18n";
-import { Terminal, type OutLine, type TerminalLike } from "../lib/terminal";
-import { RavenSession, RavenTerminal } from "../lib/raven";
-import { SshSession, SshTerminal } from "../lib/ssh";
-import { getQuiz, type QuizEntry } from "../data/quizzes";
-import { contentWidthClass, type ContentWidth } from "../lib/db";
-import { sound } from "../lib/sound";
+import { bi, t, type Lang } from "../i18n";
+import {
+  createTerminal,
+  defaultFS,
+  ravenFS,
+  runCommand,
+  sshFS,
+  type Terminal,
+} from "../lib/terminal";
+import { sudoRunFS } from "../lib/sudorun";
+import { dfirFS } from "../lib/dfir";
 import TerminalView from "./TerminalView";
-import RavenBrowser from "./RavenBrowser";
-import SshBrowser from "./SshBrowser";
-import SshTopology from "./SshTopology";
-import QuizPopup from "./QuizPopup";
-import WidthControl from "./WidthControl";
-import Icon, { MODULE_ICON } from "./Icon";
+import Icon from "./Icon";
 import { cn } from "../utils/cn";
+import { contentWidthClass, type ContentWidth } from "../lib/db";
+import WidthControl from "./WidthControl";
+import { sound } from "../lib/sound";
+import {
+  explainCommandResult,
+  relevantCommandFamiliesForModule,
+  type CommandExplanation,
+} from "../data/commandGuide";
+import CommandStudyGuide from "./CommandStudyGuide";
+import CommandResultPopup from "./CommandResultPopup";
+import DfirVisual from "./DfirVisual";
 
 export default function ModuleView({
   module,
+  userId,
   lang,
-  scenario,
-  savedDone,
-  savedCompleted,
-  onTaskDone,
-  onComplete,
-  onHint,
-  onBack,
-  onNext,
-  hasNext,
+  done,
+  contentWidth,
+  onWidth,
+  onTask,
   onCommandMetric,
-  onChallengeAttempt,
-  contentWidth = "wide",
-  onContentWidth,
+  onHint,
+  onComplete,
+  onBack,
 }: {
   module: Module;
+  userId: string;
   lang: Lang;
-  scenario: "lab" | "raven" | "ssh";
-  savedDone: string[];
-  savedCompleted: boolean;
-  onTaskDone: (taskId: string) => void;
-  onComplete: () => void;
-  onHint: () => void;
-  onBack: () => void;
-  onNext: () => void;
-  hasNext: boolean;
-  onCommandMetric?: (pasted: boolean, typo: boolean) => void;
-  onChallengeAttempt?: () => void;
+  done: string[];
   contentWidth?: ContentWidth;
-  onContentWidth?: (w: ContentWidth) => void;
+  onWidth: (w: ContentWidth) => void;
+  onTask: (taskId: string) => void;
+  onCommandMetric: (pasted: boolean, typo: boolean) => void;
+  onHint: () => void;
+  onComplete: () => void;
+  onBack: () => void;
 }) {
-  const isSsh = scenario === "ssh";
-  const showBrowser = module.tool === "browser" || module.tool === "both";
-  const showTerminal = module.tool !== "browser";
-  // SSH campaign adds a live Topology view alongside Terminal/Browser.
-  const showTopology = isSsh;
-  const [tab, setTab] = useState<"theory" | "lab">("theory");
-  const [labTool, setLabTool] = useState<"terminal" | "browser" | "topology">(
-    showTerminal ? "terminal" : "browser"
+  const [tab, setTab] = useState<"theory" | "guide" | "lab">(done.length ? "lab" : "theory");
+  const [term, setTerm] = useState<Terminal>(() =>
+    createTerminal({
+      fs: module.labFS
+        ? module.labFS()
+        : module.scenario === "raven"
+          ? ravenFS()
+          : module.scenario === "ssh"
+            ? sshFS()
+            : module.scenario === "sudorun"
+              ? sudoRunFS()
+              : module.scenario === "dfir"
+                ? dfirFS()
+              : defaultFS(),
+      user: module.scenario === "sudorun" ? "root" : module.scenario === "dfir" ? "analyst" : "operator",
+      host: module.scenario === "dfir" ? "forensics-workstation" : undefined,
+      scenario: module.scenario || "lab",
+    })
   );
-  const [done, setDone] = useState<Set<string>>(new Set(savedDone));
-  const [openHints, setOpenHints] = useState<Set<string>>(new Set());
-  const [justDone, setJustDone] = useState<string | null>(null);
-  const [showComplete, setShowComplete] = useState(false);
-  // Two gated final challenges — track each one's solved state.
-  const [chalSolved, setChalSolved] = useState<boolean[]>(
-    module.challenges.map(() => savedCompleted)
-  );
-  const challengeDone = chalSolved.every(Boolean);
-  const [justSolvedChallenge, setJustSolvedChallenge] = useState(false);
-  const [explainTask, setExplainTask] = useState<(typeof module.tasks)[number] | null>(null);
-  // Queue of educational quiz popups, one per just-completed task.
-  const [quizQueue, setQuizQueue] = useState<{ label: string; entry: QuizEntry; result?: OutLine[] }[]>([]);
-
-  // Create the right engine(s) once. The terminal + browser + topology all share
-  // one session object which is also the objective-check context.
-  const engineRef = useRef<{
-    term: TerminalLike;
-    ctx: any;
-    ravenSession?: RavenSession;
-    sshSession?: SshSession;
-  } | null>(null);
-  if (!engineRef.current) {
-    if (scenario === "raven") {
-      const session = new RavenSession();
-      const rt = new RavenTerminal(session);
-      module.ravenInit?.(rt);
-      engineRef.current = { term: rt, ctx: session, ravenSession: session };
-    } else if (scenario === "ssh") {
-      const session = new SshSession();
-      const st = new SshTerminal(session);
-      module.sshInit?.(st);
-      engineRef.current = { term: st, ctx: session, sshSession: session };
-    } else {
-      const t = new Terminal();
-      engineRef.current = { term: t, ctx: t };
+  const [hints, setHints] = useState<Record<string, boolean>>({});
+  const [explain, setExplain] = useState<string | null>(null);
+  const [finished, setFinished] = useState(false);
+  const [commandResult, setCommandResult] = useState<CommandExplanation | null>(null);
+  const [commandSuggestion, setCommandSuggestion] = useState<string | null>(null);
+  const commandPopupStorageKey = `hackforge.command-tutor.v1:${userId}:${module.id}`;
+  const [seenPopupFamilies, setSeenPopupFamilies] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem(commandPopupStorageKey);
+      const parsed: unknown = stored ? JSON.parse(stored) : [];
+      return new Set(Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : []);
+    } catch {
+      return new Set();
     }
-  }
-  const engine = engineRef.current;
+  });
+  const [, bump] = useState(0);
 
-  const banner: OutLine[] = useMemo(() => {
-    const tag = scenario === "raven" ? "RAVEN // BOOT2ROOT" : scenario === "ssh" ? "SSH // PORT 22" : "HACKFORGE";
-    return [
-      { text: `╔════════════════════════════════════════════╗`, cls: "text-ember-500" },
-      { text: `  ${tag} // ${module.title.en.toUpperCase()}`, cls: "text-ember-400" },
-      { text: `  ${module.subtitle[lang]}`, cls: "text-iron-400" },
-      { text: `╚════════════════════════════════════════════╝`, cls: "text-ember-500" },
-      { text: `Type 'help' for commands. Complete the objectives on the right →`, cls: "text-neon-cyan" },
-      { text: "" },
-    ];
-  }, [module, lang, scenario]);
+  const tasksDone = module.tasks.filter((x) => done.includes(x.id) || x.check(term));
+  const allTasks = tasksDone.length >= module.tasks.length;
+  const ch1 = done.includes("ch-0") || module.challenges[0].check(term);
+  const ch2 = done.includes("ch-1") || module.challenges[1].check(term);
 
-  const tasksDone = done.size >= module.tasks.length;
+  const progress = useMemo(() => {
+    const total = module.tasks.length + 2;
+    const n = (allTasks ? module.tasks.length : tasksDone.length) + (ch1 ? 1 : 0) + (ch2 ? 1 : 0);
+    return Math.round((n / total) * 100);
+  }, [allTasks, tasksDone.length, ch1, ch2, module.tasks.length]);
 
-  // Re-evaluate objectives after any action. `output` is the terminal result the
-  // player just saw (undefined for browser actions). The result is shown FIRST in
-  // the terminal; the quiz popup appears shortly after and repeats the result.
-  const handleAction = (output?: OutLine[], pasted?: boolean) => {
-    // Record gamification metrics for real terminal commands (output defined).
-    if (output !== undefined && onCommandMetric) {
-      const typo = output.some((l) => /command not found|not found|No such file/i.test(l.text));
-      onCommandMetric(!!pasted, typo);
-      if (typo) setTimeout(() => sound.error(), 200);
-      // a captured flag in the output gets its own little chime
-      if (output.some((l) => /flag\d?\{/.test(l.text))) setTimeout(() => sound.flag(), 500);
-    }
-    const ctx = engine.ctx;
-    const newly: typeof module.tasks = [];
+  const applyChecks = (t0: Terminal) => {
     for (const task of module.tasks) {
-      if (!done.has(task.id) && task.check(ctx)) {
-        done.add(task.id);
-        onTaskDone(task.id);
-        newly.push(task);
+      if (!done.includes(task.id) && task.check(t0)) {
+        onTask(task.id);
+        sound.taskDone();
       }
     }
-    if (newly.length) {
-      setDone(new Set(done));
-      setJustDone(newly[newly.length - 1].id);
-      setTimeout(() => sound.taskDone(), 350);
-      setTimeout(() => setJustDone(null), 1500);
-      // Queue an educational result + explanation + quiz for each completed task.
-      const popups: { label: string; entry: QuizEntry; result?: OutLine[] }[] = [];
-      for (const task of newly) {
-        const entry = getQuiz(task.id);
-        if (entry) popups.push({ label: task.instruction[lang], entry, result: output });
+    if (allTasks || module.tasks.every((x) => done.includes(x.id) || x.check(t0))) {
+      if (!done.includes("ch-0") && module.challenges[0].check(t0)) {
+        onTask("ch-0");
+        sound.challengeDone();
       }
-      // Small delay so the player reads the terminal result before the popup.
-      if (popups.length) setTimeout(() => setQuizQueue((q) => [...q, ...popups]), 650);
-    }
-    // The two final challenges only count once every objective is cleared.
-    const allTasksDone = done.size >= module.tasks.length;
-    if (allTasksDone && !challengeDone && output !== undefined) {
-      onChallengeAttempt?.(); // a command run during the challenge phase = an attempt
-    }
-    if (allTasksDone && !challengeDone) {
-      let anyNew = false;
-      const nextSolved = module.challenges.map((ch, i) => {
-        if (chalSolved[i]) return true;
-        if (ch.check(ctx)) {
-          anyNew = true;
-          return true;
-        }
-        return false;
-      });
-      if (anyNew) {
-        setChalSolved(nextSolved);
-        setJustSolvedChallenge(true);
-        setTimeout(() => setJustSolvedChallenge(false), 1200);
-        if (nextSolved.every(Boolean)) {
-          setTimeout(() => sound.moduleComplete(), 400);
-          onComplete();
-        } else {
-          setTimeout(() => sound.challengeDone(), 400);
-        }
-        // Assessment is opened by the player via the "See the results" button.
+      if (!done.includes("ch-1") && module.challenges[1].check(t0)) {
+        onTask("ch-1");
+        sound.challengeDone();
       }
     }
-  };
-
-  const toggleHint = (id: string) => {
-    setOpenHints((s) => {
-      const n = new Set(s);
-      if (n.has(id)) n.delete(id);
-      else {
-        n.add(id);
-        onHint();
-      }
-      return n;
-    });
+    const tasksNow = module.tasks.every((x) => done.includes(x.id) || x.check(t0));
+    const c1 = done.includes("ch-0") || module.challenges[0].check(t0);
+    const c2 = done.includes("ch-1") || module.challenges[1].check(t0);
+    if (tasksNow && c1 && c2 && !finished) {
+      setFinished(true);
+      sound.moduleComplete();
+      onComplete();
+    }
   };
 
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden">
-      {/* header */}
-      <header className="flex flex-none items-center justify-between gap-3 border-b border-forge-border bg-forge-panel/80 px-3 py-3 backdrop-blur sm:px-5">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <button
-            onClick={onBack}
-            title={t("backToMap", lang)}
-            className="flex shrink-0 items-center gap-1 rounded-lg border border-forge-border px-2.5 py-1.5 font-mono text-xs text-iron-400 transition hover:border-ember-500 hover:text-ember-400"
-          >
-            ← <span className="hidden sm:inline">{t("backToMap", lang)}</span>
-          </button>
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-forge-border bg-forge-bg text-ember-400">
-              <Icon name={MODULE_ICON[module.id]} className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <div className="truncate text-sm font-bold text-zinc-100">{module.title[lang]}</div>
-              <div className="truncate font-mono text-[11px] text-iron-500">
-                {t("level", lang)} {module.order} · {"◆".repeat(module.difficulty)}
-              </div>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="button" onClick={onBack} className="text-sm text-iron-400 hover:text-ember-400">
+          ← {t("backToMap", lang)}
+        </button>
+        <div className="flex-1" />
+        <WidthControl value={contentWidth} onChange={onWidth} />
+      </div>
+
+      <div className={contentWidthClass(contentWidth)}>
+        <div className="flex items-start gap-4 mb-4">
+          <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${module.color} grid place-items-center forge-glow`}>
+            <Icon name={module.icon} className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-ember-400">
+              {t("difficulty", lang)} {"▲".repeat(module.difficulty)}
+              {"△".repeat(5 - module.difficulty)}
             </div>
+            <h1 className="text-2xl font-bold text-zinc-100">{bi(module.title, lang)}</h1>
+            <p className="text-sm text-iron-400">{bi(module.subtitle, lang)}</p>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-ember-400">{progress}%</div>
+            <div className="text-[11px] text-iron-500">{t("progress", lang)}</div>
           </div>
         </div>
-        {/* tabs */}
-        <div className="flex shrink-0 rounded-lg border border-forge-border bg-forge-bg p-1">
-          {(["theory", "lab"] as const).map((k) => (
+        <div className="h-1.5 rounded-full bg-forge-panel2 overflow-hidden mb-6">
+          <div className="h-full bg-gradient-to-r from-ember-600 to-ember-400 bar-grow" style={{ width: `${progress}%` }} />
+        </div>
+
+        <div className="flex rounded-xl bg-forge-panel border border-forge-border p-1 mb-6 w-fit">
+          {(["theory", "guide", "lab"] as const).map((k) => (
             <button
               key={k}
+              type="button"
               onClick={() => setTab(k)}
               className={cn(
-                "rounded-md px-3 py-1.5 font-mono text-xs font-semibold transition sm:px-4",
-                tab === k ? "bg-ember-600 text-white" : "text-iron-400 hover:text-zinc-200"
+                "px-4 py-2 rounded-lg text-sm font-semibold",
+                tab === k ? "bg-ember-600 text-white" : "text-iron-400"
               )}
             >
               {t(k, lang)}
             </button>
           ))}
         </div>
-      </header>
 
-      {tab === "theory" ? (
-        <div className="flex-1 overflow-y-auto px-5 py-8">
-          <div className={cn("flex-1", contentWidthClass(contentWidth))}>
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <span className="rounded-full bg-ember-500/10 px-3 py-1 font-mono text-xs text-ember-400">
-              {t("briefing", lang)}
-            </span>
-            {onContentWidth && (
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[10px] uppercase tracking-wide text-iron-500">Reading width</span>
-                <WidthControl value={contentWidth} onChange={onContentWidth} />
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-7">
+        {tab === "theory" && (
+          <div className="space-y-6 enter">
             {module.theory.map((s, i) => (
-              <section key={i} className="fadeup rounded-xl border border-forge-border bg-forge-panel p-5">
-                <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-zinc-100">
-                  <span className="text-ember-500">{String(i + 1).padStart(2, "0")}</span>
-                  {s.heading[lang]}
-                </h3>
-                <p className="text-[15px] leading-relaxed text-zinc-300">{s.body[lang]}</p>
+              <section key={i} className="glass rounded-2xl border border-forge-border p-5">
+                <h2 className="text-lg font-semibold text-zinc-100 mb-2">{bi(s.heading, lang)}</h2>
+                <p className="text-sm text-zinc-300 leading-relaxed">{bi(s.body, lang)}</p>
                 {s.tip && (
-                  <div className="mt-4 flex items-start gap-2 rounded-lg bg-ember-500/10 p-3 text-[13px] text-ember-300">
-                    <Icon name="bulb" className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>{s.tip[lang]}</span>
-                  </div>
+                  <p className="mt-3 text-xs text-neon-cyan/90 border-l-2 border-neon-cyan/40 pl-3">{bi(s.tip, lang)}</p>
                 )}
+                {s.shots?.map((sh, si) => (
+                  <div key={si} className="mt-4 rounded-xl border border-forge-border bg-black/70 overflow-hidden font-mono text-[12px]">
+                    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 text-[10px] text-iron-500">
+                      <span className="h-2 w-2 rounded-full bg-rose-500/80" />
+                      <span className="h-2 w-2 rounded-full bg-amber-400/80" />
+                      <span className="h-2 w-2 rounded-full bg-neon-green/80" />
+                      <span className="ml-2 tracking-wider text-iron-400">screenshot · HackForge lab</span>
+                    </div>
+                    <pre className="px-3 py-3 text-zinc-200 whitespace-pre-wrap leading-relaxed">
+                      {sh.cmd && <span className="text-ember-400">root@kali:~# {sh.cmd}{"\n"}</span>}
+                      {sh.lines.join("\n")}
+                    </pre>
+                  </div>
+                ))}
+                {s.visual && <DfirVisual visual={s.visual} lang={lang} />}
               </section>
             ))}
-          </div>
-
-          {/* cheat sheet */}
-          <div className="mt-8 rounded-xl border border-forge-border bg-forge-panel p-5">
-            <h4 className="mb-3 font-mono text-sm font-bold text-neon-cyan">$ {t("cheatsheet", lang)}</h4>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {module.cheats.map((c, i) => (
-                <div key={i} className="flex flex-col rounded-lg bg-forge-bg px-3 py-2">
-                  <code className="font-mono text-[13px] text-ember-400">{c.cmd}</code>
-                  <span className="text-xs text-iron-500">{c.desc[lang]}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={() => setTab("lab")}
-            className="forge-glow mt-8 w-full rounded-xl bg-ember-600 py-4 font-mono text-sm font-bold text-white transition hover:bg-ember-500"
-          >
-            {t("beginLab", lang)} →
-          </button>
-          </div>
-        </div>
-      ) : (
-        <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-4 lg:grid-cols-[1fr_360px] lg:overflow-hidden">
-          <div className="flex min-h-[440px] flex-col gap-2 lg:min-h-0">
-            {(() => {
-              const tabs: { k: "terminal" | "browser" | "topology"; label: string; icon: string }[] = [];
-              if (showTerminal) tabs.push({ k: "terminal", label: "Terminal", icon: "terminal" });
-              if (showTopology) tabs.push({ k: "topology", label: "Topology", icon: "network" });
-              if (showBrowser) tabs.push({ k: "browser", label: "Browser", icon: "globe" });
-              if (tabs.length < 2) return null;
-              return (
-                <div className="flex flex-none gap-1 rounded-lg border border-forge-border bg-forge-bg p-1">
-                  {tabs.map((tb) => (
-                    <button
-                      key={tb.k}
-                      onClick={() => setLabTool(tb.k)}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-md px-3 py-1.5 font-mono text-xs font-semibold transition",
-                        labTool === tb.k ? "bg-ember-600 text-white" : "text-iron-400 hover:text-zinc-200"
-                      )}
-                    >
-                      <Icon name={tb.icon} className="h-3.5 w-3.5" />
-                      {tb.label}
-                    </button>
-                  ))}
-                </div>
-              );
-            })()}
-            <div className="min-h-0 flex-1">
-              {labTool === "topology" && engine.sshSession ? (
-                <SshTopology session={engine.sshSession} />
-              ) : labTool === "browser" && engine.ravenSession ? (
-                <RavenBrowser session={engine.ravenSession} onAction={() => handleAction()} />
-              ) : labTool === "browser" && engine.sshSession ? (
-                <SshBrowser session={engine.sshSession} onAction={() => handleAction()} />
-              ) : (
-                <TerminalView
-                  term={engine.term}
-                  onCommand={(_raw, output) => handleAction(output)}
-                  banner={banner}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* objectives */}
-          <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto">
-            <div className="rounded-xl border border-forge-border bg-forge-panel p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h4 className="font-mono text-sm font-bold text-ember-400">{t("objectives", lang)}</h4>
-                <span className="font-mono text-xs text-iron-500">
-                  {done.size}/{module.tasks.length}
-                </span>
-              </div>
-              <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-forge-bg">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-ember-500 to-ember-400 transition-all"
-                  style={{ width: `${(done.size / module.tasks.length) * 100}%` }}
-                />
-              </div>
-              <ol className="space-y-3">
-                {module.tasks.map((task, i) => {
-                  const isDone = done.has(task.id);
-                  return (
-                    <li
-                      key={task.id}
-                      className={cn(
-                        "rounded-lg border p-3 transition",
-                        isDone
-                          ? "border-neon-green/40 bg-neon-green/5"
-                          : justDone === task.id
-                            ? "border-ember-500"
-                            : "border-forge-border bg-forge-bg"
-                      )}
-                    >
-                      <div className="flex items-start gap-2">
-                        <span
-                          className={cn(
-                            "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border font-mono text-[11px]",
-                            isDone ? "border-neon-green bg-neon-green/20 text-neon-green" : "border-iron-500 text-iron-500"
-                          )}
-                        >
-                          {isDone ? "✓" : i + 1}
-                        </span>
-                        <span className={cn("flex-1 text-[13px]", isDone ? "text-iron-400 line-through" : "text-zinc-200")}>
-                          {task.instruction[lang]}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExplainTask(task);
-                          }}
-                          title={t("whyHow", lang)}
-                          className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-neon-cyan/50 font-mono text-[11px] font-bold text-neon-cyan transition hover:bg-neon-cyan/15"
-                        >
-                          ?
-                        </button>
-                      </div>
-                      {!isDone && (
-                        <div className="mt-2 pl-7">
-                          <button
-                            onClick={() => toggleHint(task.id)}
-                            className="font-mono text-[11px] text-neon-cyan hover:underline"
-                          >
-                            {openHints.has(task.id) ? "▾" : "▸"} {t("showHint", lang)}
-                          </button>
-                          {openHints.has(task.id) && (
-                            <code className="mt-1 block rounded bg-forge-panel2 px-2 py-1 font-mono text-[12px] text-ember-300">
-                              {task.hint[lang]}
-                            </code>
-                          )}
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-
-            {/* FINAL CHALLENGES — two gated tasks, no hints, no solution shown */}
-            <div
-              className={cn(
-                "relative overflow-hidden rounded-xl border p-4 transition",
-                challengeDone
-                  ? "border-neon-green/50 bg-neon-green/5"
-                  : tasksDone
-                    ? "border-ember-500/70 bg-ember-500/5 forge-glow"
-                    : "border-forge-line bg-forge-panel/40"
-              )}
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <h4 className="flex items-center gap-2 font-mono text-sm font-bold text-ember-400">
-                  <Icon
-                    name={challengeDone ? "flag" : tasksDone ? "sword" : "lock"}
-                    className="h-4 w-4"
-                  />
-                  {t("finalChallenges", lang)}
-                </h4>
-                <span className="font-mono text-[11px] text-iron-500">
-                  {chalSolved.filter(Boolean).length}/{module.challenges.length}
-                </span>
-              </div>
-
-              {!tasksDone ? (
-                <p className="text-[13px] leading-relaxed text-iron-500">{t("challengeLocked", lang)}</p>
-              ) : (
-                <div className="space-y-3">
-                  {module.challenges.map((ch, i) => {
-                    const solved = chalSolved[i];
-                    return (
-                      <div
-                        key={i}
-                        className={cn(
-                          "rounded-lg border p-3 transition",
-                          solved ? "border-neon-green/40 bg-neon-green/5" : "border-forge-border bg-forge-bg"
-                        )}
-                      >
-                        <div className="mb-1 flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 text-[13px] font-bold text-zinc-100">
-                            <span
-                              className={cn(
-                                "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border font-mono text-[10px]",
-                                solved ? "border-neon-green text-neon-green" : "border-ember-500 text-ember-400"
-                              )}
-                            >
-                              {solved ? "✓" : i + 1}
-                            </span>
-                            {ch.title[lang]}
-                          </div>
-                          <span className="rounded-full bg-red-500/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-red-400">
-                            {"◆".repeat(module.difficulty)}
-                          </span>
-                        </div>
-                        {solved ? (
-                          <p className="pl-6.5 text-[12px] leading-relaxed text-iron-400">{ch.success[lang]}</p>
-                        ) : (
-                          <p className="text-[12px] leading-relaxed text-zinc-300">{ch.brief[lang]}</p>
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  {!challengeDone && (
-                    <>
-                      <div className="flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-[12px] text-red-300">
-                        <Icon name="ban" className="h-4 w-4 shrink-0" />
-                        <span>{t("noHints", lang)}</span>
-                      </div>
-                      <p className="font-mono text-[11px] text-ember-400">{t("solveBothToProceed", lang)}</p>
-                    </>
-                  )}
-
-                  {challengeDone && (
-                    <button
-                      onClick={() => setShowComplete(true)}
-                      className="forge-glow flex w-full items-center justify-center gap-2 rounded-lg bg-ember-600 py-2.5 font-mono text-xs font-bold text-white transition hover:bg-ember-500"
-                    >
-                      <Icon name="medal" className="h-4 w-4" />
-                      {t("seeResults", lang)}
-                    </button>
-                  )}
-                </div>
-              )}
-              {justSolvedChallenge && (
-                <div className="pointer-events-none absolute inset-0 animate-pulse rounded-xl border-2 border-neon-green/60" />
-              )}
-            </div>
-          </aside>
-        </div>
-      )}
-
-      {/* "why & how" explanation popup */}
-      {explainTask && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6 backdrop-blur-sm"
-          onClick={() => setExplainTask(null)}
-        >
-          <div
-            className="fadeup w-full max-w-lg rounded-2xl border border-neon-cyan/40 bg-forge-panel p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-neon-cyan/50 font-mono text-sm font-bold text-neon-cyan">
-                  ?
-                </span>
-                <h3 className="font-mono text-sm font-bold text-neon-cyan">{t("whyHow", lang)}</h3>
-              </div>
-              <button
-                onClick={() => setExplainTask(null)}
-                className="rounded-lg border border-forge-border px-2 py-1 font-mono text-xs text-iron-400 transition hover:border-ember-500 hover:text-ember-400"
-              >
-                ✕
-              </button>
-            </div>
-            <p className="mb-4 rounded-lg bg-forge-bg px-3 py-2 text-[13px] text-zinc-200">
-              {explainTask.instruction[lang]}
-            </p>
-            <p className="whitespace-pre-line text-[14px] leading-relaxed text-iron-300">
-              {explainTask.explain[lang]}
-            </p>
             <button
-              onClick={() => setExplainTask(null)}
-              className="mt-6 w-full rounded-xl bg-neon-cyan/15 py-3 font-mono text-sm font-bold text-neon-cyan transition hover:bg-neon-cyan/25"
+              type="button"
+              onClick={() => {
+                setTab("lab");
+                sound.popup();
+              }}
+              className="rounded-xl bg-gradient-to-r from-ember-600 to-ember-500 px-5 py-3 font-bold text-white shimmer-hover"
             >
-              {t("close", lang)}
+              {t("beginLab", lang)}
             </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* educational output explanation + quiz, shown per completed objective */}
-      {quizQueue.length > 0 && (
-        <QuizPopup
-          entry={quizQueue[0].entry}
-          taskLabel={quizQueue[0].label}
-          result={quizQueue[0].result}
-          lang={lang}
-          onClose={() => setQuizQueue((q) => q.slice(1))}
-        />
-      )}
+        {tab === "guide" && (
+          <CommandStudyGuide
+            module={module}
+            lang={lang}
+            onTry={(command) => {
+              setCommandSuggestion(command);
+              setTab("lab");
+              sound.popup();
+            }}
+          />
+        )}
 
-      {/* completion overlay */}
-      {showComplete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6 backdrop-blur-sm">
-          <div className="fadeup w-full max-w-md rounded-2xl border border-ember-500/40 bg-forge-panel p-8 text-center forge-glow">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-ember-500/40 bg-ember-500/10 text-ember-400 forge-glow">
-              <Icon name={MODULE_ICON[module.id]} className="h-8 w-8" />
-            </div>
-            <h2 className="text-glow mb-1 text-2xl font-black text-ember-400">{t("moduleComplete", lang)}</h2>
-            <p className="mb-4 text-sm text-iron-400">{module.title[lang]}</p>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-ember-500/40 bg-ember-500/10 px-4 py-2 text-ember-300">
-              <Icon name="medal" className="h-4 w-4" />
-              <span className="font-mono text-sm font-bold text-ember-300">{module.badge[lang]}</span>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={onBack}
-                className="flex-1 rounded-xl border border-forge-border py-3 font-mono text-sm text-iron-300 transition hover:border-ember-500 hover:text-ember-400"
-              >
-                {t("backToMap", lang)}
-              </button>
-              {hasNext && (
-                <button
-                  onClick={onNext}
-                  className="flex-1 rounded-xl bg-ember-600 py-3 font-mono text-sm font-bold text-white transition hover:bg-ember-500"
-                >
-                  {t("nextModule", lang)} →
-                </button>
-              )}
-            </div>
+        {tab === "lab" && (
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
+            <TerminalView
+              term={term}
+              lang={lang}
+              suggestion={commandSuggestion}
+              onSuggestionConsumed={() => setCommandSuggestion(null)}
+              onCommand={(raw, pasted) => {
+                if (!raw.trim()) return;
+                const lines = runCommand(term, raw);
+                if (raw.trim() === "clear") {
+                  term.lines = [];
+                } else {
+                  term.lines = [...term.lines, ...lines];
+                }
+                for (const line of lines) {
+                  const flags = line.text.match(/FLAG\{[^}]+\}/g) || [];
+                  flags.forEach((flag) => term.flags.add(`saw:${flag}`));
+                }
+                const relevantFamilies = relevantCommandFamiliesForModule(module, raw, term);
+                const firstRunFamilies = relevantFamilies.filter((family) => !seenPopupFamilies.has(family));
+                if (firstRunFamilies.length > 0) {
+                  const nextSeen = new Set(seenPopupFamilies);
+                  relevantFamilies.forEach((family) => nextSeen.add(family));
+                  setSeenPopupFamilies(nextSeen);
+                  try {
+                    localStorage.setItem(commandPopupStorageKey, JSON.stringify([...nextSeen]));
+                  } catch {
+                    // Popup remains one-time for the current mounted lab if storage is unavailable.
+                  }
+                  setCommandResult(explainCommandResult(raw, lines, term, lang));
+                } else {
+                  setCommandResult(null);
+                }
+                const typo = term.lastExit === 127;
+                onCommandMetric(pasted, typo);
+                applyChecks(term);
+                setTerm(term);
+                bump((x) => x + 1);
+              }}
+            />
+            <aside className="space-y-4">
+              <div className="glass rounded-2xl border border-forge-border p-4">
+                <div className="text-[10px] uppercase tracking-widest text-ember-400 mb-3">{t("objectives", lang)}</div>
+                <ol className="space-y-3">
+                  {module.tasks.map((task, idx) => {
+                    const ok = done.includes(task.id) || task.check(term);
+                    return (
+                      <li key={task.id} className="text-sm">
+                        <div className="flex items-start gap-2">
+                          <span className={cn("mt-0.5", ok ? "text-neon-green" : "text-iron-500")}>
+                            {ok ? "●" : "○"}
+                          </span>
+                          <div className="flex-1">
+                            <div className={ok ? "text-zinc-500 line-through" : "text-zinc-200"}>
+                              {idx + 1}. {bi(task.instruction, lang)}
+                            </div>
+                            <div className="flex gap-2 mt-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setHints((h) => ({ ...h, [task.id]: true }));
+                                  onHint();
+                                }}
+                                className="text-[11px] text-ember-400 hover:underline"
+                              >
+                                {t("showHint", lang)}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setExplain(explain === task.id ? null : task.id)}
+                                className="text-[11px] text-neon-cyan hover:underline"
+                              >
+                                {t("whyHow", lang)}
+                              </button>
+                            </div>
+                            {hints[task.id] && <div className="mt-1 font-mono text-[11px] text-amber-300">{bi(task.hint, lang)}</div>}
+                            {explain === task.id && (
+                              <div className="mt-1 text-[11px] text-zinc-400 leading-relaxed">{bi(task.explain, lang)}</div>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+
+              <div className="glass rounded-2xl border border-forge-border p-4">
+                <div className="text-[10px] uppercase tracking-widest text-ember-400 mb-2">{t("finalChallenges", lang)}</div>
+                {!allTasks ? (
+                  <p className="text-xs text-iron-500">{t("challengeLocked", lang)}</p>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-[11px] text-iron-400">{t("solveBothToProceed", lang)}</p>
+                    {module.challenges.map((ch, i) => {
+                      const ok = i === 0 ? ch1 : ch2;
+                      return (
+                        <div key={i} className="text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className={ok ? "text-neon-green" : "text-ember-400"}>{ok ? "✔" : "◆"}</span>
+                            <span className="font-semibold text-zinc-100">{bi(ch.title, lang)}</span>
+                          </div>
+                          <p className="text-xs text-zinc-400 mt-1 ml-5">{bi(ch.brief, lang)}</p>
+                          <p className="text-[11px] text-zinc-600 ml-5">{t("noHints", lang)}</p>
+                          {ok && <p className="text-xs text-neon-green ml-5 mt-1">{bi(ch.success, lang)}</p>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <details className="glass rounded-2xl border border-forge-border p-4">
+                <summary className="text-[10px] uppercase tracking-widest text-iron-400 cursor-pointer">
+                  {t("cheatsheet", lang)}
+                </summary>
+                <ul className="mt-3 space-y-1 font-mono text-[12px]">
+                  {module.cheats.map((c) => (
+                    <li key={c.cmd} className="flex justify-between gap-2">
+                      <span className="text-ember-300">{c.cmd}</span>
+                      <span className="text-zinc-500 text-right">{bi(c.desc, lang)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </aside>
           </div>
-        </div>
+        )}
+      </div>
+      {commandResult && (
+        <CommandResultPopup
+          result={commandResult}
+          lang={lang}
+          onClose={() => setCommandResult(null)}
+        />
       )}
     </div>
   );

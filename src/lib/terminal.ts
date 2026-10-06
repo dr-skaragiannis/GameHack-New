@@ -1,1966 +1,1204 @@
-// A safe, simulated Linux terminal engine for the HACKFORGE lab.
-// No real commands are executed — everything is a scripted simulation.
+import { applyRedirect, handleSudoRun, splitPipes } from "./sudorun";
+import { handleDfirCommand } from "./dfir";
+export { splitPipes };
 
 export type FileNode = {
-  type: "file" | "dir";
+  name: string;
+  type: "dir" | "file";
   content?: string;
-  perms: string; // e.g. "rwxr-xr-x"
-  owner: string;
-  group: string;
-  size: number;
-  hidden?: boolean;
-  setuid?: boolean;
-  setgid?: boolean;
+  mode?: string;
+  owner?: string;
+  group?: string;
   children?: Record<string, FileNode>;
 };
 
-export type CmdResult = {
-  lines: OutLine[];
-  command: string;
+export type Proc = {
+  pid: number;
+  user: string;
+  cpu: string;
+  mem: string;
+  cmd: string;
+  nice: number;
+  alive: boolean;
 };
 
-export type OutLine = { text: string; cls?: string };
+export type TermLine = { kind: "in" | "out" | "err" | "ok" | "sys"; text: string };
 
-// Common surface used by the TerminalView component so it can drive either the
-// lab Terminal or the Raven terminal.
-export interface TerminalLike {
-  history: string[];
-  prompt(): string;
-  run(raw: string): OutLine[];
-  complete(input: string): { completed: string; candidates: string[] };
-}
-
-const c = {
-  err: "text-red-400",
-  ok: "text-neon-green",
-  warn: "text-amber-300",
-  dim: "text-iron-500",
-  info: "text-neon-cyan",
-  ember: "text-ember-400",
+export type HostInfo = {
+  ip: string;
+  hostname: string;
+  ports: { port: number; proto: string; service: string; version: string; state: string }[];
+  os?: string;
 };
 
-function line(text: string, cls?: string): OutLine {
-  return { text, cls };
-}
-
-// ------------------------- Virtual File System -------------------------
-
-function file(content: string, perms = "rw-r--r--", owner = "operator"): FileNode {
-  return { type: "file", content, perms, owner, group: owner, size: content.length };
-}
-function dir(children: Record<string, FileNode>, perms = "rwxr-xr-x", owner = "operator"): FileNode {
-  return { type: "dir", children, perms, owner, group: owner, size: 4096 };
-}
-
-export function buildFS(): FileNode {
-  return dir({
-    home: dir({
-      operator: dir({
-        "readme.txt": file(
-          "Welcome to HACKFORGE, operator.\nThis is a sandbox. Practice freely.\nRule #1: hack only what you are allowed to.\n"
-        ),
-        "notes.md": file("# Recon notes\n- gateway is 10.10.10.1\n- target box: 10.10.10.5\n"),
-        documents: dir({
-          "passwords.txt": file("do-not-store-passwords-in-plaintext\n", "rw-------"),
-          "todo.txt": file("1. learn linux\n2. scan network\n3. profit (ethically)\n"),
-          ".htpasswd": file("root:x:hidden\nadmin:BACKDOOR:flag{grep_found_the_backdoor}\nguest:x:none\n"),
-        }),
-        loot: dir({}),
-        ".secret": file("flag{hidden_files_start_with_a_dot}\n"),
-        ".vault": dir({
-          "flag.txt": file("flag{you_navigated_the_hidden_vault}\n"),
-        }),
-        ".ssh": dir({
-          id_rsa: file("-----BEGIN OPENSSH PRIVATE KEY-----\n(simulated private key)\n-----END-----\n", "rw-r--r--"),
-          "id_rsa.pub": file("ssh-rsa AAAAB3... operator@kali\n"),
-        }),
-        "backup.sh": file("#!/bin/bash\ntar -czf backup.tgz documents/\n", "rwxr-xr-x"),
-      }),
-    }),
-    etc: dir({
-      passwd: file(
-        "root:x:0:0:root:/root:/bin/bash\noperator:x:1000:1000::/home/operator:/bin/bash\nwww-data:x:33:33::/var/www:/usr/sbin/nologin\n",
-        "rw-r--r--",
-        "root"
-      ),
-      hosts: file("127.0.0.1 localhost\n10.10.10.5 target.hackforge.lab\n", "rw-r--r--", "root"),
-      shadow: file(
-        "root:$6$saltsalt$R0oThAsh...:19000:0:99999:7:::\noperator:$6$abc$hAsH...:19000:0:99999:7:::\nflag{root_reads_the_shadow_file}\n",
-        "rw-------",
-        "root"
-      ),
-    }),
-    var: dir({
-      www: dir({ "index.html": file("<h1>It works</h1>\n", "rw-r--r--", "www-data") }, "rwxr-xr-x", "www-data"),
-    }),
-    root: dir(
-      {
-        "flag.txt": file("flag{root_access_the_forge_is_complete}\n", "rw-------", "root"),
-      },
-      "rwx------",
-      "root"
-    ),
-  });
-}
-
-// ------------------------- Network model -------------------------
-
-const NETWORK: Record<string, { ports: { port: number; svc: string; ver: string; state?: string }[]; hostname: string }> = {
-  "10.10.10.1": { hostname: "gateway.hackforge.lab", ports: [{ port: 53, svc: "domain", ver: "dnsmasq 2.85" }] },
-  "10.10.10.5": {
-    hostname: "target.hackforge.lab",
-    ports: [
-      { port: 22, svc: "ssh", ver: "OpenSSH 8.9p1" },
-      { port: 80, svc: "http", ver: "Apache 2.4.52" },
-      { port: 3306, svc: "mysql", ver: "MySQL 5.7.38" },
-    ],
-  },
-  "10.10.10.7": {
-    hostname: "web.hackforge.lab",
-    ports: [
-      { port: 80, svc: "http", ver: "nginx 1.18.0" },
-      { port: 443, svc: "https", ver: "nginx 1.18.0" },
-    ],
-  },
-  "10.10.10.6": {
-    hostname: "hackforge.in",
-    ports: [
-      { port: 53, svc: "domain", ver: "BIND 9.18" },
-      { port: 80, svc: "http", ver: "Apache 2.4.52" },
-      { port: 443, svc: "https", ver: "Apache 2.4.52" },
-    ],
-  },
-  "10.10.10.9": {
-    hostname: "files.hackforge.lab",
-    ports: [
-      { port: 21, svc: "ftp", ver: "vsftpd 3.0.5" },
-      { port: 22, svc: "ssh", ver: "OpenSSH 8.9p1" },
-    ],
-  },
-};
-const HOSTALIAS: Record<string, string> = {
-  "target.hackforge.lab": "10.10.10.5",
-  "web.hackforge.lab": "10.10.10.7",
-  "gateway.hackforge.lab": "10.10.10.1",
-  "scanme.hackforge.lab": "10.10.10.5",
-  "hackforge.in": "10.10.10.6",
-  "www.hackforge.in": "10.10.10.6",
-  "files.hackforge.lab": "10.10.10.9",
-};
-
-// Domains that always resolve in the lab (used by dig / ftp).
-const DOMAIN_IPS: Record<string, string> = {
-  "hackforge.in": "10.10.10.6",
-  "www.hackforge.in": "10.10.10.6",
-  "files.hackforge.lab": "10.10.10.9",
-};
-
-// Simulated FTP server tree (Sudo_Run campaign): files.hackforge.lab
-const FTP_TREE: Record<string, string[]> = {
-  "": ["ubuntu/"],
-  ubuntu: ["releases/"],
-  "ubuntu/releases": ["favicon.ico", "SHA256SUMS.txt", "README.txt"],
-};
-const FTP_FILES: Record<string, string> = {
-  "ubuntu/releases/favicon.ico": "FAKE-ICO-DATA hackforge labs favicon",
-  "ubuntu/releases/SHA256SUMS.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  hackforge.iso",
-  "ubuntu/releases/README.txt": "HackForge Labs mirror - training mirrors only.",
-};
-
-// Static process table for ps/top (Sudo_Run campaign lessons).
-const PROC_TABLE: { pid: number; name: string; cpu: string; mem: string; state: string }[] = [
-  { pid: 1432, name: "kworker/u2:1", cpu: "0.0", mem: "0.0", state: "S" },
-  { pid: 1668, name: "kworker/2:3", cpu: "0.1", mem: "0.1", state: "S" },
-  { pid: 2145, name: "cupsd", cpu: "0.0", mem: "0.3", state: "S" },
-  { pid: 2568, name: "wirelesstracker", cpu: "0.4", mem: "0.8", state: "S" },
-  { pid: 3120, name: "bash", cpu: "0.0", mem: "0.2", state: "S" },
-  { pid: 3898, name: "apt", cpu: "0.2", mem: "0.5", state: "S" },
-  { pid: 4198, name: "dnsmasq", cpu: "0.0", mem: "0.1", state: "S" },
-  { pid: 4378, name: "bluetoothd", cpu: "0.1", mem: "0.2", state: "Z (zombie)" },
-  { pid: 4423, name: "apt-listchanges", cpu: "0.0", mem: "0.2", state: "S" },
-  { pid: 4569, name: "sshd", cpu: "0.0", mem: "0.3", state: "S" },
-  { pid: 5123, name: "msfconsole", cpu: "2.4", mem: "6.1", state: "S" },
-  { pid: 6242, name: "ssh-agent", cpu: "0.0", mem: "0.1", state: "S" },
-  { pid: 6673, name: "rsyslogd", cpu: "0.0", mem: "0.2", state: "S" },
-  { pid: 7102, name: "ps", cpu: "0.3", mem: "0.1", state: "R" },
-];
-
-function resolve(host: string): string | null {
-  if (NETWORK[host]) return host;
-  if (HOSTALIAS[host]) return HOSTALIAS[host];
-  return null;
-}
-
-// ------------------------- Engine -------------------------
-
-export class Terminal {
-  fs: FileNode;
-  cwd: string[]; // path segments, e.g. ["home","operator"]
+export type Terminal = {
   user: string;
   host: string;
-  history: string[] = [];
-  commandsRun = 0;
-  ran: string[] = []; // normalized command log for objective checks
-
-  // ---- Outcome tracking (method-agnostic) — checks read these, NOT raw text ----
-  // Every flag below is set ONLY when a command actually executes successfully in
-  // the right context (correct user/permissions/target), never just because the
-  // command string was typed.
-  capturedFlags = new Set<string>(); // any flag{...} the player has revealed
-  pinged = new Set<string>(); // IPs proven reachable (by IP or resolved name)
-  resolved = new Set<string>(); // hostnames/IPs resolved via any DNS tool
-  nmapSubnet = false; // performed a subnet sweep
-  nmapVersionScans = new Set<string>(); // IPs given a service/version scan
-  nmapPortScans = new Set<string>(); // IPs given any port scan
-  nmapSpecificPorts = new Set<string>(); // `${ip}:${port}` explicitly scanned via -p
-  bruteforced = new Set<string>(); // services successfully brute-forced
-  sqlmapRun = false; // ran an automated SQLi tool
-  sqlmapDumped = false; // ran sqlmap with --dump (extracted data)
-  nmapFullScan = new Set<string>(); // IPs scanned with -p- (all ports)
-  // simple "this action actually happened" outcomes
-  ranHelp = false;
-  ranWhoami = false;
-  ranId = false;
-  ranPwd = false;
-  ranClear = false;
-  ranIpAddr = false;
-  ranIpRoute = false;
-  ranNetstat = false;
-  ranIfconfig = false;
-  ranFindCmd = false; // a find that executed over a valid path
-  whoisDone = false;
-  listedDirs = new Set<string>(); // dirs successfully listed with ls
-  listedHidden = false; // ls -a that actually revealed hidden entries
-  listedLong = false; // ls -l performed on a real dir
-  readFiles = new Set<string>(); // abs paths of files whose content was printed
-  sudoReadFiles = new Set<string>(); // files read while effectively root (via sudo/root)
-  grepped = new Set<string>(); // abs file paths where grep returned a match
-  curled = new Set<string>(); // hosts successfully fetched with curl
-  sshTargets = new Set<string>(); // hosts an ssh session was opened to
-
-  // ---- Sudo_Run campaign engine state ----
-  vars: Record<string, string> = {}; // shell/environment variables (HISTSIZE, custom ones)
-  exported = new Set<string>(); // variables marked with export
-  unsetVars = new Set<string>(); // variables removed with unset
-  awaitingRead: string | null = null; // a running script paused on `read VAR`
-  scriptQueue: string[] = []; // remaining script lines to run after read completes
-  scriptStack: { lines: string[]; idx: number } | null = null;
-  ranScripts = new Set<string>(); // abs paths of scripts executed via ./script
-  readUsed = false; // a script consumed user input via `read`
-  chmodX = new Set<string>(); // files made executable with chmod
-  jobs: { id: number; pid: number; cmd: string }[] = []; // background jobs (&)
-  fgUsed = false;
-  killed = new Set<string>(); // pids killed with kill
-  niceRan = false;
-  reniceRan = false;
-  atScheduled = false;
-  psRan = false;
-  psAux = false;
-  topRan = false;
-  envViewed = false;
-  iwconfigRan = false;
-  eth0 = { ip: "10.10.10.13", mac: "08:00:27:1a:2b:3c", up: true };
-  ipChanged = false;
-  macSpoofed = false;
-  dhcpDone = false;
-  digMx = false;
-  digNs = false;
-  locateRan = false;
-  whereisRan = false;
-  whichRan = false;
-  nlRan = false;
-  sedRan = false;
-  sedReplaced = new Set<string>(); // files whose content was rewritten via sed -i
-  nanoOpened = new Set<string>(); // files opened in the nano editor sim
-  aptSearched = false;
-  installedPkgs = new Set<string>(); // packages installed via apt-get install
-  removedPkgs = new Set<string>(); // packages removed via apt-get remove
-  purgedPkgs = new Set<string>(); // packages purged via apt-get purge
-  aptUpdated = false; // apt-get update ran
-  aptUpgraded = false; // apt-get upgrade ran
-  serviceStates: Record<string, string> = { apache2: "inactive (dead)", ssh: "inactive (dead)", cron: "inactive (dead)", mysql: "active (running)" };
-  rcAdded = new Set<string>(); // services added to boot with update-rc.d
-  cronListed = false; // crontab -l ran
-  ftpGot = new Set<string>(); // files downloaded via ftp get
-  ftpDone = false; // ftp session used (get + bye)
-  whichFound: string | null = null; // last program successfully resolved by which
-  niceValue: string | null = null; // niceness passed to nice -n
-  renicedPid: string | null = null; // pid adjusted with renice
-  manRan = false; // a manual page was viewed
-  manViewed = new Set<string>(); // manuals opened
-  nmapPingSweep = false; // nmap -sP/-sn host discovery ran
-
-  constructor(fs?: FileNode) {
-    this.fs = fs || buildFS();
-    this.cwd = ["home", "operator"];
-    this.user = "operator";
-    this.host = "kali";
-    this.vars = { HISTSIZE: "1000", HOSTNAME: "kali", USER: "operator", HOME: "/home/operator", PATH: "/usr/local/bin:/usr/bin:/bin", SHELL: "/bin/bash", LANG: "en_US.UTF-8" };
-  }
-
-  // ---- public helpers for module/challenge checks ----
-  fileContent(input: string): string | null {
-    const segs = this.resolvePath(input);
-    const n = segs && this.nodeAt(segs);
-    return n && n.type === "file" ? n.content || "" : null;
-  }
-  serviceState(name: string): string {
-    return this.serviceStates[name] || "unknown";
-  }
-  hasPkg(name: string): boolean {
-    return this.installedPkgs.has(name) && !this.removedPkgs.has(name);
-  }
-  getVar(name: string): string | undefined {
-    return this.vars[name];
-  }
-  specialPerms(input: string): { suid: boolean; setgid: boolean } | null {
-    const segs = this.resolvePath(input);
-    const n = segs && this.nodeAt(segs);
-    return n ? { suid: !!n.setuid, setgid: !!n.setgid } : null;
-  }
-  exists(input: string): boolean {
-    const segs = this.resolvePath(input);
-    return !!(segs && this.nodeAt(segs));
-  }
-  permsOf(input: string): string | null {
-    const segs = this.resolvePath(input);
-    const n = segs && this.nodeAt(segs);
-    return n ? n.perms : null;
-  }
-  ownerOf(input: string): string | null {
-    const segs = this.resolvePath(input);
-    const n = segs && this.nodeAt(segs);
-    return n ? n.owner : null;
-  }
-  groupOf(input: string): string | null {
-    const segs = this.resolvePath(input);
-    const n = segs && this.nodeAt(segs);
-    return n ? n.group : null;
-  }
-  private writeFileAbs(segs: string[], content: string, append: boolean): boolean {
-    const parent = this.nodeAt(segs.slice(0, -1));
-    if (!parent || parent.type !== "dir" || !parent.children) return false;
-    const name = segs[segs.length - 1];
-    const existing = parent.children[name];
-    if (existing && existing.type === "dir") return false;
-    if (existing) {
-      existing.content = append ? (existing.content || "") + content : content;
-      existing.size = (existing.content || "").length;
-    } else {
-      parent.children[name] = file(content);
-    }
-    return true;
-  }
-
-  cwdStr(): string {
-    const p = "/" + this.cwd.join("/");
-    if (p === "/home/operator") return "~";
-    if (p.startsWith("/home/operator/")) return "~" + p.slice("/home/operator".length);
-    return p;
-  }
-
-  prompt(): string {
-    return `${this.user}@${this.host}:${this.cwdStr()}$`;
-  }
-
-  // Public helper for challenge checks: permission string of a path, or null.
-  pathPerms(input: string): string | null {
-    const segs = this.resolvePath(input);
-    const n = segs && this.nodeAt(segs);
-    return n ? n.perms : null;
-  }
-
-  // Public helper for challenge checks: does a path exist?
-  pathExists(input: string): boolean {
-    const segs = this.resolvePath(input);
-    return !!(segs && this.nodeAt(segs));
-  }
-
-  // Tab completion: given the current input, return the completed string and any
-  // ambiguous candidates. Completes command names on the first word, otherwise paths.
-  complete(input: string): { completed: string; candidates: string[] } {
-    const noneChange = { completed: input, candidates: [] as string[] };
-    const trailingSpace = /\s$/.test(input);
-    const parts = input.split(/\s+/);
-    const isFirstWord = parts.length === 1 && !trailingSpace;
-
-    // ---- complete a command name ----
-    if (isFirstWord) {
-      const frag = parts[0];
-      if (!frag) return noneChange;
-      const cmds = COMMANDS.filter((c) => c.startsWith(frag));
-      if (cmds.length === 0) return noneChange;
-      if (cmds.length === 1) return { completed: cmds[0] + " ", candidates: [] };
-      const common = longestCommonPrefix(cmds);
-      return { completed: common.length > frag.length ? common : frag, candidates: cmds };
-    }
-
-    // ---- complete a path argument ----
-    const frag = trailingSpace ? "" : parts[parts.length - 1];
-    // split fragment into a directory portion and the final name portion
-    const slash = frag.lastIndexOf("/");
-    const dirPart = slash >= 0 ? frag.slice(0, slash + 1) : "";
-    const namePart = slash >= 0 ? frag.slice(slash + 1) : frag;
-    const dirSegs = this.resolvePath(dirPart || ".");
-    const dirNode = dirSegs && this.nodeAt(dirSegs);
-    if (!dirNode || dirNode.type !== "dir" || !dirNode.children) return noneChange;
-
-    let names = Object.keys(dirNode.children).filter((n) => n.startsWith(namePart));
-    // only show dotfiles if the user has started typing a dot
-    if (!namePart.startsWith(".")) names = names.filter((n) => !n.startsWith("."));
-    if (names.length === 0) return noneChange;
-
-    const decorate = (n: string) => (dirNode.children![n].type === "dir" ? n + "/" : n);
-
-    if (names.length === 1) {
-      const full = dirPart + decorate(names[0]);
-      const rebuilt = [...parts.slice(0, -1), full].join(" ");
-      return { completed: rebuilt + (dirNode.children[names[0]].type === "dir" ? "" : " "), candidates: [] };
-    }
-    const common = longestCommonPrefix(names);
-    const full = dirPart + (common.length > namePart.length ? common : namePart);
-    const rebuilt = [...parts.slice(0, -1), full].join(" ");
-    return { completed: rebuilt, candidates: names.map(decorate) };
-  }
-
-  private nodeAt(segs: string[]): FileNode | null {
-    let n: FileNode = this.fs;
-    for (const s of segs) {
-      if (n.type !== "dir" || !n.children || !n.children[s]) return null;
-      n = n.children[s];
-    }
-    return n;
-  }
-
-  private resolvePath(input: string): string[] | null {
-    let segs: string[];
-    if (input.startsWith("/")) segs = input.split("/").filter(Boolean);
-    else if (input === "~" || input.startsWith("~/")) {
-      segs = ["home", "operator", ...input.slice(1).split("/").filter(Boolean)];
-    } else {
-      segs = [...this.cwd, ...input.split("/").filter(Boolean)];
-    }
-    const out: string[] = [];
-    for (const s of segs) {
-      if (s === ".") continue;
-      if (s === "..") out.pop();
-      else out.push(s);
-    }
-    return out;
-  }
-
-  run(raw: string): OutLine[] {
-    let input = raw.trim();
-    if (input) {
-      this.history.push(input);
-      this.commandsRun++;
-      this.ran.push(input.replace(/\s+/g, " "));
-    }
-
-    // 1) A script paused on `read VAR` consumes this line as the variable's value.
-    if (this.awaitingRead) {
-      const name = this.awaitingRead;
-      const rest = this.scriptQueue;
-      this.awaitingRead = null;
-      this.scriptQueue = [];
-      this.vars[name] = input;
-      this.readUsed = true;
-      return this.execScriptLines(rest);
-    }
-
-    // 2) Inside an FTP session everything routes to the FTP mini-shell.
-    if (this.ftp) return this.ftpInput(input);
-
-    if (!input) return [];
-
-    // 3) Shell variable assignment: NAME=value (quotes stripped)
-    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(input)) {
-      const eq = input.indexOf("=");
-      this.vars[input.slice(0, eq)] = input.slice(eq + 1).replace(/^["']|["']$/g, "");
-      return [];
-    }
-
-    // 4) Expand $VAR / ${VAR} before dispatch
-    input = input.replace(
-      /\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)/g,
-      (_m, a, b) => this.vars[a || b] ?? ""
-    );
-
-    // 5) Background job marker: trailing &
-    let background = false;
-    if (/&\s*$/.test(input)) {
-      background = true;
-      input = input.replace(/&\s*$/, "").trim();
-    }
-
-    // 6) Output redirection: ... > file  |  ... >> file
-    let redirect: { op: string; target: string } | null = null;
-    const red = input.match(/\s+(>>?)\s*([^\s>]+)\s*$/);
-    if (red) {
-      redirect = { op: red[1], target: red[2] };
-      input = input.slice(0, red.index).trim();
-    }
-
-    // 7) Pipelines: a | b | c  (stderr marker 2>&1 tolerated anywhere)
-    const stages = input
-      .split("|")
-      .map((s) => s.replace(/2>&1/g, "").trim())
-      .filter(Boolean);
-
-    let out = this.dispatch(stages[0] || "");
-    for (const stage of stages.slice(1)) out = this.pipeStage(stage, out);
-
-    if (background) {
-      const id = this.jobs.length + 1;
-      const pid = 7800 + id * 137;
-      this.jobs.push({ id, pid, cmd: stages.join(" | ") });
-      out = [line(`[${id}] ${pid}`, c.ok)];
-    }
-
-    if (redirect) {
-      const segs = this.resolvePath(redirect.target);
-      const text = out.filter((l) => l.text !== "__CLEAR__").map((l) => l.text).join("\n") + "\n";
-      if (!segs || !this.writeFileAbs(segs, text, redirect.op === ">>")) {
-        return [line(`bash: ${redirect.target}: No such file or directory`, c.err)];
-      }
-      return [];
-    }
-
-    // Any command whose output reveals a flag captures it — method-agnostic.
-    for (const l of out) {
-      const m = l.text.match(/flag\{[^}]+\}/g);
-      if (m) m.forEach((f) => this.capturedFlags.add(f));
-    }
-    return out;
-  }
-
-  // Handle one stage of a pipeline against the previous stage's output.
-  private pipeStage(stage: string, lines: OutLine[]): OutLine[] {
-    const parts = stage.split(/\s+/);
-    const cmd = parts[0];
-    const flags = parts.slice(1).filter((a) => a.startsWith("-")).join("");
-    const args = parts.slice(1).filter((a) => !a.startsWith("-"));
-    const texts = lines.map((l) => l.text);
-    switch (cmd) {
-      case "grep": {
-        const pattern = (args[0] || "").replace(/^["']|["']$/g, "");
-        if (!pattern) return [line("usage: grep PATTERN", c.err)];
-        const invert = flags.includes("v");
-        const ci = flags.includes("i");
-        const test = (s: string) =>
-          ci ? s.toLowerCase().includes(pattern.toLowerCase()) : s.includes(pattern);
-        const kept = texts.filter((tx) => (invert ? !test(tx) : test(tx)));
-        return kept.map((tx) => line(tx, invert ? c.dim : c.ok));
-      }
-      case "more":
-      case "less":
-      case "cat":
-        return lines;
-      case "head":
-        return lines.slice(0, Number(args[0]) || 10);
-      case "tail":
-        return lines.slice(-(Number(args[0]) || 10));
-      case "wc":
-        return [line(`${texts.filter((tx) => tx.trim()).length}`, c.ok)];
-      default:
-        return [line(`(sim) pipe to '${cmd}' is not supported — try grep, head, tail, more, less`, c.dim), ...lines];
-    }
-  }
-
-  private dispatch(input: string): OutLine[] {
-    const parts = input.split(/\s+/);
-    const cmd = parts[0];
-    const args = parts.slice(1);
-    const flags = args.filter((a) => a.startsWith("-")).join("").replace(/-/g, "");
-    const pos = args.filter((a) => !a.startsWith("-"));
-
-    switch (cmd) {
-      case "help":
-        this.ranHelp = true;
-        return this.help();
-      case "clear":
-      case "cls":
-        this.ranClear = true;
-        return [{ text: "__CLEAR__" }];
-      case "pwd":
-        this.ranPwd = true;
-        return [line("/" + this.cwd.join("/"))];
-      case "whoami":
-        this.ranWhoami = true;
-        return [line(this.user)];
-      case "id":
-        this.ranId = true;
-        return [
-          line(
-            this.user === "root"
-              ? "uid=0(root) gid=0(root) groups=0(root)"
-              : "uid=1000(operator) gid=1000(operator) groups=1000(operator),27(sudo)"
-          ),
-        ];
-      case "hostname":
-        return [line(this.host)];
-      case "echo":
-        return [line(args.join(" ").replace(/^["']|["']$/g, ""))];
-      case "date":
-        return [line(new Date().toString())];
-      case "history":
-        return this.history.map((h, i) => line(`${String(i + 1).padStart(4)}  ${h}`));
-      case "ls":
-        return this.ls(flags, pos);
-      case "cd":
-        return this.cd(pos[0]);
-      case "cat":
-      case "less":
-      case "more":
-      case "head":
-      case "tail":
-      case "bat":
-        return this.cat(pos);
-      case "mkdir":
-        return this.mkdir(pos);
-      case "touch":
-        return this.touch(pos);
-      case "rm":
-        return this.rm(flags, pos);
-      case "rmdir":
-        if (!pos[0]) return [line("rmdir: missing operand", c.err)];
-        {
-          const segs = this.resolvePath(pos[0]);
-          const node = segs && this.nodeAt(segs);
-          if (!node) return [line(`rmdir: failed to remove '${pos[0]}': No such file or directory`, c.err)];
-          if (node.type !== "dir") return [line(`rmdir: failed to remove '${pos[0]}': Not a directory`, c.err)];
-          if (Object.keys(node.children || {}).length)
-            return [line(`rmdir: failed to remove '${pos[0]}': Directory not empty — use rm -r for non-empty dirs`, c.err)];
-          const parent = this.nodeAt(segs!.slice(0, -1));
-          if (parent && parent.children) delete parent.children[segs![segs!.length - 1]];
-        }
-        return [];
-      case "cp":
-        return this.cp(pos);
-      case "mv":
-        return this.mv(pos);
-      case "find":
-        return this.find(pos);
-      case "grep":
-        return this.grep(args);
-      case "chmod":
-        return this.chmod(pos);
-      case "chown":
-        return this.chown(pos);
-      case "sudo":
-        return this.sudo(args);
-      case "man":
-        return this.man(pos[0]);
-      case "ip":
-        return this.ip(args);
-      case "ifconfig":
-        return this.ifconfig(args);
-      case "ping":
-        return this.ping(pos);
-      case "netstat":
-      case "ss":
-        return this.netstat();
-      case "nslookup":
-      case "host":
-      case "resolvectl":
-        return this.nslookup(pos[0]);
-      case "dig":
-        return this.dig(pos[0], pos[1]);
-      case "whois":
-        return this.whois(pos[0]);
-      case "nmap":
-        return this.nmap(args);
-      case "hydra":
-        return this.hydra(args);
-      case "curl":
-        return this.curl(args);
-      case "sqlmap":
-        return this.sqlmap(args);
-      case "ssh":
-        return this.ssh(args);
-      case "exit":
-        return [line("logout", c.dim)];
-      // ---- Sudo_Run additions ----
-      case "locate":
-        return this.locate(pos[0]);
-      case "whereis":
-        return this.whereis(pos[0]);
-      case "which":
-        return this.which(pos[0]);
-      case "nl":
-        return this.nl(pos[0]);
-      case "sed":
-        return this.sed(args);
-      case "chgrp":
-        return this.chgrp(pos);
-      case "apt-cache":
-        return this.aptCache(pos);
-      case "apt-get":
-        return this.aptGet(pos, flags);
-      case "nano":
-        return this.nano(pos[0]);
-      case "iwconfig":
-        this.iwconfigRan = true;
-        return this.iwconfig();
-      case "dhclient":
-        return this.dhclient(pos[0]);
-      case "ps":
-        return this.ps(args);
-      case "top":
-        this.topRan = true;
-        return this.topOut();
-      case "nice":
-        return this.nice(args);
-      case "renice":
-        return this.renice(pos);
-      case "kill":
-        return this.killProc(pos, flags);
-      case "jobs":
-        if (!this.jobs.length) return [line("no active jobs", c.dim)];
-        return this.jobs.map((j) => line(`[${j.id}]+  Running    ${j.cmd} &`));
-      case "fg":
-        return this.fg(pos[0]);
-      case "at":
-        return this.atCmd(pos[0]);
-      case "env":
-      case "set":
-        this.envViewed = true;
-        return Object.entries(this.vars).map(([k, v]) => line(`${k}=${v}`));
-      case "export":
-        for (const p of pos) {
-          const name = p.split("=")[0];
-          this.exported.add(name);
-        }
-        return [];
-      case "unset":
-        for (const p of pos) {
-          delete this.vars[p];
-          this.unsetVars.add(p);
-        }
-        return [];
-      case "service":
-        return this.service(pos);
-      case "crontab":
-        return this.crontab(args);
-      case "update-rc.d":
-        return this.updateRc(pos);
-      case "ftp":
-        return this.ftpConnect(pos[0]);
-      case "bash":
-      case "sh":
-        return this.runScript(pos[0], false);
-      default:
-        if (cmd.startsWith("./") || cmd.endsWith(".sh")) return this.runScript(cmd, true);
-        return [line(`${cmd}: command not found`, c.err), line(`Type 'help' for available commands.`, c.dim)];
-    }
-  }
-
-  private help(): OutLine[] {
-    const groups: [string, string[]][] = [
-      ["files", ["ls", "cd", "pwd", "cat", "echo", "mkdir", "touch", "cp", "mv", "rm", "find", "grep"]],
-      ["system", ["whoami", "id", "chmod", "chown", "chgrp", "sudo", "history", "man", "clear"]],
-      ["text", ["head", "tail", "nl", "sed", "more", "less"]],
-      ["packages", ["apt-cache search", "apt-get install/remove/purge", "apt-get update/upgrade"]],
-      ["network", ["ip a", "ifconfig", "iwconfig", "dhclient", "ping", "nslookup", "dig [mx|ns]", "whois"]],
-      ["processes", ["ps [aux]", "top", "nice -n", "renice", "kill [-S]", "jobs", "fg", "at"]],
-      ["environment", ["env", "set", "export", "unset", "echo $VAR"]],
-      ["services", ["service", "crontab [-l|-e]", "update-rc.d", "ftp", "nano"]],
-      ["lookup", ["locate", "whereis", "which"]],
-      ["offensive", ["nmap", "hydra", "curl", "sqlmap", "ssh"]],
-      ["shell", ["pipes: a | grep b", "redirect: > file / >> file", "jobs: cmd &", "vars: NAME=value", "./script.sh"]],
-    ];
-    const out: OutLine[] = [line("Available commands (simulated):", c.ember)];
-    for (const [g, cmds] of groups) {
-      out.push(line("  " + g + ":", c.info));
-      out.push(line("    " + cmds.join("  "), c.dim));
-    }
-    return out;
-  }
-
-  private ls(flags: string, pos: string[]): OutLine[] {
-    const target = pos[0] ? this.resolvePath(pos[0]) : this.cwd;
-    if (!target) return [line(`ls: cannot access '${pos[0]}': No such file or directory`, c.err)];
-    const node = this.nodeAt(target);
-    if (!node) return [line(`ls: cannot access '${pos[0]}': No such file or directory`, c.err)];
-    let names: string[];
-    let nodes: Record<string, FileNode>;
-    if (node.type === "file") {
-      names = [target[target.length - 1]];
-      nodes = { [names[0]]: node };
-    } else {
-      nodes = node.children || {};
-      names = Object.keys(nodes).sort();
-    }
-    const showAll = flags.includes("a");
-    const hadHidden = names.some((n) => n.startsWith("."));
-    if (!showAll) names = names.filter((n) => !n.startsWith("."));
-    const long = flags.includes("l");
-    // outcomes: only record a successful directory listing
-    if (node.type === "dir") {
-      this.listedDirs.add("/" + target.join("/"));
-      if (showAll && hadHidden) this.listedHidden = true;
-      if (long) this.listedLong = true;
-    }
-    if (long) {
-      const out: OutLine[] = [];
-      if (node.type === "dir") out.push(line(`total ${names.length}`, c.dim));
-      for (const n of names) {
-        const f = nodes[n];
-        const type = f.type === "dir" ? "d" : "-";
-        const nm = f.type === "dir" ? n + "/" : n;
-        const cls = f.type === "dir" ? c.info : f.perms.includes("x") ? c.ok : undefined;
-        const pv = renderPerms(f);
-        out.push(
-          line(
-            `${type}${pv}  1 ${f.owner.padEnd(8)} ${f.group.padEnd(8)} ${String(f.size).padStart(5)} Jan 01 09:00 ${nm}`,
-            cls
-          )
-        );
-      }
-      return out.length ? out : [line("")];
-    }
-    // grid-ish single line
-    const disp = names.map((n) => {
-      const f = nodes[n];
-      return f.type === "dir" ? n + "/" : n;
-    });
-    return [line(disp.join("   "), undefined)];
-  }
-
-  private cd(target?: string): OutLine[] {
-    if (!target || target === "~") {
-      this.cwd = ["home", "operator"];
-      return [];
-    }
-    const segs = this.resolvePath(target);
-    if (!segs) return [line(`cd: ${target}: No such file or directory`, c.err)];
-    const node = this.nodeAt(segs);
-    if (!node) return [line(`cd: ${target}: No such file or directory`, c.err)];
-    if (node.type !== "dir") return [line(`cd: ${target}: Not a directory`, c.err)];
-    this.cwd = segs;
-    return [];
-  }
-
-  private cat(pos: string[]): OutLine[] {
-    if (!pos.length) return [line("cat: missing file operand", c.err)];
-    const out: OutLine[] = [];
-    for (const p of pos) {
-      const segs = this.resolvePath(p);
-      const node = segs && this.nodeAt(segs);
-      if (!node) out.push(line(`cat: ${p}: No such file or directory`, c.err));
-      else if (node.type === "dir") out.push(line(`cat: ${p}: Is a directory`, c.err));
-      else if (node.perms.startsWith("rw-------") && this.user !== "root" && node.owner !== this.user)
-        out.push(line(`cat: ${p}: Permission denied`, c.err));
-      else {
-        // outcome: content was actually printed → record the real read
-        const abs = "/" + segs!.join("/");
-        this.readFiles.add(abs);
-        if (this.user === "root") this.sudoReadFiles.add(abs);
-        (node.content || "").split("\n").forEach((l, i, arr) => {
-          if (i === arr.length - 1 && l === "") return;
-          out.push(line(l));
-        });
-      }
-    }
-    return out;
-  }
-
-  private mkdir(pos: string[]): OutLine[] {
-    if (!pos.length) return [line("mkdir: missing operand", c.err)];
-    const out: OutLine[] = [];
-    for (const p of pos.filter((x) => x !== "-p")) {
-      const segs = this.resolvePath(p);
-      if (!segs) continue;
-      const parent = this.nodeAt(segs.slice(0, -1));
-      if (!parent || parent.type !== "dir") {
-        out.push(line(`mkdir: cannot create directory '${p}': No such file or directory`, c.err));
-        continue;
-      }
-      const name = segs[segs.length - 1];
-      if (parent.children![name]) out.push(line(`mkdir: cannot create directory '${p}': File exists`, c.err));
-      else parent.children![name] = dir({}, "rwxr-xr-x", this.user);
-    }
-    return out;
-  }
-
-  private touch(pos: string[]): OutLine[] {
-    if (!pos.length) return [line("touch: missing file operand", c.err)];
-    for (const p of pos) {
-      const segs = this.resolvePath(p);
-      if (!segs) continue;
-      const parent = this.nodeAt(segs.slice(0, -1));
-      if (!parent || parent.type !== "dir") continue;
-      const name = segs[segs.length - 1];
-      if (!parent.children![name]) parent.children![name] = file("", "rw-r--r--", this.user);
-    }
-    return [];
-  }
-
-  private rm(flags: string, pos: string[]): OutLine[] {
-    if (!pos.length) return [line("rm: missing operand", c.err)];
-    const out: OutLine[] = [];
-    for (const p of pos) {
-      const segs = this.resolvePath(p);
-      const node = segs && this.nodeAt(segs);
-      if (!node) {
-        out.push(line(`rm: cannot remove '${p}': No such file or directory`, c.err));
-        continue;
-      }
-      if (node.type === "dir" && !flags.includes("r")) {
-        out.push(line(`rm: cannot remove '${p}': Is a directory`, c.err));
-        continue;
-      }
-      const parent = this.nodeAt(segs!.slice(0, -1));
-      if (parent && parent.children) delete parent.children[segs![segs!.length - 1]];
-    }
-    return out;
-  }
-
-  private cp(pos: string[]): OutLine[] {
-    if (pos.length < 2) return [line("cp: missing destination file operand", c.err)];
-    const src = this.resolvePath(pos[0]);
-    const node = src && this.nodeAt(src);
-    if (!node) return [line(`cp: cannot stat '${pos[0]}': No such file or directory`, c.err)];
-    const dst = this.resolvePath(pos[1]);
-    if (!dst) return [line(`cp: bad destination`, c.err)];
-    const dstNode = this.nodeAt(dst);
-    if (dstNode && dstNode.type === "dir") {
-      dstNode.children![src![src!.length - 1]] = JSON.parse(JSON.stringify(node));
-    } else {
-      const parent = this.nodeAt(dst.slice(0, -1));
-      if (parent && parent.children) parent.children[dst[dst.length - 1]] = JSON.parse(JSON.stringify(node));
-    }
-    return [];
-  }
-
-  private mv(pos: string[]): OutLine[] {
-    if (pos.length < 2) return [line("mv: missing destination file operand", c.err)];
-    const out = this.cp(pos);
-    if (out.length) return out;
-    return this.rm("r", [pos[0]]);
-  }
-
-  private find(pos: string[]): OutLine[] {
-    const start = pos[0] || ".";
-    const nameIdx = pos.indexOf("-name");
-    const pattern = nameIdx >= 0 ? pos[nameIdx + 1]?.replace(/["'*]/g, "") : "";
-    const base = this.resolvePath(start.startsWith("-") ? "." : start) || this.cwd;
-    const node = this.nodeAt(base);
-    if (!node) return [line(`find: '${start}': No such file or directory`, c.err)];
-    this.ranFindCmd = true; // outcome: a find actually ran over a valid path
-    const out: OutLine[] = [];
-    const prefix = start === "." ? "." : start.replace(/\/$/, "");
-    const walk = (n: FileNode, path: string) => {
-      if (n.type === "dir" && n.children) {
-        for (const [k, v] of Object.entries(n.children)) {
-          const p = path === "" ? k : `${path}/${k}`;
-          // Non-root users cannot traverse root-only trees: mimic the real
-          // "Permission denied" noise everyone meets on `find /`.
-          const locked = v.perms.startsWith("rwx--") && v.owner === "root" && this.user !== "root";
-          const lockedFile = v.type === "file" && v.perms === "rw-------" && v.owner === "root" && this.user !== "root";
-          if (locked) {
-            out.push(line(`find: '${prefix}/${p}': Permission denied`, c.err));
-            continue;
-          }
-          if (lockedFile) {
-            out.push(line(`find: '${prefix}/${p}': Permission denied`, c.err));
-            continue;
-          }
-          if (!pattern || k.includes(pattern)) out.push(line(`${prefix}/${p}`));
-          walk(v, p);
-        }
-      }
-    };
-    walk(node, "");
-    return out;
-  }
-
-  private grep(args: string[]): OutLine[] {
-    const flags = args.filter((a) => a.startsWith("-")).join("");
-    const nonFlags = args.filter((a) => !a.startsWith("-"));
-    if (nonFlags.length < 1) return [line("usage: grep PATTERN FILE", c.err)];
-    const pattern = nonFlags[0].replace(/^["']|["']$/g, "");
-    const ci = flags.includes("i");
-    const recursive = flags.includes("r") || flags.includes("R");
-    const matchLine = (l: string) => (ci ? l.toLowerCase().includes(pattern.toLowerCase()) : l.includes(pattern));
-
-    // Recursive search across a directory tree.
-    if (recursive) {
-      const startArg = nonFlags[1] || ".";
-      const base = this.resolvePath(startArg) || this.cwd;
-      const node = this.nodeAt(base);
-      if (!node) return [line(`grep: ${startArg}: No such file or directory`, c.err)];
-      const out: OutLine[] = [];
-      const walk = (n: FileNode, path: string, abs: string[]) => {
-        if (n.type === "file") {
-          (n.content || "").split("\n").forEach((l) => {
-            if (l && matchLine(l)) {
-              out.push(line(`${path}:${l}`, c.ok));
-              this.grepped.add("/" + abs.join("/")); // outcome: match in this file
-            }
-          });
-        } else if (n.children) {
-          for (const [k, v] of Object.entries(n.children))
-            walk(v, path === "" ? k : `${path}/${k}`, [...abs, k]);
-        }
-      };
-      walk(node, startArg === "." ? "" : startArg, base);
-      return out;
-    }
-
-    const fileArg = nonFlags[1];
-    if (!fileArg) return [line("usage: grep PATTERN FILE", c.err)];
-    const segs = this.resolvePath(fileArg);
-    const node = segs && this.nodeAt(segs);
-    if (!node || node.type !== "file") return [line(`grep: ${fileArg}: No such file or directory`, c.err)];
-    const matches = (node.content || "").split("\n").filter(matchLine);
-    if (matches.length) this.grepped.add("/" + segs!.join("/")); // outcome: match found
-    return matches.map((m) => line(m, c.ok));
-  }
-
-  private chmod(pos: string[]): OutLine[] {
-    if (pos.length < 2) return [line("chmod: missing operand", c.err)];
-    const mode = pos[0];
-    const segs = this.resolvePath(pos[1]);
-    const node = segs && this.nodeAt(segs);
-    if (!node) return [line(`chmod: cannot access '${pos[1]}': No such file or directory`, c.err)];
-    if (/^[0-7]{3,4}$/.test(mode)) {
-      node.perms = octalToPerms(mode.slice(-3));
-      if (mode.length === 4) {
-        const special = parseInt(mode[0], 8);
-        node.setuid = (special & 4) !== 0;
-        node.setgid = (special & 2) !== 0;
-      } else {
-        node.setuid = false;
-        node.setgid = false;
-      }
-      return [];
-    }
-    // symbolic — supports comma-separated clauses and +, -, = operators
-    const clauses = mode.split(",");
-    let perms = node.perms;
-    for (const cl of clauses) {
-      if (!/^[ugoa]*[+\-=][rwx]*$/.test(cl)) {
-        return [line(`chmod: invalid mode: '${mode}'`, c.err)];
-      }
-      perms = applySymbolic(perms, cl);
-    }
-    node.perms = perms;
-    return [];
-  }
-
-  private chown(pos: string[]): OutLine[] {
-    if (this.user !== "root") return [line("chown: changing ownership: Operation not permitted (try sudo)", c.err)];
-    if (pos.length < 2) return [line("chown: missing operand", c.err)];
-    const segs = this.resolvePath(pos[1]);
-    const node = segs && this.nodeAt(segs);
-    if (!node) return [line(`chown: cannot access '${pos[1]}': No such file or directory`, c.err)];
-    const owner = pos[0].split(":")[0];
-    node.owner = owner;
-    if (pos[0].includes(":")) node.group = pos[0].split(":")[1] || owner;
-    return [];
-  }
-
-  private sudo(args: string[]): OutLine[] {
-    if (!args.length) return [line("usage: sudo command", c.err)];
-    const prev = this.user;
-    this.user = "root";
-    const out = this.dispatch(args.join(" "));
-    // keep root only for that command
-    if (args[0] !== "su" && args.join(" ") !== "-i") this.user = prev;
-    // Simulate "sudo su" giving a root shell
-    if (args[0] === "su" || (args[0] === "-i")) {
-      this.user = "root";
-      return [line("root shell acquired. You are now root.", c.ok)];
-    }
-    return out;
-  }
-
-  private man(name?: string): OutLine[] {
-    const pages: Record<string, string> = {
-      ls: "ls - list directory contents. -l long format, -a show hidden.",
-      cd: "cd - change working directory. cd .. up one, cd ~ home, cd / root.",
-      chmod: "chmod - change file mode bits. e.g. chmod 755 file, chmod +x script.sh, chmod 4644 file (SUID).",
-      chown: "chown - change file owner and group: chown user file | chown user:group file",
-      chgrp: "chgrp - change group ownership: chgrp group file",
-      find: "find - search files in a directory tree. find / -name pattern",
-      grep: "grep - print lines matching a pattern. -i ignore case, -v invert match, -r recursive.",
-      sed: "sed - stream editor. sed 's/old/new/g' file  (-i edits the file in place)",
-      ps: "ps - report process status. ps aux for all processes with user/CPU/mem info.",
-      top: "top - live process monitor sorted by CPU usage.",
-      kill: "kill - send a signal to a process. kill -9 PID force, kill -1 PID hangup.",
-      nice: "nice - run a command with modified scheduling priority: nice -n N cmd",
-      renice: "renice - alter the priority of a running process: renice N PID",
-      crontab: "crontab - manage cron jobs. -l list, -e edit.",
-      service: "service - run an init script: service NAME start|stop|restart|status",
-      "apt-get": "apt-get - package manager. install, remove, purge, update, upgrade.",
-      "apt-cache": "apt-cache - query the package cache: apt-cache search NAME",
-      nmap: "nmap - network mapper. Scan hosts & ports. -sV service versions, -p ports.",
-      hydra: "hydra - parallelized login brute-forcer. e.g. hydra -l user -P wordlist ssh://host",
-      ping: "ping - send ICMP ECHO_REQUEST to network hosts. -c count.",
-      man: "man - display manual pages. man COMMAND",
-      ftp: "ftp - file transfer client: ftp HOST, then ls/cd/get/bye.",
-      ssh: "ssh - openssh client: ssh user@host",
-      dig: "dig - DNS lookup: dig domain [mx|ns]",
-      ifconfig: "ifconfig - configure network interfaces: ifconfig eth0 [up|down|ip|hw ether MAC]",
-    };
-    this.manRan = true;
-    if (name) this.manViewed.add(name);
-    if (!name) return [line("What manual page do you want?", c.dim)];
-    return pages[name] ? [line(pages[name])] : [line(`No manual entry for ${name}`, c.err)];
-  }
-
-  private ip(args: string[]): OutLine[] {
-    if (args[0] === "a" || args[0] === "addr" || args[0] === "address") {
-      this.ranIpAddr = true;
-      return [
-        line("1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN", c.dim),
-        line("    inet 127.0.0.1/8 scope host lo", c.info),
-        line("2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP", c.dim),
-        line("    link/ether 08:00:27:1a:2b:3c brd ff:ff:ff:ff:ff:ff", c.dim),
-        line("    inet 10.10.10.13/24 brd 10.10.10.255 scope global dynamic eth0", c.info),
-      ];
-    }
-    if (args[0] === "r" || args[0] === "route") {
-      this.ranIpRoute = true;
-      return [line("default via 10.10.10.1 dev eth0 proto dhcp"), line("10.10.10.0/24 dev eth0 proto kernel scope link src 10.10.10.13")];
-    }
-    return [line("Usage: ip a | ip route", c.dim)];
-  }
-
-  private ifconfig(args: string[] = []): OutLine[] {
-    this.ranIfconfig = true;
-    const pos = args.filter((a) => !a.startsWith("-"));
-    // ifconfig eth0 down | up
-    if (pos[0] === "eth0" && pos[1] === "down") {
-      this.eth0.up = false;
-      return [line("eth0: link down", c.dim)];
-    }
-    if (pos[0] === "eth0" && pos[1] === "up") {
-      this.eth0.up = true;
-      return [line("eth0: link up", c.dim)];
-    }
-    // ifconfig eth0 hw ether 00:11:22:33:44:55
-    if (pos[0] === "eth0" && pos[1] === "hw" && pos[2] === "ether") {
-      const mac = pos[3];
-      if (!mac) return [line("usage: ifconfig eth0 hw ether MAC", c.err)];
-      const old = this.eth0.mac;
-      this.eth0.mac = mac;
-      this.macSpoofed = mac !== "08:00:27:1a:2b:3c";
-      return [line(`ether set to ${mac} (was ${old})`, c.dim)];
-    }
-    // ifconfig eth0 192.168.1.13
-    if (pos[0] === "eth0" && /^\d+\.\d+\.\d+\.\d+$/.test(pos[1] || "")) {
-      this.eth0.ip = pos[1];
-      this.ipChanged = pos[1] !== "10.10.10.13";
-      return [line(`inet set to ${pos[1]} (sim)`, c.dim)];
-    }
-    if (!this.eth0.up) return [line("eth0: interface is DOWN (ifconfig eth0 up)", c.err)];
-    return [
-      line("eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500"),
-      line(`        inet ${this.eth0.ip}  netmask 255.255.255.0  broadcast 10.10.10.255`, c.info),
-      line(`        ether ${this.eth0.mac}  txqueuelen 1000  (Ethernet)`, c.dim),
-      line("lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536"),
-      line("        inet 127.0.0.1  netmask 255.0.0.0", c.info),
-    ];
-  }
-
-  private ping(pos: string[]): OutLine[] {
-    const host = pos[0];
-    if (!host) return [line("ping: usage error: Destination address required", c.err)];
-    const ip = resolve(host) || (/^\d+\.\d+\.\d+\.\d+$/.test(host) ? host : null);
-    if (!ip || (!NETWORK[ip] && ip !== "10.10.10.13")) {
-      return [line(`ping: ${host}: Name or service not known`, c.err)];
-    }
-    this.pinged.add(ip); // outcome: this host is proven reachable
-    const out: OutLine[] = [line(`PING ${host} (${ip}) 56(84) bytes of data.`)];
-    for (let i = 1; i <= 4; i++) {
-      const ms = (0.2 + Math.random() * 1.5).toFixed(2);
-      out.push(line(`64 bytes from ${ip}: icmp_seq=${i} ttl=64 time=${ms} ms`, c.ok));
-    }
-    out.push(line(`--- ${host} ping statistics ---`));
-    out.push(line("4 packets transmitted, 4 received, 0% packet loss, time 3005ms", c.dim));
-    return out;
-  }
-
-  private netstat(): OutLine[] {
-    this.ranNetstat = true;
-    return [
-      line("Active Internet connections (only servers)"),
-      line("Proto  Local Address        State       PID/Program", c.dim),
-      line("tcp    0.0.0.0:22           LISTEN      612/sshd"),
-      line("tcp    127.0.0.1:3306       LISTEN      889/mysqld"),
-      line("tcp    10.10.10.13:44210    ESTABLISHED 1201/firefox"),
-    ];
-  }
-
-  private nslookup(host?: string): OutLine[] {
-    if (!host) return [line("usage: nslookup HOST", c.err)];
-    const ip = resolve(host);
-    if (!ip) return [line(`** server can't find ${host}: NXDOMAIN`, c.err)];
-    this.resolved.add(host);
-    this.resolved.add(ip);
-    return [
-      line("Server:\t\t10.10.10.1"),
-      line("Address:\t10.10.10.1#53", c.dim),
-      line(""),
-      line(`Name:\t${NETWORK[ip].hostname}`, c.info),
-      line(`Address: ${ip}`, c.ok),
-    ];
-  }
-
-  private dig(host?: string, type?: string): OutLine[] {
-    if (!host) return [line("usage: dig HOST [A|MX|NS]", c.err)];
-    const t = (type || "a").toLowerCase();
-    // The lab domain always resolves; other names need a known alias.
-    const ip = DOMAIN_IPS[host] || resolve(host);
-    if (!ip) return [line(`;; ->>HEADER<<- status: NXDOMAIN`, c.err)];
-    this.resolved.add(host);
-    this.resolved.add(ip);
-    if (t === "mx") {
-      this.digMx = true;
-      return [
-        line(`; <<>> DiG 9.18 <<>> ${host} mx`, c.dim),
-        line(";; ANSWER SECTION:"),
-        line(`${host}.  300  IN  MX  10 mail.${host.replace(/^www\./, "")}.`, c.ok),
-        line(`${host}.  300  IN  MX  20 mail2.${host.replace(/^www\./, "")}.`, c.ok),
-        line(";; Query time: 6 msec", c.dim),
-      ];
-    }
-    if (t === "ns") {
-      this.digNs = true;
-      return [
-        line(`; <<>> DiG 9.18 <<>> ${host} ns`, c.dim),
-        line(";; ANSWER SECTION:"),
-        line(`${host}.  300  IN  NS  ns1.hackforge.lab.`, c.ok),
-        line(`${host}.  300  IN  NS  ns2.hackforge.lab.`, c.ok),
-        line(";; Query time: 5 msec", c.dim),
-      ];
-    }
-    return [
-      line(`; <<>> DiG 9.18 <<>> ${host}`, c.dim),
-      line(";; ANSWER SECTION:"),
-      line(`${host}.  300  IN  A  ${ip}`, c.ok),
-      line(";; Query time: 4 msec", c.dim),
-    ];
-  }
-
-  private whois(host?: string): OutLine[] {
-    if (!host) return [line("usage: whois DOMAIN", c.err)];
-    this.whoisDone = true;
-    return [
-      line(`Domain Name: ${host.toUpperCase()}`),
-      line("Registrar: HACKFORGE Labs Registrar"),
-      line("Creation Date: 2024-01-01T00:00:00Z", c.dim),
-      line("Name Server: NS1.HACKFORGE.LAB", c.dim),
-      line("Registrant Country: (simulated)", c.dim),
-    ];
-  }
-
-  private nmap(args: string[]): OutLine[] {
-    // A target looks like a host/IP/subnet (contains a dot or slash), which also
-    // avoids mistaking a port spec like "22,3306" for the target.
-    const target = args.find((a) => !a.startsWith("-") && a !== "nmap" && /[.\/]/.test(a));
-    if (!target) return [line("Nmap: no target specified.", c.err)];
-    // Version detection: -sV, -A (aggressive), or --version-* all imply it.
-    const sV =
-      args.some((a) => /^-(sV|A)$/.test(a)) ||
-      args.join(" ").includes("-sV") ||
-      args.some((a) => a.startsWith("--version"));
-
-    const pingSweep = args.some((a) => /^-(sP|sn)$/.test(a));
-    if (pingSweep) this.nmapPingSweep = true;
-    // subnet / range scan
-    if (target.includes("/") || target.includes("-") || target.includes("*")) {
-      this.nmapSubnet = true; // outcome: swept the network
-      const out: OutLine[] = [line("Starting Nmap 7.94 ( https://nmap.org )", c.dim)];
-      for (const ip of Object.keys(NETWORK)) {
-        if (!pingSweep) this.nmapPortScans.add(ip);
-        if (sV && !pingSweep) this.nmapVersionScans.add(ip);
-        out.push(line(`Nmap scan report for ${NETWORK[ip].hostname} (${ip})`, c.info));
-        out.push(line("Host is up (0.00042s latency).", c.ok));
-        if (pingSweep) continue; // ping sweep lists hosts only, no port table
-      }
-      out.push(line(`Nmap done: 254 IP addresses (${Object.keys(NETWORK).length} hosts up) scanned.`, c.dim));
-      return out;
-    }
-
-    const ip = resolve(target) || (NETWORK[target] ? target : null);
-    if (!ip || !NETWORK[ip]) return [line(`Failed to resolve "${target}".`, c.err)];
-    this.nmapPortScans.add(ip); // outcome: scanned this host's ports
-    if (sV) this.nmapVersionScans.add(ip); // outcome: fingerprinted services
-    const host = NETWORK[ip];
-    const out: OutLine[] = [
-      line("Starting Nmap 7.94 ( https://nmap.org )", c.dim),
-      line(`Nmap scan report for ${host.hostname} (${ip})`, c.info),
-      line("Host is up (0.00038s latency).", c.ok),
-      line(""),
-      line("PORT     STATE SERVICE" + (sV ? "   VERSION" : ""), c.ember),
-    ];
-    let ports = host.ports;
-    // Resolve the port spec, which may be attached ('-p22,80', '-p-') or a
-    // separate following argument ('-p 22,80').
-    const pIdx = args.findIndex((a) => a === "-p" || a.startsWith("-p"));
-    if (pIdx >= 0) {
-      let spec = args[pIdx].replace(/^-p/, "");
-      if (spec === "" && args[pIdx] === "-p") spec = args[pIdx + 1] || "";
-      if (spec === "-") {
-        // '-p-' scans ALL 65535 ports — keep every port, record the full scan.
-        this.nmapFullScan.add(ip);
-      } else if (spec) {
-        const wanted = spec.split(",").map((x) => parseInt(x, 10)).filter((n) => !isNaN(n));
-        wanted.forEach((pn) => this.nmapSpecificPorts.add(`${ip}:${pn}`)); // outcome
-        ports = ports.filter((p) => wanted.includes(p.port));
-      }
-    }
-    for (const p of ports) {
-      const svc = `${p.port}/tcp`.padEnd(9);
-      out.push(line(`${svc}open  ${p.svc.padEnd(8)}${sV ? " " + p.ver : ""}`, c.ok));
-    }
-    out.push(line(""));
-    out.push(line(`Nmap done: 1 IP address (1 host up) scanned in 1.42 seconds`, c.dim));
-    return out;
-  }
-
-  private hydra(args: string[]): OutLine[] {
-    const str = args.join(" ");
-    const svcMatch = str.match(/(ssh|ftp|http-post-form|mysql):\/\/([^\s]+)/) || str.match(/\b(ssh|ftp|mysql)\b/);
-    const hasList = args.includes("-P") || args.includes("-x");
-    const hasUser = args.includes("-l") || args.includes("-L");
-    const service = svcMatch ? svcMatch[1] : args[args.length - 1];
-    if (!hasUser || !hasList) {
-      return [line("Hydra: you must supply a login (-l) and a password list (-P). e.g.", c.err), line("  hydra -l admin -P rockyou.txt ssh://10.10.10.5", c.dim)];
-    }
-    const userIdx = args.indexOf("-l");
-    const user = userIdx >= 0 ? args[userIdx + 1] : "admin";
-    if (service) this.bruteforced.add(service.toLowerCase()); // outcome: cracked this service
-    return [
-      line("Hydra v9.5 (c) by van Hauser/THC - for legal purposes only.", c.dim),
-      line(`[DATA] attacking ${service}://target...`, c.dim),
-      line("[ATTEMPT] target - login \"" + user + "\" - pass \"123456\"", c.dim),
-      line("[ATTEMPT] target - login \"" + user + "\" - pass \"password\"", c.dim),
-      line("[ATTEMPT] target - login \"" + user + "\" - pass \"letmein\"", c.dim),
-      line(`[22][${service}] host: 10.10.10.5   login: ${user}   password: hunter2`, c.ok),
-      line("1 of 1 target successfully completed, 1 valid password found", c.ok),
-    ];
-  }
-
-  private curl(args: string[]): OutLine[] {
-    const url = args.find((a) => a.startsWith("http")) || args[args.length - 1];
-    if (!url) return [line("curl: try 'curl <url>'", c.err)];
-    const hostMatch = url.match(/^https?:\/\/([^/]+)/);
-    if (hostMatch) this.curled.add(hostMatch[1]); // outcome: fetched this host
-    if (url.includes("login") && args.join(" ").includes("' OR '1'='1")) {
-      return [
-        line("HTTP/1.1 200 OK", c.dim),
-        line("Set-Cookie: session=admin; HttpOnly", c.warn),
-        line("<h1>Welcome back, administrator!</h1>", c.ok),
-        line("flag{sql_injection_authentication_bypass}", c.ember),
-      ];
-    }
-    return [
-      line("HTTP/1.1 200 OK", c.dim),
-      line("Server: Apache/2.4.52", c.dim),
-      line("Content-Type: text/html", c.dim),
-      line(""),
-      line("<html><body><h1>HACKFORGE Demo App</h1>"),
-      line('<form action="/login"><input name="user"><input name="pass"></form>'),
-      line("</body></html>"),
-    ];
-  }
-
-  private sqlmap(args: string[]): OutLine[] {
-    const url = args.find((a) => a.includes("http")) || "";
-    if (!url) return [line("sqlmap: option -u is required. e.g. sqlmap -u \"http://10.10.10.5/item?id=1\"", c.err)];
-    this.sqlmapRun = true; // outcome: automated SQLi executed
-    const wantsDump = args.some((a) => a === "--dump" || a === "--dump-all");
-    const head = [
-      line("        ___", c.dim),
-      line("       __H__  sqlmap 1.8", c.ember),
-      line("[*] starting @ 09:00", c.dim),
-      line("[INFO] testing connection to the target URL", c.dim),
-      line("[INFO] GET parameter 'id' appears to be injectable", c.warn),
-      line("[INFO] the back-end DBMS is MySQL", c.info),
-    ];
-    if (wantsDump) {
-      this.sqlmapDumped = true; // outcome: extracted table data
-      return [
-        ...head,
-        line("[INFO] fetching columns for table 'users'", c.dim),
-        line("[INFO] dumping table 'users' entries", c.dim),
-        line("Database: webapp", c.ok),
-        line("Table: users", c.ok),
-        line("+----+----------+------------------+", c.dim),
-        line("| id | username | password         |", c.ember),
-        line("+----+----------+------------------+", c.dim),
-        line("| 1  | admin    | hunter2          |", c.ok),
-        line("| 2  | editor   | p@ssw0rd!        |", c.ok),
-        line("+----+----------+------------------+", c.dim),
-        line("[*] data dumped to CSV. 2 entries extracted.", c.warn),
-      ];
-    }
-    return [
-      ...head,
-      line("[INFO] fetching database names", c.dim),
-      line("available databases [3]:", c.ok),
-      line("[*] information_schema", c.ok),
-      line("[*] webapp", c.ok),
-      line("[*] users", c.ok),
-      line("Tip: re-run with --dump to extract a table's data.", c.dim),
-    ];
-  }
-
-  private ssh(args: string[]): OutLine[] {
-    const tgt = args.find((a) => !a.startsWith("-"));
-    if (!tgt) return [line("usage: ssh user@host", c.err)];
-    // outcome: opened a session to this host (requires user@host form + known host)
-    const at = tgt.split("@");
-    const host = at.length > 1 ? at[1] : tgt;
-    const hip = resolve(host) || (/^\d+\.\d+\.\d+\.\d+$/.test(host) ? host : null);
-    if (at.length > 1 && hip && NETWORK[hip]) this.sshTargets.add(hip);
-    return [
-      line(`The authenticity of host can't be established.`, c.dim),
-      line("Warning: Permanently added to the list of known hosts.", c.dim),
-      line("operator@target's password: ********", c.dim),
-      line("Welcome to Ubuntu 22.04 LTS (simulated)", c.ok),
-      line("You are now on the remote box. (In this sim, keep working locally.)", c.info),
-    ];
-  }
-
-  // =========================== Sudo_Run command set ===========================
-
-  private walkAll(segs: string[] = []): { path: string[]; name: string; node: FileNode }[] {
-    const out: { path: string[]; name: string; node: FileNode }[] = [];
-    const dirNode = segs.length ? this.nodeAt(segs) : this.fs;
-    if (!dirNode || dirNode.type !== "dir") return out;
-    for (const [name, node] of Object.entries(dirNode.children || {})) {
-      const p = [...segs, name];
-      out.push({ path: p, name, node });
-      if (node.type === "dir" && !name.startsWith(".")) out.push(...this.walkAll(p));
-    }
-    return out;
-  }
-
-  private locate(pattern?: string): OutLine[] {
-    this.locateRan = true;
-    if (!pattern) return [line("usage: locate PATTERN", c.err)];
-    const p = pattern.toLowerCase();
-    const hits = this.walkAll()
-      .filter((e) => e.name.toLowerCase().includes(p))
-      .map((e) => "/" + e.path.join("/"));
-    if (this.hasPkg("hydra") || pattern === "hydra") hits.push("/usr/bin/hydra", "/usr/share/man/man1/hydra.1.gz");
-    if (this.hasPkg("git")) hits.push("/usr/bin/git", "/usr/share/man/man1/git.1.gz");
-    if (!hits.length) return [line("(locate database: no matches)", c.dim)];
-    return hits.map((hh) => line(hh, c.info));
-  }
-
-  private whereis(name?: string): OutLine[] {
-    this.whereisRan = true;
-    if (!name) return [line("usage: whereis PROGRAM", c.err)];
-    const builtin = ["ls", "cd", "cat", "ps", "grep", "find", "chmod", "kill", "man", "sed", "nl", "ifconfig", "nmap"].includes(name);
-    const installed = this.hasPkg(name);
-    if (!builtin && !installed) return [line(`${name}:`)];
-    return [line(`${name}: /usr/bin/${name} /usr/share/man/man1/${name}.1.gz`, c.info)];
-  }
-
-  private which(name?: string): OutLine[] {
-    this.whichRan = true;
-    if (!name) return [line("usage: which PROGRAM", c.err)];
-    const builtin = ["ls", "cd", "cat", "ps", "grep", "find", "chmod", "kill", "man", "sed", "nl", "ifconfig", "nmap", "apt-get", "apt-cache", "service", "crontab", "ssh", "ftp", "dig", "top"].includes(name);
-    const installed = this.hasPkg(name);
-    if (!builtin && !installed) return [line(`${name} not found`, c.err)];
-    this.whichFound = name;
-    return [line(`/usr/bin/${name}`, c.ok)];
-  }
-
-  private nl(file?: string): OutLine[] {
-    this.nlRan = true;
-    if (!file) return [line("usage: nl FILE", c.err)];
-    const segs = this.resolvePath(file);
-    const node = segs && this.nodeAt(segs);
-    if (!node || node.type !== "file") return [line(`nl: ${file}: No such file or directory`, c.err)];
-    return (node.content || "").split("\n").map((tx, i) => line(`     ${i + 1}  ${tx}`));
-  }
-
-  private sed(args: string[]): OutLine[] {
-    this.sedRan = true;
-    const edit = args.includes("-i");
-    const expr = args.find((a) => /^s\//.test(a));
-    if (!expr) return [line("sed: usage: sed [options] 's/old/new/[g]' FILE", c.err)];
-    const m = expr.match(/^s\/([\s\S]*?)\/([\s\S]*?)\/(g|gi)?$/);
-    if (!m) return [line("sed: unsupported expression (this sim supports s/old/new/g)", c.err)];
-    const [, from, to, mod] = m;
-    const fileArg = args[args.indexOf(expr) + 1];
-    if (!fileArg) return [line("sed: no input file", c.err)];
-    const segs = this.resolvePath(fileArg);
-    const node = segs && this.nodeAt(segs);
-    if (!node || node.type !== "file") return [line(`sed: can't read ${fileArg}: No such file or directory`, c.err)];
-    const src = node.content || "";
-    const re = new RegExp(from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), mod ? (mod.includes("i") ? "gi" : "g") : "");
-    const result = src.replace(re, to);
-    if (edit) {
-      node.content = result;
-      node.size = result.length;
-      this.sedReplaced.add("/" + segs!.join("/"));
-      return [];
-    }
-    return result.split("\n").map((tx) => line(tx));
-  }
-
-  private chgrp(pos: string[]): OutLine[] {
-    if (pos.length < 2) return [line("chgrp: missing operand", c.err)];
-    const segs = this.resolvePath(pos[1]);
-    const node = segs && this.nodeAt(segs);
-    if (!node) return [line(`chgrp: cannot access '${pos[1]}': No such file or directory`, c.err)];
-    node.group = pos[0];
-    return [];
-  }
-
-  private aptCache(pos: string[]): OutLine[] {
-    const sub = pos[0];
-    if (sub !== "search") return [line("apt-cache: try  apt-cache search <name>", c.dim)];
-    this.aptSearched = true;
-    const q = (pos[1] || "").toLowerCase();
-    const catalog: Record<string, [string, string][]> = {
-      git: [
-        ["git", "fast, scalable, distributed revision control system"],
-        ["git-core", "transitional package for git"],
-      ],
-      hydra: [
-        ["hydra", "very fast network logon cracker"],
-        ["hydra-gtk", "graphical frontend for hydra"],
-      ],
-      nmap: [["nmap", "the Network Mapper"]],
-      apache2: [["apache2", "Apache HTTP Server"]],
-    };
-    const rows = catalog[q] || (q ? catalog[q.split("-")[0]] : undefined);
-    if (!rows) return [line("(no packages matched)", c.dim)];
-    return rows.map(([n, d]) => line(`${n} - ${d}`));
-  }
-
-  private aptGet(pos: string[], _flags: string): OutLine[] {
-    const sub = pos[0];
-    const pkg = pos[1];
-    if (sub === "update") {
-      this.aptUpdated = true;
-      return [
-        line("Get:1 http://kali.hackforge.lab/kali kali-rolling InRelease [41.2 kB]", c.info),
-        line("Get:2 http://kali.hackforge.lab/kali kali-rolling/main amd64 Packages [19.8 MB]", c.dim),
-        line("Get:3 http://kali.hackforge.lab/kali kali-rolling/non-free amd64 Packages [166 kB]", c.dim),
-        line("Fetched 20.0 MB in 3s (6,112 kB/s)", c.dim),
-        line("Reading package lists... Done", c.ok),
-      ];
-    }
-    if (sub === "upgrade") {
-      this.aptUpgraded = true;
-      return [
-        line("Reading package lists... Done", c.dim),
-        line("Calculating upgrade... Done", c.dim),
-        line("The following packages have been kept back:", c.dim),
-        line("  linux-headers-amd64", c.dim),
-        line("0 upgraded, 0 newly installed, 0 to remove and 1 not upgraded.", c.ok),
-      ];
-    }
-    if (sub === "install" && pkg) {
-      this.installedPkgs.add(pkg);
-      this.removedPkgs.delete(pkg);
-      this.purgedPkgs.delete(pkg);
-      return [
-        line("Reading package lists... Done", c.dim),
-        line(`The following NEW packages will be installed: ${pkg}`, c.dim),
-        line(`Setting up ${pkg} (${pkg === "git" ? "1:2.39-1" : pkg === "hydra" ? "9.5-1" : "1.0-1"}) ...`, c.ok),
-      ];
-    }
-    if (sub === "remove" && pkg) {
-      this.removedPkgs.add(pkg);
-      return [
-        line("Reading package lists... Done", c.dim),
-        line(`The following packages will be REMOVED: ${pkg}`, c.dim),
-        line(`Removing ${pkg} ...`, c.ok),
-      ];
-    }
-    if (sub === "purge" && pkg) {
-      this.purgedPkgs.add(pkg);
-      this.removedPkgs.add(pkg);
-      return [
-        line("Reading package lists... Done", c.dim),
-        line(`The following packages will be REMOVED: ${pkg}* and its configuration files`, c.dim),
-        line(`Purging configuration files for ${pkg} ...`, c.ok),
-      ];
-    }
-    return [line("apt-get: try  apt-get install|remove|purge <pkg>  |  apt-get update|upgrade", c.dim)];
-  }
-
-  private nano(file?: string): OutLine[] {
-    if (!file) return [line("GNU nano 7.2   (sim) — usage: nano FILE", c.dim)];
-    const segs = this.resolvePath(file);
-    let node = segs && this.nodeAt(segs);
-    if (!node && segs) {
-      // nano creates a new empty file on open
-      this.writeFileAbs(segs, "", false);
-      node = this.nodeAt(segs);
-    }
-    if (!node) return [line(`nano: cannot open ${file}`, c.err)];
-    this.nanoOpened.add("/" + segs!.join("/"));
-    const body = (node.content || "").split("\n").slice(0, 8).map((tx) => line(tx));
-    return [
-      line(`  GNU nano 7.2        ${file}        `, c.ember),
-      ...body,
-      line("^G Get Help  ^O Write Out  ^X Exit", c.info),
-      line("(sim) editor opened read-style; use echo/sed to modify files in this sandbox.", c.dim),
-    ];
-  }
-
-  private iwconfig(): OutLine[] {
-    return [
-      line("lo        no wireless extensions.", c.dim),
-      line("eth0      no wireless extensions.", c.dim),
-      line("wlan0     IEEE 802.11  ESSID:\"HackForge-5G\"  Mode:Managed", c.info),
-      line("          Bit Rate=433.3 Mb/s  Tx-Power=20 dBm", c.dim),
-    ];
-  }
-
-  private dhclient(iface?: string): OutLine[] {
-    const dev = iface || "eth0";
-    this.dhcpDone = true;
-    this.eth0.ip = "10.10.10.13";
-    this.eth0.up = true;
-    this.ipChanged = false;
-    return [
-      line(`DHCPDISCOVER on ${dev} to 255.255.255.255 port 67 interval 3`, c.dim),
-      line("DHCPREQUEST for 10.10.10.13 on " + dev + " to 255.255.255.255 port 67", c.dim),
-      line("DHCPOFFER of 10.10.10.13 from 10.10.10.1", c.info),
-      line("DHCPACK of 10.10.10.13 from 10.10.10.1", c.ok),
-      line("bound to 10.10.10.13 -- renewal in 1592 seconds.", c.ok),
-    ];
-  }
-
-  private psList(): { pid: number; name: string; cpu: string; mem: string; state: string }[] {
-    const rows = [...PROC_TABLE];
-    if ((this.serviceStates.apache2 || "").startsWith("active")) rows.push({ pid: 8021, name: "apache2", cpu: "0.0", mem: "0.9", state: "S" });
-    return rows;
-  }
-
-  private ps(args: string[]): OutLine[] {
-    this.psRan = true;
-    const hasAux = args.some((a) => /^(aux|-aux|-[au]+)$/.test(a));
-    if (hasAux) {
-      this.psAux = true;
-      const head = line("USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND", c.dim);
-      const rows = this.psList().map((p) =>
-        line(
-          `root    ${String(p.pid).padStart(7)}  ${p.cpu}  ${p.mem}  12300  ${String(3000 + p.pid).padStart(6)} ?        ${p.state.padEnd(10)} 00:00   0:00 ${p.name}`
-        )
-      );
-      return [head, ...rows];
-    }
-    return [
-      line("    PID TTY          TIME CMD", c.dim),
-      line(`   3120 pts/0    00:00:00 bash`),
-      line(`   ${String(7200 + this.commandsRun)} pts/0    00:00:00 ps`),
-    ];
-  }
-
-  private topOut(): OutLine[] {
-    return [
-      line("top - 14:12:03 up 1:42,  1 user,  load average: 0.13, 0.28, 0.62", c.dim),
-      line("Tasks:  14 total,   1 running,  13 sleeping", c.info),
-      line("%Cpu(s):  0.7 us,  0.3 sy,  0.0 ni, 98.9 id", c.info),
-      line("  PID USER      PR  NI    VIRT    RES  %CPU %MEM     S COMMAND", c.dim),
-      ...this.psList()
-        .slice(0, 8)
-        .map((p) => line(`${String(p.pid).padStart(6)} root       20   0   90000  12000 ${p.cpu.padStart(4)} ${p.mem.padStart(4)}     ${p.state[0]} ${p.name}`)),
-      line("(refreshes periodically in a real top — 'q' to quit; static in this sim)", c.dim),
-    ];
-  }
-
-  private nice(args: string[]): OutLine[] {
-    // nice -n -10 nano notes.txt   (the value can itself start with '-')
-    const nIdx = args.indexOf("-n");
-    if (nIdx < 0 || args[nIdx + 1] === undefined) return [line("usage: nice -n NUM COMMAND", c.err)];
-    this.niceRan = true;
-    this.niceValue = args[nIdx + 1];
-    const cmd = args.slice(nIdx + 2).join(" ");
-    return [line(`${cmd}: started with niceness ${args[nIdx + 1]}`, c.dim)];
-  }
-
-  private renice(pos: string[]): OutLine[] {
-    // renice 20 6242   or   renice +5 -p 6242
-    const pid = pos.find((p) => /^\d{3,}$/.test(p) && Number(p) > 100);
-    const prio = pos.find((p) => /^\+?-?\d{1,2}$/.test(p));
-    if (!pid || prio === undefined) return [line("usage: renice PRIORITY PID", c.err)];
-    this.reniceRan = true;
-    this.renicedPid = pid;
-    return [line(`${pid} (process ID) old priority 0, new priority ${prio.replace("+", "")}`, c.ok)];
-  }
-
-  private killProc(pos: string[], flags: string): OutLine[] {
-    // kill -1 6242 | kill -9 5123 | kill 6242
-    const pid = pos[0] || "";
-    if (!pid) return [line("kill: usage: kill [-SIGNAL] PID", c.err)];
-    const sig = flags || "15";
-    this.killed.add(`${sig}:${pid}`);
-    if (sig === "9") this.killed.add(`any:${pid}`);
-    return [line(`sent signal ${sig} to ${pid} ${sig === "9" ? "(SIGKILL — forced)" : sig === "1" ? "(SIGHUP — hangup/reload)" : "(SIGTERM)"}`, c.dim)];
-  }
-
-  private fg(idOrPid?: string): OutLine[] {
-    if (!idOrPid) return [line("fg: usage: fg %JOBID or fg PID", c.err)];
-    const clean = idOrPid.replace("%", "");
-    const j = this.jobs.find((jj) => String(jj.id) === clean || String(jj.pid) === clean) || this.jobs[this.jobs.length - 1];
-    if (!j) return [line(`fg: ${idOrPid}: no such job`, c.err)];
-    this.fgUsed = true;
-    this.jobs = this.jobs.filter((jj) => jj !== j);
-    return [line(`fg %${j.id}`), line(`${j.cmd} — now running in the foreground.`, c.ok)];
-  }
-
-  private atCmd(time?: string): OutLine[] {
-    if (!time) return [line("at: usage: at TIME  (e.g. at 9:00pm)", c.err)];
-    this.atScheduled = true;
-    return [
-      line(`job 12 at Sat Oct 03 ${time} 2026`, c.ok),
-      line("job scheduled. View with 'atq' style tools on a real system.", c.dim),
-    ];
-  }
-
-  private service(pos: string[]): OutLine[] {
-    const name = pos[0];
-    const action = pos[1];
-    if (!name || !action) return [line("Usage: service <name> <action|status>", c.err)];
-    if (!(name in this.serviceStates)) return [line(`service: ${name}: unrecognized service`, c.err)];
-    const run = "active (running)";
-    const dead = "inactive (dead)";
-    switch (action) {
-      case "start":
-        this.serviceStates[name] = run;
-        return [line(`● ${name}.service - ${name} (HackForge sim)`, c.dim), line(`   Active: ${this.serviceStates[name]} since just now; 0s ago`, c.ok)];
-      case "stop":
-        this.serviceStates[name] = dead;
-        return [line(`● ${name}.service - ${name} (HackForge sim)`, c.dim), line(`   Active: ${this.serviceStates[name]}`, c.err)];
-      case "restart":
-        this.serviceStates[name] = run;
-        return [line(`● ${name}.service - ${name}`, c.dim), line("   Active: active (running) since just now (restarted)", c.ok)];
-      case "status": {
-        const st = this.serviceStates[name];
-        return [
-          line(`● ${name}.service - ${name} (HackForge sim)`, c.dim),
-          line(`   Active: ${st}`, st.startsWith("active") ? c.ok : c.err),
-        ];
-      }
-      default:
-        return [line(`service: ${action || "?"}: unsupported action — start|stop|restart|status`, c.err)];
-    }
-  }
-
-  private crontab(args: string[]): OutLine[] {
-    if (args.includes("-l")) {
-      this.cronListed = true;
-      const f = this.fileContent("/etc/crontab") || "";
-      return [
-        line("# HackForge crontab (sim) — m h dom mon dow user command", c.dim),
-        ...f.split("\n").filter(Boolean).map((tx) => line(tx)),
-      ];
-    }
-    if (args.includes("-e")) {
-      return [
-        line("Select an editor — nano (sim) opening /etc/crontab ...", c.dim),
-        line("(sim) editor view — append lines with:  echo \"55 23 * * * /root/scanner\" >> /etc/crontab", c.info),
-      ];
-    }
-    return [line("crontab: usage: crontab -l (list) | crontab -e (edit)", c.dim)];
-  }
-
-  private updateRc(pos: string[]): OutLine[] {
-    const name = pos[0];
-    const action = pos[1] || "defaults";
-    if (!name) return [line("update-rc.d: usage: update-rc.d <service> defaults|enable|disable|remove", c.err)];
-    this.rcAdded.add(`${name}:${action}`);
-    return [
-      line(`update-rc.d: ${name} ${action}`, c.dim),
-      line(`Adding autostart links for /etc/init.d/${name} (runlevels 2 3 4 5)`, c.ok),
-    ];
-  }
-
-  private ftp: { stage: "name" | "pass" | "cmd"; cwd: string[]; host: string } | null = null;
-
-  private ftpConnect(host?: string): OutLine[] {
-    if (!host) return [line("usage: ftp <host>", c.err)];
-    const ip = DOMAIN_IPS[host] || resolve(host);
-    if (!ip || !NETWORK[ip]) return [line(`ftp: ${host}: Name or service not known`, c.err)];
-    this.ftp = { stage: "name", cwd: [], host };
-    return [
-      line(`Trying ${ip}...`, c.dim),
-      line(`Connected to ${host}.`, c.ok),
-      line("220 HackForge FTP server ready.", c.info),
-      line(`Name (${host}:operator):`, c.dim),
-    ];
-  }
-
-  private ftpInput(input: string): OutLine[] {
-    const ftp = this.ftp!;
-    if (ftp.stage === "name") {
-      ftp.stage = "pass";
-      return [line("331 Please specify the password."), line("Password:", c.dim)];
-    }
-    if (ftp.stage === "pass") {
-      ftp.stage = "cmd";
-      return [line("230 Login successful (anonymous read-only access).", c.ok), line("Remote system type is UNIX."), line("Using binary mode to transfer files.", c.dim)];
-    }
-    const [cmd, ...rest] = input.split(/\s+/);
-    const arg = rest.join(" ");
-    const key = ftp.cwd.join("/");
-    switch (cmd) {
-      case "ls":
-      case "dir": {
-        const entries = FTP_TREE[key] || [];
-        return entries.map((e) => line(e, c.info));
-      }
-      case "pwd":
-        return [line(`257 "/${key}" is the current directory`, c.info)];
-      case "cd": {
-        const entries = FTP_TREE[key] || [];
-        const t = (arg || "").replace(/\/+$/, "");
-        if (t === ".." ) {
-          ftp.cwd.pop();
-          return [line("250 Directory successfully changed.", c.ok)];
-        }
-        if (entries.includes(t + "/")) {
-          ftp.cwd.push(t);
-          return [line("250 Directory successfully changed.", c.ok)];
-        }
-        return [line(`550 Failed to change directory: ${arg}`, c.err)];
-      }
-      case "get": {
-        const path = [...ftp.cwd, arg].join("/");
-        if (!(path in FTP_FILES)) return [line(`550 ${arg}: No such file`, c.err)];
-        const segs = [...this.cwd, arg];
-        this.writeFileAbs(segs, FTP_FILES[path] + "\n", false);
-        this.ftpGot.add(arg);
-        return [
-          line(`local randi: ${arg}  remote: /${path}`, c.dim),
-          line("150 Opening BINARY mode data connection for " + arg + ".", c.dim),
-          line("226 Transfer complete — saved to your local home directory.", c.ok),
-        ];
-      }
-      case "bye":
-      case "quit":
-      case "exit": {
-        const got = this.ftpGot.size > 0;
-        this.ftpDone = this.ftpDone || got;
-        this.ftp = null;
-        return [line("221 Goodbye.", c.ok)];
-      }
-      case "help":
-        return [line("Commands: ls, cd <dir>, pwd, get <file>, bye", c.dim)];
-      default:
-        return [line(`?Invalid command '${cmd}' — try help`, c.err)];
-    }
-  }
-
-  // Run a shell script: must exist, and (for ./script) be executable.
-  private runScript(path: string | undefined, needExec: boolean): OutLine[] {
-    if (!path) return [line("usage: ./script.sh  or  sh script.sh", c.err)];
-    const segs = this.resolvePath(path);
-    const node = segs && this.nodeAt(segs);
-    if (!node || node.type !== "file") return [line(`bash: ${path}: No such file or directory`, c.err)];
-    if (needExec && !(node.perms.includes("x") || node.setuid)) {
-      return [line(`bash: ${path}: Permission denied — make it executable: chmod +x ${path}`, c.err)];
-    }
-    this.ranScripts.add("/" + segs!.join("/"));
-    const lines = (node.content || "")
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((ll) => ll && !ll.startsWith("#"));
-    return this.execScriptLines(lines);
-  }
-
-  private execScriptLines(lines: string[]): OutLine[] {
-    const out: OutLine[] = [];
-    const rest = [...lines];
-    while (rest.length) {
-      const l = rest.shift()!;
-      const echoM = l.match(/^echo\s+(["']?)([\s\S]*)\1$/);
-      const readM = l.match(/^read\s+([A-Za-z_][A-Za-z0-9_]*)/);
-      if (echoM) {
-        const txt = echoM[2].replace(/\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?/g, (_m, v) => this.vars[v] ?? `$${v}`);
-        out.push(line(txt, c.ok));
-      } else if (readM) {
-        this.awaitingRead = readM[1];
-        this.scriptQueue = rest;
-        return out; // pause — next input line becomes the variable's value
-      } else if (/^(exit|cd\b)/.test(l)) {
-        continue;
-      } else {
-        const expanded = l.replace(/\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?/g, (_m, v) => this.vars[v] ?? "");
-        out.push(...this.dispatch(expanded));
-      }
-    }
-    return out;
-  }
+  cwd: string;
+  ran: string[];
+  history: string[];
+  lines: TermLine[];
+  fs: FileNode;
+  env: Record<string, string>;
+  flags: Set<string>;
+  filesRead: string[];
+  hosts: HostInfo[];
+  creds: { user: string; pass: string; service: string }[];
+  isRoot: boolean;
+  lastExit: number;
+  scenario: string;
+  net: { ip: string; mask: string; bcast: string; mac: string; up: boolean };
+  procs: Proc[];
+  jobs: { pid: number; cmd: string }[];
+  services: Record<string, "running" | "stopped" | "inactive">;
+  packages: Set<string>;
+  ftp: { host: string; user: string | null; cwd: string } | null;
+  crontab: string[];
+};
+
+export function dir(name: string, children: FileNode[] = [], mode = "drwxr-xr-x", owner = "root", group = "root"): FileNode {
+  const map: Record<string, FileNode> = {};
+  for (const c of children) map[c.name] = c;
+  return { name, type: "dir", mode, owner, group, children: map };
 }
 
-// All commands available for tab completion.
-export const COMMANDS = [
-  "help", "clear", "cls", "pwd", "whoami", "id", "hostname", "echo", "date", "history",
-  "ls", "cd", "cat", "less", "more", "head", "tail", "bat", "mkdir", "rmdir", "touch", "rm", "cp", "mv",
-  "find", "grep", "chmod", "chown", "chgrp", "sudo", "man",
-  "nl", "sed", "nano", "locate", "whereis", "which",
-  "apt-cache", "apt-get",
-  "ip", "ifconfig", "iwconfig", "dhclient", "ping", "netstat", "ss", "nslookup", "host", "resolvectl", "dig", "whois",
-  "ps", "top", "nice", "renice", "kill", "jobs", "fg", "at",
-  "env", "set", "export", "unset",
-  "service", "crontab", "update-rc.d",
-  "ftp", "bash", "sh", "git",
-  "nmap", "hydra", "curl", "sqlmap", "ssh", "exit",
+export function file(name: string, content: string, mode = "-rw-r--r--", owner = "root", group = "root"): FileNode {
+  return { name, type: "file", content, mode, owner, group };
+}
+
+export function defaultFS(): FileNode {
+  return dir("/", [
+    dir("home", [
+      dir("operator", [
+        file("welcome.txt", "Welcome to HACKFORGE, operator.\nYour home is /home/operator.\nTry `help` if you get lost.\n"),
+        file("notes.txt", "TODO:\n- enumerate the lab network 10.10.10.0/24\n- check hidden files with ls -a\n- never test systems you don't own\n"),
+        file(".secret", "FLAG{hidden_in_plain_sight}\nRemember: files starting with a dot are hidden from a plain `ls`.\n", "-rw-------"),
+        file(".bash_history", "whoami\npwd\nls -la\ncat notes.txt\n"),
+        dir("documents", [
+          file("readme.md", "# Operator notes\nKeep your findings here.\nThe ethics oath still applies outside this lab.\n"),
+          file("credentials.txt", "labuser:labpass123  (training only — simulated)\n"),
+        ]),
+        dir("tools", [
+          file("wordlist.txt", "admin\npassword\n123456\noperator\nlabpass123\nraven\nnevermore\n"),
+          file("targets.txt", "10.10.10.5 raven.lab\n10.10.10.8 web.lab\n10.10.10.12 ssh.lab\n10.10.10.21 db.lab\n"),
+        ]),
+        dir("labs", [file(".keep", "")]),
+      ]),
+    ]),
+    dir("etc", [
+      file("hostname", "kali\n"),
+      file(
+        "passwd",
+        "root:x:0:0:root:/root:/bin/bash\noperator:x:1000:1000:Operator:/home/operator:/bin/bash\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nmysql:x:27:27:MySQL Server:/nonexistent:/bin/false\nraven:x:1001:1001:Raven:/home/raven:/bin/bash\n"
+      ),
+      file("hosts", "127.0.0.1 localhost\n10.10.10.5 raven.lab\n10.10.10.8 web.lab\n10.10.10.12 ssh.lab\n10.10.10.21 db.lab\n"),
+      file("shadow", "root:*:19000:0:99999:7:::\noperator:*:19000:0:99999:7:::\n", "-rw-------"),
+      file("issue", "HACKFORGE Training OS 1.0 — simulated Kali\nUnauthorized access is a crime. This is a sandbox.\n"),
+      dir("ssh", [file("sshd_config", "Port 22\nPermitRootLogin no\nPasswordAuthentication yes\nPubkeyAuthentication yes\n")]),
+    ]),
+    dir("var", [
+      dir("log", [
+        file(
+          "auth.log",
+          "Apr 12 09:01:11 kali sshd[1021]: Accepted password for operator from 10.10.10.1 port 51222\nApr 12 09:14:02 kali sudo: operator : TTY=pts/0 ; PWD=/home/operator ; USER=root ; COMMAND=/usr/bin/id\n"
+        ),
+        file("syslog", "Apr 12 08:00:01 kali systemd[1]: Started HACKFORGE lab services.\n"),
+      ]),
+      dir("www", [
+        dir("html", [
+          file("index.html", "<html><body><h1>Forge CMS</h1><p>Login at /login.php</p></body></html>\n"),
+          file(
+            "login.php",
+            "<?php /* simulated */ $user=$_POST['user']; $pass=$_POST['pass']; /* vulnerable to SQLi in this lab only */ ?>\n"
+          ),
+        ]),
+      ]),
+    ]),
+    dir("tmp", [file(".keep", "")]),
+    dir("root", [file("flag.txt", "FLAG{root_of_the_forge}\n", "-rw-------")], "drwx------"),
+    dir("opt", [
+      dir("raven", [
+        file("user.txt", "FLAG{raven_foothold}\n"),
+        file("todo.txt", "Move the web backup off this box.\nCheck /var/www/html.\n"),
+      ]),
+    ]),
+    dir("usr", [
+      dir("bin", []),
+      dir("share", [
+        dir("wordlists", [file("rockyou-mini.txt", "password\n123456\nadmin\nletmein\nraven\nnevermore\nqwerty\nlabpass123\n")]),
+      ]),
+    ]),
+  ]);
+}
+
+export function ravenFS(): FileNode {
+  return dir("/", [
+    dir("home", [
+      dir("raven", [
+        file("user.txt", "FLAG{raven_user_nevermore}\n"),
+        file("note.txt", "Stephanie, the CMS backup is in /var/backups/cms.sql — rotate it.\nSSH key leftover in .ssh/\n"),
+        dir(".ssh", [
+          file("id_rsa", "-----BEGIN OPENSSH PRIVATE KEY-----\nSIMULATED-KEY-DO-NOT-USE\n-----END OPENSSH PRIVATE KEY-----\n", "-rw-------"),
+          file("authorized_keys", "ssh-rsa AAAFAKE raven@raven.lab\n"),
+        ]),
+      ]),
+      dir("operator", [file("welcome.txt", "You pivoted onto raven.lab. Stay ethical.\n")]),
+    ]),
+    dir("var", [
+      dir("www", [
+        dir("html", [
+          file("index.php", "<?php echo 'Raven CMS v1.2'; ?>\n"),
+          file("config.php", "<?php $db_user='raven'; $db_pass='nevermore'; $db_name='ravencms'; ?>\n"),
+          file("login.php", "<?php /* SQLi lab endpoint */ ?>\n"),
+        ]),
+      ]),
+      dir("backups", [file("cms.sql", "-- dump\nINSERT INTO users VALUES (1,'admin','FLAG{raven_web_dump}');\n")]),
+      dir("log", [file("apache2/access.log", "10.10.10.1 - - [12/Apr] \"GET /login.php?id=1' HTTP/1.1\" 500\n")]),
+    ]),
+    dir("etc", [
+      file("hostname", "raven\n"),
+      file("passwd", "root:x:0:0:root:/root:/bin/bash\nraven:x:1001:1001::/home/raven:/bin/bash\nwww-data:x:33:33::/var/www:/usr/sbin/nologin\n"),
+      file("crontab", "* * * * * root /usr/local/bin/backup.sh\n"),
+    ]),
+    dir("usr", [
+      dir("local", [
+        dir("bin", [
+          file(
+            "backup.sh",
+            "#!/bin/bash\n# world-writable backup script — privesc vector (simulated)\ncp -r /var/www/html /var/backups/\n",
+            "-rwxrwxrwx"
+          ),
+        ]),
+      ]),
+    ]),
+    dir("root", [file("root.txt", "FLAG{raven_rooted_the_nevermore}\n", "-rw-------")], "drwx------"),
+    dir("tmp", []),
+  ]);
+}
+
+export function sshFS(): FileNode {
+  return dir("/", [
+    dir("home", [
+      dir("operator", [
+        file("jump.txt", "Bastion 10.10.20.2 (jump.lab)\nDev 10.10.20.14 (dev.lab) — key auth only\ndb-int 10.10.20.30 — reachable from dev only\n"),
+        dir(".ssh", [
+          file("id_ed25519", "-----BEGIN OPENSSH PRIVATE KEY-----\nSIMULATED-OPERATOR-KEY\n-----END OPENSSH PRIVATE KEY-----\n", "-rw-------"),
+          file("config", "Host jump\n  HostName 10.10.20.2\n  User operator\nHost dev\n  HostName 10.10.20.14\n  User dev\n  ProxyJump jump\n"),
+        ]),
+        file("id_dev", "-----BEGIN OPENSSH PRIVATE KEY-----\nSIMULATED-DEV-KEY\n-----END OPENSSH PRIVATE KEY-----\n", "-rw-------"),
+      ]),
+    ]),
+    dir("etc", [
+      file("hostname", "kali\n"),
+      file("hosts", "10.10.20.2 jump.lab\n10.10.20.14 dev.lab\n10.10.20.30 db-int.lab\n"),
+    ]),
+    dir("tmp", [file("flag-hop.txt", "FLAG{ssh_proxyjump_ok}\n")]),
+    dir("opt", [file("tunnel.flag", "FLAG{ssh_local_forward}\n")]),
+  ]);
+}
+
+const DEFAULT_HOSTS: HostInfo[] = [
+  {
+    ip: "10.10.10.5",
+    hostname: "raven.lab",
+    os: "Linux 5.10",
+    ports: [
+      { port: 22, proto: "tcp", service: "ssh", version: "OpenSSH 8.4p1", state: "open" },
+      { port: 80, proto: "tcp", service: "http", version: "Apache 2.4.51 (RavenCMS)", state: "open" },
+      { port: 111, proto: "tcp", service: "rpcbind", version: "2-4", state: "open" },
+    ],
+  },
+  {
+    ip: "10.10.10.8",
+    hostname: "web.lab",
+    os: "Linux 5.15",
+    ports: [
+      { port: 22, proto: "tcp", service: "ssh", version: "OpenSSH 8.9", state: "open" },
+      { port: 80, proto: "tcp", service: "http", version: "nginx 1.18.0", state: "open" },
+      { port: 443, proto: "tcp", service: "https", version: "nginx 1.18.0", state: "open" },
+      { port: 3306, proto: "tcp", service: "mysql", version: "MySQL 5.7", state: "filtered" },
+    ],
+  },
+  {
+    ip: "10.10.10.12",
+    hostname: "ssh.lab",
+    os: "Linux 5.4",
+    ports: [{ port: 22, proto: "tcp", service: "ssh", version: "OpenSSH 7.9", state: "open" }],
+  },
+  {
+    ip: "10.10.10.21",
+    hostname: "db.lab",
+    os: "Linux 5.10",
+    ports: [
+      { port: 22, proto: "tcp", service: "ssh", version: "OpenSSH 8.2", state: "filtered" },
+      { port: 3306, proto: "tcp", service: "mysql", version: "MariaDB 10.5", state: "open" },
+    ],
+  },
+  {
+    ip: "10.10.20.2",
+    hostname: "jump.lab",
+    os: "Linux 5.15",
+    ports: [{ port: 22, proto: "tcp", service: "ssh", version: "OpenSSH 8.9", state: "open" }],
+  },
+  {
+    ip: "10.10.20.14",
+    hostname: "dev.lab",
+    os: "Linux 5.15",
+    ports: [{ port: 22, proto: "tcp", service: "ssh", version: "OpenSSH 8.9", state: "open" }],
+  },
+  {
+    ip: "10.10.20.30",
+    hostname: "db-int.lab",
+    os: "Linux 5.10",
+    ports: [
+      { port: 22, proto: "tcp", service: "ssh", version: "OpenSSH 8.2", state: "filtered" },
+      { port: 5432, proto: "tcp", service: "postgresql", version: "14.5", state: "open" },
+    ],
+  },
 ];
 
-function longestCommonPrefix(arr: string[]): string {
-  if (!arr.length) return "";
-  let prefix = arr[0];
-  for (const s of arr) {
-    while (!s.startsWith(prefix)) prefix = prefix.slice(0, -1);
-    if (!prefix) return "";
-  }
-  return prefix;
+function defaultProcs(): Proc[] {
+  return [
+    { pid: 1, user: "root", cpu: "0.0", mem: "0.1", cmd: "/sbin/init", nice: 0, alive: true },
+    { pid: 412, user: "root", cpu: "0.1", mem: "0.4", cmd: "sshd", nice: 0, alive: true },
+    { pid: 880, user: "root", cpu: "1.2", mem: "2.1", cmd: "msfconsole", nice: 0, alive: true },
+    { pid: 4378, user: "root", cpu: "8.4", mem: "6.2", cmd: "[zombie-lab]", nice: 5, alive: true },
+    { pid: 6242, user: "root", cpu: "0.3", mem: "0.8", cmd: "/usr/bin/ssh-agent", nice: 0, alive: true },
+    { pid: 9001, user: "root", cpu: "0.0", mem: "0.2", cmd: "cron", nice: 0, alive: true },
+  ];
 }
 
-// helpers
-function octalToPerms(oct: string): string {
-  const map = ["---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx"];
-  return oct.split("").map((d) => map[parseInt(d, 10)]).join("");
+export function createTerminal(opts?: { fs?: FileNode; user?: string; host?: string; scenario?: string }): Terminal {
+  const user = opts?.user || "operator";
+  const isDfir = opts?.scenario === "dfir";
+  const rooty = user === "root" || opts?.scenario === "sudorun";
+  const account = isDfir ? "analyst" : rooty ? "root" : user;
+  const home = isDfir ? "/cases/IR-2404" : rooty ? "/root" : "/home/operator";
+  return {
+    user: account,
+    host: opts?.host || (isDfir ? "forensics-workstation" : "kali"),
+    cwd: isDfir ? "/cases/IR-2404/evidence" : home,
+    ran: [],
+    history: [],
+    lines: [
+      { kind: "sys", text: "HACKFORGE simulated terminal — educational sandbox only." },
+      { kind: "sys", text: "Type `help` for commands. Unauthorized access outside this lab is illegal." },
+    ],
+    fs: opts?.fs || defaultFS(),
+    env: {
+      HOME: home,
+      USER: account,
+      PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin",
+      HISTSIZE: "1000",
+      SHELL: "/bin/bash",
+    },
+    flags: new Set(),
+    filesRead: [],
+    hosts: DEFAULT_HOSTS,
+    creds: [
+      { user: "labuser", pass: "labpass123", service: "ssh://10.10.10.12" },
+      { user: "raven", pass: "nevermore", service: "ssh://10.10.10.5" },
+      { user: "admin", pass: "admin' OR '1'='1", service: "http://10.10.10.8/login.php" },
+      { user: "ignite", pass: "ignite", service: "ssh://192.168.0.11" },
+    ],
+    isRoot: rooty,
+    lastExit: 0,
+    scenario: opts?.scenario || "lab",
+    net: { ip: "10.10.10.2", mask: "255.255.255.0", bcast: "10.10.10.255", mac: "08:00:27:12:34:56", up: true },
+    procs: defaultProcs(),
+    jobs: [],
+    services: { apache2: "stopped", ssh: "stopped", cron: "inactive", mysql: "stopped" },
+    packages: new Set(["git", "nmap", "hydra", "apache2", "cron", "openssh-server"]),
+    ftp: null,
+    crontab: ["# m h  dom mon dow   command", "17 * * * * root    cd / && run-parts --report /etc/cron.hourly"],
+  };
 }
-function renderPerms(f: FileNode): string {
-  if (!f.setuid && !f.setgid) return f.perms;
-  return f.perms
-    .split("")
-    .map((ch, i) => {
-      if (f.setuid && i === 2) return ch === "x" ? "s" : "S";
-      if (f.setgid && i === 5) return ch === "x" ? "s" : "S";
-      return ch;
-    })
-    .join("");
+
+export function normalize(path: string): string {
+  const parts: string[] = [];
+  for (const p of path.split("/")) {
+    if (!p || p === ".") continue;
+    if (p === "..") parts.pop();
+    else parts.push(p);
+  }
+  return "/" + parts.join("/");
 }
-function applySymbolic(perms: string, clause: string): string {
-  // clause like: a+x, go-rwx, u=rw, o=, +x
-  const op = clause.includes("+") ? "+" : clause.includes("-") ? "-" : "=";
-  const who = clause.match(/^[ugoa]*/)?.[0] || "";
-  const bit = clause.slice(clause.indexOf(op) + 1); // rwx portion (may be empty for '=')
-  const applyWho = who === "" || who === "a" ? ["u", "g", "o"] : who.split("");
-  const p = perms.split("");
-  const chars = ["r", "w", "x"];
-  for (const w of applyWho) {
-    const base = w === "u" ? 0 : w === "g" ? 3 : 6;
-    for (let i = 0; i < 3; i++) {
-      const has = bit.includes(chars[i]);
-      if (op === "+") {
-        if (has) p[base + i] = chars[i];
-      } else if (op === "-") {
-        if (has) p[base + i] = "-";
-      } else {
-        // '=' sets exactly the listed bits, clears the rest
-        p[base + i] = has ? chars[i] : "-";
-      }
+
+export function resolvePath(t: Terminal, p: string): string {
+  if (!p || p === "~") return t.env.HOME || "/home/operator";
+  if (p.startsWith("~/")) return normalize((t.env.HOME || "/home/operator") + p.slice(1));
+  if (p.startsWith("/")) return normalize(p);
+  return normalize(t.cwd + "/" + p);
+}
+
+export function getNode(root: FileNode, path: string): FileNode | null {
+  const norm = normalize(path);
+  if (norm === "/") return root;
+  let cur: FileNode | undefined = root;
+  for (const part of norm.split("/").filter(Boolean)) {
+    if (!cur || cur.type !== "dir" || !cur.children) return null;
+    cur = cur.children[part];
+  }
+  return cur || null;
+}
+
+export function parentAndName(path: string): { parent: string; name: string } {
+  const norm = normalize(path);
+  const i = norm.lastIndexOf("/");
+  if (i <= 0) return { parent: "/", name: norm.slice(1) };
+  return { parent: norm.slice(0, i), name: norm.slice(i + 1) };
+}
+
+function promptOf(t: Terminal): string {
+  const home = t.env.HOME || "/home/operator";
+  const short = t.cwd === home ? "~" : t.cwd.startsWith(home + "/") ? "~" + t.cwd.slice(home.length) : t.cwd;
+  const sig = t.isRoot ? "#" : "$";
+  return `${t.user}@${t.host}:${short}${sig}`;
+}
+
+function lsMode(n: FileNode): string {
+  return n.mode || (n.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--");
+}
+
+function canRead(t: Terminal, n: FileNode): boolean {
+  const mode = lsMode(n);
+  if (t.isRoot) return true;
+  if (mode.includes("------") || mode.endsWith("------")) return false;
+  if (n.mode === "-rw-------" && !t.isRoot) return false;
+  if (n.mode === "drwx------" && !t.isRoot) return false;
+  return true;
+}
+
+const HELP = `HACKFORGE lab commands (simulated):
+  help                 this list
+  clear                clear the screen
+  whoami / id          current user
+  pwd                  print working directory
+  ls [-la] [path]      list files
+  cd [dir]             change directory
+  cat FILE             print file
+  head/tail FILE       first/last lines
+  grep PAT FILE        search file
+  find PATH -name GLOB search tree
+  echo TEXT            print text
+  uname -a             system info
+  hostname             host name
+  history              command history
+  env                  environment
+  which CMD            locate command
+  ping HOST            icmp echo (sim)
+  ip addr / ifconfig   interfaces (sim)
+  nmap [opts] TARGET   port scan (sim)
+  curl URL             fetch (sim)
+  hydra ...            password spray (sim)
+  ssh user@host        remote login (sim)
+  sudo -l / sudo su    privilege (sim)
+  file / strings       identify type and printable clues
+  md5sum / sha256sum   verify evidence identity (sim)
+  xxd / hexedit        inspect / repair a virtual copy
+  oleid / olevba       static Office triage
+  tshark / volatility  packet and memory fixtures
+  docker inspect/diff  container evidence fixtures
+  timeline CASE        correlate case timestamps
+  submit FLAG{...}     submit a captured flag
+  man CMD              short manual
+
+This is a SAFE simulation. Never run these techniques on systems you do not own.`;
+
+function globToRe(glob: string): RegExp {
+  const esc = glob.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".");
+  return new RegExp("^" + esc + "$");
+}
+
+function walk(node: FileNode, path: string, acc: { path: string; node: FileNode }[]) {
+  acc.push({ path: path || "/", node });
+  if (node.type === "dir" && node.children) {
+    for (const [k, c] of Object.entries(node.children)) {
+      walk(c, (path === "/" ? "" : path) + "/" + k, acc);
     }
   }
-  return p.join("");
+}
+
+function findHost(t: Terminal, target: string): HostInfo | undefined {
+  const clean = target.replace(/\/.*$/, "");
+  return t.hosts.find((h) => h.ip === clean || h.hostname === clean || h.hostname === clean + ".lab");
+}
+
+export function parseArgs(raw: string): string[] {
+  const out: string[] = [];
+  let cur = "";
+  let q: string | null = null;
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i];
+    if (q) {
+      if (ch === q) q = null;
+      else cur += ch;
+    } else if (ch === '"' || ch === "'") q = ch;
+    else if (/\s/.test(ch)) {
+      if (cur) out.push(cur);
+      cur = "";
+    } else cur += ch;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
+export function complete(t: Terminal, partial: string): string[] {
+  const parts = partial.split(/\s+/);
+  const last = parts[parts.length - 1] || "";
+  if (parts.length <= 1) {
+    const cmds = [
+      "help",
+      "clear",
+      "whoami",
+      "id",
+      "pwd",
+      "ls",
+      "cd",
+      "cat",
+      "head",
+      "tail",
+      "grep",
+      "find",
+      "echo",
+      "uname",
+      "hostname",
+      "history",
+      "env",
+      "which",
+      "ping",
+      "ip",
+      "ifconfig",
+      "nmap",
+      "curl",
+      "hydra",
+      "ssh",
+      "sudo",
+      "submit",
+      "man",
+      "locate",
+      "whereis",
+      "chmod",
+      "chown",
+      "chgrp",
+      "cp",
+      "mv",
+      "rm",
+      "rmdir",
+      "apt-get",
+      "apt-cache",
+      "dig",
+      "ps",
+      "top",
+      "kill",
+      "service",
+      "crontab",
+      "ftp",
+      "sed",
+      "nl",
+      "file",
+      "strings",
+      "md5sum",
+      "sha1sum",
+      "sha256sum",
+      "hashdeep",
+      "hash-identifier",
+      "xxd",
+      "hexdump",
+      "hexedit",
+      "exiftool",
+      "oleid",
+      "olevba",
+      "oleobj",
+      "zsteg",
+      "steghide",
+      "audio-analyze",
+      "tshark",
+      "tcpdump",
+      "wireshark",
+      "ewfacquire",
+      "ftkimager",
+      "mmls",
+      "fls",
+      "mftecmd",
+      "icat",
+      "timeline",
+      "memory-acquire",
+      "static-report",
+      "sandbox-report",
+      "volatility",
+      "docker",
+      "reg",
+      "sqlitebrowser",
+      "evtx",
+      "wevtutil",
+      "LECmd",
+      "john",
+      "hashcat",
+    ];
+    return cmds.filter((c) => c.startsWith(last));
+  }
+  const base = last.includes("/") ? last.slice(0, last.lastIndexOf("/") + 1) : "";
+  const rest = last.includes("/") ? last.slice(last.lastIndexOf("/") + 1) : last;
+  const dirPath = resolvePath(t, base || ".");
+  const node = getNode(t.fs, dirPath);
+  if (!node || node.type !== "dir" || !node.children) return [];
+  return Object.keys(node.children)
+    .filter((n) => n.startsWith(rest))
+    .map((n) => (base || "") + n + (node.children![n].type === "dir" ? "/" : ""));
+}
+
+let PIPE_STDIN: string | null = null;
+
+export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean; stdin?: string | null }): TermLine[] {
+  let input = raw.replace(/\s+$/, "");
+  if (!input.trim()) return [];
+  const capturing = !!inner?.capture;
+  if (!capturing) {
+    t.ran.push(input.trim());
+    t.history.push(input.trim());
+  }
+  const out: TermLine[] = capturing ? [] : [{ kind: "in", text: `${promptOf(t)} ${input}` }];
+
+  if (!capturing && /&\s*$/.test(input) && !input.trim().startsWith("nano") === false) {
+    /* background handled in sudo handler too */
+  }
+
+  if (!capturing && input.includes("|") && !input.includes("||")) {
+    const stages = splitPipes(input);
+    let stdin = "";
+    for (const st of stages) {
+      const part = runCommand(t, st, { capture: true, stdin });
+      stdin = part
+        .filter((l) => l.kind === "out" || l.kind === "ok" || l.kind === "sys")
+        .map((l) => l.text)
+        .join("\n");
+    }
+    t.flags.add("pipe");
+    if (/grep/.test(input)) t.flags.add("grep");
+    if (/ifconfig/.test(input) && /grep/.test(input)) t.flags.add("grep-inet");
+    if (/ps/.test(input) && /grep/.test(input)) t.flags.add("ps-grep");
+    if (/locate/.test(input)) t.flags.add("locate");
+    if (/find/.test(input)) t.flags.add("find");
+    if (/set/.test(input) && /HISTSIZE/.test(input)) t.flags.add("grep-hist");
+    for (const line of stdin.split("\n")) out.push({ kind: "out", text: line });
+    t.lastExit = 0;
+    return out;
+  }
+
+  const redir = input.match(/^(.*?)(>>?)(\s*)(\S+)$/);
+  if (!capturing && redir && /echo|cat|printf/.test(redir[1]) && !redir[1].includes("|")) {
+    const left = redir[1].trim();
+    const append = redir[2] === ">>";
+    const dest = redir[4];
+    const innerOut = runCommand(t, left, { capture: true });
+    const text = innerOut
+      .filter((l) => l.kind === "out" || l.kind === "ok")
+      .map((l) => l.text)
+      .join("\n");
+    applyRedirect(t, left, dest, append, text);
+    t.lastExit = 0;
+    return out;
+  }
+
+  const args = parseArgs(input.trim());
+  const cmd = args[0];
+  const rest = args.slice(1);
+  const flags = new Set(rest.filter((a) => a.startsWith("-") && !a.startsWith("--")).flatMap((a) => a.slice(1).split("")));
+  const pos = rest.filter((a) => !a.startsWith("-"));
+
+  const print = (text: string, kind: TermLine["kind"] = "out") => {
+    for (const line of text.split("\n")) out.push({ kind, text: line });
+  };
+
+  const unknown = () => {
+    print(`${cmd}: command not found`, "err");
+    t.lastExit = 127;
+  };
+
+  try {
+    const prevStdin = PIPE_STDIN;
+    PIPE_STDIN = inner?.stdin ?? null;
+    const context = {
+      cmd,
+      args,
+      rest,
+      pos,
+      flags,
+      input,
+      print,
+      stdin: PIPE_STDIN,
+    };
+    const handled = t.scenario === "dfir" && handleDfirCommand(t, context)
+      ? true
+      : handleSudoRun(t, context);
+    PIPE_STDIN = prevStdin;
+    if (handled) {
+      t.lastExit = out.some((l) => l.kind === "err") ? 1 : 0;
+      return out;
+    }
+
+    switch (cmd) {
+      case "help":
+        print(HELP, "sys");
+        t.flags.add("used-help");
+        break;
+      case "clear":
+        t.lines = [];
+        t.lastExit = 0;
+        return [];
+      case "whoami":
+        print(t.isRoot ? "root" : t.user);
+        t.flags.add("whoami");
+        break;
+      case "id":
+        if (t.isRoot) print("uid=0(root) gid=0(root) groups=0(root)");
+        else print(`uid=1000(${t.user}) gid=1000(${t.user}) groups=1000(${t.user}),27(sudo)`);
+        t.flags.add("id");
+        break;
+      case "pwd":
+        print(t.cwd);
+        t.flags.add("pwd");
+        break;
+      case "hostname":
+        print(t.host);
+        break;
+      case "uname":
+        print("Linux " + t.host + " 5.15.0-forge #1 SMP x86_64 GNU/Linux");
+        t.flags.add("uname");
+        break;
+      case "date":
+        print(new Date().toString());
+        break;
+      case "echo": {
+        const rawE = rest.join(" ");
+        const expanded = rawE.replace(/\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?/g, (_, k) => t.env[k] ?? "");
+        print(expanded.replace(/^["']|["']$/g, ""));
+        t.flags.add("echo");
+        break;
+      }
+      case "env":
+      case "printenv":
+        print(Object.entries(t.env).map(([k, v]) => `${k}=${v}`).join("\n"));
+        break;
+      case "history":
+        print(t.history.map((c, i) => `  ${i + 1}  ${c}`).join("\n"));
+        break;
+      case "which":
+        if (!pos[0]) print("which: missing argument", "err");
+        else print(`/usr/bin/${pos[0]}`);
+        break;
+      case "man": {
+        const m = pos[0] || cmd;
+        t.flags.add("man");
+        if (m === "ls") {
+          t.flags.add("man-ls");
+          print(`LS(1)                            User Commands                           LS(1)
+
+NAME
+       ls - list directory contents
+
+SYNOPSIS
+       ls [OPTION]... [FILE]...
+
+DESCRIPTION
+       -a  do not ignore entries starting with .
+       -l  use a long listing format
+       -h  with -l, print sizes in human readable format`);
+        } else print(`MAN ${m} — simulated. Try \`help\` for the lab command list.`, "sys");
+        break;
+      }
+      case "ls": {
+        const target = resolvePath(t, pos[0] || ".");
+        const node = getNode(t.fs, target);
+        if (!node) {
+          print(`ls: cannot access '${pos[0]}': No such file or directory`, "err");
+          t.lastExit = 2;
+          break;
+        }
+        const long = flags.has("l");
+        const all = flags.has("a");
+        t.flags.add("ls");
+        if (all) t.flags.add("ls-a");
+        if (long) t.flags.add("ls-l");
+        if (node.type === "file") {
+          print(long ? `${lsMode(node)} 1 ${node.owner || t.user} ${node.group || t.user} ${String(node.content?.length || 0).padStart(4)} ${node.name}` : node.name);
+          break;
+        }
+        const names = Object.keys(node.children || {}).sort();
+        const shown = all ? [".", "..", ...names] : names.filter((n) => !n.startsWith("."));
+        if (!long) {
+          print(shown.join("  ") || "");
+        } else {
+          const rows = shown.map((n) => {
+            if (n === "." || n === "..") return `drwxr-xr-x 2 ${t.user} ${t.user}    4 ${n}`;
+            const c = node.children![n];
+            const sz = c.type === "file" ? String(c.content?.length || 0).padStart(4) : "   4";
+            return `${lsMode(c)} 1 ${c.owner || t.user} ${c.group || t.user} ${sz} ${n}`;
+          });
+          print("total " + shown.length + "\n" + rows.join("\n"));
+        }
+        break;
+      }
+      case "cd": {
+        const dest = resolvePath(t, pos[0] || "~");
+        const node = getNode(t.fs, dest);
+        if (!node) {
+          print(`bash: cd: ${pos[0]}: No such file or directory`, "err");
+          t.lastExit = 1;
+          break;
+        }
+        if (node.type !== "dir") {
+          print(`bash: cd: ${pos[0]}: Not a directory`, "err");
+          t.lastExit = 1;
+          break;
+        }
+        if (!canRead(t, node)) {
+          print(`bash: cd: ${pos[0]}: Permission denied`, "err");
+          t.lastExit = 1;
+          break;
+        }
+        t.cwd = dest;
+        t.flags.add("cd");
+        if (dest.includes("documents") || dest.includes("Documents")) t.flags.add("cd-documents");
+        if (dest.endsWith("/Desktop") || dest.endsWith("/Desktop/")) t.flags.add("cd-desktop");
+        if (dest.includes("/opt/raven")) t.flags.add("cd-raven");
+        if (dest.includes("/home/raven")) t.flags.add("cd-home-raven");
+        if (dest.includes("/var/www")) t.flags.add("cd-www");
+        if (dest.includes("/root")) t.flags.add("cd-root");
+        break;
+      }
+      case "cat":
+      case "head":
+      case "tail":
+      case "less":
+      case "more": {
+        if (!pos[0] && PIPE_STDIN != null) {
+          let content = PIPE_STDIN;
+          if (cmd === "head") content = content.split("\n").slice(0, 10).join("\n");
+          if (cmd === "tail") content = content.split("\n").slice(-10).join("\n");
+          print(content);
+          t.flags.add(cmd);
+          break;
+        }
+        if (!pos[0]) {
+          print(`${cmd}: missing file operand`, "err");
+          break;
+        }
+        const p = resolvePath(t, pos[0]);
+        const node = getNode(t.fs, p);
+        if (!node) {
+          print(`${cmd}: ${pos[0]}: No such file or directory`, "err");
+          t.lastExit = 1;
+          break;
+        }
+        if (node.type === "dir") {
+          print(`${cmd}: ${pos[0]}: Is a directory`, "err");
+          t.lastExit = 1;
+          break;
+        }
+        if (!canRead(t, node)) {
+          print(`${cmd}: ${pos[0]}: Permission denied`, "err");
+          t.lastExit = 1;
+          break;
+        }
+        let content = node.content || "";
+        if (cmd === "head") content = content.split("\n").slice(0, 10).join("\n");
+        if (cmd === "tail") content = content.split("\n").slice(-10).join("\n");
+        print(content.replace(/\n$/, ""));
+        t.filesRead.push(p);
+        t.flags.add("cat");
+        if (p.endsWith(".secret") || content.includes("FLAG{hidden")) t.flags.add("read-secret");
+        if (content.includes("FLAG{")) {
+          const m = content.match(/FLAG\{[^}]+\}/g);
+          if (m) m.forEach((f) => t.flags.add("saw:" + f));
+        }
+        if (p.includes("welcome.txt")) t.flags.add("read-welcome");
+        if (p.includes("notes.txt")) t.flags.add("read-notes");
+        if (p.includes("config.php")) t.flags.add("read-config");
+        if (p.includes("cms.sql")) t.flags.add("read-sql");
+        if (p.includes("user.txt")) t.flags.add("read-user-flag");
+        if (p.includes("root.txt") || p.includes("/root/flag")) t.flags.add("read-root-flag");
+        if (p.includes("backup.sh")) t.flags.add("read-backup-script");
+        if (p.includes("id_rsa") || p.includes("id_ed25519") || p.includes("id_dev")) t.flags.add("read-ssh-key");
+        if (p.includes("jump.txt")) t.flags.add("read-jump");
+        if (p.includes("credentials.txt")) t.flags.add("read-creds");
+        if (p.includes("wordlist") || p.includes("rockyou")) t.flags.add("read-wordlist");
+        if (p.includes("/etc/passwd")) t.flags.add("read-passwd");
+        if (p.includes("/etc/hosts")) t.flags.add("read-hosts");
+        if (p.includes("sshd_config")) t.flags.add("read-sshd");
+        if (p.includes("crontab")) t.flags.add("read-cron");
+        if (/hackforge\.txt/.test(p)) t.flags.add("cat-hf");
+        if (/etter\.dns/.test(p)) t.flags.add("etter");
+        if (/simple_bash/.test(p)) t.flags.add("cat-bash");
+        if (/sources\.list/.test(p)) t.flags.add("read-sources");
+        break;
+      }
+      case "grep": {
+        const pat = (pos[0] || "").replace(/^["']|["']$/g, "");
+        const re = new RegExp(pat, "i");
+        let source = PIPE_STDIN;
+        if (source == null && pos[1]) {
+          const p = resolvePath(t, pos[1]);
+          const node = getNode(t.fs, p);
+          if (!node || node.type !== "file") {
+            print(`grep: ${pos[1]}: No such file`, "err");
+            break;
+          }
+          source = node.content || "";
+          t.filesRead.push(p);
+        }
+        if (source == null) {
+          print("usage: grep PATTERN FILE", "err");
+          break;
+        }
+        const hits = source.split("\n").filter((l) => re.test(l));
+        print(hits.join("\n") || "");
+        t.flags.add("grep");
+        if (/echo/i.test(pat)) t.flags.add("grep-echo");
+        if (/inet/i.test(pat)) t.flags.add("grep-inet");
+        if (/msf/i.test(pat)) t.flags.add("ps-grep");
+        if (/HISTSIZE/i.test(pat)) t.flags.add("grep-hist");
+        if (hits.some((h) => h.includes("FLAG{"))) t.flags.add("grep-flag");
+        break;
+      }
+      case "find": {
+        const start = resolvePath(t, pos[0] || ".");
+        const node = getNode(t.fs, start);
+        if (!node) {
+          print(`find: '${pos[0]}': No such file or directory`, "err");
+          break;
+        }
+        const nameIdx = rest.indexOf("-name");
+        const pat = nameIdx >= 0 ? rest[nameIdx + 1] : "*";
+        const re = globToRe(pat || "*");
+        const acc: { path: string; node: FileNode }[] = [];
+        walk(node, start, acc);
+        const hits = acc.filter((a) => re.test(a.node.name)).map((a) => a.path);
+        print(hits.join("\n") || "");
+        t.flags.add("find");
+        if (hits.some((h) => h.includes(".secret") || h.includes("flag") || h.includes("id_rsa"))) t.flags.add("find-secret");
+        if (hits.some((h) => /hackforge$/i.test(h) || h.endsWith("/hackforge"))) t.flags.add("find-hf");
+        break;
+      }
+      case "ping": {
+        const target = pos[0];
+        if (!target) {
+          print("ping: missing host", "err");
+          break;
+        }
+        const h = findHost(t, target) || { ip: target, hostname: target };
+        print(`PING ${h.hostname || target} (${h.ip || target}): 56 data bytes`);
+        print(`64 bytes from ${h.ip || target}: icmp_seq=1 ttl=64 time=0.4 ms`);
+        print(`64 bytes from ${h.ip || target}: icmp_seq=2 ttl=64 time=0.3 ms`);
+        print(`--- ${target} ping statistics ---`);
+        print(`2 packets transmitted, 2 received, 0% packet loss`);
+        t.flags.add("ping");
+        if (String(target).includes("10.10.10")) t.flags.add("ping-lab");
+        break;
+      }
+      case "ifconfig":
+      case "ip": {
+        print(`eth0: flags=${t.net.up ? "4163<UP,BROADCAST,RUNNING>" : "4098<BROADCAST,MULTICAST>"} mtu 1500
+        inet ${t.net.ip}  netmask ${t.net.mask}  broadcast ${t.net.bcast}
+        inet6 fe80::a00:27ff:fe12:3456  prefixlen 64
+        ether ${t.net.mac}
+lo: flags=73<UP,LOOPBACK,RUNNING> mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0`);
+        t.flags.add("ip");
+        if (/\d+\.\d+\.\d+\.\d+/.test(pos[0] || "") && /eth0/.test(input)) {
+          t.net.ip = pos.find((p) => /^\d+\.\d+\.\d+\.\d+$/.test(p)) || t.net.ip;
+          t.flags.add("ip-set");
+        }
+        break;
+      }
+      case "nmap": {
+        const target = pos.find((p) => /[0-9]|lab/.test(p)) || pos[0];
+        if (!target) {
+          print("nmap: specify a target, e.g. nmap 10.10.10.0/24", "err");
+          break;
+        }
+        t.flags.add("nmap");
+        const svc = rest.includes("-sV") || rest.includes("-A") || rest.includes("-sC");
+        if (svc) t.flags.add("nmap-sv");
+        if (rest.includes("-sn") || rest.includes("-sP") || rest.includes("-sp")) t.flags.add("nmap-sn");
+        if (target.includes("/24") || target.endsWith(".0")) {
+          t.flags.add("nmap-sweep");
+          print(`Starting Nmap 7.94 ( https://nmap.org ) at lab-time
+Nmap scan report for 10.10.10.5 (raven.lab)
+Host is up (0.001s latency).
+Nmap scan report for 10.10.10.8 (web.lab)
+Host is up (0.001s latency).
+Nmap scan report for 10.10.10.12 (ssh.lab)
+Host is up (0.002s latency).
+Nmap scan report for 10.10.10.21 (db.lab)
+Host is up (0.002s latency).
+Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
+          break;
+        }
+        const h = findHost(t, target);
+        if (!h) {
+          print(`Note: Host seems down (this is a simulated lab — try 10.10.10.5).`, "err");
+          break;
+        }
+        t.flags.add("nmap-host");
+        if (h.ip === "10.10.10.5") t.flags.add("nmap-raven");
+        if (h.ip === "10.10.10.8") t.flags.add("nmap-web");
+        if (h.ip === "10.10.10.12") t.flags.add("nmap-ssh");
+        const lines = [
+          `Starting Nmap 7.94 ( simulated )`,
+          `Nmap scan report for ${h.hostname} (${h.ip})`,
+          `Host is up (0.0012s latency).`,
+          svc && h.os ? `OS: ${h.os}` : "",
+          `PORT     STATE    SERVICE    ${svc ? "VERSION" : ""}`,
+          ...h.ports.map(
+            (p) =>
+              `${String(p.port).padEnd(5)}/${p.proto} ${p.state.padEnd(8)} ${p.service.padEnd(10)} ${svc ? p.version : ""}`.trimEnd()
+          ),
+          `Nmap done: 1 IP address (1 host up) scanned`,
+        ].filter(Boolean);
+        print(lines.join("\n"));
+        break;
+      }
+      case "curl":
+      case "wget": {
+        const url = pos[0] || "";
+        t.flags.add("curl");
+        if (/login\.php/i.test(url) && /[?&](id|user|u)=/i.test(url) && /('|or|union)/i.test(url)) {
+          print('{"id":1,"user":"admin","flag":"FLAG{sqli_union_selected}"}');
+          t.flags.add("sqli-win");
+          break;
+        }
+        if (/10\.10\.10\.8|web\.lab/.test(url)) {
+          print("<html><h1>Forge CMS</h1><a href='/login.php'>login</a></html>");
+          t.flags.add("curl-web");
+          break;
+        }
+        if (/10\.10\.10\.5|raven\.lab/.test(url)) {
+          print("<html><h1>Raven CMS v1.2</h1><p>login.php</p></html>");
+          t.flags.add("curl-raven");
+          break;
+        }
+        if (/localhost|127\.0\.0\.1/.test(url)) {
+          t.flags.add("curl-local");
+          const page = getNode(t.fs, "/var/www/html/index.html");
+          print(page?.content || "<h1>It works!</h1>");
+          break;
+        }
+        if (url) print(`curl: fetched ${url} (simulated empty body)`);
+        else print("curl: try curl http://10.10.10.8/", "err");
+        break;
+      }
+      case "hydra":
+      case "medusa":
+      case "ncrack": {
+        t.flags.add("hydra");
+        const joined = input.toLowerCase();
+        const hasList = joined.includes("wordlist") || joined.includes("rockyou") || joined.includes("-p") || joined.includes("-P");
+        const hasTarget = /10\.10\.10\.12|ssh\.lab|10\.10\.10\.5|raven/.test(joined);
+        if (!hasList || !hasTarget) {
+          print("hydra: specify a target and wordlist (simulated). e.g.\n  hydra -l labuser -P tools/wordlist.txt ssh://10.10.10.12", "err");
+          break;
+        }
+        if (/10\.10\.10\.12|ssh\.lab/.test(joined)) {
+          print(`[DATA] attacking ssh://10.10.10.12:22
+[22][ssh] host: 10.10.10.12   login: labuser   password: labpass123
+1 of 1 target successfully completed, 1 valid password found`);
+          t.flags.add("hydra-win");
+        } else if (/10\.10\.10\.5|raven/.test(joined)) {
+          print(`[22][ssh] host: 10.10.10.5   login: raven   password: nevermore
+1 valid password found`);
+          t.flags.add("hydra-raven");
+        } else print("hydra: no valid password found in this simulation");
+        break;
+      }
+      case "ssh": {
+        t.flags.add("ssh");
+        const dest = pos.find((p) => p.includes("@") || p.includes(".")) || pos[0] || "";
+        const key = rest.includes("-i") || /id_/.test(input);
+        if (/ignite@|192\.168\.0\.11/.test(dest) || /ignite@/.test(input)) {
+          print("Welcome to ubuntu (HackForge lab host)\nLast login: simulated\nignite@ubuntu:~$");
+          t.flags.add("ssh-ignite");
+          t.user = "ignite";
+          t.host = "ubuntu";
+          break;
+        }
+        if (/labuser@10\.10\.10\.12|labuser@ssh/.test(dest) || (/10\.10\.10\.12/.test(dest) && t.flags.has("hydra-win"))) {
+          print("Welcome to Ubuntu 20.04 LTS (ssh.lab)\nLast login: simulated");
+          t.user = "labuser";
+          t.host = "ssh";
+          t.cwd = "/home/operator";
+          t.flags.add("ssh-labuser");
+          break;
+        }
+        if (/raven@10\.10\.10\.5|raven@raven/.test(dest) || (key && /10\.10\.10\.5|raven/.test(dest))) {
+          print("Welcome to raven.lab — nevermore\nuser.txt awaits in ~");
+          t.user = "raven";
+          t.host = "raven";
+          t.fs = ravenFS();
+          t.cwd = "/home/raven";
+          t.env.HOME = "/home/raven";
+          t.flags.add("ssh-raven");
+          break;
+        }
+        if (/jump|10\.10\.20\.2/.test(dest)) {
+          print("Welcome to jump.lab bastion. Use ProxyJump to reach dev.");
+          t.host = "jump";
+          t.flags.add("ssh-jump");
+          break;
+        }
+        if (/dev@|10\.10\.20\.14|ProxyJump| -J /.test(input)) {
+          print("Welcome to dev.lab via jump host.\nInternal db is at 10.10.20.30");
+          t.host = "dev";
+          t.user = "dev";
+          t.flags.add("ssh-dev");
+          t.flags.add("ssh-hop");
+          break;
+        }
+        if (/10\.10\.20\.30|db-int/.test(dest) && t.flags.has("ssh-dev")) {
+          print("psql (14.5) on db-int.lab\nFLAG{ssh_deep_pivot}");
+          t.flags.add("ssh-db");
+          break;
+        }
+        print(`ssh: connect to host ${dest || "?"} port 22: Connection refused (try a lab host)`, "err");
+        t.lastExit = 1;
+        break;
+      }
+      case "sudo": {
+        t.flags.add("sudo");
+        if (rest[0] === "-l") {
+          print(`User ${t.user} may run the following commands on ${t.host}:
+    (ALL) NOPASSWD: /usr/bin/find
+    (root) NOPASSWD: /usr/local/bin/backup.sh`);
+          t.flags.add("sudo-l");
+          break;
+        }
+        if (rest[0] === "su" || rest.join(" ") === "-i" || rest[0] === "bash" || rest[0] === "su-") {
+          print("root@forge — simulated. Remember the oath.");
+          t.isRoot = true;
+          t.user = "root";
+          t.flags.add("got-root");
+          break;
+        }
+        if (rest.includes("find") || /find/.test(input)) {
+          print("GTFOBins find → root (simulated). You are now root.");
+          t.isRoot = true;
+          t.user = "root";
+          t.flags.add("got-root");
+          t.flags.add("privesc-find");
+          break;
+        }
+        if (/backup\.sh/.test(input)) {
+          print("Running world-writable backup.sh as root (simulated).");
+          t.flags.add("ran-backup-root");
+          if (t.flags.has("wrote-backup")) {
+            t.isRoot = true;
+            t.user = "root";
+            t.flags.add("got-root");
+          }
+          break;
+        }
+        print("sudo: a simulated password is not required in this lab. Try `sudo -l`.", "err");
+        break;
+      }
+      case "chmod":
+      case "echo-append":
+        break;
+      case "submit": {
+        const flag = pos[0] || "";
+        if (/^FLAG\{.+\}$/.test(flag)) {
+          t.flags.add("submit:" + flag);
+          t.flags.add("submitted");
+          print(`Flag accepted: ${flag}`, "ok");
+        } else print("usage: submit FLAG{...}", "err");
+        break;
+      }
+      case "python":
+      case "python3":
+        print("Python 3.11.2 (simulated). Use the shell tools in this lab.");
+        break;
+      case "nc":
+      case "netcat":
+        print("nc: simulated. No live listeners in the sandbox.");
+        break;
+      case "sqlmap": {
+        t.flags.add("sqlmap");
+        if (/login\.php|10\.10\.10\.8|10\.10\.10\.5/.test(input)) {
+          print(`sqlmap identified the following injection point:
+Parameter: id (GET)
+    Type: UNION query
+    Title: Generic UNION query (simulated)
+available databases [2]:
+[*] information_schema
+[*] ravencms
+Table: users
+[2 entries]
++-------+----------------------------------+
+| admin | FLAG{sqli_union_selected}        |
++-------+----------------------------------+`);
+          t.flags.add("sqli-win");
+        } else print("sqlmap: provide a lab URL such as http://10.10.10.8/login.php?id=1");
+        break;
+      }
+      case "john":
+      case "hashcat":
+        print("Hash cracking is simulated here. Use hydra against lab SSH for the password module.");
+        break;
+      case "scp":
+        t.flags.add("scp");
+        print("scp: simulated transfer complete.");
+        break;
+      case "touch": {
+        const p = resolvePath(t, pos[0] || "");
+        if (!pos[0]) {
+          print("touch: missing file operand", "err");
+          break;
+        }
+        const { parent, name } = parentAndName(p);
+        const dirn = getNode(t.fs, parent);
+        if (dirn && dirn.type === "dir" && dirn.children) {
+          if (!dirn.children[name]) dirn.children[name] = file(name, "");
+          t.flags.add("touch");
+          if (/hackforge-2/.test(name)) t.flags.add("touch-hf2");
+        }
+        break;
+      }
+      case "mkdir": {
+        const p = resolvePath(t, pos[0] || "");
+        const { parent, name } = parentAndName(p);
+        const dirn = getNode(t.fs, parent);
+        if (dirn && dirn.type === "dir" && dirn.children && name) {
+          dirn.children[name] = dir(name);
+          t.flags.add("mkdir");
+          if (name === "ignite") t.flags.add("mkdir-ignite");
+        }
+        break;
+      }
+      case "nano":
+      case "vi":
+      case "vim": {
+        if (/backup\.sh/.test(input)) {
+          t.flags.add("wrote-backup");
+          print("Edited /usr/local/bin/backup.sh (simulated). Next run it via sudo.");
+        } else print(`${cmd}: editor simulated — not needed for this lab.`);
+        break;
+      }
+      default:
+        unknown();
+        return out;
+    }
+    t.lastExit = out.some((l) => l.kind === "err") ? 1 : 0;
+  } catch (e) {
+    print(String(e), "err");
+    t.lastExit = 1;
+  }
+  return out;
+}
+
+export function usedCmd(t: Terminal, re: RegExp): boolean {
+  return t.ran.some((c) => re.test(c));
+}
+
+export function prompt(t: Terminal): string {
+  return promptOf(t);
 }

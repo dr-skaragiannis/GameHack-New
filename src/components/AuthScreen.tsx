@@ -1,149 +1,136 @@
 import { useState } from "react";
 import { useAuth } from "../lib/useAuth";
-import type { Role } from "../lib/db";
+import { t, type Lang } from "../i18n";
+import { sound } from "../lib/sound";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
+import type { Role } from "../lib/db";
 
 export default function AuthScreen() {
   const { login, register } = useAuth();
-  const [mode, setMode] = useState<"login" | "register">("login");
-  const [role, setRole] = useState<Role>("player");
+  const [mode, setMode] = useState<"in" | "up">("in");
+  const [lang, setLang] = useState<Lang>("en");
   const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [role, setRole] = useState<Role>("player");
   const [error, setError] = useState("");
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    sound.unlock();
+    sound.enter();
     const res =
-      mode === "login" ? login(username, password) : register(username, password, role, displayName);
-    if (!res.ok) setError(res.error || "Something went wrong");
+      mode === "in" ? login(username, password) : register(username, password, role, displayName || username);
+    if (!res.ok) {
+      setError(res.error || "Error");
+      sound.error();
+    }
   };
 
   return (
-    <div className="forge-grid relative flex min-h-screen items-center justify-center overflow-hidden bg-forge-bg px-6 py-12">
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-ember-600/20 blur-[120px] float" />
-      <div className="relative z-10 w-full max-w-md">
-        <div className="fadeup mb-8 text-center">
-          <h1 className="text-glow font-mono text-6xl font-black tracking-tight text-ember-400">
-            HACK<span className="text-zinc-100">FORGE</span>
-          </h1>
-          <p className="mt-2 font-mono text-xs uppercase tracking-[0.4em] text-iron-500">
-            Interactive Ethical Hacking Lab
-          </p>
+    <div className="forge-grid min-h-full flex items-center justify-center p-4 relative">
+      <button
+        type="button"
+        onClick={() => setLang(lang === "en" ? "el" : "en")}
+        className="absolute top-4 right-4 z-10 text-xs font-bold tracking-widest text-iron-400 hover:text-ember-400 border border-forge-border rounded-lg px-3 py-1.5"
+      >
+        {t("langLabel", lang)}
+      </button>
+
+      <div className="relative z-10 w-full max-w-md enter">
+        <div className="text-center mb-8">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-ember-500 to-ember-700 forge-glow mb-4 float">
+            <Icon name="hammer" className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-extrabold tracking-[0.2em] text-shine">{t("appName", lang)}</h1>
+          <p className="mt-2 text-iron-400 text-sm">{t("tagline", lang)}</p>
+          <p className="mt-3 text-zinc-400 text-sm leading-relaxed">{t("heroLine", lang)}</p>
         </div>
 
-        <div className="scale-in rounded-3xl border border-forge-border glass p-5 forge-glow sm:p-7">
-          {/* mode tabs */}
-          <div className="mb-5 flex rounded-lg border border-forge-border bg-forge-bg p-1">
-            {(["login", "register"] as const).map((m) => (
+        <div className="glass rounded-2xl border border-forge-border p-6">
+          <div className="flex rounded-xl bg-forge-bg p-1 mb-5">
+            {(["in", "up"] as const).map((m) => (
               <button
                 key={m}
+                type="button"
                 onClick={() => {
                   setMode(m);
                   setError("");
                 }}
                 className={cn(
-                  "flex-1 rounded-md py-2 font-mono text-xs font-bold uppercase transition",
+                  "flex-1 py-2 rounded-lg text-sm font-semibold transition",
                   mode === m ? "bg-ember-600 text-white" : "text-iron-400 hover:text-zinc-200"
                 )}
               >
-                {m === "login" ? "Log in" : "Register"}
+                {m === "in" ? t("signIn", lang) : t("createAccount", lang)}
               </button>
             ))}
           </div>
 
-          <form onSubmit={submit} className="space-y-4">
-            {mode === "register" && (
-              <div>
-                <label className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-iron-500">
-                  I am a…
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(["player", "educator"] as const).map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => setRole(r)}
-                      className={cn(
-                        "flex items-center justify-center gap-2 rounded-lg border py-2.5 font-mono text-xs font-bold capitalize transition",
-                        role === r
-                          ? "border-ember-500 bg-ember-500/10 text-ember-400"
-                          : "border-forge-border text-iron-400 hover:text-zinc-200"
-                      )}
-                    >
-                      <Icon name={r === "player" ? "terminal" : "crown"} className="h-4 w-4" />
-                      {r}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          <form onSubmit={submit} className="space-y-3">
+            {mode === "up" && (
+              <input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder={t("displayName", lang)}
+                className="w-full rounded-xl bg-forge-bg border border-forge-border px-3 py-2.5 text-sm outline-none focus:border-ember-500"
+              />
             )}
-
-            {mode === "register" && (
-              <Field label="Display name" value={displayName} onChange={setDisplayName} placeholder="Nova Reyes" />
-            )}
-            <Field label="Username" value={username} onChange={setUsername} placeholder="nova" autoFocus />
-            <Field
-              label="Password"
-              value={password}
-              onChange={setPassword}
-              placeholder="••••••••"
-              type="password"
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder={t("username", lang)}
+              autoComplete="username"
+              className="w-full rounded-xl bg-forge-bg border border-forge-border px-3 py-2.5 text-sm outline-none focus:border-ember-500"
             />
-
-            {error && (
-              <div className="flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 font-mono text-xs text-red-300">
-                <Icon name="ban" className="h-4 w-4 shrink-0" /> {error}
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={t("password", lang)}
+              autoComplete={mode === "in" ? "current-password" : "new-password"}
+              className="w-full rounded-xl bg-forge-bg border border-forge-border px-3 py-2.5 text-sm outline-none focus:border-ember-500"
+            />
+            {mode === "up" && (
+              <div className="grid grid-cols-2 gap-2">
+                {(["player", "educator"] as const).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRole(r)}
+                    className={cn(
+                      "rounded-xl border py-2 text-xs font-semibold",
+                      role === r
+                        ? "border-ember-500 bg-ember-500/15 text-ember-300"
+                        : "border-forge-border text-iron-400"
+                    )}
+                  >
+                    {r === "player" ? t("iAmPlayer", lang) : t("iAmEducator", lang)}
+                  </button>
+                ))}
               </div>
             )}
-
+            {error && <div className="text-rose-400 text-xs">{error}</div>}
             <button
               type="submit"
-              className="forge-glow w-full rounded-xl bg-ember-600 py-3 font-mono text-sm font-bold text-white transition hover:bg-ember-500"
+              className="w-full rounded-xl bg-gradient-to-r from-ember-600 to-ember-500 py-2.5 font-bold text-white shimmer-hover"
             >
-              {mode === "login" ? "Enter the Lab →" : "Create account →"}
+              {mode === "in" ? t("start", lang) : t("createAccount", lang)}
             </button>
           </form>
 
-          <div className="mt-4 rounded-lg bg-forge-bg px-3 py-2 font-mono text-[11px] leading-relaxed text-iron-500">
-            <span className="text-ember-400">Demo:</span> player <b className="text-zinc-300">nova / demo</b> ·
-            educator <b className="text-zinc-300">educator / teach123</b>
+          <div className="mt-5 pt-4 border-t border-forge-line text-[11px] text-iron-500 space-y-1">
+            <div className="uppercase tracking-widest text-iron-400 mb-1">{t("demoHint", lang)}</div>
+            <div>
+              player — <span className="text-zinc-400 font-mono">nova / demo</span>
+            </div>
+            <div>
+              educator — <span className="text-zinc-400 font-mono">educator / teach123</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-  autoFocus,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  type?: string;
-  autoFocus?: boolean;
-}) {
-  return (
-    <div>
-      <label className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-iron-500">{label}</label>
-      <input
-        type={type}
-        value={value}
-        autoFocus={autoFocus}
-        spellCheck={false}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full rounded-lg border border-forge-border bg-forge-bg px-3 py-2.5 font-mono text-sm text-zinc-100 outline-none transition focus:border-ember-500"
-      />
     </div>
   );
 }

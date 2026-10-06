@@ -1,544 +1,686 @@
 import type { Bi } from "./lessons";
 
-// A short educational popup shown each time a task's command succeeds:
-// an "output explained" note plus a 3-question quiz (distinct from challenges).
-
-export type QuizQ = { q: Bi; options: Bi[]; answer: number };
-export type QuizEntry = { info: Bi; questions: QuizQ[] };
-
-const b = (en: string, el: string): Bi => ({ en, el });
-const q = (en: string, el: string, opts: [string, string][], answer: number): QuizQ => ({
-  q: b(en, el),
-  options: opts.map(([e, l]) => b(e, l)),
-  answer,
-});
-
-// Quizzes are keyed by command concept so several tasks can share one.
-const CONCEPTS: Record<string, QuizEntry> = {
-  help: {
-    info: b(
-      "'help' listed every command available in this lab, grouped by category. On a real Linux system you'd use 'man COMMAND' for a full manual.",
-      "Το 'help' εμφάνισε κάθε διαθέσιμη εντολή του εργαστηρίου, ανά κατηγορία. Σε πραγματικό Linux θα χρησιμοποιούσες 'man ΕΝΤΟΛΗ' για πλήρες εγχειρίδιο."
-    ),
-    questions: [
-      q("What does 'help' show you?", "Τι σου δείχνει το 'help';", [["A list of available commands", "Λίστα διαθέσιμων εντολών"], ["Your IP address", "Τη διεύθυνση IP σου"], ["The password file", "Το αρχείο κωδικών"]], 0),
-      q("On real Linux, how do you read a command's manual?", "Σε πραγματικό Linux, πώς διαβάζεις το εγχειρίδιο μιας εντολής;", [["man COMMAND", "man ΕΝΤΟΛΗ"], ["help COMMAND", "help ΕΝΤΟΛΗ"], ["list COMMAND", "list ΕΝΤΟΛΗ"]], 0),
-      q("Why check help first on an unfamiliar system?", "Γιατί να δεις πρώτα το help σε άγνωστο σύστημα;", [["To learn what actions are possible", "Για να μάθεις τι ενέργειες γίνονται"], ["To delete logs", "Για να σβήσεις logs"], ["To gain root", "Για να πάρεις root"]], 0),
-    ],
-  },
-  whoami: {
-    info: b(
-      "'whoami' printed your current username. Your identity decides what you can read, write and execute on the system.",
-      "Το 'whoami' τύπωσε το τρέχον όνομα χρήστη σου. Η ταυτότητά σου καθορίζει τι μπορείς να διαβάσεις, να γράψεις και να εκτελέσεις."
-    ),
-    questions: [
-      q("What does whoami output?", "Τι εμφανίζει το whoami;", [["Your current username", "Το τρέχον όνομα χρήστη"], ["Your hostname", "Το hostname"], ["The time", "Την ώρα"]], 0),
-      q("Why does your username matter in security?", "Γιατί μετράει το όνομα χρήστη στην ασφάλεια;", [["It determines your permissions", "Καθορίζει τα δικαιώματά σου"], ["It sets the screen color", "Ορίζει το χρώμα οθόνης"], ["It does nothing", "Δεν κάνει τίποτα"]], 0),
-      q("Which prompt symbol means you are root?", "Ποιο σύμβολο prompt σημαίνει root;", [["#", "#"], ["$", "$"], ["~", "~"]], 0),
-    ],
-  },
-  clear: {
-    info: b(
-      "'clear' wiped the screen but deleted nothing — your command history is intact (press ↑ to recall).",
-      "Το 'clear' καθάρισε την οθόνη αλλά δεν διέγραψε τίποτα — το ιστορικό εντολών παραμένει (πάτα ↑)."
-    ),
-    questions: [
-      q("Does 'clear' delete your files?", "Το 'clear' διαγράφει αρχεία;", [["No, it only clears the view", "Όχι, καθαρίζει μόνο την προβολή"], ["Yes, all files", "Ναι, όλα"], ["Only hidden files", "Μόνο τα κρυφά"]], 0),
-      q("Keyboard shortcut for clear?", "Συντόμευση για clear;", [["Ctrl+L", "Ctrl+L"], ["Ctrl+C", "Ctrl+C"], ["Ctrl+Z", "Ctrl+Z"]], 0),
-      q("How do you recall a previous command?", "Πώς ανακαλείς προηγούμενη εντολή;", [["Press ↑ (up arrow)", "Πάτα ↑ (πάνω βέλος)"], ["Retype everything", "Ξαναγράψε τα όλα"], ["It is gone forever", "Χάθηκε για πάντα"]], 0),
-    ],
-  },
-  pwd: {
-    info: b(
-      "'pwd' printed your absolute path from the root '/'. Knowing where you are prevents mistakes with relative paths.",
-      "Το 'pwd' τύπωσε την απόλυτη διαδρομή από τη ρίζα '/'. Το να ξέρεις πού είσαι αποτρέπει λάθη με σχετικές διαδρομές."
-    ),
-    questions: [
-      q("What does pwd stand for?", "Τι σημαίνει pwd;", [["Print working directory", "Print working directory"], ["Password", "Κωδικός"], ["Print web domain", "Print web domain"]], 0),
-      q("Every absolute path starts with?", "Κάθε απόλυτη διαδρομή ξεκινά με;", [["/ (root)", "/ (ρίζα)"], ["~", "~"], [".", "."]], 0),
-      q("'~' is a shortcut for?", "Το '~' είναι συντόμευση για;", [["Your home directory", "Τον αρχικό σου φάκελο"], ["The root dir", "Τη ρίζα"], ["The current dir", "Τον τρέχοντα φάκελο"]], 0),
-    ],
-  },
-  ls: {
-    info: b(
-      "'ls' listed the directory's contents. Flags expand it: -l for details, -a for hidden files.",
-      "Το 'ls' εμφάνισε τα περιεχόμενα του φακέλου. Flags το επεκτείνουν: -l για λεπτομέρειες, -a για κρυφά."
-    ),
-    questions: [
-      q("What does ls do?", "Τι κάνει το ls;", [["Lists directory contents", "Εμφανίζει περιεχόμενα φακέλου"], ["Logs you in", "Σε συνδέει"], ["Lists services", "Εμφανίζει υπηρεσίες"]], 0),
-      q("Which flag gives a detailed listing?", "Ποιο flag δίνει αναλυτική λίστα;", [["-l", "-l"], ["-a", "-a"], ["-r", "-r"]], 0),
-      q("ls with no argument lists?", "Το ls χωρίς όρισμα εμφανίζει;", [["The current directory", "Τον τρέχοντα φάκελο"], ["The root dir", "Τη ρίζα"], ["Your home only", "Μόνο το home"]], 0),
-    ],
-  },
-  lsa: {
-    info: b(
-      "'ls -a' revealed hidden files whose names start with a dot — a favourite spot for secrets and configs.",
-      "Το 'ls -a' αποκάλυψε κρυφά αρχεία που ξεκινούν με τελεία — αγαπημένο σημείο για μυστικά και ρυθμίσεις."
-    ),
-    questions: [
-      q("Hidden file names begin with?", "Τα κρυφά αρχεία ξεκινούν με;", [["A dot (.)", "Τελεία (.)"], ["A dash (-)", "Παύλα (-)"], ["A slash (/)", "Κάθετο (/)"]], 0),
-      q("Which flag reveals them?", "Ποιο flag τα αποκαλύπτει;", [["-a", "-a"], ["-l", "-l"], ["-h", "-h"]], 0),
-      q("Why do attackers check hidden files?", "Γιατί οι επιτιθέμενοι ελέγχουν κρυφά αρχεία;", [["They often hide secrets/config", "Συχνά κρύβουν μυστικά/ρυθμίσεις"], ["They load faster", "Φορτώνουν πιο γρήγορα"], ["They are bigger", "Είναι μεγαλύτερα"]], 0),
-    ],
-  },
-  cat: {
-    info: b(
-      "'cat' printed the file's contents to the screen. For long files, 'less' lets you scroll.",
-      "Το 'cat' τύπωσε το περιεχόμενο του αρχείου. Για μεγάλα αρχεία, το 'less' επιτρέπει κύλιση."
-    ),
-    questions: [
-      q("What does cat do?", "Τι κάνει το cat;", [["Prints file contents", "Τυπώνει περιεχόμενο αρχείου"], ["Deletes a file", "Διαγράφει αρχείο"], ["Creates a folder", "Φτιάχνει φάκελο"]], 0),
-      q("Best tool for a very long file?", "Καλύτερο εργαλείο για μεγάλο αρχείο;", [["less", "less"], ["cat", "cat"], ["touch", "touch"]], 0),
-      q("Can cat show several files at once?", "Μπορεί το cat να δείξει πολλά αρχεία μαζί;", [["Yes: cat a b", "Ναι: cat a b"], ["No", "Όχι"], ["Only with sudo", "Μόνο με sudo"]], 0),
-    ],
-  },
-  cd: {
-    info: b(
-      "'cd' moved you into a directory. 'cd ..' goes up, 'cd ~' returns home, 'cd /' goes to root.",
-      "Το 'cd' σε μετακίνησε σε φάκελο. 'cd ..' ανεβαίνει, 'cd ~' επιστρέφει στο home, 'cd /' στη ρίζα."
-    ),
-    questions: [
-      q("'cd ..' does what?", "Τι κάνει το 'cd ..';", [["Moves up one level", "Ανεβαίνει ένα επίπεδο"], ["Deletes the dir", "Διαγράφει τον φάκελο"], ["Clears the screen", "Καθαρίζει την οθόνη"]], 0),
-      q("'cd ~' takes you to?", "Το 'cd ~' σε πάει;", [["Your home directory", "Στον αρχικό σου φάκελο"], ["The root", "Στη ρίζα"], ["The previous dir", "Στον προηγούμενο"]], 0),
-      q("After cd, which command shows contents?", "Μετά το cd, ποια εντολή δείχνει τα περιεχόμενα;", [["ls", "ls"], ["pwd", "pwd"], ["id", "id"]], 0),
-    ],
-  },
-  mkdir: {
-    info: b(
-      "'mkdir' created a new directory. 'mkdir -p a/b/c' builds nested folders in one go.",
-      "Το 'mkdir' δημιούργησε νέο φάκελο. Το 'mkdir -p a/b/c' φτιάχνει εμφωλευμένους φακέλους μαζί."
-    ),
-    questions: [
-      q("mkdir does?", "Τι κάνει το mkdir;", [["Creates a directory", "Δημιουργεί φάκελο"], ["Removes a directory", "Διαγράφει φάκελο"], ["Moves files", "Μετακινεί αρχεία"]], 0),
-      q("Flag to create nested paths?", "Flag για εμφωλευμένες διαδρομές;", [["-p", "-p"], ["-r", "-r"], ["-a", "-a"]], 0),
-      q("Why organise a pentest in folders?", "Γιατί να οργανώσεις ένα pentest σε φακέλους;", [["Keep scans/loot/notes separate", "Ξεχωριστά scans/ευρήματα/σημειώσεις"], ["To slow down", "Για καθυστέρηση"], ["No reason", "Χωρίς λόγο"]], 0),
-    ],
-  },
-  touch: {
-    info: b(
-      "'touch' created an empty file (or updated its timestamp). Handy for notes, placeholders and wordlists.",
-      "Το 'touch' δημιούργησε κενό αρχείο (ή ενημέρωσε την ημερομηνία). Χρήσιμο για σημειώσεις, placeholders, wordlists."
-    ),
-    questions: [
-      q("touch on a new name does?", "Το touch σε νέο όνομα κάνει;", [["Creates an empty file", "Δημιουργεί κενό αρχείο"], ["Deletes it", "Το διαγράφει"], ["Runs it", "Το εκτελεί"]], 0),
-      q("touch on an existing file?", "Το touch σε υπάρχον αρχείο;", [["Updates its timestamp", "Ενημερώνει την ημερομηνία"], ["Erases contents", "Σβήνει το περιεχόμενο"], ["Nothing at all", "Τίποτα"]], 0),
-      q("An empty file is useful to?", "Ένα κενό αρχείο χρησιμεύει για;", [["Store findings later", "Αποθήκευση ευρημάτων αργότερα"], ["Crash the shell", "Κρασάρισμα shell"], ["Gain root", "Απόκτηση root"]], 0),
-    ],
-  },
-  find: {
-    info: b(
-      "'find' searched the directory tree for files matching your pattern — far faster than browsing manually.",
-      "Το 'find' έψαξε το δέντρο φακέλων για αρχεία που ταιριάζουν στο μοτίβο — πολύ πιο γρήγορα από χειροκίνητη περιήγηση."
-    ),
-    questions: [
-      q("find is used to?", "Το find χρησιμοποιείται για;", [["Search for files by criteria", "Αναζήτηση αρχείων με κριτήρια"], ["Edit files", "Επεξεργασία αρχείων"], ["Log in", "Σύνδεση"]], 0),
-      q("Which option matches by name?", "Ποια επιλογή ταιριάζει με όνομα;", [["-name", "-name"], ["-grep", "-grep"], ["-f", "-f"]], 0),
-      q("'*' in a pattern means?", "Το '*' σε μοτίβο σημαίνει;", [["Any characters (wildcard)", "Οποιοιδήποτε χαρακτήρες (μπαλαντέρ)"], ["Exactly one char", "Ακριβώς ένας χαρακτήρας"], ["Root", "Ρίζα"]], 0),
-    ],
-  },
-  grep: {
-    info: b(
-      "'grep' searched inside files for text — the fast way to spot passwords, IPs or keywords in logs and configs.",
-      "Το 'grep' έψαξε κείμενο μέσα σε αρχεία — ο γρήγορος τρόπος να εντοπίσεις κωδικούς, IP ή λέξεις-κλειδιά σε logs και ρυθμίσεις."
-    ),
-    questions: [
-      q("grep searches for?", "Το grep ψάχνει;", [["Text inside files", "Κείμενο μέσα σε αρχεία"], ["Open ports", "Ανοιχτές θύρες"], ["Users", "Χρήστες"]], 0),
-      q("Flag to ignore case?", "Flag για αγνόηση πεζών/κεφαλαίων;", [["-i", "-i"], ["-r", "-r"], ["-v", "-v"]], 0),
-      q("Flag to search a whole folder?", "Flag για αναζήτηση σε όλο τον φάκελο;", [["-r (recursive)", "-r (αναδρομικά)"], ["-i", "-i"], ["-l", "-l"]], 0),
-    ],
-  },
-  lsl: {
-    info: b(
-      "'ls -l' showed permissions like -rwxr-xr-x: the type, then rights for owner / group / others, plus the owner name.",
-      "Το 'ls -l' έδειξε δικαιώματα όπως -rwxr-xr-x: τύπος, μετά δικαιώματα για ιδιοκτήτη / ομάδα / άλλους, και το όνομα ιδιοκτήτη."
-    ),
-    questions: [
-      q("In -rwxr-xr-x the three groups are?", "Στο -rwxr-xr-x οι τρεις ομάδες είναι;", [["owner, group, others", "ιδιοκτήτης, ομάδα, άλλοι"], ["read, write, run", "ανάγνωση, εγγραφή, εκτέλεση"], ["past, present, future", "παρελθόν, παρόν, μέλλον"]], 0),
-      q("'r' means?", "Το 'r' σημαίνει;", [["read", "ανάγνωση"], ["run", "εκτέλεση"], ["root", "root"]], 0),
-      q("Reading permissions helps with?", "Η ανάγνωση δικαιωμάτων βοηθά σε;", [["Defense and privilege escalation", "Άμυνα και ανύψωση προνομίων"], ["Only speed", "Μόνο ταχύτητα"], ["Nothing", "Τίποτα"]], 0),
-    ],
-  },
-  id: {
-    info: b(
-      "'id' showed your uid, gid and group memberships. Being in a group like 'sudo' can grant powerful rights.",
-      "Το 'id' έδειξε uid, gid και ομάδες. Η συμμετοχή σε ομάδα όπως 'sudo' μπορεί να δίνει ισχυρά δικαιώματα."
-    ),
-    questions: [
-      q("id shows?", "Το id δείχνει;", [["uid, gid and groups", "uid, gid και ομάδες"], ["Only the username", "Μόνο το όνομα χρήστη"], ["Your IP", "Την IP σου"]], 0),
-      q("Being in the 'sudo' group lets you?", "Η ομάδα 'sudo' σου επιτρέπει;", [["Run commands as root", "Εκτέλεση εντολών ως root"], ["Change colors", "Αλλαγή χρωμάτων"], ["Nothing", "Τίποτα"]], 0),
-      q("uid 0 belongs to?", "Το uid 0 ανήκει στον;", [["root", "root"], ["the first user", "πρώτο χρήστη"], ["nobody", "nobody"]], 0),
-    ],
-  },
-  chmodx: {
-    info: b(
-      "'chmod +x' added the execute bit so the script can be run. That is how you make a downloaded tool runnable.",
-      "Το 'chmod +x' πρόσθεσε το bit εκτέλεσης ώστε το script να τρέχει. Έτσι κάνεις ένα κατεβασμένο εργαλείο εκτελέσιμο."
-    ),
-    questions: [
-      q("The 'x' permission allows?", "Το δικαίωμα 'x' επιτρέπει;", [["Executing the file", "Εκτέλεση του αρχείου"], ["Reading only", "Μόνο ανάγνωση"], ["Writing only", "Μόνο εγγραφή"]], 0),
-      q("'chmod +x script.sh' makes it?", "Το 'chmod +x script.sh' το κάνει;", [["Runnable", "Εκτελέσιμο"], ["Hidden", "Κρυφό"], ["Read-only", "Μόνο ανάγνωση"]], 0),
-      q("'chmod u+x' affects?", "Το 'chmod u+x' επηρεάζει;", [["Only the owner", "Μόνο τον ιδιοκτήτη"], ["Everyone", "Όλους"], ["The group only", "Μόνο την ομάδα"]], 0),
-    ],
-  },
-  chmodnum: {
-    info: b(
-      "Octal chmod uses r=4, w=2, x=1. '600' = owner read+write, group/others nothing — perfect for secrets.",
-      "Το οκταδικό chmod: r=4, w=2, x=1. Το '600' = ιδιοκτήτης ανάγνωση+εγγραφή, ομάδα/άλλοι τίποτα — ιδανικό για μυστικά."
-    ),
-    questions: [
-      q("In octal, r + w =", "Στο οκταδικό, r + w =", [["6", "6"], ["5", "5"], ["7", "7"]], 0),
-      q("'600' gives others?", "Το '600' δίνει στους άλλους;", [["No access", "Καμία πρόσβαση"], ["Read", "Ανάγνωση"], ["Full access", "Πλήρη"]], 0),
-      q("'755' gives the owner?", "Το '755' δίνει στον ιδιοκτήτη;", [["rwx", "rwx"], ["r--", "r--"], ["r-x", "r-x"]], 0),
-    ],
-  },
-  sudo: {
-    info: b(
-      "'sudo' ran one command as root. Misconfigured sudo rules are the #1 privilege-escalation path.",
-      "Το 'sudo' εκτέλεσε μία εντολή ως root. Λανθασμένοι κανόνες sudo είναι ο #1 δρόμος ανύψωσης προνομίων."
-    ),
-    questions: [
-      q("sudo lets you?", "Το sudo σου επιτρέπει;", [["Run a command as root", "Εκτέλεση εντολής ως root"], ["Clear the screen", "Καθαρισμό οθόνης"], ["List files", "Λίστα αρχείων"]], 0),
-      q("Why are sudo rules a risk?", "Γιατί οι κανόνες sudo είναι κίνδυνος;", [["Misconfig can grant root", "Λάθος ρύθμιση δίνει root"], ["They slow boot", "Καθυστερούν την εκκίνηση"], ["No risk", "Κανένας κίνδυνος"]], 0),
-      q("'sudo -l' shows?", "Το 'sudo -l' δείχνει;", [["What you may run as root", "Τι μπορείς να τρέξεις ως root"], ["Your files", "Τα αρχεία σου"], ["Logins", "Συνδέσεις"]], 0),
-    ],
-  },
-  ipaddr: {
-    info: b(
-      "'ip a' showed your interfaces and IP (e.g. 10.x/24). You must know your network to know what you can reach.",
-      "Το 'ip a' έδειξε τις διεπαφές και την IP σου (π.χ. 10.x/24). Πρέπει να ξέρεις το δίκτυό σου για να ξέρεις τι φτάνεις."
-    ),
-    questions: [
-      q("'ip a' shows?", "Το 'ip a' δείχνει;", [["Your IP addresses/interfaces", "Διευθύνσεις IP/διεπαφές"], ["Open ports", "Ανοιχτές θύρες"], ["Users", "Χρήστες"]], 0),
-      q("'/24' describes the?", "Το '/24' περιγράφει;", [["Subnet size", "Μέγεθος subnet"], ["Port", "Θύρα"], ["Protocol", "Πρωτόκολλο"]], 0),
-      q("Typical wired interface name?", "Τυπικό όνομα ενσύρματης διεπαφής;", [["eth0", "eth0"], ["lo", "lo"], ["wan", "wan"]], 0),
-    ],
-  },
-  iproute: {
-    info: b(
-      "'ip route' revealed the default gateway — the router linking your subnet to everything else, and a key pivot point.",
-      "Το 'ip route' αποκάλυψε το προεπιλεγμένο gateway — τον router που συνδέει το subnet σου με τα υπόλοιπα, σημαντικό σημείο pivot."
-    ),
-    questions: [
-      q("The default gateway is?", "Το προεπιλεγμένο gateway είναι;", [["The router to other networks", "Ο router προς άλλα δίκτυα"], ["Your own PC", "Ο υπολογιστής σου"], ["A website", "Μια ιστοσελίδα"]], 0),
-      q("Which line names it?", "Ποια γραμμή το ονομάζει;", [["default via X", "default via X"], ["inet X", "inet X"], ["link/ether", "link/ether"]], 0),
-      q("Gateways matter because they are?", "Τα gateways μετράνε γιατί είναι;", [["Pivot points", "Σημεία pivot"], ["Pretty", "Όμορφα"], ["Random", "Τυχαία"]], 0),
-    ],
-  },
-  ping: {
-    info: b(
-      "'ping' sent ICMP echo packets; the replies prove the host is up and show the round-trip latency.",
-      "Το 'ping' έστειλε πακέτα ICMP echo· οι απαντήσεις αποδεικνύουν ότι ο host είναι ζωντανός και δείχνουν την καθυστέρηση."
-    ),
-    questions: [
-      q("ping tests?", "Το ping ελέγχει;", [["Reachability of a host", "Προσβασιμότητα ενός host"], ["Open ports", "Ανοιχτές θύρες"], ["Passwords", "Κωδικούς"]], 0),
-      q("Replies mean the host is?", "Οι απαντήσεις σημαίνουν ότι ο host είναι;", [["Up", "Ζωντανός"], ["Down", "Εκτός"], ["Encrypted", "Κρυπτογραφημένος"]], 0),
-      q("Flag to send a fixed count?", "Flag για συγκεκριμένο αριθμό πακέτων;", [["-c", "-c"], ["-p", "-p"], ["-n", "-n"]], 0),
-    ],
-  },
-  netstat: {
-    info: b(
-      "'netstat' / 'ss' listed listening ports — open doors into the machine and the software waiting behind them.",
-      "Το 'netstat' / 'ss' εμφάνισαν θύρες που ακούν — ανοιχτές πόρτες στο μηχάνημα και το λογισμικό πίσω τους."
-    ),
-    questions: [
-      q("A listening port is?", "Μια θύρα που ακούει είναι;", [["A service accepting connections", "Υπηρεσία που δέχεται συνδέσεις"], ["A closed door", "Κλειστή πόρτα"], ["A file", "Αρχείο"]], 0),
-      q("Modern replacement for netstat?", "Σύγχρονη αντικατάσταση του netstat;", [["ss", "ss"], ["nc", "nc"], ["nmap", "nmap"]], 0),
-      q("Why enumerate local ports?", "Γιατί να απαριθμήσεις τοπικές θύρες;", [["Reveal attack surface", "Αποκάλυψη επιφάνειας επίθεσης"], ["Speed up disk", "Επιτάχυνση δίσκου"], ["Nothing", "Τίποτα"]], 0),
-    ],
-  },
-  dns: {
-    info: b(
-      "DNS tools (nslookup / dig / host) turned a hostname into an IP address — you attack IPs, not names.",
-      "Τα εργαλεία DNS (nslookup / dig / host) μετέτρεψαν ένα hostname σε IP — επιτίθεσαι σε IP, όχι σε ονόματα."
-    ),
-    questions: [
-      q("DNS maps?", "Το DNS αντιστοιχίζει;", [["Names to IP addresses", "Ονόματα σε διευθύνσεις IP"], ["Ports to services", "Θύρες σε υπηρεσίες"], ["Users to groups", "Χρήστες σε ομάδες"]], 0),
-      q("Which tool is the pro's choice?", "Ποιο εργαλείο προτιμούν οι επαγγελματίες;", [["dig", "dig"], ["ping", "ping"], ["echo", "echo"]], 0),
-      q("Resolving a name gives you?", "Η ανάλυση ονόματος σου δίνει;", [["The target IP", "Την IP στόχου"], ["The password", "Τον κωδικό"], ["The OS", "Το λειτουργικό"]], 0),
-    ],
-  },
-  whois: {
-    info: b(
-      "'whois' returned registration data (registrar, dates, name servers) without touching the target — passive, stealthy recon.",
-      "Το 'whois' επέστρεψε στοιχεία καταχώρησης (registrar, ημερομηνίες, name servers) χωρίς επαφή με τον στόχο — παθητική, διακριτική αναγνώριση."
-    ),
-    questions: [
-      q("whois returns?", "Το whois επιστρέφει;", [["Domain registration info", "Στοιχεία καταχώρησης domain"], ["Open ports", "Ανοιχτές θύρες"], ["File contents", "Περιεχόμενα αρχείων"]], 0),
-      q("whois is which kind of recon?", "Το whois είναι τι είδους αναγνώριση;", [["Passive", "Παθητική"], ["Active", "Ενεργητική"], ["Destructive", "Καταστροφική"]], 0),
-      q("It can reveal?", "Μπορεί να αποκαλύψει;", [["Registrar / name servers", "Registrar / name servers"], ["The root password", "Τον κωδικό root"], ["The flags", "Τα flags"]], 0),
-    ],
-  },
-  nmapsubnet: {
-    info: b(
-      "A subnet scan (e.g. 10.10.10.0/24) swept every address to list the live hosts — this is host discovery.",
-      "Μια σάρωση subnet (π.χ. 10.10.10.0/24) σάρωσε κάθε διεύθυνση για να βρει τους ζωντανούς hosts — αυτό είναι host discovery."
-    ),
-    questions: [
-      q("'/24' scans how many addresses?", "Το '/24' σαρώνει πόσες διευθύνσεις;", [["256", "256"], ["24", "24"], ["1", "1"]], 0),
-      q("Subnet scanning is for?", "Η σάρωση subnet είναι για;", [["Finding live hosts", "Εύρεση ζωντανών hosts"], ["Cracking passwords", "Σπάσιμο κωδικών"], ["Reading files", "Ανάγνωση αρχείων"]], 0),
-      q("After discovery you then?", "Μετά την ανακάλυψη, τι κάνεις;", [["Scan a host's ports", "Σαρώνεις τις θύρες ενός host"], ["Reboot", "Επανεκκίνηση"], ["Stop", "Σταματάς"]], 0),
-    ],
-  },
-  nmap: {
-    info: b(
-      "'nmap' listed the open ports and services on the host. Each open port is a potential way in.",
-      "Το 'nmap' εμφάνισε τις ανοιχτές θύρες και υπηρεσίες του host. Κάθε ανοιχτή θύρα είναι πιθανή είσοδος."
-    ),
-    questions: [
-      q("nmap maps?", "Το nmap χαρτογραφεί;", [["Open ports and services", "Ανοιχτές θύρες και υπηρεσίες"], ["Users", "Χρήστες"], ["Files", "Αρχεία"]], 0),
-      q("Port 22 usually runs?", "Η θύρα 22 συνήθως τρέχει;", [["SSH", "SSH"], ["HTTP", "HTTP"], ["MySQL", "MySQL"]], 0),
-      q("Port 80 usually runs?", "Η θύρα 80 συνήθως τρέχει;", [["HTTP", "HTTP"], ["SSH", "SSH"], ["DNS", "DNS"]], 0),
-    ],
-  },
-  nmapver: {
-    info: b(
-      "'nmap -sV' detected service versions. An exact version (e.g. Apache 2.4.52) points you to known exploits.",
-      "Το 'nmap -sV' ανίχνευσε εκδόσεις υπηρεσιών. Μια ακριβής έκδοση (π.χ. Apache 2.4.52) σε οδηγεί σε γνωστά exploits."
-    ),
-    questions: [
-      q("'-sV' adds?", "Το '-sV' προσθέτει;", [["Version detection", "Ανίχνευση έκδοσης"], ["A faster scan", "Ταχύτερη σάρωση"], ["Stealth", "Αθόρυβη λειτουργία"]], 0),
-      q("Why do versions matter?", "Γιατί μετράνε οι εκδόσεις;", [["They map to known vulns", "Αντιστοιχούν σε γνωστά ευπάθειες"], ["They look nice", "Φαίνονται ωραία"], ["They don't", "Δεν μετράνε"]], 0),
-      q("'-A' is?", "Το '-A' είναι;", [["Aggressive scan incl. versions", "Επιθετική σάρωση με εκδόσεις"], ["A port range", "Εύρος θυρών"], ["A ping", "Ένα ping"]], 0),
-    ],
-  },
-  nmapports: {
-    info: b(
-      "'-p' scanned only the ports you chose — faster and quieter than a full sweep.",
-      "Το '-p' σάρωσε μόνο τις θύρες που επέλεξες — πιο γρήγορα και αθόρυβα από πλήρη σάρωση."
-    ),
-    questions: [
-      q("'-p 22,80' scans?", "Το '-p 22,80' σαρώνει;", [["Only ports 22 and 80", "Μόνο τις θύρες 22 και 80"], ["All ports", "Όλες τις θύρες"], ["Random ports", "Τυχαίες θύρες"]], 0),
-      q("'-p-' scans?", "Το '-p-' σαρώνει;", [["All 65535 ports", "Και τις 65535 θύρες"], ["Just port 1", "Μόνο τη θύρα 1"], ["Nothing", "Τίποτα"]], 0),
-      q("Narrow scans are?", "Οι στενές σαρώσεις είναι;", [["Faster and stealthier", "Ταχύτερες και πιο αθόρυβες"], ["Slower", "Πιο αργές"], ["Louder", "Πιο θορυβώδεις"]], 0),
-    ],
-  },
-  hydra: {
-    info: b(
-      "'hydra' brute-forced the login against a wordlist. With no account lockout, you get unlimited guesses.",
-      "Το 'hydra' έκανε brute-force στο login με μια wordlist. Χωρίς κλείδωμα λογαριασμού, έχεις απεριόριστες δοκιμές."
-    ),
-    questions: [
-      q("hydra performs?", "Το hydra κάνει;", [["Password brute-forcing", "Brute-force κωδικών"], ["Port scanning", "Σάρωση θυρών"], ["DNS lookup", "Αναζήτηση DNS"]], 0),
-      q("'-P' specifies?", "Το '-P' ορίζει;", [["A password list", "Μια λίστα κωδικών"], ["One password", "Έναν κωδικό"], ["A port", "Μια θύρα"]], 0),
-      q("What makes brute force easy here?", "Τι κάνει εύκολο το brute force εδώ;", [["No account lockout", "Χωρίς κλείδωμα λογαριασμού"], ["Strong passwords", "Ισχυροί κωδικοί"], ["MFA", "MFA"]], 0),
-    ],
-  },
-  ssh: {
-    info: b(
-      "'ssh' opened an interactive shell on the remote machine using the cracked credentials — your foothold.",
-      "Το 'ssh' άνοιξε διαδραστικό shell στο απομακρυσμένο μηχάνημα με τα σπασμένα διαπιστευτήρια — το πάτημά σου."
-    ),
-    questions: [
-      q("ssh gives you?", "Το ssh σου δίνει;", [["A remote shell", "Απομακρυσμένο shell"], ["A web page", "Μια ιστοσελίδα"], ["A file", "Ένα αρχείο"]], 0),
-      q("Correct syntax to connect?", "Σωστή σύνταξη για σύνδεση;", [["ssh user@host", "ssh user@host"], ["ssh host:user", "ssh host:user"], ["ssh -host", "ssh -host"]], 0),
-      q("The credentials came from?", "Τα διαπιστευτήρια ήρθαν από;", [["The brute-force result", "Το αποτέλεσμα του brute-force"], ["Guessing blindly", "Τυφλή μαντεψιά"], ["The browser", "Τον browser"]], 0),
-    ],
-  },
-  curl: {
-    info: b(
-      "'curl' fetched the web page and headers from the command line — the starting point of any web attack.",
-      "Το 'curl' κατέβασε τη σελίδα και τα headers από τη γραμμή εντολών — το σημείο εκκίνησης κάθε web επίθεσης."
-    ),
-    questions: [
-      q("curl is used to?", "Το curl χρησιμοποιείται για;", [["Fetch web content from CLI", "Λήψη web περιεχομένου από CLI"], ["Scan ports", "Σάρωση θυρών"], ["Crack hashes", "Σπάσιμο hashes"]], 0),
-      q("Flag to show response headers?", "Flag για εμφάνιση headers;", [["-i", "-i"], ["-x", "-x"], ["-p", "-p"]], 0),
-      q("curl is useful to?", "Το curl είναι χρήσιμο για;", [["Inspect HTML/APIs quickly", "Γρήγορη εξέταση HTML/APIs"], ["Replace a browser fully", "Πλήρη αντικατάσταση browser"], ["Crack SSH", "Σπάσιμο SSH"]], 0),
-    ],
-  },
-  "sqli-bypass": {
-    info: b(
-      "The payload ' OR '1'='1 made the login's WHERE clause always true, logging you in with no valid password — authentication bypass.",
-      "Το payload ' OR '1'='1 έκανε τη συνθήκη WHERE του login πάντα αληθή, συνδέοντάς σε χωρίς έγκυρο κωδικό — παράκαμψη ταυτοποίησης."
-    ),
-    questions: [
-      q("' OR '1'='1 works because?", "Το ' OR '1'='1 δουλεύει γιατί;", [["The condition is always true", "Η συνθήκη είναι πάντα αληθής"], ["It guesses the password", "Μαντεύει τον κωδικό"], ["It deletes users", "Διαγράφει χρήστες"]], 0),
-      q("Root cause of SQL injection?", "Βασική αιτία του SQL injection;", [["Unsanitised input in queries", "Μη καθαρισμένη είσοδος σε queries"], ["Weak passwords", "Αδύναμοι κωδικοί"], ["Open ports", "Ανοιχτές θύρες"]], 0),
-      q("The main defence is?", "Η κύρια άμυνα είναι;", [["Parameterised queries", "Parameterised queries"], ["Longer passwords", "Μεγαλύτεροι κωδικοί"], ["Hiding the form", "Απόκρυψη της φόρμας"]], 0),
-    ],
-  },
-  idpriv: {
-    info: b(
-      "Checking 'id' began privilege escalation: you confirm exactly what you can do now before finding a path upward.",
-      "Ο έλεγχος με 'id' ξεκίνησε την ανύψωση προνομίων: επιβεβαιώνεις τι μπορείς να κάνεις τώρα πριν βρεις δρόμο προς τα πάνω."
-    ),
-    questions: [
-      q("Privilege escalation starts with?", "Η ανύψωση προνομίων ξεκινά με;", [["Enumeration (id, sudo -l)", "Απαρίθμηση (id, sudo -l)"], ["Rebooting", "Επανεκκίνηση"], ["Logging out", "Αποσύνδεση"]], 0),
-      q("'id' helps because it shows?", "Το 'id' βοηθά γιατί δείχνει;", [["Your groups and uid", "Τις ομάδες και το uid σου"], ["The root password", "Τον κωδικό root"], ["Open ports", "Ανοιχτές θύρες"]], 0),
-      q("A good next check is?", "Μια καλή επόμενη ενέργεια;", [["sudo -l", "sudo -l"], ["clear", "clear"], ["ping", "ping"]], 0),
-    ],
-  },
-  privesc: {
-    info: b(
-      "You escalated to root and read the protected flag. As root (uid 0) you control the whole machine.",
-      "Ανέβηκες σε root και διάβασες το προστατευμένο flag. Ως root (uid 0) ελέγχεις όλο το μηχάνημα."
-    ),
-    questions: [
-      q("Root (uid 0) can?", "Ο root (uid 0) μπορεί;", [["Read/modify anything", "Να διαβάσει/αλλάξει τα πάντα"], ["Only its own files", "Μόνο τα δικά του αρχεία"], ["Nothing", "Τίποτα"]], 0),
-      q("A common escalation is?", "Μια κοινή ανύψωση είναι;", [["Abusing sudo rights", "Εκμετάλλευση δικαιωμάτων sudo"], ["Pinging the gateway", "Ping στο gateway"], ["Viewing source", "Προβολή πηγαίου"]], 0),
-      q("After rooting, you document findings for?", "Μετά το root, τεκμηριώνεις ευρήματα για;", [["The client report", "Την αναφορά πελάτη"], ["Nobody", "Κανέναν"], ["Bragging only", "Μόνο για καύχημα"]], 0),
-    ],
-  },
-  netdiscover: {
-    info: b(
-      "'netdiscover' used ARP to list live hosts on the LAN — the fastest way to find an unknown target's IP.",
-      "Το 'netdiscover' χρησιμοποίησε ARP για να βρει ζωντανούς hosts στο LAN — ο ταχύτερος τρόπος να βρεις την IP ενός άγνωστου στόχου."
-    ),
-    questions: [
-      q("netdiscover finds?", "Το netdiscover βρίσκει;", [["Live hosts on the network", "Ζωντανούς hosts στο δίκτυο"], ["Open ports", "Ανοιχτές θύρες"], ["Passwords", "Κωδικούς"]], 0),
-      q("Which protocol does it use?", "Ποιο πρωτόκολλο χρησιμοποιεί;", [["ARP", "ARP"], ["HTTP", "HTTP"], ["DNS", "DNS"]], 0),
-      q("Which address do you ignore?", "Ποια διεύθυνση αγνοείς;", [["The gateway", "Το gateway"], ["The target", "Τον στόχο"], ["All of them", "Όλες"]], 0),
-    ],
-  },
-  browse: {
-    info: b(
-      "Browsing the site like a visitor shows its structure and content. The web server (port 80) is one of two ways into Raven.",
-      "Η περιήγηση στο site σαν επισκέπτης δείχνει δομή και περιεχόμενο. Ο web server (θύρα 80) είναι ένας από τους δύο δρόμους στο Raven."
-    ),
-    questions: [
-      q("Why click through every page?", "Γιατί να δεις κάθε σελίδα;", [["To find the one that's different", "Για να βρεις αυτή που ξεχωρίζει"], ["To buy something", "Για να αγοράσεις κάτι"], ["To waste time", "Για να χάσεις χρόνο"]], 0),
-      q("The web server runs on which port?", "Σε ποια θύρα τρέχει ο web server;", [["80", "80"], ["22", "22"], ["3306", "3306"]], 0),
-      q("Web + SSH open means?", "Ανοιχτά Web + SSH σημαίνει;", [["Two attack paths", "Δύο μονοπάτια επίθεσης"], ["One path", "Ένα μονοπάτι"], ["No path", "Κανένα μονοπάτι"]], 0),
-    ],
-  },
-  viewsource: {
-    info: b(
-      "Viewing the page source revealed a flag hidden in an HTML comment — invisible on the rendered page itself.",
-      "Η προβολή του πηγαίου αποκάλυψε ένα flag κρυμμένο σε σχόλιο HTML — αόρατο στην ίδια τη σελίδα."
-    ),
-    questions: [
-      q("HTML comments look like?", "Τα σχόλια HTML μοιάζουν με;", [["<!-- ... -->", "<!-- ... -->"], ["// ...", "// ..."], ["/* ... */", "/* ... */"]], 0),
-      q("Why view page source?", "Γιατί να δεις τον πηγαίο;", [["Secrets hide in comments/fields", "Μυστικά κρύβονται σε σχόλια/πεδία"], ["It loads faster", "Φορτώνει ταχύτερα"], ["It is required to load", "Απαιτείται για φόρτωση"]], 0),
-      q("The flag was visible?", "Το flag ήταν ορατό;", [["Only in the source", "Μόνο στον πηγαίο"], ["On the page", "Στη σελίδα"], ["In the URL", "Στο URL"]], 0),
-    ],
-  },
-  dirb: {
-    info: b(
-      "'dirb' brute-forced directory names and uncovered hidden paths like /wordpress that aren't shown in the menus.",
-      "Το 'dirb' έκανε brute-force σε ονόματα φακέλων και αποκάλυψε κρυφές διαδρομές όπως /wordpress που δεν φαίνονται στα μενού."
-    ),
-    questions: [
-      q("dirb discovers?", "Το dirb ανακαλύπτει;", [["Hidden web directories", "Κρυφούς web φακέλους"], ["Open ports", "Ανοιχτές θύρες"], ["Users", "Χρήστες"]], 0),
-      q("Which key path did it find?", "Ποια σημαντική διαδρομή βρήκε;", [["/wordpress", "/wordpress"], ["/root", "/root"], ["/etc", "/etc"]], 0),
-      q("Website menus show?", "Τα μενού ιστοσελίδας δείχνουν;", [["Only what the owner wants", "Μόνο ό,τι θέλει ο ιδιοκτήτης"], ["Everything", "Τα πάντα"], ["Nothing", "Τίποτα"]], 0),
-    ],
-  },
-  wpscan: {
-    info: b(
-      "'wpscan' fingerprinted WordPress and enumerated usernames (michael, steven) — each is half of a login.",
-      "Το 'wpscan' ταυτοποίησε το WordPress και απαρίθμησε ονόματα χρηστών (michael, steven) — καθένα είναι το μισό login."
-    ),
-    questions: [
-      q("wpscan targets?", "Το wpscan στοχεύει;", [["WordPress sites", "Sites WordPress"], ["SSH", "SSH"], ["Databases", "Βάσεις δεδομένων"]], 0),
-      q("'--enumerate u' lists?", "Το '--enumerate u' εμφανίζει;", [["Usernames", "Ονόματα χρηστών"], ["Plugins only", "Μόνο plugins"], ["Posts", "Posts"]], 0),
-      q("Usernames + no lockout equals?", "Ονόματα χρηστών + χωρίς κλείδωμα ίσον;", [["A brute-force target", "Στόχος brute-force"], ["A dead end", "Αδιέξοδο"], ["Encryption", "Κρυπτογράφηση"]], 0),
-    ],
-  },
-  loot: {
-    info: b(
-      "After getting a foothold you enumerated the filesystem and found a planted flag in the web root. This is post-exploitation.",
-      "Αφού απέκτησες πάτημα, απαρίθμησες το σύστημα αρχείων και βρήκες ένα flag στο web root. Αυτό είναι post-exploitation."
-    ),
-    questions: [
-      q("A classic place for planted files?", "Κλασικό σημείο για αρχεία-στόχους;", [["/var/www (web root)", "/var/www (web root)"], ["/tmp only", "Μόνο /tmp"], ["Nowhere", "Πουθενά"]], 0),
-      q("Command to hunt flags anywhere?", "Εντολή για αναζήτηση flags παντού;", [["find / -name 'flag*'", "find / -name 'flag*'"], ["ls", "ls"], ["pwd", "pwd"]], 0),
-      q("Post-exploitation means?", "Το post-exploitation σημαίνει;", [["Exploring after you have access", "Εξερεύνηση αφού έχεις πρόσβαση"], ["Before scanning", "Πριν τη σάρωση"], ["Logging out", "Αποσύνδεση"]], 0),
-    ],
-  },
-  config: {
-    info: b(
-      "wp-config.php stored the database username and password in plain text — a classic credential-reuse opportunity.",
-      "Το wp-config.php αποθήκευε το όνομα χρήστη και τον κωδικό της βάσης σε καθαρό κείμενο — κλασική ευκαιρία επαναχρήσης διαπιστευτηρίων."
-    ),
-    questions: [
-      q("wp-config.php contains?", "Το wp-config.php περιέχει;", [["DB credentials in plain text", "Creds βάσης σε καθαρό κείμενο"], ["The flags", "Τα flags"], ["Nothing useful", "Τίποτα χρήσιμο"]], 0),
-      q("Config files are?", "Τα αρχεία config είναι;", [["A goldmine for credentials", "Χρυσωρυχείο διαπιστευτηρίων"], ["Always encrypted", "Πάντα κρυπτογραφημένα"], ["Useless", "Άχρηστα"]], 0),
-      q("The found credentials were for?", "Τα creds που βρέθηκαν ήταν για;", [["MySQL", "MySQL"], ["SSH only", "Μόνο SSH"], ["The browser", "Τον browser"]], 0),
-    ],
-  },
-  mysql: {
-    info: b(
-      "You logged into MySQL with the stolen password, gaining direct access to every secret the database stores.",
-      "Συνδέθηκες στη MySQL με τον κλεμμένο κωδικό, αποκτώντας άμεση πρόσβαση σε κάθε μυστικό της βάσης."
-    ),
-    questions: [
-      q("'mysql -u root -p' prompts for?", "Το 'mysql -u root -p' ζητά;", [["The password", "Τον κωδικό"], ["A port", "Μια θύρα"], ["A file", "Ένα αρχείο"]], 0),
-      q("Direct DB access exposes?", "Η άμεση πρόσβαση στη βάση εκθέτει;", [["Posts, options, user hashes", "Posts, options, hashes χρηστών"], ["Only the time", "Μόνο την ώρα"], ["Nothing", "Τίποτα"]], 0),
-      q("SQL statements end with?", "Οι εντολές SQL τελειώνουν με;", [[";", ";"], [".", "."], [":", ":"]], 0),
-    ],
-  },
-  dbdump: {
-    info: b(
-      "Dumping wp_posts revealed flags hidden as draft posts — a genuine misconfiguration in the challenge.",
-      "Το άδειασμα του wp_posts αποκάλυψε flags κρυμμένα ως προσχέδια — πραγματική λανθασμένη ρύθμιση."
-    ),
-    questions: [
-      q("'use wordpress;' does?", "Τι κάνει το 'use wordpress;';", [["Selects that database", "Επιλέγει αυτή τη βάση"], ["Deletes it", "Τη διαγράφει"], ["Exports it", "Την εξάγει"]], 0),
-      q("The flags hid in which table?", "Σε ποιον πίνακα κρύφτηκαν τα flags;", [["wp_posts", "wp_posts"], ["wp_options", "wp_options"], ["wp_terms", "wp_terms"]], 0),
-      q("'show tables;' lists?", "Το 'show tables;' εμφανίζει;", [["Tables in the current DB", "Πίνακες της τρέχουσας βάσης"], ["Databases", "Βάσεις δεδομένων"], ["Users", "Χρήστες"]], 0),
-    ],
-  },
-  crack: {
-    info: b(
-      "A cracker (john / hashcat) turned steven's stolen hash into the password 'pink84'. Reused passwords often work elsewhere.",
-      "Ένας cracker (john / hashcat) μετέτρεψε το κλεμμένο hash του steven στον κωδικό 'pink84'. Οι επαναχρησιμοποιημένοι κωδικοί συχνά δουλεύουν αλλού."
-    ),
-    questions: [
-      q("A stolen hash is useful once you?", "Ένα κλεμμένο hash χρησιμεύει όταν το;", [["Crack it offline", "Σπάσεις offline"], ["Encrypt it", "Κρυπτογραφήσεις"], ["Delete it", "Διαγράψεις"]], 0),
-      q("Tools for cracking hashes?", "Εργαλεία για σπάσιμο hashes;", [["john or hashcat", "john ή hashcat"], ["nmap", "nmap"], ["curl", "curl"]], 0),
-      q("Reused passwords mean the DB password often?", "Οι επαναχρησιμοποιημένοι κωδικοί σημαίνουν ότι ο κωδικός βάσης συχνά;", [["Works as a login too", "Δουλεύει και ως login"], ["Never works", "Δεν δουλεύει ποτέ"], ["Is random", "Είναι τυχαίος"]], 0),
-    ],
-  },
-  su: {
-    info: b(
-      "'su steven' switched to his account using the cracked password — pivoting to a more privileged user.",
-      "Το 'su steven' άλλαξε στον λογαριασμό του με τον σπασμένο κωδικό — pivot σε έναν πιο προνομιούχο χρήστη."
-    ),
-    questions: [
-      q("su is used to?", "Το su χρησιμοποιείται για;", [["Switch user", "Αλλαγή χρήστη"], ["Scan ports", "Σάρωση θυρών"], ["Search files", "Αναζήτηση αρχείων"]], 0),
-      q("You pivot to steven because?", "Κάνεις pivot στον steven γιατί;", [["He has a powerful sudo right", "Έχει ισχυρό δικαίωμα sudo"], ["He is nicer", "Είναι πιο ευγενικός"], ["Random choice", "Τυχαία επιλογή"]], 0),
-      q("After su, confirm with?", "Μετά το su, επιβεβαιώνεις με;", [["whoami", "whoami"], ["ls", "ls"], ["pwd", "pwd"]], 0),
-    ],
-  },
-  sudol: {
-    info: b(
-      "'sudo -l' revealed steven may run python as root with NOPASSWD — exactly the escalation path to root.",
-      "Το 'sudo -l' αποκάλυψε ότι ο steven μπορεί να τρέξει python ως root με NOPASSWD — ακριβώς το μονοπάτι ανύψωσης σε root."
-    ),
-    questions: [
-      q("'sudo -l' lists?", "Το 'sudo -l' εμφανίζει;", [["Commands you may run as root", "Εντολές που τρέχεις ως root"], ["Your files", "Τα αρχεία σου"], ["Open ports", "Ανοιχτές θύρες"]], 0),
-      q("NOPASSWD means?", "Το NOPASSWD σημαίνει;", [["No password needed to sudo it", "Δεν χρειάζεται κωδικός για sudo"], ["No access", "Καμία πρόσβαση"], ["No password set", "Δεν έχει οριστεί κωδικός"]], 0),
-      q("A root-runnable interpreter (python) means?", "Ένας interpreter εκτελέσιμος ως root (python) σημαίνει;", [["Instant root shell", "Άμεσο root shell"], ["Nothing", "Τίποτα"], ["Slower system", "Πιο αργό σύστημα"]], 0),
-    ],
-  },
+export type QuizQ = {
+  q: Bi;
+  choices: Bi[];
+  answer: number;
+  why: Bi;
 };
 
-// Map each task id to a quiz concept. Shared ids across campaigns reuse one quiz.
-const TASK_CONCEPT: Record<string, string> = {
-  // intro — linux basics
-  help: "help", whoami: "whoami", clear: "clear", pwd: "pwd", ls: "ls",
-  hidden: "lsa", "cat-secret": "cat", "cd-docs": "cd",
-  // intro — files
-  mkdir: "mkdir", touch: "touch", find: "find", grep: "grep",
-  // intro — permissions
-  "ls-l": "lsl", id: "id", "chmod-x": "chmodx", "chmod-600": "chmodnum", sudo: "sudo",
-  // intro — networking
-  "ip-a": "ipaddr", route: "iproute", "ping-gw": "ping", "ping-target": "ping", netstat: "netstat",
-  // intro — recon
-  nslookup: "dns", dig: "dns", whois: "whois", subnet: "nmapsubnet",
-  // intro — scanning
-  scan: "nmap", versions: "nmapver", specific: "nmapports",
-  // intro — bruteforce / sqli / privesc
-  hydra: "hydra", ssh: "ssh", curl: "curl", bypass: "sqli-bypass",
-  enum: "idpriv", root: "privesc", confirm: "whoami",
-  // raven
-  netdiscover: "netdiscover", nmap: "nmap",
-  visit: "browse", services: "browse", "source-flag1": "viewsource",
-  dirb: "dirb", wpscan: "wpscan",
-  flag2: "loot", config: "config", mysql: "mysql", dump: "dbdump",
-  crack: "crack", su: "su", "sudo-l": "sudol",
+export const QUIZZES: Record<string, QuizQ[]> = {
+  "linux-basics": [
+    {
+      q: { en: "What does the $ at the end of a bash prompt mean?", el: "Τι σημαίνει το $ στο τέλος του prompt;" },
+      choices: [
+        { en: "You are root", el: "Είσαι root" },
+        { en: "You are a normal user", el: "Είσαι απλός χρήστης" },
+        { en: "The disk is full", el: "Ο δίσκος είναι γεμάτος" },
+        { en: "SSH is connected", el: "Το SSH είναι συνδεδεμένο" },
+      ],
+      answer: 1,
+      why: { en: "$ = unprivileged user. # = root.", el: "Το $ είναι απλός χρήστης. Το # είναι root." },
+    },
+    {
+      q: { en: "Which command prints the current directory?", el: "Ποια εντολή τυπώνει τον τρέχοντα φάκελο;" },
+      choices: [
+        { en: "whoami", el: "whoami" },
+        { en: "ls", el: "ls" },
+        { en: "pwd", el: "pwd" },
+        { en: "cd", el: "cd" },
+      ],
+      answer: 2,
+      why: { en: "pwd = print working directory.", el: "pwd = print working directory." },
+    },
+    {
+      q: { en: "How do you list hidden files?", el: "Πώς εμφανίζεις κρυφά αρχεία;" },
+      choices: [
+        { en: "ls -h", el: "ls -h" },
+        { en: "ls -a", el: "ls -a" },
+        { en: "ls hidden", el: "ls hidden" },
+        { en: "cat -a", el: "cat -a" },
+      ],
+      answer: 1,
+      why: { en: "ls -a shows names that start with a dot.", el: "Το ls -a δείχνει ονόματα που ξεκινούν με τελεία." },
+    },
+  ],
+  files: [
+    {
+      q: { en: "An absolute path always starts with…", el: "Μια απόλυτη διαδρομή ξεκινά πάντα με…" },
+      choices: [
+        { en: "~", el: "~" },
+        { en: "/", el: "/" },
+        { en: ".", el: "." },
+        { en: "$HOME", el: "$HOME" },
+      ],
+      answer: 1,
+      why: { en: "Absolute paths begin at the filesystem root /.", el: "Οι απόλυτες διαδρομές ξεκινούν από τη ρίζα /." },
+    },
+    {
+      q: { en: "grep PATTERN file does what?", el: "Τι κάνει το grep PATTERN file;" },
+      choices: [
+        { en: "Deletes matching lines", el: "Διαγράφει γραμμές" },
+        { en: "Searches file contents for PATTERN", el: "Ψάχνει το περιεχόμενο για PATTERN" },
+        { en: "Renames the file", el: "Μετονομάζει το αρχείο" },
+        { en: "Changes permissions", el: "Αλλάζει δικαιώματα" },
+      ],
+      answer: 1,
+      why: { en: "grep filters lines that match a pattern.", el: "Το grep φιλτράρει γραμμές που ταιριάζουν." },
+    },
+    {
+      q: { en: "Which file lists local user accounts?", el: "Ποιο αρχείο έχει τους τοπικούς λογαριασμούς;" },
+      choices: [
+        { en: "/etc/shadow", el: "/etc/shadow" },
+        { en: "/etc/passwd", el: "/etc/passwd" },
+        { en: "/etc/group", el: "/etc/group" },
+        { en: "/home/users", el: "/home/users" },
+      ],
+      answer: 1,
+      why: { en: "/etc/passwd is world-readable and lists users. /etc/shadow holds hashes and is root-only.", el: "Το /etc/passwd έχει χρήστες. Το /etc/shadow έχει hashes και είναι μόνο για root." },
+    },
+  ],
+  permissions: [
+    {
+      q: { en: "In -rwxr-xr--, what can 'others' do?", el: "Στο -rwxr-xr--, τι μπορούν οι 'others';" },
+      choices: [
+        { en: "read, write, execute", el: "ανάγνωση, εγγραφή, εκτέλεση" },
+        { en: "read only", el: "μόνο ανάγνωση" },
+        { en: "nothing", el: "τίποτα" },
+        { en: "execute only", el: "μόνο εκτέλεση" },
+      ],
+      answer: 1,
+      why: { en: "The last triple is r-- : read only for others.", el: "Το τελευταίο triple είναι r-- : μόνο ανάγνωση." },
+    },
+    {
+      q: { en: "sudo -l shows…", el: "Το sudo -l δείχνει…" },
+      choices: [
+        { en: "Last logins", el: "Τελευταίες συνδέσεις" },
+        { en: "Commands you may run as root", el: "Εντολές που μπορείς ως root" },
+        { en: "Listening ports", el: "Θύρες σε ακρόαση" },
+        { en: "Kernel modules", el: "Κερνελ modules" },
+      ],
+      answer: 1,
+      why: { en: "sudo -l lists your sudo privileges — a key privesc check.", el: "Το sudo -l είναι βασικός έλεγχος privesc." },
+    },
+    {
+      q: { en: "Why is /etc/shadow not world-readable?", el: "Γιατί το /etc/shadow δεν διαβάζεται από όλους;" },
+      choices: [
+        { en: "It is empty", el: "Είναι άδειο" },
+        { en: "It stores password hashes", el: "Αποθηκεύει hashes κωδικών" },
+        { en: "It is a binary", el: "Είναι binary" },
+        { en: "SELinux forbids it always", el: "Το SELinux το απαγορεύει πάντα" },
+      ],
+      answer: 1,
+      why: { en: "Hashes can be cracked offline if leaked.", el: "Τα hashes σπάνε offline αν διαρρεύσουν." },
+    },
+  ],
+  networking: [
+    {
+      q: { en: "What does ping test?", el: "Τι ελέγχει το ping;" },
+      choices: [
+        { en: "Open TCP ports", el: "Ανοιχτές TCP θύρες" },
+        { en: "ICMP echo connectivity", el: "Συνδεσιμότητα ICMP echo" },
+        { en: "DNSSEC", el: "DNSSEC" },
+        { en: "TLS certificates", el: "Πιστοποιητικά TLS" },
+      ],
+      answer: 1,
+      why: { en: "Ping sends ICMP echo requests. Hosts may block ICMP and still be up.", el: "Το ping στέλνει ICMP. Κάποιοι hosts το μπλοκάρουν." },
+    },
+    {
+      q: { en: "10.10.10.0/24 contains how many addresses?", el: "Το 10.10.10.0/24 έχει πόσες διευθύνσεις;" },
+      choices: [
+        { en: "24", el: "24" },
+        { en: "256", el: "256" },
+        { en: "10", el: "10" },
+        { en: "65536", el: "65536" },
+      ],
+      answer: 1,
+      why: { en: "/24 means 8 host bits → 256 addresses (254 usable).", el: "/24 = 8 host bits → 256 διευθύνσεις." },
+    },
+    {
+      q: { en: "Scanning a network you do not own is…", el: "Η σάρωση δικτύου που δεν σου ανήκει είναι…" },
+      choices: [
+        { en: "Always fine", el: "Πάντα εντάξει" },
+        { en: "A crime without permission", el: "Έγκλημα χωρίς άδεια" },
+        { en: "Required by ISO", el: "Υποχρεωτική από ISO" },
+        { en: "Only illegal on port 22", el: "Παράνομη μόνο στη θύρα 22" },
+      ],
+      answer: 1,
+      why: { en: "Get written permission. HACKFORGE is a sandbox.", el: "Πάρε γραπτή άδεια. Το HACKFORGE είναι sandbox." },
+    },
+  ],
+  recon: [
+    {
+      q: { en: "Passive recon means…", el: "Παθητική recon σημαίνει…" },
+      choices: [
+        { en: "Sending nmap SYN packets", el: "Αποστολή nmap SYN" },
+        { en: "Using public data without touching the target", el: "Δημόσια δεδομένα χωρίς επαφή με τον στόχο" },
+        { en: "DDoS", el: "DDoS" },
+        { en: "Exploiting a CVE", el: "Εκμετάλλευση CVE" },
+      ],
+      answer: 1,
+      why: { en: "Passive = OSINT, DNS, archives. Active = packets to the target.", el: "Παθητική = OSINT. Ενεργητική = πακέτα." },
+    },
+    {
+      q: { en: "nmap 10.10.10.0/24 is primarily a…", el: "Το nmap 10.10.10.0/24 είναι κυρίως…" },
+      choices: [
+        { en: "Web exploit", el: "Web exploit" },
+        { en: "Subnet host discovery", el: "Ανακάλυψη hosts στο subnet" },
+        { en: "Password crack", el: "Σπάσιμο κωδικού" },
+        { en: "Rootkit", el: "Rootkit" },
+      ],
+      answer: 1,
+      why: { en: "A sweep finds live hosts before you port-scan one of them.", el: "Η σάρωση βρίσκει ζωντανούς hosts." },
+    },
+    {
+      q: { en: "You should only scan…", el: "Πρέπει να σαρώνεις μόνο…" },
+      choices: [
+        { en: "Famous companies", el: "Διάσημες εταιρείες" },
+        { en: "In-scope systems you are allowed to test", el: "Συστήματα εντός scope με άδεια" },
+        { en: "Anything with port 80", el: "Οτιδήποτε με θύρα 80" },
+        { en: "Random /8s", el: "Τυχαία /8" },
+      ],
+      answer: 1,
+      why: { en: "Scope and permission are non-negotiable.", el: "Το scope και η άδεια δεν συζητιούνται." },
+    },
+  ],
+  scanning: [
+    {
+      q: { en: "nmap -sV is used to…", el: "Το nmap -sV χρησιμεύει για…" },
+      choices: [
+        { en: "DDoS a host", el: "DDoS" },
+        { en: "Detect service versions", el: "Ανίχνευση εκδόσεων υπηρεσιών" },
+        { en: "Disable a firewall", el: "Απενεργοποίηση firewall" },
+        { en: "Crack hashes", el: "Σπάσιμο hashes" },
+      ],
+      answer: 1,
+      why: { en: "-sV probes banners so you know which software (and version) answers.", el: "Το -sV διαβάζει banners." },
+    },
+    {
+      q: { en: "An open port 22 typically means…", el: "Ανοιχτή θύρα 22 συνήθως σημαίνει…" },
+      choices: [
+        { en: "HTTP", el: "HTTP" },
+        { en: "SSH", el: "SSH" },
+        { en: "SMTP", el: "SMTP" },
+        { en: "RDP", el: "RDP" },
+      ],
+      answer: 1,
+      why: { en: "22/tcp is the IANA port for SSH.", el: "22/tcp = SSH." },
+    },
+    {
+      q: { en: "Why grab HTTP with curl during scanning?", el: "Γιατί curl στο HTTP στη σάρωση;" },
+      choices: [
+        { en: "To mine bitcoin", el: "Για bitcoin" },
+        { en: "To read banners, titles, tech stack clues", el: "Για banners, τίτλους, ενδείξεις stack" },
+        { en: "To wipe logs", el: "Για να σβήσεις logs" },
+        { en: "It is required by TCP", el: "Το απαιτεί το TCP" },
+      ],
+      answer: 1,
+      why: { en: "A homepage often leaks CMS names and versions.", el: "Η αρχική συχνά αποκαλύπτει CMS." },
+    },
+  ],
+  bruteforce: [
+    {
+      q: { en: "A dictionary attack tries…", el: "Μια επίθεση λεξικού δοκιμάζει…" },
+      choices: [
+        { en: "Every possible byte", el: "Κάθε δυνατό byte" },
+        { en: "Passwords from a list of likely values", el: "Κωδικούς από λίστα πιθανών τιμών" },
+        { en: "Only the empty password", el: "Μόνο κενό κωδικό" },
+        { en: "TLS session keys", el: "Κλειδιά TLS" },
+      ],
+      answer: 1,
+      why: { en: "Dictionaries are faster than true brute force because humans pick predictable passwords.", el: "Τα λεξικά είναι ταχύτερα γιατί οι άνθρωποι διαλέγουν προβλέψιμους κωδικούς." },
+    },
+    {
+      q: { en: "Best defence against SSH password sprays?", el: "Καλύτερη άμυνα στα SSH sprays;" },
+      choices: [
+        { en: "A longer MOTD", el: "Μεγαλύτερο MOTD" },
+        { en: "Disable passwords, use keys + MFA, rate-limit", el: "Κλειδιά + MFA, χωρίς passwords, rate-limit" },
+        { en: "Open port 22 to the world", el: "Άνοιγμα 22 στον κόσμο" },
+        { en: "Use telnet instead", el: "Telnet" },
+      ],
+      answer: 1,
+      why: { en: "Key-only SSH plus monitoring makes hydra-style attacks fail loudly.", el: "SSH μόνο με κλειδιά και monitoring." },
+    },
+    {
+      q: { en: "Running hydra against a random internet host is…", el: "Το hydra σε τυχαίο host του internet είναι…" },
+      choices: [
+        { en: "Fine if you are curious", el: "ΟΚ αν είσαι περίεργος" },
+        { en: "Illegal without authorisation", el: "Παράνομο χωρίς εξουσιοδότηση" },
+        { en: "A NIST requirement", el: "Απαίτηση NIST" },
+        { en: "Only rude", el: "Απλώς αγενές" },
+      ],
+      answer: 1,
+      why: { en: "Credential attacks without permission are a crime. Lab only.", el: "Επιθέσεις διαπιστευτηρίων χωρίς άδεια είναι έγκλημα." },
+    },
+  ],
+  sqli: [
+    {
+      q: { en: "SQL injection happens when…", el: "Το SQLi συμβαίνει όταν…" },
+      choices: [
+        { en: "TLS is too new", el: "Το TLS είναι νέο" },
+        { en: "Untrusted input is concatenated into a query", el: "Μη έμπιστη είσοδος μπαίνει σε ερώτημα" },
+        { en: "The DB is PostgreSQL", el: "Η βάση είναι PostgreSQL" },
+        { en: "The server uses IPv6", el: "Ο server έχει IPv6" },
+      ],
+      answer: 1,
+      why: { en: "Fix: parameterised queries / prepared statements, never string concat.", el: "Λύση: parameterized queries, ποτέ concat." },
+    },
+    {
+      q: { en: "A single quote in an id= parameter is often used to…", el: "Το μονό εισαγωγικό σε id= συχνά…" },
+      choices: [
+        { en: "Beautify HTML", el: "Ομορφαίνει HTML" },
+        { en: "Test if the query syntax breaks", el: "Ελέγχει αν σπάει η σύνταξη" },
+        { en: "Enable HTTP/2", el: "Ενεργοποιεί HTTP/2" },
+        { en: "Reset a password", el: "Κάνει reset κωδικού" },
+      ],
+      answer: 1,
+      why: { en: "A syntax error (or odd response) is a detection signal — in a lab.", el: "Σφάλμα σύνταξης είναι σήμα ανίχνευσης — στο lab." },
+    },
+    {
+      q: { en: "The defender's first control against SQLi is…", el: "Το πρώτο μέτρο του defender είναι…" },
+      choices: [
+        { en: "More RAM", el: "Περισσότερη RAM" },
+        { en: "Parameterised queries and least-privilege DB users", el: "Parameterized queries και least-privilege" },
+        { en: "Disabling HTTPS", el: "Απενεργοποίηση HTTPS" },
+        { en: "Using FTP", el: "FTP" },
+      ],
+      answer: 1,
+      why: { en: "ORMs + bound parameters + a DB account that cannot DROP TABLE.", el: "ORM + bound parameters + λογαριασμός χωρίς DROP." },
+    },
+  ],
+  privesc: [
+    {
+      q: { en: "Privilege escalation is…", el: "Η ανύψωση προνομίων είναι…" },
+      choices: [
+        { en: "The first packet you send", el: "Το πρώτο πακέτο" },
+        { en: "Moving from a low user to a more powerful one", el: "Από χαμηλό χρήστη σε ισχυρότερο" },
+        { en: "Buying a bigger NIC", el: "Μεγαλύτερο NIC" },
+        { en: "Changing DNS", el: "Αλλαγή DNS" },
+      ],
+      answer: 1,
+      why: { en: "After a foothold, enumerate sudo, SUID, cron, kernel.", el: "Μετά το foothold: sudo, SUID, cron, kernel." },
+    },
+    {
+      q: { en: "Why is `sudo find` dangerous?", el: "Γιατί είναι επικίνδυνο το sudo find;" },
+      choices: [
+        { en: "find is slow", el: "Το find είναι αργό" },
+        { en: "It can execute commands as root (GTFOBins)", el: "Μπορεί να εκτελέσει εντολές ως root" },
+        { en: "It deletes /", el: "Διαγράφει το /" },
+        { en: "It disables SELinux", el: "Κλείνει SELinux" },
+      ],
+      answer: 1,
+      why: { en: "Many Unix tools have breakout flags. Don't sudo them.", el: "Πολλά Unix tools έχουν breakout. Μην τα κάνεις sudo." },
+    },
+    {
+      q: { en: "Least privilege means…", el: "Least privilege σημαίνει…" },
+      choices: [
+        { en: "Everyone is root", el: "Όλοι είναι root" },
+        { en: "Grant only the rights needed to do the job", el: "Δώσε μόνο τα απαραίτητα δικαιώματα" },
+        { en: "Disable logging", el: "Κλείσε logging" },
+        { en: "Share one password", el: "Ένας κοινός κωδικός" },
+      ],
+      answer: 1,
+      why: { en: "The smaller the sudoers file, the smaller the blast radius.", el: "Μικρότερο sudoers = μικρότερη ακτίνα έκρηξης." },
+    },
+  ],
+  "raven-recon": [
+    {
+      q: { en: "A boot2root box is designed to be…", el: "Ένα boot2root είναι σχεδιασμένο να είναι…" },
+      choices: [
+        { en: "A production bank", el: "Τράπεζα παραγωγής" },
+        { en: "A legal playground from scan to root", el: "Νόμιμο πεδίο από σάρωση ως root" },
+        { en: "A CDN", el: "CDN" },
+        { en: "An ISP core", el: "Πυρήνας ISP" },
+      ],
+      answer: 1,
+      why: { en: "CTF / lab machines exist so you never touch live systems.", el: "Τα CTF υπάρχουν για να μην αγγίζεις live συστήματα." },
+    },
+    {
+      q: { en: "Typical first step on a new box?", el: "Τυπικό πρώτο βήμα;" },
+      choices: [
+        { en: "Format the disk", el: "Format" },
+        { en: "Recon / port scan", el: "Recon / σάρωση θυρών" },
+        { en: "Email the CEO", el: "Email στον CEO" },
+        { en: "Buy zero-days", el: "Αγορά 0-days" },
+      ],
+      answer: 1,
+      why: { en: "Don't skip recon. You cannot exploit a service you have not found.", el: "Μην παραλείπεις recon." },
+    },
+    {
+      q: { en: "Raven in this lab speaks which services?", el: "Ο Raven μιλά ποιες υπηρεσίες;" },
+      choices: [
+        { en: "Only FTP", el: "Μόνο FTP" },
+        { en: "SSH and HTTP", el: "SSH και HTTP" },
+        { en: "Only RDP", el: "Μόνο RDP" },
+        { en: "SIP", el: "SIP" },
+      ],
+      answer: 1,
+      why: { en: "Your nmap -sV showed 22 and 80.", el: "Το nmap -sV έδειξε 22 και 80." },
+    },
+  ],
+  "raven-foothold": [
+    {
+      q: { en: "A foothold is…", el: "Foothold είναι…" },
+      choices: [
+        { en: "Root on day one, always", el: "Root την πρώτη μέρα" },
+        { en: "An initial working access (often a user shell)", el: "Αρχική πρόσβαση (συχνά user shell)" },
+        { en: "A firewall rule", el: "Κανόνας firewall" },
+        { en: "A SIEM alert", el: "Ειδοποίηση SIEM" },
+      ],
+      answer: 1,
+      why: { en: "Then you enumerate locally for privesc.", el: "Μετά τοπική απαρίθμηση για privesc." },
+    },
+    {
+      q: { en: "user.txt on a CTF box usually sits in…", el: "Το user.txt συνήθως είναι στο…" },
+      choices: [
+        { en: "/proc", el: "/proc" },
+        { en: "The low-priv user's home", el: "Το home του χαμηλού χρήστη" },
+        { en: "BIOS", el: "BIOS" },
+        { en: "The NTP pool", el: "NTP pool" },
+      ],
+      answer: 1,
+      why: { en: "Convention: /home/<user>/user.txt proves foothold.", el: "Σύμβαση: /home/<user>/user.txt." },
+    },
+    {
+      q: { en: "Why do CTF passwords appear in wordlists?", el: "Γιατί οι κωδικοί CTF είναι σε wordlists;" },
+      choices: [
+        { en: "To train the dictionary-attack lesson", el: "Για το μάθημα dictionary-attack" },
+        { en: "Because AES is broken", el: "Γιατί έσπασε το AES" },
+        { en: "Random chance", el: "Τύχη" },
+        { en: "IPv4 shortage", el: "Έλλειψη IPv4" },
+      ],
+      answer: 0,
+      why: { en: "They teach a pattern. Real systems must not reuse those words.", el: "Διδάσκουν μοτίβο. Τα πραγματικά συστήματα δεν πρέπει να τα επαναχρησιμοποιούν." },
+    },
+  ],
+  "raven-web": [
+    {
+      q: { en: "Why loot /var/www/html/config.php?", el: "Γιατί το config.php;" },
+      choices: [
+        { en: "It is pretty", el: "Είναι όμορφο" },
+        { en: "App configs often store DB credentials", el: "Συχνά έχει διαπιστευτήρια βάσης" },
+        { en: "PHP cannot run without being read", el: "Η PHP δεν τρέχει αλλιώς" },
+        { en: "It disables ASLR", el: "Κλείνει ASLR" },
+      ],
+      answer: 1,
+      why: { en: "Secrets in web roots are a classic finding.", el: "Μυστικά στο web root είναι κλασικό εύρημα." },
+    },
+    {
+      q: { en: "SQL dumps in /var/backups are dangerous because…", el: "Τα SQL dumps στο /var/backups είναι επικίνδυνα γιατί…" },
+      choices: [
+        { en: "They slow cron", el: "Αργό cron" },
+        { en: "They often contain users, hashes, PII", el: "Έχουν χρήστες, hashes, PII" },
+        { en: "They use UTF-16", el: "UTF-16" },
+        { en: "tar is illegal", el: "Το tar είναι παράνομο" },
+      ],
+      answer: 1,
+      why: { en: "Encrypt backups and restrict who can read them.", el: "Κρυπτογράφηση backups και περιορισμένη ανάγνωση." },
+    },
+    {
+      q: { en: "crontab running a user-writable script as root is…", el: "crontab με εγγράψιμο script ως root είναι…" },
+      choices: [
+        { en: "A hardening win", el: "Νίκη hardening" },
+        { en: "A privilege-escalation footgun", el: "Όπλο privesc" },
+        { en: "Required by PCI", el: "Απαίτηση PCI" },
+        { en: "Unrelated to security", el: "Άσχετο" },
+      ],
+      answer: 1,
+      why: { en: "If I can edit what root executes, I am root.", el: "Αν επεξεργάζομαι ό,τι εκτελεί ο root, είμαι root." },
+    },
+  ],
+  "raven-root": [
+    {
+      q: { en: "World-writable + executed by root equals…", el: "World-writable + εκτέλεση από root =" },
+      choices: [
+        { en: "Secure by default", el: "Ασφαλές by default" },
+        { en: "Game over for the box", el: "Game over για το κουτί" },
+        { en: "Faster backups", el: "Ταχύτερα backups" },
+        { en: "A SELinux success", el: "Επιτυχία SELinux" },
+      ],
+      answer: 1,
+      why: { en: "Lock modes to 750/640 owned by root.", el: "Κλείδωσε modes 750/640 owned by root." },
+    },
+    {
+      q: { en: "root.txt conventionally proves…", el: "Το root.txt αποδεικνύει…" },
+      choices: [
+        { en: "You rebooted", el: "Κάνεις reboot" },
+        { en: "You achieved root on the box", el: "Πέτυχες root" },
+        { en: "DNS works", el: "Δουλεύει το DNS" },
+        { en: "IPv6 is on", el: "IPv6 on" },
+      ],
+      answer: 1,
+      why: { en: "That's the boot2root finish line.", el: "Η γραμμή τερματισμού boot2root." },
+    },
+    {
+      q: { en: "After rooting a lab, you should…", el: "Μετά το root σε lab πρέπει…" },
+      choices: [
+        { en: "Attack the next random IP you know", el: "Χτυπήσεις την επόμενη τυχαία IP" },
+        { en: "Write notes and stay inside authorised scope", el: "Σημειώσεις και παραμονή στο scope" },
+        { en: "Post real customer data", el: "Δημοσιεύσεις δεδομένα πελατών" },
+        { en: "Disable all logging everywhere", el: "Κλείσεις όλα τα logs" },
+      ],
+      answer: 1,
+      why: { en: "The oath still holds when you are good at this.", el: "Ο όρκος ισχύει και όταν είσαι καλός." },
+    },
+  ],
+  "ssh-keys": [
+    {
+      q: { en: "Private SSH keys should be mode…", el: "Τα ιδιωτικά κλειδιά SSH πρέπει να είναι…" },
+      choices: [
+        { en: "777", el: "777" },
+        { en: "600 (owner read/write only)", el: "600 (μόνο ο ιδιοκτήτης)" },
+        { en: "644", el: "644" },
+        { en: "000", el: "000" },
+      ],
+      answer: 1,
+      why: { en: "ssh refuses keys that are group/world-readable.", el: "Το ssh αρνείται κλειδιά αναγνώσιμα από άλλους." },
+    },
+    {
+      q: { en: "~/.ssh/config Host stanzas let you…", el: "Τα Host στο config σου επιτρέπουν…" },
+      choices: [
+        { en: "Mine crypto", el: "Mining" },
+        { en: "Alias hostnames, users, keys, ProxyJump", el: "Alias, users, keys, ProxyJump" },
+        { en: "Bypass MFA always", el: "Παράκαμψη MFA" },
+        { en: "Open SMTP", el: "SMTP" },
+      ],
+      answer: 1,
+      why: { en: "Config turns ugly one-liners into ssh jump.", el: "Το config κάνει ssh jump αντί για one-liners." },
+    },
+    {
+      q: { en: "ssh -i file specifies…", el: "Το ssh -i file ορίζει…" },
+      choices: [
+        { en: "An identity (private key) file", el: "Αρχείο ταυτότητας (ιδιωτικό κλειδί)" },
+        { en: "An iptables rule", el: "Κανόνα iptables" },
+        { en: "Idle timeout", el: "Idle timeout" },
+        { en: "IPv6 only", el: "Μόνο IPv6" },
+      ],
+      answer: 0,
+      why: { en: "-i identity_file.", el: "-i identity_file." },
+    },
+  ],
+  "ssh-hop": [
+    {
+      q: { en: "ProxyJump (-J) is used to…", el: "Το ProxyJump (-J) χρησιμεύει για…" },
+      choices: [
+        { en: "Jump through a bastion to an internal host", el: "Πέρασμα από bastion σε εσωτερικό host" },
+        { en: "Upgrade RAM", el: "Αναβάθμιση RAM" },
+        { en: "Disable keys", el: "Απενεργοποίηση κλειδιών" },
+        { en: "Scan /24s faster", el: "Ταχύτερη σάρωση /24" },
+      ],
+      answer: 0,
+      why: { en: "ssh -J bastion user@internal", el: "ssh -J bastion user@internal" },
+    },
+    {
+      q: { en: "Bastion hosts should have…", el: "Τα bastion πρέπει να έχουν…" },
+      choices: [
+        { en: "Wide outbound any/any", el: "Ελεύθερο outbound" },
+        { en: "MFA, monitoring, tight egress", el: "MFA, monitoring, σφιχτό egress" },
+        { en: "Telnet enabled", el: "Telnet" },
+        { en: "Shared root passwords on sticky notes", el: "Κωδικό root σε χαρτάκι" },
+      ],
+      answer: 1,
+      why: { en: "A bastion is a high-value choke point. Treat it like one.", el: "Το bastion είναι σημείο ελέγχου υψηλής αξίας." },
+    },
+    {
+      q: { en: "Pivoting through SSH is relevant to defenders because…", el: "Το SSH pivot αφορά τους defenders γιατί…" },
+      choices: [
+        { en: "East-west SSH after a phish is a common path", el: "Το east-west SSH μετά από phish είναι κοινό" },
+        { en: "SSH cannot be logged", el: "Το SSH δεν λογαριάζεται" },
+        { en: "Firewalls ignore 22", el: "Τα firewall αγνοούν τη 22" },
+        { en: "It is layer 8 only", el: "Είναι μόνο layer 8" },
+      ],
+      answer: 0,
+      why: { en: "Watch unusual SSH graphs, not just the perimeter.", el: "Παρακολούθησε ασυνήθιστα γραφήματα SSH." },
+    },
+  ],
+  "ssh-tunnel": [
+    {
+      q: { en: "Network segmentation means…", el: "Segmentation σημαίνει…" },
+      choices: [
+        { en: "One flat VLAN for all", el: "Ένα VLAN για όλους" },
+        { en: "Not every host can reach every other host", el: "Δεν φτάνει κάθε host σε κάθε άλλον" },
+        { en: "No logging", el: "Χωρίς logs" },
+        { en: "Public IPs on printers", el: "Public IP σε εκτυπωτές" },
+      ],
+      answer: 1,
+      why: { en: "db-int was invisible from kali — that's the point.", el: "Το db-int ήταν αόρατο από kali." },
+    },
+    {
+      q: { en: "ssh -L is a…", el: "Το ssh -L είναι…" },
+      choices: [
+        { en: "Local port forward", el: "Τοπικό port forward" },
+        { en: "Linux kernel module", el: "Κερνελ module" },
+        { en: "LDAP bind", el: "LDAP bind" },
+        { en: "Lost packet counter", el: "Μετρητής lost packets" },
+      ],
+      answer: 0,
+      why: { en: "It maps localhost:port to a remote service through the SSH hop.", el: "Χαρτογραφεί localhost:port σε απομακρυσμένη υπηρεσία." },
+    },
+    {
+      q: { en: "A dual-homed host is a pivot because…", el: "Dual-homed host είναι pivot γιατί…" },
+      choices: [
+        { en: "It sits on more than one network", el: "Κάθεται σε περισσότερα δίκτυα" },
+        { en: "It has two keyboards", el: "Έχει δύο πληκτρολόγια" },
+        { en: "It uses RAID 0", el: "RAID 0" },
+        { en: "It is always root", el: "Είναι πάντα root" },
+      ],
+      answer: 0,
+      why: { en: "Compromise it and you inherit its routes.", el: "Αν το παραβιάσεις, κληρονομείς τις διαδρομές του." },
+    },
+  ],
+  "sr-intro": [
+    { q: { en: "pwd prints…", el: "Το pwd τυπώνει…" }, choices: [{ en: "Users", el: "Χρήστες" }, { en: "Working directory", el: "Τρέχοντα φάκελο" }, { en: "Processes", el: "Διεργασίες" }, { en: "IPs", el: "IP" }], answer: 1, why: { en: "print working directory", el: "print working directory" } },
+    { q: { en: "whoami as root means…", el: "whoami ως root σημαίνει…" }, choices: [{ en: "Guest", el: "Guest" }, { en: "Full administrator on this box", el: "Πλήρης διαχειριστής" }, { en: "FTP only", el: "Μόνο FTP" }, { en: "No privileges", el: "Χωρίς προνόμια" }], answer: 1, why: { en: "root is the superuser.", el: "root = superuser." } },
+    { q: { en: "ls is closest to Windows…", el: "Το ls μοιάζει με…" }, choices: [{ en: "dir", el: "dir" }, { en: "ipconfig", el: "ipconfig" }, { en: "taskmgr", el: "taskmgr" }, { en: "notepad", el: "notepad" }], answer: 0, why: { en: "ls lists directory contents.", el: "Το ls λιστάρει." } },
+  ],
+  "sr-help": [
+    { q: { en: "man ls opens…", el: "man ls ανοίγει…" }, choices: [{ en: "A movie", el: "Ταινία" }, { en: "The ls manual page", el: "Το εγχειρίδιο ls" }, { en: "A firewall", el: "Firewall" }, { en: "apt", el: "apt" }], answer: 1, why: { en: "man = manual.", el: "man = εγχειρίδιο." } },
+    { q: { en: "which git returns…", el: "which git επιστρέφει…" }, choices: [{ en: "Every file named git", el: "Κάθε αρχείο git" }, { en: "The git binary on PATH", el: "Το binary στο PATH" }, { en: "GitHub", el: "GitHub" }, { en: "Nothing", el: "Τίποτα" }], answer: 1, why: { en: "which is PATH-only.", el: "which = μόνο PATH." } },
+    { q: { en: "locate's database is typically updated…", el: "Η βάση locate ενημερώνεται…" }, choices: [{ en: "Every millisecond", el: "Κάθε ms" }, { en: "About once a day", el: "Περίπου μία φορά τη μέρα" }, { en: "Never", el: "Ποτέ" }, { en: "On SSH login only", el: "Μόνο στο SSH" }], answer: 1, why: { en: "New files can be missing until updatedb.", el: "Νέα αρχεία λείπουν μέχρι updatedb." } },
+  ],
+  "sr-search": [
+    { q: { en: "ifconfig | grep inet keeps…", el: "ifconfig | grep inet κρατά…" }, choices: [{ en: "All lines", el: "Όλα" }, { en: "Lines containing inet", el: "Γραμμές με inet" }, { en: "Only errors", el: "Μόνο σφάλματα" }, { en: "PIDs", el: "PID" }], answer: 1, why: { en: "grep filters stdin.", el: "Το grep φιλτράρει stdin." } },
+    { q: { en: "find / -type f -name hackforge starts at…", el: "Το find / ξεκινά από…" }, choices: [{ en: "Your home only", el: "Μόνο home" }, { en: "The filesystem root", el: "Τη ρίζα" }, { en: "RAM", el: "RAM" }, { en: "DNS", el: "DNS" }], answer: 1, why: { en: "/ is the tree root.", el: "/ = ρίζα." } },
+    { q: { en: "2>&1 sends…", el: "Το 2>&1 στέλνει…" }, choices: [{ en: "stdout to a printer", el: "stdout σε εκτυπωτή" }, { en: "stderr to stdout", el: "stderr στο stdout" }, { en: "root mail", el: "mail root" }, { en: "Nothing", el: "Τίποτα" }], answer: 1, why: { en: "Merge streams so grep can filter errors.", el: "Ένωση ροών." } },
+  ],
+  "sr-files": [
+    { q: { en: "touch creates…", el: "Το touch δημιουργεί…" }, choices: [{ en: "A user", el: "Χρήστη" }, { en: "An empty file", el: "Κενό αρχείο" }, { en: "A RAID", el: "RAID" }, { en: "A VLAN", el: "VLAN" }], answer: 1, why: { en: "touch NAME", el: "touch NAME" } },
+    { q: { en: "mv can…", el: "Το mv μπορεί…" }, choices: [{ en: "Only delete", el: "Μόνο διαγραφή" }, { en: "Move or rename", el: "Μετακίνηση ή μετονομασία" }, { en: "Format disks", el: "Format" }, { en: "Crack wifi", el: "Crack wifi" }], answer: 1, why: { en: "mv SRC DEST", el: "mv SRC DEST" } },
+    { q: { en: "rmdir fails when…", el: "Το rmdir αποτυγχάνει όταν…" }, choices: [{ en: "The dir has contents", el: "Ο φάκελος έχει περιεχόμενο" }, { en: "You are root", el: "Είσαι root" }, { en: "It is Monday", el: "Δευτέρα" }, { en: "IPv6 is on", el: "IPv6" }], answer: 0, why: { en: "Use rm -r for non-empty dirs.", el: "rm -r για μη άδειους." } },
+  ],
+  "sr-text": [
+    { q: { en: "head shows…", el: "Το head δείχνει…" }, choices: [{ en: "Last 10 lines by default", el: "Τελευταίες 10" }, { en: "First 10 lines by default", el: "Πρώτες 10" }, { en: "PIDs", el: "PID" }, { en: "MAC", el: "MAC" }], answer: 1, why: { en: "tail is the opposite.", el: "Το tail είναι το αντίθετο." } },
+    { q: { en: "sed s/WWW/www/g does…", el: "Το sed s/WWW/www/g…" }, choices: [{ en: "Deletes the file", el: "Σβήνει το αρχείο" }, { en: "Replaces WWW with www globally (on stdout)", el: "Αντικαθιστά WWW→www στην έξοδο" }, { en: "Starts apache", el: "Ανοίγει apache" }, { en: "Sets SUID", el: "SUID" }], answer: 1, why: { en: "/g = every occurrence. Redirect to write.", el: "/g = όλες. Redirect για εγγραφή." } },
+    { q: { en: "less vs more: less can…", el: "less vs more: το less μπορεί…" }, choices: [{ en: "Format ext4", el: "ext4" }, { en: "Search with / in a real TTY", el: "Αναζήτηση με /" }, { en: "Assign IPs", el: "IP" }, { en: "Compile C", el: "C" }], answer: 1, why: { en: "less is the nicer pager.", el: "Το less είναι καλύτερο pager." } },
+  ],
+  "sr-apt": [
+    { q: { en: "apt-get update…", el: "apt-get update…" }, choices: [{ en: "Installs every package", el: "Εγκαθιστά όλα" }, { en: "Refreshes package indexes", el: "Ανανεώνει ευρετήρια" }, { en: "Deletes /", el: "Σβήνει /" }, { en: "Starts FTP", el: "FTP" }], answer: 1, why: { en: "upgrade applies the updates.", el: "Το upgrade εφαρμόζει." } },
+    { q: { en: "purge vs remove…", el: "purge vs remove…" }, choices: [{ en: "Same always", el: "Ίδια" }, { en: "purge also drops leftover configs", el: "Το purge καθαρίζει configs" }, { en: "purge installs more", el: "Εγκαθιστά περισσότερα" }, { en: "remove needs rootless", el: "χωρίς root" }], answer: 1, why: { en: "purge is the thorough uninstall.", el: "Το purge είναι πλήρες." } },
+    { q: { en: "sources.list lists…", el: "Το sources.list έχει…" }, choices: [{ en: "Users", el: "Χρήστες" }, { en: "Package repositories", el: "Αποθετήρια πακέτων" }, { en: "Cron jobs", el: "Cron" }, { en: "SSH keys", el: "SSH keys" }], answer: 1, why: { en: "Don't add random experimental repos.", el: "Όχι τυχαία experimental repos." } },
+  ],
+  "sr-perms": [
+    { q: { en: "chmod 7 means…", el: "chmod 7 σημαίνει…" }, choices: [{ en: "---", el: "---" }, { en: "rwx", el: "rwx" }, { en: "r--", el: "r--" }, { en: "x only", el: "μόνο x" }], answer: 1, why: { en: "4+2+1 = rwx.", el: "4+2+1 = rwx." } },
+    { q: { en: "SUID is set with prefix…", el: "SUID με πρόθεμα…" }, choices: [{ en: "2", el: "2" }, { en: "4", el: "4" }, { en: "7", el: "7" }, { en: "0", el: "0" }], answer: 1, why: { en: "4644 = SUID + 644. 2xxx = SGID.", el: "4=SUID, 2=SGID." } },
+    { q: { en: "chown Raj file changes…", el: "chown Raj αλλάζει…" }, choices: [{ en: "The group only", el: "Μόνο ομάδα" }, { en: "The owner", el: "Τον ιδιοκτήτη" }, { en: "The kernel", el: "Το kernel" }, { en: "DNS", el: "DNS" }], answer: 1, why: { en: "chgrp changes group.", el: "chgrp = ομάδα." } },
+  ],
+  "sr-net": [
+    { q: { en: "lo is always…", el: "Το lo είναι πάντα…" }, choices: [{ en: "8.8.8.8", el: "8.8.8.8" }, { en: "127.0.0.1", el: "127.0.0.1" }, { en: "0.0.0.0", el: "0.0.0.0" }, { en: "255.255.255.255", el: "255.255.255.255" }], answer: 1, why: { en: "Loopback.", el: "Loopback." } },
+    { q: { en: "dhclient asks…", el: "Το dhclient ζητά…" }, choices: [{ en: "A TLS cert", el: "Πιστοποιητικό TLS" }, { en: "A DHCP lease / IP", el: "Μίσθωση DHCP / IP" }, { en: "A man page", el: "man" }, { en: "SUID", el: "SUID" }], answer: 1, why: { en: "Dynamic addressing.", el: "Δυναμική διευθυνσιοδότηση." } },
+    { q: { en: "Changing MAC to bypass someone else's network control is…", el: "Αλλαγή MAC για παράκαμψη ξένου δικτύου είναι…" }, choices: [{ en: "Fine always", el: "Πάντα ΟΚ" }, { en: "Illegal without authorisation", el: "Παράνομο χωρίς άδεια" }, { en: "Required by HTTP", el: "Απαίτηση HTTP" }, { en: "A DNS standard", el: "Πρότυπο DNS" }], answer: 1, why: { en: "Lab only.", el: "Μόνο lab." } },
+  ],
+  "sr-proc": [
+    { q: { en: "ps aux shows…", el: "ps aux δείχνει…" }, choices: [{ en: "Only cron", el: "Μόνο cron" }, { en: "All users' processes", el: "Διεργασίες όλων" }, { en: "DNS only", el: "Μόνο DNS" }, { en: "Disk partitions", el: "Διαμερίσματα" }], answer: 1, why: { en: "a,u,x flags widen the listing.", el: "a,u,x διευρύνουν." } },
+    { q: { en: "kill -9 is…", el: "kill -9 είναι…" }, choices: [{ en: "A polite hangup", el: "Ευγενικό hangup" }, { en: "SIGKILL — force stop", el: "SIGKILL — βίαιο stop" }, { en: "Nice +9", el: "Nice +9" }, { en: "FTP restart", el: "FTP restart" }], answer: 1, why: { en: "-1 is SIGHUP.", el: "-1 = SIGHUP." } },
+    { q: { en: "Appending & …", el: "Το & στο τέλος…" }, choices: [{ en: "Deletes the process", el: "Σβήνει τη διεργασία" }, { en: "Runs it in the background", el: "Τη βάζει στο παρασκήνιο" }, { en: "Formats /tmp", el: "Format /tmp" }, { en: "Opens man", el: "Ανοίγει man" }], answer: 1, why: { en: "jobs / fg manage those jobs.", el: "jobs / fg." } },
+  ],
+  "sr-env": [
+    { q: { en: "HISTSIZE=0 must have…", el: "HISTSIZE=0 πρέπει…" }, choices: [{ en: "Spaces around =", el: "Κενά γύρω από =" }, { en: "No spaces around =", el: "Χωρίς κενά" }, { en: "A comma", el: "Κόμμα" }, { en: "sudo always", el: "πάντα sudo" }], answer: 1, why: { en: "VAR=value syntax.", el: "Σύνταξη VAR=value." } },
+    { q: { en: "export makes a var…", el: "Το export κάνει τη μεταβλητή…" }, choices: [{ en: "Hidden from ps", el: "Κρυφή από ps" }, { en: "Inherited by child processes", el: "Κληρονομήσιμη στα παιδιά" }, { en: "A firewall rule", el: "Κανόνα firewall" }, { en: "Immutable kernel", el: "Αμετάβλητο kernel" }], answer: 1, why: { en: "Environment vs shell scope.", el: "Περιβάλλον vs shell." } },
+    { q: { en: "unset NAME…", el: "unset NAME…" }, choices: [{ en: "Creates NAME", el: "Δημιουργεί NAME" }, { en: "Deletes the variable", el: "Διαγράφει τη μεταβλητή" }, { en: "Installs apt", el: "Εγκαθιστά apt" }, { en: "Opens nano", el: "Ανοίγει nano" }], answer: 1, why: { en: "Gone until you set it again.", el: "Φεύγει μέχρι να την ξαναθέσεις." } },
+  ],
+  "sr-bash": [
+    { q: { en: "#!/bin/bash is the…", el: "#!/bin/bash είναι…" }, choices: [{ en: "SUID bit", el: "SUID" }, { en: "Shebang — interpreter line", el: "Shebang — διερμηνέας" }, { en: "Cron field", el: "Πεδίο cron" }, { en: "MAC", el: "MAC" }], answer: 1, why: { en: "Tells the kernel to use bash.", el: "Λέει στο kernel να χρησιμοποιήσει bash." } },
+    { q: { en: "./script means…", el: "./script σημαίνει…" }, choices: [{ en: "Run from PATH only", el: "Μόνο PATH" }, { en: "Run the file in the current directory", el: "Τρέξε το αρχείο εδώ" }, { en: "Delete it", el: "Διαγραφή" }, { en: "Compile it", el: "Compile" }], answer: 1, why: { en: "Need +x too.", el: "Χρειάζεται και +x." } },
+    { q: { en: "nmap -sn is a…", el: "nmap -sn είναι…" }, choices: [{ en: "OS exploit", el: "OS exploit" }, { en: "Ping / host-discovery sweep", el: "Ping / ανακάλυψη hosts" }, { en: "Hash crack", el: "Hash crack" }, { en: "TLS MITM", el: "TLS MITM" }], answer: 1, why: { en: "Formerly -sP. Lab networks only.", el: "Πρώην -sP. Μόνο lab." } },
+  ],
+  "sr-cron": [
+    { q: { en: "Crontab field 1 is…", el: "Το 1ο πεδίο crontab είναι…" }, choices: [{ en: "Year", el: "Έτος" }, { en: "Minute 0–59", el: "Λεπτό 0–59" }, { en: "User always", el: "Πάντα χρήστης" }, { en: "Path", el: "Path" }], answer: 1, why: { en: "Then hour, dom, month, dow.", el: "Μετά ώρα, μέρα, μήνας, εβδομάδα." } },
+    { q: { en: "55 23 * * * means…", el: "55 23 * * * σημαίνει…" }, choices: [{ en: "05:23 once", el: "05:23 μία φορά" }, { en: "23:55 every day", el: "23:55 κάθε μέρα" }, { en: "Every 23 seconds", el: "Κάθε 23 δευτ." }, { en: "Never", el: "Ποτέ" }], answer: 1, why: { en: "minute 55, hour 23.", el: "λεπτό 55, ώρα 23." } },
+    { q: { en: "Runlevel 0…", el: "Runlevel 0…" }, choices: [{ en: "Reboot", el: "Reboot" }, { en: "Halt the system", el: "Σβήσιμο συστήματος" }, { en: "GUI only", el: "Μόνο GUI" }, { en: "Single-user", el: "Single-user" }], answer: 1, why: { en: "6 is reboot, 1 is single-user.", el: "6=reboot, 1=single-user." } },
+  ],
+  "sr-svc": [
+    { q: { en: "Apache's default page lives at…", el: "Η default σελίδα Apache είναι στο…" }, choices: [{ en: "/etc/passwd", el: "/etc/passwd" }, { en: "/var/www/html/index.html", el: "/var/www/html/index.html" }, { en: "/root/Desktop", el: "/root/Desktop" }, { en: "/proc", el: "/proc" }], answer: 1, why: { en: "Document root.", el: "Document root." } },
+    { q: { en: "SSH vs telnet…", el: "SSH vs telnet…" }, choices: [{ en: "Same encryption", el: "Ίδια κρυπτογράφηση" }, { en: "SSH encrypts the channel", el: "Το SSH κρυπτογραφεί το κανάλι" }, { en: "Telnet is newer", el: "Το telnet είναι νεότερο" }, { en: "Neither uses TCP", el: "Κανένα TCP" }], answer: 1, why: { en: "Never telnet credentials.", el: "Ποτέ κωδικοί σε telnet." } },
+    { q: { en: "Anonymous FTP login in this lab is…", el: "Anonymous FTP εδώ είναι…" }, choices: [{ en: "A live CESCA server", el: "Ζωντανός CESCA" }, { en: "A simulated HackForge server", el: "Προσομοίωση HackForge" }, { en: "Required on the internet", el: "Υποχρεωτικό στο internet" }, { en: "A kernel module", el: "Κερνελ module" }], answer: 1, why: { en: "ftp.forge.lab is fake. Stay in scope.", el: "Το ftp.forge.lab είναι ψεύτικο." } },
+  ],
+  "dfir-intake": [
+    { q: { en: "A matching SHA-256 digest supports…", el: "Ίδιο SHA-256 υποστηρίζει…" }, choices: [{ en: "The file is harmless", el: "Το αρχείο είναι ακίνδυνο" }, { en: "The compared byte sequences match", el: "Τα bytes που συγκρίθηκαν είναι ίδια" }, { en: "The author is known", el: "Είναι γνωστός ο δημιουργός" }, { en: "The file is original", el: "Είναι πρωτότυπο" }], answer: 1, why: { en: "A digest supports byte identity, not safety or authorship.", el: "Το digest υποστηρίζει ταυτότητα bytes, όχι ασφάλεια ή δημιουργό." } },
+    { q: { en: "What is chain of custody for?", el: "Σε τι χρησιμεύει chain of custody;" }, choices: [{ en: "Provenance and handling record", el: "Καταγραφή προέλευσης και χειρισμού" }, { en: "Running a suspicious file", el: "Εκτέλεση ύποπτου αρχείου" }, { en: "Changing timestamps", el: "Αλλαγή timestamps" }, { en: "Attribution from an IP", el: "Attribution από IP" }], answer: 0, why: { en: "It records who handled evidence, when, how, and why.", el: "Καταγράφει ποιος, πότε, πώς και γιατί χειρίστηκε τεκμήριο." } },
+    { q: { en: "A file extension is…", el: "Η κατάληξη αρχείου είναι…" }, choices: [{ en: "Proof of file type", el: "Απόδειξη τύπου" }, { en: "A clue that should be checked against content", el: "Ένδειξη που ελέγχεται με το περιεχόμενο" }, { en: "A cryptographic hash", el: "Cryptographic hash" }, { en: "A chain-of-custody log", el: "Chain-of-custody log" }], answer: 1, why: { en: "Use file signatures and metadata to verify the actual format.", el: "Έλεγξε signatures και metadata για πραγματικό format." } },
+  ],
+  "dfir-windows": [
+    { q: { en: "NTUSER.DAT primarily represents…", el: "Το NTUSER.DAT αντιπροσωπεύει κυρίως…" }, choices: [{ en: "A user registry hive", el: "Hive Registry χρήστη" }, { en: "A packet capture", el: "Packet capture" }, { en: "A disk image", el: "Disk image" }, { en: "A browser executable", el: "Εκτελέσιμο browser" }], answer: 0, why: { en: "Per-user settings are stored in the user's hive.", el: "Ρυθμίσεις χρήστη αποθηκεύονται στο user hive." } },
+    { q: { en: "Windows Security event 4625 indicates…", el: "Το Windows Security event 4625 δείχνει…" }, choices: [{ en: "Successful login", el: "Επιτυχή σύνδεση" }, { en: "Failed login", el: "Αποτυχημένη σύνδεση" }, { en: "Audit log cleared", el: "Καθαρισμό audit log" }, { en: "Account created", el: "Δημιουργία account" }], answer: 1, why: { en: "Correlate event IDs with user, host, time, and nearby events.", el: "Συσχέτισε ID με χρήστη, host, χρόνο και γειτονικά events." } },
+    { q: { en: "A browser history row is strongest when…", el: "Μια γραμμή browser history είναι ισχυρότερη όταν…" }, choices: [{ en: "Used alone for attribution", el: "Χρησιμοποιείται μόνη για attribution" }, { en: "Correlated with other artifacts and timestamps", el: "Συσχετίζεται με artifacts και timestamps" }, { en: "Passwords are disclosed", el: "Αποκαλύπτονται κωδικοί" }, { en: "The database is modified", el: "Τροποποιείται η βάση" }], answer: 1, why: { en: "Independent artifacts provide stronger context.", el: "Ανεξάρτητα artifacts δίνουν ισχυρότερο πλαίσιο." } },
+  ],
+  "dfir-documents": [
+    { q: { en: "Modern .docx is commonly…", el: "Το σύγχρονο .docx είναι συνήθως…" }, choices: [{ en: "A ZIP-based OOXML container", el: "ZIP-based OOXML container" }, { en: "A packet capture", el: "Packet capture" }, { en: "An NTFS hive", el: "NTFS hive" }, { en: "A plain bitmap", el: "Bitmap" }], answer: 0, why: { en: "OOXML documents package XML, relationships, metadata, and media.", el: "Τα OOXML πακετάρουν XML, relationships, metadata και media." } },
+    { q: { en: "A detected macro means…", el: "Εντοπισμένο macro σημαίνει…" }, choices: [{ en: "It definitely executed", el: "Σίγουρα εκτελέστηκε" }, { en: "Perform static inspection; execution still needs evidence", el: "Κάνε static inspection· η εκτέλεση θέλει evidence" }, { en: "The document is benign", el: "Το έγγραφο είναι ακίνδυνο" }, { en: "The hash is wrong", el: "Λάθος hash" }], answer: 1, why: { en: "Presence is an indicator, not proof of execution.", el: "Η παρουσία είναι ένδειξη, όχι απόδειξη εκτέλεσης." } },
+    { q: { en: "A hidden image string is…", el: "Κρυφό string εικόνας είναι…" }, choices: [{ en: "Always malicious", el: "Πάντα κακόβουλο" }, { en: "A lead to validate and contextualize", el: "Lead προς επαλήθευση και πλαίσιο" }, { en: "A file hash", el: "File hash" }, { en: "A chain-of-custody record", el: "Chain-of-custody record" }], answer: 1, why: { en: "Steganography findings need independent validation.", el: "Ευρήματα steganography θέλουν ανεξάρτητη επικύρωση." } },
+  ],
+  "dfir-web": [
+    { q: { en: "Apache access logs commonly show…", el: "Τα Apache access logs δείχνουν συνήθως…" }, choices: [{ en: "Request line, status, time, client", el: "Request, status, χρόνος, client" }, { en: "Full POST body always", el: "Πάντα πλήρες POST body" }, { en: "RAM pages", el: "RAM pages" }, { en: "Registry hives", el: "Registry hives" }], answer: 0, why: { en: "POST request bodies may require WAF or application logs.", el: "POST bodies μπορεί να απαιτούν WAF/application logs." } },
+    { q: { en: "A WAF rule hit is…", el: "WAF rule hit είναι…" }, choices: [{ en: "An automatic attribution verdict", el: "Αυτόματο attribution" }, { en: "A detector event to validate with context", el: "Detector event προς επαλήθευση με πλαίσιο" }, { en: "A hash mismatch", el: "Hash mismatch" }, { en: "Proof data was exfiltrated", el: "Απόδειξη exfiltration" }], answer: 1, why: { en: "Correlate rule, request, response, timestamps, and impact.", el: "Συσχέτισε rule, request, response, χρόνο και επίπτωση." } },
+    { q: { en: "An IP address alone proves…", el: "Μια IP μόνη της αποδεικνύει…" }, choices: [{ en: "A named person", el: "Συγκεκριμένο άτομο" }, { en: "An observed network address", el: "Παρατηρημένη network address" }, { en: "Intent", el: "Πρόθεση" }, { en: "Malware family", el: "Malware family" }], answer: 1, why: { en: "NAT, VPNs, proxies, and shared infrastructure limit attribution.", el: "NAT, VPN, proxies και shared infrastructure περιορίζουν attribution." } },
+  ],
+  "dfir-network": [
+    { q: { en: "A Wireshark display filter…", el: "Ένα Wireshark display filter…" }, choices: [{ en: "Deletes packets from the capture", el: "Διαγράφει packets" }, { en: "Narrows the displayed packet view", el: "Περιορίζει την προβολή packets" }, { en: "Rewrites the source PCAP", el: "Αλλάζει το PCAP" }, { en: "Authenticates a user", el: "Ελέγχει χρήστη" }], answer: 1, why: { en: "Filters change the view, not the evidence source.", el: "Τα filters αλλάζουν προβολή, όχι source evidence." } },
+    { q: { en: "Follow TCP Stream helps…", el: "Το Follow TCP Stream βοηθά…" }, choices: [{ en: "Reconstruct conversation context", el: "Ανασύνθεση context συνομιλίας" }, { en: "Create a hash", el: "Δημιουργία hash" }, { en: "Mount NTFS", el: "Mount NTFS" }, { en: "Decrypt every TLS stream", el: "Αποκρυπτογράφηση TLS" }], answer: 0, why: { en: "It presents packets from one connection as a conversation.", el: "Παρουσιάζει packets μιας σύνδεσης ως συνομιλία." } },
+    { q: { en: "Exported objects should be…", el: "Τα exported objects πρέπει να…" }, choices: [{ en: "Treated as original evidence", el: "Θεωρούνται πρωτότυπο" }, { en: "Recorded as derived evidence with source stream", el: "Καταγράφονται ως derived με source stream" }, { en: "Uploaded publicly", el: "Ανεβαίνουν δημόσια" }, { en: "Edited in place", el: "Τροποποιούνται επί τόπου" }], answer: 1, why: { en: "Record source capture, frame/stream, export method, and hash.", el: "Κατέγραψε source capture, frame/stream, export και hash." } },
+  ],
+  "dfir-disk": [
+    { q: { en: "A forensic image should be…", el: "Ένα forensic image πρέπει να…" }, choices: [{ en: "Acquired read-only and verified", el: "Αποκτηθεί read-only και επαληθευτεί" }, { en: "Edited before hashing", el: "Τροποποιηθεί πριν το hash" }, { en: "Mounted read/write", el: "Mounted read/write" }, { en: "Renamed without notes", el: "Μετονομαστεί χωρίς σημειώσεις" }], answer: 0, why: { en: "Preserve source, document acquisition, and validate the copy.", el: "Διατήρησε πηγή, τεκμηρίωσε acquisition και επικύρωσε αντίγραφο." } },
+    { q: { en: "$MFT primarily stores…", el: "$MFT κυρίως αποθηκεύει…" }, choices: [{ en: "NTFS file metadata records", el: "NTFS file metadata records" }, { en: "PCAP streams", el: "PCAP streams" }, { en: "Passwords in plaintext", el: "Plaintext passwords" }, { en: "Browser cookies only", el: "Μόνο cookies" }], answer: 0, why: { en: "$LogFile records filesystem metadata transactions; the two serve different roles.", el: "$LogFile κρατά filesystem metadata transactions· έχουν διαφορετικούς ρόλους." } },
+    { q: { en: "A deleted MFT entry proves…", el: "Deleted MFT entry αποδεικνύει…" }, choices: [{ en: "All file contents are recoverable", el: "Ανακτάται όλο το περιεχόμενο" }, { en: "A metadata record is marked deleted", el: "Metadata record έχει σημειωθεί deleted" }, { en: "Who deleted the file", el: "Ποιος το διέγραψε" }, { en: "Malware execution", el: "Malware execution" }], answer: 1, why: { en: "Recovery and attribution require additional evidence.", el: "Ανάκτηση και attribution απαιτούν πρόσθετα evidence." } },
+  ],
+  "dfir-malware": [
+    { q: { en: "Static analysis means…", el: "Static analysis σημαίνει…" }, choices: [{ en: "Inspecting without executing the sample", el: "Εξέταση χωρίς εκτέλεση" }, { en: "Running it on a workstation", el: "Εκτέλεση σε workstation" }, { en: "Deleting logs", el: "Διαγραφή logs" }, { en: "Hash cracking", el: "Cracking hashes" }], answer: 0, why: { en: "Begin with metadata, hashes, strings, and safe code inspection.", el: "Ξεκίνα με metadata, hashes, strings και ασφαλή code inspection." } },
+    { q: { en: "A defanged domain ending .invalid…", el: "Defanged domain με .invalid…" }, choices: [{ en: "Should resolve publicly", el: "Επιλύεται δημόσια" }, { en: "Is a safe, non-routable reporting placeholder", el: "Είναι ασφαλές reporting placeholder" }, { en: "Proves malware", el: "Αποδεικνύει malware" }, { en: "Is an MD5", el: "Είναι MD5" }], answer: 1, why: { en: ".invalid is reserved for examples and prevents accidental live navigation.", el: "Το .invalid είναι δεσμευμένο για παραδείγματα." } },
+    { q: { en: "A clean public scanner result proves…", el: "Καθαρό public scanner result αποδεικνύει…" }, choices: [{ en: "The sample is harmless", el: "Το sample είναι ακίνδυνο" }, { en: "Only that those scanners did not flag it then", el: "Μόνο ότι δεν το επισήμαναν τότε" }, { en: "Its author", el: "Δημιουργό" }, { en: "No behavior", el: "Καμία συμπεριφορά" }], answer: 1, why: { en: "Absence of detections is not proof of benignness; public upload may expose confidential data.", el: "Απουσία detection δεν αποδεικνύει benignness· public upload εκθέτει πιθανώς confidential data." } },
+  ],
+  "dfir-memory": [
+    { q: { en: "Memory evidence is especially valuable because it can preserve…", el: "Memory evidence είναι πολύτιμο γιατί διατηρεί…" }, choices: [{ en: "Only old file names", el: "Μόνο ονόματα αρχείων" }, { en: "Volatile processes, sockets, environment, clipboard", el: "Volatile processes, sockets, environment, clipboard" }, { en: "Only registry backups", el: "Μόνο registry backups" }, { en: "Static disk sectors only", el: "Μόνο sectors δίσκου" }], answer: 1, why: { en: "RAM captures a moment-in-time volatile system state.", el: "Η RAM συλλαμβάνει στιγμιαία volatile κατάσταση." } },
+    { q: { en: "pstree adds which context to a process list?", el: "Το pstree προσθέτει ποιο πλαίσιο;" }, choices: [{ en: "Parent-child relationships", el: "Σχέσεις parent-child" }, { en: "File hashes", el: "File hashes" }, { en: "Partition offsets", el: "Partition offsets" }, { en: "Browser bookmarks", el: "Bookmarks" }], answer: 0, why: { en: "An unusual parent can help explain how a process started.", el: "Ασυνήθιστος parent βοηθά να εξηγηθεί εκκίνηση process." } },
+    { q: { en: "A suggested memory profile is…", el: "Προτεινόμενο memory profile είναι…" }, choices: [{ en: "A parsing hypothesis to validate", el: "Υπόθεση parsing προς επικύρωση" }, { en: "The user's password", el: "Κωδικός χρήστη" }, { en: "A disk image", el: "Disk image" }, { en: "Always certain", el: "Πάντα βέβαιο" }], answer: 0, why: { en: "Validate profile output with image metadata and other artifacts.", el: "Επικύρωσε με image metadata και άλλα artifacts." } },
+  ],
+  "dfir-container": [
+    { q: { en: "docker diff reports…", el: "Το docker diff αναφέρει…" }, choices: [{ en: "Added, deleted, changed paths", el: "Προσθήκες, διαγραφές, αλλαγές paths" }, { en: "Only network packets", el: "Μόνο packets" }, { en: "Password hashes", el: "Hashes κωδικών" }, { en: "VBA macros", el: "VBA macros" }], answer: 0, why: { en: "A/C/D changes compare a container's writable layer with its image.", el: "A/C/D συγκρίνουν writable layer με image." } },
+    { q: { en: "Deleting a secret in a later image layer…", el: "Διαγραφή secret σε μεταγενέστερο layer…" }, choices: [{ en: "Guarantees bytes are erased", el: "Εγγυάται διαγραφή bytes" }, { en: "May leave secret bytes in an earlier layer", el: "Μπορεί να αφήσει bytes σε παλιότερο layer" }, { en: "Changes the host kernel", el: "Αλλάζει host kernel" }, { en: "Rewrites all logs", el: "Ξαναγράφει logs" }], answer: 1, why: { en: "Container image layers are immutable; inspect history and rotate exposed secrets.", el: "Image layers είναι immutable· έλεγξε history και κάνε rotation." } },
+    { q: { en: "docker export typically captures…", el: "Το docker export συνήθως συλλέγει…" }, choices: [{ en: "Filesystem snapshot, not full image history", el: "Filesystem snapshot, όχι όλο image history" }, { en: "Only registry keys", el: "Μόνο registry keys" }, { en: "Every memory page", el: "Κάθε memory page" }, { en: "No evidence", el: "Κανένα evidence" }], answer: 0, why: { en: "Container filesystem export and image-layer acquisition answer different questions.", el: "Filesystem export και image-layer acquisition απαντούν διαφορετικά ερωτήματα." } },
+  ],
+  "dfir-passwords": [
+    { q: { en: "A password hash is…", el: "Password hash είναι…" }, choices: [{ en: "Encrypted text with a reversible key", el: "Αναστρέψιμο κρυπτογραφημένο κείμενο" }, { en: "A one-way digest commonly checked against candidates", el: "One-way digest που συγκρίνεται με candidates" }, { en: "A username", el: "Username" }, { en: "A packet filter", el: "Packet filter" }], answer: 1, why: { en: "Candidate hashing and comparison can find weak passwords; the hash is not simply decrypted.", el: "Hash candidates και σύγκριση βρίσκουν αδύναμους κωδικούς· δεν αποκρυπτογραφείται απλά." } },
+    { q: { en: "Why salt stored passwords?", el: "Γιατί salt στους κωδικούς;" }, choices: [{ en: "To make every account hash distinct and defeat precomputed reuse", el: "Μοναδικό hash ανά account και αποφυγή precomputed reuse" }, { en: "To reveal the password", el: "Για αποκάλυψη κωδικού" }, { en: "To speed up MD5", el: "Επιτάχυνση MD5" }, { en: "To encrypt a disk", el: "Κρυπτογράφηση δίσκου" }], answer: 0, why: { en: "Use a unique salt and a slow adaptive KDF such as Argon2id, bcrypt, or scrypt.", el: "Χρησιμοποίησε μοναδικό salt και αργό adaptive KDF όπως Argon2id, bcrypt ή scrypt." } },
+    { q: { en: "A recovered candidate password proves…", el: "Ένας ανακτημένος candidate κωδικός αποδεικνύει…" }, choices: [{ en: "Which person typed it", el: "Ποιος τον πληκτρολόγησε" }, { en: "The candidate matches the supplied training digest", el: "Ο candidate ταιριάζει στο training digest" }, { en: "The account was used in the incident", el: "Το account χρησιμοποιήθηκε στο incident" }, { en: "The evidence is authentic", el: "Το evidence είναι authentic" }], answer: 1, why: { en: "Password recovery and user attribution are separate questions.", el: "Ανάκτηση κωδικού και attribution είναι διαφορετικά ερωτήματα." } },
+  ],
 };
-
-export function getQuiz(taskId: string): QuizEntry | null {
-  const concept = TASK_CONCEPT[taskId];
-  return concept ? CONCEPTS[concept] : null;
-}

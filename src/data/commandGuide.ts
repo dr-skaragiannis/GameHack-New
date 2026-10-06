@@ -1,0 +1,1212 @@
+import type { Bi, Module } from "./lessons";
+import { parseArgs, splitPipes, type Terminal, type TermLine } from "../lib/terminal";
+import type { Lang } from "../i18n";
+
+export type CommandLesson = {
+  key: string;
+  aliases: string[];
+  title: Bi;
+  purpose: Bi;
+  mechanics: Bi;
+  output: Bi;
+  syntax: string;
+  example: string;
+  caution?: Bi;
+};
+
+export type CommandExplanation = {
+  command: string;
+  lesson: CommandLesson;
+  reading: string;
+  output: TermLine[];
+  exitCode: number;
+};
+
+const both = (en: string, el: string): Bi => ({ en, el });
+
+export const COMMAND_GUIDE: CommandLesson[] = [
+  {
+    key: "help", aliases: ["help"], title: both("Command help", "Βοήθεια εντολών"),
+    purpose: both("Discover what this shell can do.", "Μάθε ποιες εντολές υποστηρίζει αυτό το shell."),
+    mechanics: both("The lab prints its available command names and short usage guidance. Options such as --help are commonly provided by individual programs.", "Το lab εμφανίζει διαθέσιμες εντολές και οδηγίες. Τα προγράμματα συχνά έχουν δικό τους --help."),
+    output: both("The list is a reference for this safe simulator, not a promise that every real Linux distribution has identical tools.", "Η λίστα αφορά τον ασφαλή προσομοιωτή, όχι κάθε διανομή Linux."),
+    syntax: "help", example: "help",
+  },
+  {
+    key: "pipeline", aliases: [], title: both("Connect commands with a pipe", "Σύνδεση εντολών με pipe"),
+    purpose: both("Combine small tools so one command's output becomes the next command's input.", "Συνδύασε μικρά εργαλεία ώστε η έξοδος μιας εντολής να γίνει είσοδος της επόμενης."),
+    mechanics: both("The | operator connects standard output to standard input. The left side produces data; the right side filters, transforms, or displays it.", "Ο τελεστής | συνδέει standard output με standard input. Η αριστερή εντολή παράγει δεδομένα· η δεξιά φιλτράρει, μετασχηματίζει ή εμφανίζει."),
+    output: both("You see the final stage's output. Earlier stages may have produced more data that later stages intentionally removed.", "Βλέπεις την έξοδο του τελευταίου σταδίου. Τα προηγούμενα μπορεί να παρήγαγαν περισσότερα δεδομένα που φιλτραρίστηκαν."),
+    syntax: "COMMAND | COMMAND", example: "ifconfig | grep inet",
+  },
+  {
+    key: "tab", aliases: ["tab"], title: both("Tab completion", "Συμπλήρωση με Tab"),
+    purpose: both("Complete a command or path and reduce typing mistakes.", "Συμπλήρωσε εντολή ή διαδρομή και μείωσε τα λάθη πληκτρολόγησης."),
+    mechanics: both("Type part of a command or filename and press Tab. One match fills in; multiple matches are listed so you can narrow the choice.", "Γράψε μέρος εντολής ή ονόματος και πάτησε Tab. Ένα αποτέλεσμα συμπληρώνεται· πολλά εμφανίζονται για να περιορίσεις την επιλογή."),
+    output: both("A completion changes the current input or lists candidates. It does not run the command until you press Enter.", "Η συμπλήρωση αλλάζει την τρέχουσα είσοδο ή εμφανίζει υποψήφια. Δεν εκτελείται μέχρι να πατήσεις Enter."),
+    syntax: "TYPE PREFIX, THEN PRESS TAB", example: "ls ",
+  },
+  {
+    key: "pwd", aliases: ["pwd"], title: both("Print working directory", "Εμφάνιση τρέχοντος φακέλου"),
+    purpose: both("Orient yourself in the filesystem.", "Προσανατολίσου στο σύστημα αρχείων."),
+    mechanics: both("pwd means print working directory. It reads the shell's current location; it does not change files.", "pwd σημαίνει print working directory. Εμφανίζει την τρέχουσα θέση χωρίς να αλλάζει αρχεία."),
+    output: both("The printed absolute path is where relative paths such as notes.txt will be resolved.", "Η απόλυτη διαδρομή δείχνει από πού θα λυθούν σχετικές διαδρομές όπως notes.txt."),
+    syntax: "pwd", example: "pwd",
+  },
+  {
+    key: "whoami", aliases: ["whoami"], title: both("Current identity", "Τρέχουσα ταυτότητα"),
+    purpose: both("Check which account will own the next action.", "Έλεγξε ποιος λογαριασμός θα εκτελέσει την επόμενη ενέργεια."),
+    mechanics: both("whoami prints the effective username. A root result means administrator-level access inside this simulation.", "Το whoami εμφανίζει το ενεργό όνομα χρήστη. Το root σημαίνει δικαιώματα διαχειριστή μέσα στην προσομοίωση."),
+    output: both("Use the identity together with the prompt and file permissions; the username alone does not prove access to a remote machine.", "Συνδύασε την ταυτότητα με το prompt και τα δικαιώματα. Το όνομα μόνο του δεν σημαίνει πρόσβαση σε απομακρυσμένο host."),
+    syntax: "whoami", example: "whoami", caution: both("Root can make broad changes. Practice only in the isolated lab.", "Ο root μπορεί να κάνει μεγάλες αλλαγές. Εξασκήσου μόνο στο απομονωμένο lab."),
+  },
+  {
+    key: "id", aliases: ["id"], title: both("User and group IDs", "Αναγνωριστικά χρήστη και ομάδων"),
+    purpose: both("Inspect numeric identity and group membership.", "Έλεγξε την αριθμητική ταυτότητα και τις ομάδες."),
+    mechanics: both("id reports UID, primary GID, and supplementary groups. Group membership often explains why a user can access a resource.", "Το id εμφανίζει UID, κύριο GID και πρόσθετες ομάδες. Οι ομάδες εξηγούν συχνά την πρόσβαση σε πόρους."),
+    output: both("uid=0 means root. Other numeric IDs map to accounts and groups in the local system.", "uid=0 σημαίνει root. Τα υπόλοιπα αριθμητικά IDs αντιστοιχούν σε τοπικούς χρήστες και ομάδες."),
+    syntax: "id", example: "id",
+  },
+  {
+    key: "hostname", aliases: ["hostname"], title: both("Machine name", "Όνομα μηχανήματος"),
+    purpose: both("Identify the current simulated host.", "Αναγνώρισε τον τρέχοντα προσομοιωμένο host."),
+    mechanics: both("hostname prints the local system name. It is not a DNS lookup and does not identify the user.", "Το hostname εμφανίζει το τοπικό όνομα συστήματος. Δεν κάνει DNS lookup και δεν είναι όνομα χρήστη."),
+    output: both("A short name such as kali labels the machine whose shell prompt you are using.", "Ένα όνομα όπως kali χαρακτηρίζει το μηχάνημα του prompt."),
+    syntax: "hostname", example: "hostname",
+  },
+  {
+    key: "uname", aliases: ["uname"], title: both("Kernel and system information", "Πληροφορίες kernel και συστήματος"),
+    purpose: both("Learn the operating-system and kernel details.", "Μάθε πληροφορίες λειτουργικού και kernel."),
+    mechanics: both("uname reports kernel metadata. The -a option requests the full system summary on a real Linux host.", "Το uname εμφανίζει μεταδεδομένα kernel. Η επιλογή -a ζητά πλήρη σύνοψη σε πραγματικό Linux."),
+    output: both("The output is inventory information, not evidence that a vulnerability exists.", "Η έξοδος είναι πληροφορία απογραφής, όχι απόδειξη ευπάθειας."),
+    syntax: "uname -a", example: "uname -a",
+  },
+  {
+    key: "ls", aliases: ["ls"], title: both("List directory entries", "Λίστα περιεχομένων φακέλου"),
+    purpose: both("See files and subdirectories before acting.", "Δες αρχεία και υποφακέλους πριν ενεργήσεις."),
+    mechanics: both("ls reads a directory. -a includes dotfiles, -l shows permissions/owner/size, and -h makes long-list sizes easier to read.", "Το ls διαβάζει έναν φάκελο. Το -a δείχνει dotfiles, το -l δικαιώματα/ιδιοκτήτη/μέγεθος και το -h ευανάγνωστα μεγέθη."),
+    output: both("Names are entries in the current directory unless a path was supplied. No output can mean the directory is empty.", "Τα ονόματα ανήκουν στον τρέχοντα φάκελο αν δεν δόθηκε διαδρομή. Κενή έξοδος μπορεί να σημαίνει άδειο φάκελο."),
+    syntax: "ls [-a] [-l] [PATH]", example: "ls -la /root",
+  },
+  {
+    key: "cd", aliases: ["cd"], title: both("Change directory", "Αλλαγή φακέλου"),
+    purpose: both("Move the shell's working location.", "Μετακίνησε την τρέχουσα θέση του shell."),
+    mechanics: both("cd changes the current working directory. ~ means home, .. means parent, and an absolute path begins at /.", "Το cd αλλάζει τον φάκελο εργασίας. Το ~ σημαίνει home, το .. γονικό φάκελο και η απόλυτη διαδρομή ξεκινά με /."),
+    output: both("A successful cd is normally silent. Read the updated prompt or run pwd to confirm the new location.", "Το επιτυχημένο cd συνήθως δεν τυπώνει κάτι. Δες το prompt ή τρέξε pwd για επιβεβαίωση."),
+    syntax: "cd PATH", example: "cd ~/Documents",
+  },
+  {
+    key: "cat", aliases: ["cat"], title: both("Read a text file", "Ανάγνωση αρχείου κειμένου"),
+    purpose: both("Print a file's contents to the terminal.", "Εμφάνισε τα περιεχόμενα αρχείου στο τερματικό."),
+    mechanics: both("cat reads the named file and writes its bytes to standard output. It is useful for short text files, not huge logs.", "Το cat διαβάζει το αρχείο και στέλνει το περιεχόμενο στο standard output. Ταιριάζει σε μικρά αρχεία, όχι τεράστια logs."),
+    output: both("The printed lines are the file contents, not commands to run. A permission or path error means nothing was read.", "Οι γραμμές είναι περιεχόμενο αρχείου, όχι εντολές προς εκτέλεση. Σφάλμα δικαιωμάτων ή διαδρομής σημαίνει ότι δεν διαβάστηκε."),
+    syntax: "cat FILE", example: "cat /etc/hosts", caution: both("Treat files as data; never run unknown scripts just because you can read them.", "Αντιμετώπιζε τα αρχεία ως δεδομένα· μην εκτελείς άγνωστα scripts επειδή απλώς τα διάβασες."),
+  },
+  {
+    key: "head", aliases: ["head"], title: both("Read the start of a file", "Ανάγνωση αρχής αρχείου"),
+    purpose: both("Preview the first lines of a text file.", "Προεπισκόπηση πρώτων γραμμών αρχείου."),
+    mechanics: both("head shows the first ten lines by default. -n changes the number.", "Το head δείχνει τις πρώτες δέκα γραμμές. Το -n αλλάζει το πλήθος."),
+    output: both("The result is a prefix of the file, which is useful for headers and configuration context.", "Η έξοδος είναι η αρχή του αρχείου, χρήσιμη για headers και πλαίσιο ρυθμίσεων."),
+    syntax: "head [-n COUNT] FILE", example: "head -n 5 /var/log/syslog",
+  },
+  {
+    key: "tail", aliases: ["tail"], title: both("Read the end of a file", "Ανάγνωση τέλους αρχείου"),
+    purpose: both("Inspect recent lines in a log or text file.", "Έλεγξε πρόσφατες γραμμές log ή κειμένου."),
+    mechanics: both("tail shows the last ten lines by default. Real tail supports -f to follow a growing log.", "Το tail δείχνει τις τελευταίες δέκα γραμμές. Σε πραγματικό Linux το -f παρακολουθεί log που μεγαλώνει."),
+    output: both("The result is a suffix of the file, often where recent events appear.", "Η έξοδος είναι το τέλος του αρχείου, όπου βρίσκονται συχνά πρόσφατα συμβάντα."),
+    syntax: "tail [-n COUNT] FILE", example: "tail -n 5 /var/log/auth.log",
+  },
+  {
+    key: "grep", aliases: ["grep"], title: both("Filter matching lines", "Φιλτράρισμα γραμμών"),
+    purpose: both("Find text patterns in a file or command output.", "Βρες μοτίβα κειμένου σε αρχείο ή έξοδο εντολής."),
+    mechanics: both("grep tests each input line against a pattern. With a pipe it reads the previous command's output; -i ignores case and -v inverts the match.", "Το grep ελέγχει κάθε γραμμή με μοτίβο. Με pipe διαβάζει την προηγούμενη έξοδο· το -i αγνοεί πεζά/κεφαλαία και το -v αντιστρέφει το ταίριασμα."),
+    output: both("Printed rows are the matches. No rows usually means no match; it is not necessarily an error.", "Οι γραμμές που τυπώνονται ταιριάζουν. Καμία γραμμή συνήθως σημαίνει ότι δεν βρέθηκε ταίριασμα, όχι απαραίτητα σφάλμα."),
+    syntax: "grep [OPTIONS] PATTERN FILE", example: "grep -i ssh /etc/hosts",
+  },
+  {
+    key: "find", aliases: ["find"], title: both("Search the filesystem", "Αναζήτηση στο σύστημα αρχείων"),
+    purpose: both("Locate files using their path, name, type, owner, or other properties.", "Εντόπισε αρχεία με βάση διαδρομή, όνομα, τύπο, ιδιοκτήτη ή άλλα γνωρίσματα."),
+    mechanics: both("find starts at a path and walks the directory tree. -type f selects regular files; -name applies a filename pattern.", "Το find ξεκινά από μια διαδρομή και διασχίζει τους φακέλους. Το -type f επιλέγει αρχεία και το -name μοτίβο ονόματος."),
+    output: both("Each printed path is a match. Permission errors mean parts of the tree were not readable by this account.", "Κάθε τυπωμένη διαδρομή είναι αποτέλεσμα. Σφάλματα permission σημαίνουν ότι ο λογαριασμός δεν διάβασε όλο το δέντρο."),
+    syntax: "find START -type f -name PATTERN", example: "find /root -type f -name '*.txt'",
+  },
+  {
+    key: "locate", aliases: ["locate"], title: both("Search the filename index", "Αναζήτηση ευρετηρίου ονομάτων"),
+    purpose: both("Find paths quickly by name keyword.", "Βρες διαδρομές γρήγορα με λέξη στο όνομα."),
+    mechanics: both("locate searches an index rather than walking the live tree. Its results depend on when the index was last updated.", "Το locate ψάχνει ευρετήριο, όχι το ζωντανό δέντρο. Τα αποτελέσματα εξαρτώνται από την τελευταία ενημέρωση."),
+    output: both("Each row is an indexed path. A very new file may not appear yet; find searches the live filesystem.", "Κάθε γραμμή είναι ευρετηριασμένη διαδρομή. Ένα νέο αρχείο μπορεί να λείπει· το find ψάχνει το ζωντανό σύστημα."),
+    syntax: "locate KEYWORD", example: "locate CTF | more",
+  },
+  {
+    key: "whereis", aliases: ["whereis"], title: both("Locate binary and manual", "Εντοπισμός binary και manual"),
+    purpose: both("Look up common locations for a program and its documentation.", "Βρες συνήθεις θέσεις προγράμματος και τεκμηρίωσης."),
+    mechanics: both("whereis searches standard binary, source, and manual locations; it does not search every file on disk.", "Το whereis ψάχνει συνηθισμένες θέσεις binary, source και manual, όχι κάθε αρχείο του δίσκου."),
+    output: both("A binary path and a man-page path may be printed on one line.", "Μπορεί να εμφανιστεί διαδρομή binary και man page στην ίδια γραμμή."),
+    syntax: "whereis PROGRAM", example: "whereis git",
+  },
+  {
+    key: "which", aliases: ["which"], title: both("Find an executable on PATH", "Εντοπισμός εκτελέσιμου στο PATH"),
+    purpose: both("See which executable a shell would launch for a name.", "Δες ποιο εκτελέσιμο θα ξεκινήσει το shell για ένα όνομα."),
+    mechanics: both("which searches the directories listed in PATH, in order. It is narrower than whereis.", "Το which ψάχνει τους φακέλους του PATH με τη σειρά. Είναι πιο περιορισμένο από το whereis."),
+    output: both("The printed path is the matching executable found on PATH; no path means it was not found there.", "Η τυπωμένη διαδρομή είναι το binary που βρέθηκε στο PATH· χωρίς διαδρομή δεν βρέθηκε εκεί."),
+    syntax: "which PROGRAM", example: "which git",
+  },
+  {
+    key: "echo", aliases: ["echo"], title: both("Print or redirect text", "Εμφάνιση ή ανακατεύθυνση κειμένου"),
+    purpose: both("Write text to the terminal or send it into a file.", "Γράψε κείμενο στο τερματικό ή κατεύθυνέ το σε αρχείο."),
+    mechanics: both("echo expands variables such as $HOME in this lab. > replaces a file; >> appends. A redirect changes a file rather than printing the text to the terminal.", "Το echo κάνει expand μεταβλητές όπως $HOME. Το > αντικαθιστά αρχείο, το >> προσθέτει. Με redirect αλλάζει αρχείο αντί να τυπώσει το κείμενο."),
+    output: both("Without redirection, the expanded text appears. With redirection, no terminal output is expected; inspect the target file to verify.", "Χωρίς redirect εμφανίζεται το κείμενο. Με redirect δεν αναμένεται έξοδος· έλεγξε το αρχείο-στόχο."),
+    syntax: "echo TEXT [> FILE | >> FILE]", example: 'echo "hello" > note.txt', caution: both("A single > overwrites the destination. Check the path before using it.", "Το μονό > αντικαθιστά τον προορισμό. Έλεγξε τη διαδρομή."),
+  },
+  {
+    key: "touch", aliases: ["touch"], title: both("Create or timestamp a file", "Δημιουργία ή ενημέρωση χρόνου αρχείου"),
+    purpose: both("Create an empty file when it does not exist.", "Δημιούργησε κενό αρχείο αν δεν υπάρχει."),
+    mechanics: both("touch updates modification time; in this beginner lab it also creates a missing file.", "Το touch ενημερώνει χρόνο τροποποίησης· στο beginner lab δημιουργεί και νέο αρχείο."),
+    output: both("Success is normally silent. Use ls -l or cat to verify the new file.", "Η επιτυχία συνήθως δεν τυπώνει τίποτα. Χρησιμοποίησε ls -l ή cat για έλεγχο."),
+    syntax: "touch FILE", example: "touch practice.txt",
+  },
+  {
+    key: "mkdir", aliases: ["mkdir"], title: both("Create a directory", "Δημιουργία φακέλου"),
+    purpose: both("Make a new folder for organizing files.", "Φτιάξε φάκελο για οργάνωση αρχείων."),
+    mechanics: both("mkdir creates the named directory. Its parent must already exist unless -p is supported.", "Το mkdir δημιουργεί τον φάκελο. Ο γονικός φάκελος πρέπει να υπάρχει, εκτός αν χρησιμοποιηθεί -p."),
+    output: both("No output usually means success. ls shows the new directory.", "Χωρίς έξοδο συνήθως πέτυχε. Το ls εμφανίζει τον νέο φάκελο."),
+    syntax: "mkdir DIRECTORY", example: "mkdir Documents/practice",
+  },
+  {
+    key: "cp", aliases: ["cp"], title: both("Copy a file", "Αντιγραφή αρχείου"),
+    purpose: both("Create a second copy at a destination.", "Δημιούργησε δεύτερο αντίγραφο σε προορισμό."),
+    mechanics: both("cp reads the source and writes a copy at the destination. Copying into an existing directory keeps the source filename.", "Το cp διαβάζει την πηγή και γράφει αντίγραφο στον προορισμό. Αν ο προορισμός είναι φάκελος, διατηρείται το όνομα."),
+    output: both("Success is usually silent. List the destination to confirm the copy.", "Η επιτυχία συνήθως είναι σιωπηλή. Κάνε ls στον προορισμό."),
+    syntax: "cp SOURCE DESTINATION", example: "cp notes.txt Documents/",
+  },
+  {
+    key: "mv", aliases: ["mv"], title: both("Move or rename", "Μετακίνηση ή μετονομασία"),
+    purpose: both("Move an entry to another path or rename it.", "Μετακίνησε αρχείο σε άλλη διαδρομή ή μετονόμασέ το."),
+    mechanics: both("mv removes the old directory entry after placing the entry at the destination.", "Το mv αφαιρεί την παλιά εγγραφή αφού τοποθετήσει το αρχείο στον νέο προορισμό."),
+    output: both("Success is normally silent. Check both source and destination paths with ls.", "Η επιτυχία συνήθως είναι σιωπηλή. Έλεγξε πηγή και προορισμό με ls."),
+    syntax: "mv SOURCE DESTINATION", example: "mv draft.txt final.txt",
+  },
+  {
+    key: "rm", aliases: ["rm"], title: both("Remove a file", "Αφαίρεση αρχείου"),
+    purpose: both("Delete an entry from the filesystem.", "Διέγραψε μια εγγραφή από το σύστημα αρχείων."),
+    mechanics: both("rm removes the named file. Recursive options can remove directory trees, so verify every path before using them.", "Το rm αφαιρεί το αρχείο. Οι recursive επιλογές αφαιρούν ολόκληρα δέντρα φακέλων· έλεγχε πάντα τη διαδρομή."),
+    output: both("A silent result usually means removal succeeded; check with ls. Deleted data is not moved to a recycle bin.", "Σιωπηλή έξοδος συνήθως σημαίνει επιτυχημένη διαγραφή· έλεγξε με ls. Τα δεδομένα δεν πάνε σε κάδο ανακύκλωσης."),
+    syntax: "rm FILE", example: "rm practice-copy.txt", caution: both("Destructive operation. The sandbox is resettable; real files may not be.", "Καταστροφική ενέργεια. Το sandbox επαναφέρεται· τα πραγματικά αρχεία ίσως όχι."),
+  },
+  {
+    key: "rmdir", aliases: ["rmdir"], title: both("Remove an empty directory", "Αφαίρεση κενού φακέλου"),
+    purpose: both("Remove a directory only when it contains no files.", "Αφαίρεσε φάκελο μόνο όταν είναι άδειος."),
+    mechanics: both("rmdir refuses non-empty directories. That guard helps prevent accidental recursive deletion.", "Το rmdir αρνείται μη άδειους φακέλους. Έτσι αποφεύγεται τυχαία recursive διαγραφή."),
+    output: both("No output means the empty directory was removed. If it contains entries, the command reports that it is not empty.", "Χωρίς έξοδο σημαίνει ότι αφαιρέθηκε. Αν έχει περιεχόμενο, αναφέρει ότι δεν είναι άδειος."),
+    syntax: "rmdir DIRECTORY", example: "rmdir empty-folder",
+  },
+  {
+    key: "nl", aliases: ["nl"], title: both("Number lines", "Αρίθμηση γραμμών"),
+    purpose: both("Display text with line numbers for reference.", "Εμφάνισε κείμενο με αριθμούς γραμμών."),
+    mechanics: both("nl prefixes each input line with a line number. It is a view operation and does not edit the file.", "Το nl βάζει αριθμό πριν από κάθε γραμμή. Δεν τροποποιεί το αρχείο."),
+    output: both("The numbers help identify a particular line when discussing configuration or code.", "Οι αριθμοί βοηθούν να εντοπιστεί συγκεκριμένη γραμμή σε ρυθμίσεις ή κώδικα."),
+    syntax: "nl FILE", example: "nl /etc/hosts",
+  },
+  {
+    key: "sed", aliases: ["sed"], title: both("Transform text with sed", "Μετασχηματισμός κειμένου με sed"),
+    purpose: both("Search and transform text streams.", "Αναζήτησε και μετασχημάτισε ροές κειμένου."),
+    mechanics: both("The s/OLD/NEW/g expression substitutes OLD with NEW; g means every occurrence on a line. Unless redirected, sed prints transformed output and leaves the source file unchanged.", "Η έκφραση s/OLD/NEW/g αντικαθιστά OLD με NEW· το g σημαίνει όλες τις εμφανίσεις στη γραμμή. Χωρίς redirect το αρχικό αρχείο δεν αλλάζει."),
+    output: both("The displayed text is the transformed stream. Redirect to a new file if you need to save a copy.", "Το κείμενο που εμφανίζεται είναι η μετασχηματισμένη ροή. Κάνε redirect σε νέο αρχείο για αποθήκευση."),
+    syntax: "sed 's/OLD/NEW/g' FILE", example: "sed 's/WWW/www/g' hackforge.in",
+  },
+  {
+    key: "more", aliases: ["more"], title: both("Page through a file", "Σελιδοποίηση αρχείου"),
+    purpose: both("Read a long file a page at a time.", "Διάβασε μεγάλο αρχείο σε σελίδες."),
+    mechanics: both("more is a pager. On a real terminal, Enter advances and q exits. This simulator prints a text preview.", "Το more είναι pager. Σε πραγματικό terminal το Enter προχωρά και το q βγαίνει. Ο προσομοιωτής εμφανίζει preview."),
+    output: both("The lines come from the requested file; they are not a status report.", "Οι γραμμές προέρχονται από το αρχείο, όχι από αναφορά κατάστασης."),
+    syntax: "more FILE", example: "more /etc/ettercap/etter.dns",
+  },
+  {
+    key: "less", aliases: ["less"], title: both("Browse and search text", "Περιήγηση και αναζήτηση κειμένου"),
+    purpose: both("Navigate through text and search within it.", "Περιηγήσου σε κείμενο και αναζήτησέ το."),
+    mechanics: both("less is an interactive pager. In a real terminal, /word searches and q exits. This simulator prints a preview instead of opening an interactive TTY.", "Το less είναι διαδραστικό pager. Σε πραγματικό terminal το /λέξη ψάχνει και το q βγαίνει. Ο προσομοιωτής δείχνει preview."),
+    output: both("The shown text is the file preview; search controls are described here but not attached to a live TTY.", "Το κείμενο είναι preview αρχείου· τα πλήκτρα αναζήτησης δεν συνδέονται με πραγματικό TTY."),
+    syntax: "less FILE", example: "less /etc/ettercap/etter.dns",
+  },
+  {
+    key: "chmod", aliases: ["chmod"], title: both("Change permission bits", "Αλλαγή bits δικαιωμάτων"),
+    purpose: both("Grant or remove read, write, and execute permission.", "Δώσε ή αφαίρεσε δικαιώματα ανάγνωσης, εγγραφής και εκτέλεσης."),
+    mechanics: both("Numeric digits encode owner/group/other: read=4, write=2, execute=1. +x adds execute. A leading 4 sets SUID; a leading 2 sets SGID.", "Τα αριθμητικά ψηφία κωδικοποιούν owner/group/other: read=4, write=2, execute=1. Το +x προσθέτει εκτέλεση. Αρχικό 4 θέτει SUID, αρχικό 2 SGID."),
+    output: both("chmod is normally silent. Verify the resulting mode with ls -l. Avoid 777: it grants everyone every permission.", "Το chmod συνήθως δεν τυπώνει κάτι. Έλεγξε το νέο mode με ls -l. Απόφυγε 777: δίνει όλα τα δικαιώματα σε όλους."),
+    syntax: "chmod MODE FILE", example: "chmod 640 notes.txt", caution: both("Overly broad or special permissions can expose data or create privilege risks.", "Υπερβολικά ανοιχτά ή special permissions εκθέτουν δεδομένα και αυξάνουν τον κίνδυνο προνομίων."),
+  },
+  {
+    key: "chown", aliases: ["chown"], title: both("Change file owner", "Αλλαγή ιδιοκτήτη αρχείου"),
+    purpose: both("Transfer ownership to a user account.", "Μετέφερε την ιδιοκτησία σε λογαριασμό χρήστη."),
+    mechanics: both("chown updates the owner metadata on the named file. On real systems it usually requires root or equivalent authorization.", "Το chown αλλάζει τα μεταδεδομένα ιδιοκτήτη. Σε πραγματικά συστήματα συνήθως απαιτεί root ή αντίστοιχη εξουσιοδότηση."),
+    output: both("Success is usually silent. Run ls -l to inspect the owner column.", "Η επιτυχία συνήθως είναι σιωπηλή. Τρέξε ls -l για τη στήλη owner."),
+    syntax: "chown USER FILE", example: "chown Raj hackforge.txt",
+  },
+  {
+    key: "chgrp", aliases: ["chgrp"], title: both("Change file group", "Αλλαγή ομάδας αρχείου"),
+    purpose: both("Assign a file to a group for shared access control.", "Ανάθεσε αρχείο σε ομάδα για κοινό έλεγχο πρόσβασης."),
+    mechanics: both("chgrp changes the group metadata; it does not change the file's content.", "Το chgrp αλλάζει τα μεταδεδομένα ομάδας, όχι το περιεχόμενο."),
+    output: both("Success is normally silent. Use ls -l to confirm the group column.", "Η επιτυχία είναι συνήθως σιωπηλή. Επιβεβαίωσε τη στήλη group με ls -l."),
+    syntax: "chgrp GROUP FILE", example: "chgrp ignite hackforge.txt",
+  },
+  {
+    key: "apt-cache", aliases: ["apt-cache"], title: both("Search package metadata", "Αναζήτηση μεταδεδομένων πακέτων"),
+    purpose: both("Check the configured package index before installing software.", "Έλεγξε το ευρετήριο πακέτων πριν εγκαταστήσεις λογισμικό."),
+    mechanics: both("apt-cache search matches package names and descriptions in the local package index. It does not install the package.", "Το apt-cache search ταιριάζει ονόματα και περιγραφές στο τοπικό ευρετήριο. Δεν εγκαθιστά πακέτο."),
+    output: both("Each result is a package candidate and short description; availability depends on configured repositories.", "Κάθε αποτέλεσμα είναι υποψήφιο πακέτο με σύντομη περιγραφή· η διαθεσιμότητα εξαρτάται από τα repositories."),
+    syntax: "apt-cache search KEYWORD", example: "apt-cache search git",
+  },
+  {
+    key: "apt-get", aliases: ["apt-get", "apt"], title: both("Manage Debian packages", "Διαχείριση Debian πακέτων"),
+    purpose: both("Install, remove, or refresh package information in Debian-based systems.", "Εγκατέστησε, αφαίρεσε ή ανανέωσε πακέτα σε Debian-based συστήματα."),
+    mechanics: both("update refreshes package indexes; upgrade applies available updates; install adds a package; remove uninstalls it; purge also removes package configuration. This lab aborts removals safely.", "Το update ανανεώνει indexes, το upgrade εφαρμόζει ενημερώσεις, το install προσθέτει πακέτο, το remove το αφαιρεί και το purge καθαρίζει ρυθμίσεις. Το lab ακυρώνει με ασφάλεια τις αφαιρέσεις."),
+    output: both("Read the package names and summary before confirming. In this simulator, installation and update results are illustrative and do not contact a repository.", "Διάβασε τα ονόματα πακέτων και τη σύνοψη πριν επιβεβαιώσεις. Ο προσομοιωτής δεν επικοινωνεί με repository."),
+    syntax: "apt-get ACTION [PACKAGE]", example: "apt-get install git", caution: both("Package installs can alter a real system. This implementation is simulation-only.", "Η εγκατάσταση πακέτων αλλάζει πραγματικό σύστημα. Αυτή η υλοποίηση είναι μόνο προσομοίωση."),
+  },
+  {
+    key: "ifconfig", aliases: ["ifconfig"], title: both("Inspect network interfaces", "Έλεγχος διεπαφών δικτύου"),
+    purpose: both("Review local IP, netmask, broadcast, MAC, and link state.", "Έλεγξε τοπική IP, netmask, broadcast, MAC και κατάσταση σύνδεσης."),
+    mechanics: both("ifconfig reports interface configuration. In this lab, eth0 and loopback are simulated; no real network adapter is changed.", "Το ifconfig εμφανίζει ρυθμίσεις διεπαφών. Εδώ τα eth0 και loopback είναι προσομοιωμένα· δεν αλλάζει πραγματικός adapter."),
+    output: both("inet is an IPv4 address, netmask defines the subnet, broadcast is the subnet broadcast, and ether is a MAC address.", "inet είναι IPv4, netmask ορίζει subnet, broadcast είναι broadcast του subnet και ether είναι MAC."),
+    syntax: "ifconfig [INTERFACE]", example: "ifconfig",
+  },
+  {
+    key: "iwconfig", aliases: ["iwconfig"], title: both("Inspect wireless interfaces", "Έλεγχος ασύρματων διεπαφών"),
+    purpose: both("View wireless adapter mode and association details.", "Δες λειτουργία και σύνδεση ασύρματου adapter."),
+    mechanics: both("iwconfig shows wireless settings such as ESSID and mode. Wired interfaces report that they have no wireless extensions.", "Το iwconfig εμφανίζει ESSID και mode. Οι ενσύρματες διεπαφές λένε ότι δεν έχουν ασύρματες επεκτάσεις."),
+    output: both("No wireless extensions is an informative result: that interface is not a wireless adapter.", "Το no wireless extensions είναι πληροφορία: η διεπαφή δεν είναι ασύρματος adapter."),
+    syntax: "iwconfig", example: "iwconfig",
+  },
+  {
+    key: "dhclient", aliases: ["dhclient"], title: both("Request a DHCP lease", "Αίτημα DHCP lease"),
+    purpose: both("Request an automatically assigned network address.", "Ζήτησε αυτόματα εκχωρημένη διεύθυνση δικτύου."),
+    mechanics: both("dhclient sends a DHCP request for an interface. Here the DHCP exchange is mocked and updates only the virtual interface.", "Το dhclient στέλνει αίτημα DHCP για διεπαφή. Εδώ η ανταλλαγή είναι εικονική και αλλάζει μόνο τη virtual interface."),
+    output: both("DHCPREQUEST is the request; bound to ... means the simulator assigned a lease address.", "Το DHCPREQUEST είναι αίτημα· το bound to ... σημαίνει ότι αποδόθηκε lease από τον προσομοιωτή."),
+    syntax: "dhclient INTERFACE", example: "dhclient eth0", caution: both("The simulated lease cannot change your real network settings.", "Το εικονικό lease δεν αλλάζει ρυθμίσεις πραγματικού δικτύου."),
+  },
+  {
+    key: "dig", aliases: ["dig"], title: both("Query DNS records", "Ερώτημα εγγραφών DNS"),
+    purpose: both("Ask DNS for a name's address or mail/name-server records.", "Ρώτησε DNS για διεύθυνση ή εγγραφές mail/name-server."),
+    mechanics: both("A is the address record; MX identifies mail exchangers; NS identifies authoritative name servers. HackForge resolves only lab names.", "Το A είναι διεύθυνση, το MX mail exchangers και το NS name servers. Το HackForge επιλύει μόνο ονόματα lab."),
+    output: both("The ANSWER SECTION shows the returned record and value. A record maps a name to an IP address.", "Το ANSWER SECTION δείχνει εγγραφή και τιμή. Η A αντιστοιχίζει όνομα σε IP."),
+    syntax: "dig NAME [A|MX|NS]", example: "dig hackforge.lab mx",
+  },
+  {
+    key: "ip", aliases: ["ip"], title: both("Inspect network configuration", "Έλεγχος ρυθμίσεων δικτύου"),
+    purpose: both("Inspect interfaces and addresses with the modern ip utility.", "Έλεγξε διεπαφές και διευθύνσεις με το σύγχρονο ip."),
+    mechanics: both("ip addr is the modern counterpart for interface/address inspection. This simulation prints the lab's virtual interface summary.", "Το ip addr είναι σύγχρονος τρόπος ελέγχου διεπαφών/διευθύνσεων. Η προσομοίωση εμφανίζει την εικονική διεπαφή."),
+    output: both("Look for interface names and inet address lines to identify local addressing.", "Αναζήτησε ονόματα διεπαφών και γραμμές inet για τοπικές διευθύνσεις."),
+    syntax: "ip addr", example: "ip addr",
+  },
+  {
+    key: "ping", aliases: ["ping"], title: both("Test basic reachability", "Έλεγχος βασικής προσβασιμότητας"),
+    purpose: both("Send simulated ICMP echo requests to an authorized lab host.", "Στείλε προσομοιωμένα ICMP echo σε εξουσιοδοτημένο host του lab."),
+    mechanics: both("ping sends ICMP echo requests. A real host may block ICMP while still being online; this lab always returns a safe simulated response.", "Το ping στέλνει ICMP echo. Πραγματικός host μπορεί να μπλοκάρει ICMP ενώ είναι online· εδώ η απάντηση είναι εικονική."),
+    output: both("Replies indicate the simulator considers the host reachable; packet loss summarizes unanswered requests.", "Οι απαντήσεις δηλώνουν ότι ο προσομοιωτής θεωρεί τον host προσβάσιμο· το packet loss συνοψίζει αναπάντητα αιτήματα."),
+    syntax: "ping HOST", example: "ping 10.10.10.5", caution: both("Only probe systems within written authorization. The lab target is simulated.", "Έλεγχε μόνο συστήματα με γραπτή άδεια. Ο στόχος lab είναι εικονικός."),
+  },
+  {
+    key: "nmap", aliases: ["nmap"], title: both("Inventory authorized lab hosts", "Απογραφή εξουσιοδοτημένων hosts"),
+    purpose: both("Learn how host and service discovery results are read.", "Μάθε να διαβάζεις αποτελέσματα ανακάλυψης hosts και υπηρεσιών."),
+    mechanics: both("The HackForge nmap command returns canned results for lab-only targets. -sn/-sP is host discovery; -sV asks for service versions in a real scan.", "Το nmap του HackForge δίνει προκαθορισμένα αποτελέσματα μόνο για lab. Τα -sn/-sP είναι host discovery και το -sV ζητά εκδόσεις υπηρεσιών σε πραγματική σάρωση."),
+    output: both("Host is up marks a simulated response. PORT/STATE/SERVICE rows describe simulated services; they are not live internet findings.", "Το Host is up δείχνει εικονική απάντηση. Οι γραμμές PORT/STATE/SERVICE περιγράφουν εικονικές υπηρεσίες, όχι ευρήματα live internet."),
+    syntax: "nmap [OPTIONS] TARGET", example: "nmap -sV 10.10.10.5", caution: both("Scanning without permission can be illegal and disruptive. This command never sends packets outside the sandbox.", "Η σάρωση χωρίς άδεια μπορεί να είναι παράνομη και να προκαλέσει προβλήματα. Η εντολή δεν στέλνει πακέτα εκτός sandbox."),
+  },
+  {
+    key: "curl", aliases: ["curl", "wget"], title: both("Fetch a URL", "Λήψη URL"),
+    purpose: both("Request a web resource and inspect its response.", "Ζήτησε web πόρο και έλεγξε την απόκριση."),
+    mechanics: both("curl makes an HTTP request. This simulator returns canned pages for local lab hosts and localhost only.", "Το curl κάνει HTTP request. Ο προσομοιωτής επιστρέφει προκαθορισμένες σελίδες μόνο για localhost και lab hosts."),
+    output: both("HTML/text is the response body. Headers and status codes are omitted in this beginner simulation.", "HTML/κείμενο είναι το σώμα απόκρισης. Headers και status codes παραλείπονται στην beginner προσομοίωση."),
+    syntax: "curl URL", example: "curl http://localhost", caution: both("Use only the sandbox URLs provided by the lab.", "Χρησιμοποίησε μόνο URL sandbox που δίνει το lab."),
+  },
+  {
+    key: "ps", aliases: ["ps"], title: both("List running processes", "Λίστα διεργασιών"),
+    purpose: both("Inspect currently running programs and their process IDs.", "Έλεγξε προγράμματα που εκτελούνται και τα process IDs."),
+    mechanics: both("ps shows a process snapshot. ps aux includes processes from all users and columns such as PID, CPU, memory, and command.", "Το ps εμφανίζει στιγμιότυπο διεργασιών. Το ps aux περιλαμβάνει όλους τους χρήστες και στήλες PID, CPU, μνήμη και εντολή."),
+    output: both("Each row is one running process. PID identifies it for tools such as renice and kill.", "Κάθε γραμμή είναι διεργασία. Το PID τη χαρακτηρίζει για εργαλεία όπως renice και kill."),
+    syntax: "ps [aux]", example: "ps aux | grep cron",
+  },
+  {
+    key: "top", aliases: ["top"], title: both("Monitor process resources", "Παρακολούθηση πόρων διεργασιών"),
+    purpose: both("Find processes consuming the most CPU or memory.", "Βρες διεργασίες που καταναλώνουν CPU ή μνήμη."),
+    mechanics: both("top normally refreshes continuously; the simulator prints one snapshot ordered by CPU use.", "Το top συνήθως ανανεώνεται συνεχώς· ο προσομοιωτής τυπώνει ένα στιγμιότυπο ταξινομημένο με CPU."),
+    output: both("Compare %CPU and %MEM columns to spot unusual resource use; high usage alone is not proof of malicious activity.", "Σύγκρινε %CPU και %MEM για ασυνήθιστη χρήση· υψηλή χρήση μόνη της δεν αποδεικνύει κακόβουλη δραστηριότητα."),
+    syntax: "top", example: "top",
+  },
+  {
+    key: "nice", aliases: ["nice"], title: both("Start with a scheduling priority", "Εκκίνηση με προτεραιότητα scheduler"),
+    purpose: both("Adjust a new process's niceness to share CPU fairly.", "Ρύθμισε niceness νέας διεργασίας για δίκαιη χρήση CPU."),
+    mechanics: both("nice launches a command with a scheduling niceness value. Linux niceness ranges from -20 (higher priority) to 19 (lower priority).", "Το nice ξεκινά εντολή με τιμή niceness. Στο Linux η κλίμακα είναι -20 (υψηλή προτεραιότητα) έως 19 (χαμηλή)."),
+    output: both("The lab confirms a simulated launch; it does not start a real background process.", "Το lab επιβεβαιώνει εικονική εκκίνηση· δεν ξεκινά πραγματική διεργασία."),
+    syntax: "nice -n VALUE COMMAND", example: "nice -n 10 sleep 10",
+  },
+  {
+    key: "renice", aliases: ["renice"], title: both("Change a process priority", "Αλλαγή προτεραιότητας διεργασίας"),
+    purpose: both("Adjust the niceness of an existing process by PID.", "Άλλαξε niceness υπάρχουσας διεργασίας με PID."),
+    mechanics: both("renice takes a priority and process identifier. More positive values yield CPU more readily; changing negative values may require privileges.", "Το renice παίρνει προτεραιότητα και PID. Πιο θετική τιμή παραχωρεί CPU ευκολότερα· αρνητικές τιμές μπορεί να απαιτούν δικαιώματα."),
+    output: both("The old and new priority show the scheduler setting that changed.", "Η παλιά και νέα προτεραιότητα δείχνουν τη ρύθμιση που άλλαξε."),
+    syntax: "renice VALUE PID", example: "renice 10 6242",
+  },
+  {
+    key: "kill", aliases: ["kill"], title: both("Signal a process", "Αποστολή σήματος σε διεργασία"),
+    purpose: both("Ask a process to stop or send a stronger termination signal.", "Ζήτησε από διεργασία να σταματήσει ή στείλε ισχυρότερο σήμα."),
+    mechanics: both("kill sends a signal to a PID. -1 is SIGHUP; -9 is SIGKILL and cannot be handled by the process. Prefer graceful shutdown when possible.", "Το kill στέλνει σήμα σε PID. Το -1 είναι SIGHUP· το -9 είναι SIGKILL και δεν μπορεί να αγνοηθεί. Προτίμησε ήπιο τερματισμό."),
+    output: both("The simulator marks the selected lab process as stopped. On a real system, verify the PID before signalling it.", "Ο προσομοιωτής σταματά την επιλεγμένη lab διεργασία. Σε πραγματικό σύστημα επιβεβαίωσε το PID."),
+    syntax: "kill [-SIGNAL] PID", example: "kill -1 6242", caution: both("Killing the wrong PID can interrupt important work. This lab uses fake processes.", "Λάθος PID μπορεί να διακόψει σημαντική εργασία. Το lab χρησιμοποιεί ψεύτικες διεργασίες."),
+  },
+  {
+    key: "jobs", aliases: ["jobs"], title: both("List shell background jobs", "Λίστα jobs παρασκηνίου"),
+    purpose: both("See commands started in the background by this shell.", "Δες εντολές που ξεκίνησαν στο παρασκήνιο από αυτό το shell."),
+    mechanics: both("Appending & to a command backgrounds it. jobs lists those shell-managed jobs.", "Το & στο τέλος βάζει εντολή στο παρασκήνιο. Το jobs εμφανίζει τα shell jobs."),
+    output: both("A job number and state identify each listed command. An empty list means no shell jobs are recorded.", "Αριθμός job και κατάσταση χαρακτηρίζουν κάθε εντολή. Κενή λίστα σημαίνει ότι δεν καταγράφηκαν shell jobs."),
+    syntax: "jobs", example: "jobs",
+  },
+  {
+    key: "fg", aliases: ["fg"], title: both("Bring a job to the foreground", "Μεταφορά job στο προσκήνιο"),
+    purpose: both("Resume interacting with a shell job in the foreground.", "Συνέχισε την αλληλεπίδραση με shell job στο προσκήνιο."),
+    mechanics: both("fg brings the current background job, or a selected job, back to the terminal foreground.", "Το fg επαναφέρει το τρέχον background job στο terminal foreground."),
+    output: both("The job's command is shown in this simulation. A real shell would attach your terminal to the running job.", "Ο προσομοιωτής δείχνει την εντολή job. Πραγματικό shell συνδέει το terminal στη διεργασία."),
+    syntax: "fg [JOB]", example: "fg",
+  },
+  {
+    key: "at", aliases: ["at"], title: both("Schedule a one-time job", "Προγραμματισμός εφάπαξ εργασίας"),
+    purpose: both("Queue a command to run once at a future time.", "Προγραμμάτισε εντολή να τρέξει μία φορά στο μέλλον."),
+    mechanics: both("at accepts a time and then commands through an interactive prompt. Repeating schedules are normally handled by cron.", "Το at δέχεται ώρα και εντολές σε διαδραστικό prompt. Επαναλαμβανόμενες εργασίες συνήθως ανήκουν στο cron."),
+    output: both("A job number and scheduled time confirm the simulated queue entry.", "Αριθμός job και ώρα επιβεβαιώνουν την εικονική καταχώριση."),
+    syntax: "at TIME", example: "at 9:00pm",
+  },
+  {
+    key: "env", aliases: ["env", "set", "histsize="], title: both("Inspect shell variables", "Έλεγχος μεταβλητών shell"),
+    purpose: both("Inspect environment or shell variables available to the current session.", "Έλεγξε μεταβλητές περιβάλλοντος ή shell της τρέχουσας συνεδρίας."),
+    mechanics: both("env lists exported environment variables. set in bash shows shell variables and functions as well. A pipe to grep narrows the list.", "Το env εμφανίζει exported μεταβλητές. Το set στο bash εμφανίζει και shell variables/functions. Pipe με grep περιορίζει τη λίστα."),
+    output: both("KEY=value rows show the current session's values; changing a shell variable may not affect child processes until exported.", "Οι γραμμές KEY=value δείχνουν τιμές συνεδρίας· shell variable δεν περνά σε child process μέχρι να γίνει export."),
+    syntax: "env | grep NAME", example: "set | grep HISTSIZE",
+  },
+  {
+    key: "export", aliases: ["export"], title: both("Export a variable", "Export μεταβλητής"),
+    purpose: both("Make a shell variable available to child processes.", "Κάνε shell variable διαθέσιμη σε child processes."),
+    mechanics: both("An assignment such as NAME=value creates a shell variable. export NAME marks it for inheritance by child commands in this session.", "Η ανάθεση NAME=value δημιουργεί shell variable. Το export NAME επιτρέπει κληρονομιά από child commands σε αυτή τη συνεδρία."),
+    output: both("export is normally silent. Run env or printenv to inspect exported values.", "Το export συνήθως δεν τυπώνει κάτι. Τρέξε env ή printenv για έλεγχο."),
+    syntax: "export NAME", example: "export HISTSIZE",
+  },
+  {
+    key: "unset", aliases: ["unset"], title: both("Remove a shell variable", "Αφαίρεση shell variable"),
+    purpose: both("Delete a named variable from the current shell environment.", "Διέγραψε μεταβλητή από το τρέχον shell."),
+    mechanics: both("unset removes the variable binding. It does not delete a file with the same name.", "Το unset αφαιρεί τη μεταβλητή. Δεν διαγράφει αρχείο με ίδιο όνομα."),
+    output: both("The command is silent; echo $NAME after unsetting expands to an empty value.", "Η εντολή είναι σιωπηλή· μετά το unset το echo $NAME γίνεται κενό."),
+    syntax: "unset NAME", example: "unset url_variable",
+  },
+  {
+    key: "service", aliases: ["service"], title: both("Manage a service", "Διαχείριση υπηρεσίας"),
+    purpose: both("Inspect or change the state of a background service.", "Έλεγξε ή άλλαξε κατάσταση υπηρεσίας παρασκηνίου."),
+    mechanics: both("Common actions are status, start, stop, and restart. HackForge updates only an in-memory service state.", "Συνήθεις ενέργειες: status, start, stop, restart. Το HackForge αλλάζει μόνο εικονική κατάσταση υπηρεσίας."),
+    output: both("status reports active/running or stopped/inactive. start/stop messages confirm a simulated transition.", "Το status αναφέρει running ή stopped. Τα μηνύματα start/stop επιβεβαιώνουν εικονική μετάβαση."),
+    syntax: "service NAME status|start|stop|restart", example: "service apache2 status", caution: both("The service commands in HackForge do not start daemons on your computer.", "Οι service εντολές του HackForge δεν ξεκινούν daemon στον υπολογιστή σου."),
+  },
+  {
+    key: "crontab", aliases: ["crontab"], title: both("Edit or list scheduled jobs", "Επεξεργασία προγραμματισμένων εργασιών"),
+    purpose: both("Manage recurring commands for the current account.", "Διαχειρίσου επαναλαμβανόμενες εντολές του λογαριασμού."),
+    mechanics: both("crontab -e opens an editor for the user's crontab; crontab -l lists it. A schedule has minute, hour, day-of-month, month, and day-of-week fields before the command.", "Το crontab -e ανοίγει editor και το -l εμφανίζει εγγραφές. Το πρόγραμμα έχει λεπτό, ώρα, ημέρα μήνα, μήνα και ημέρα εβδομάδας πριν την εντολή."),
+    output: both("The editor preview shows the schedule file. A five-field schedule followed by a command is one job definition.", "Το preview δείχνει το αρχείο schedule. Πέντε πεδία και μετά εντολή ορίζουν ένα job."),
+    syntax: "crontab -e | crontab -l", example: "crontab -e",
+  },
+  {
+    key: "update-rc.d", aliases: ["update-rc.d"], title: both("Configure boot services", "Ρύθμιση υπηρεσιών εκκίνησης"),
+    purpose: both("Learn how a service can be enabled to start at boot.", "Μάθε πώς μια υπηρεσία ενεργοποιείται στην εκκίνηση."),
+    mechanics: both("update-rc.d manages legacy SysV init links. Modern distributions commonly use systemd units instead. The lab only records the requested setting.", "Το update-rc.d διαχειρίζεται παλιά SysV init links. Σύγχρονες διανομές συνήθως χρησιμοποιούν systemd. Το lab απλώς καταγράφει τη ρύθμιση."),
+    output: both("The confirmation states which service and boot action were simulated.", "Η επιβεβαίωση αναφέρει ποια υπηρεσία και ενέργεια εκκίνησης προσομοιώθηκε."),
+    syntax: "update-rc.d SERVICE defaults", example: "update-rc.d mysql defaults",
+  },
+  {
+    key: "bash", aliases: ["bash", "sh", "script"], title: both("Run a shell script", "Εκτέλεση shell script"),
+    purpose: both("Execute a sequence of shell instructions from a script file.", "Εκτέλεσε ακολουθία οδηγιών shell από script."),
+    mechanics: both("A shebang such as #!/bin/bash selects the interpreter. ./script runs a file from the current directory and typically requires execute permission; bash script invokes bash directly.", "Shebang όπως #!/bin/bash επιλέγει interpreter. Το ./script συνήθως απαιτεί execute permission· το bash script καλεί bash απευθείας."),
+    output: both("Lines printed by echo in the script appear in the terminal. This lab uses canned, safe script behavior.", "Οι γραμμές echo του script εμφανίζονται στο terminal. Το lab χρησιμοποιεί προκαθορισμένη ασφαλή συμπεριφορά."),
+    syntax: "bash SCRIPT | ./SCRIPT", example: "./first_script", caution: both("Read a script before executing it, especially outside a sandbox.", "Διάβασε script πριν το εκτελέσεις, ιδίως εκτός sandbox."),
+  },
+  {
+    key: "nano", aliases: ["nano", "vim", "vi"], title: both("Edit a text file", "Επεξεργασία αρχείου κειμένου"),
+    purpose: both("Open or create a text file in a terminal editor.", "Άνοιξε ή δημιούργησε αρχείο σε terminal editor."),
+    mechanics: both("nano and vim are interactive editors on a real terminal. This simulator shows a preview or creates a virtual file; keyboard editing is not implemented.", "Τα nano και vim είναι διαδραστικοί editors σε πραγματικό terminal. Εδώ εμφανίζεται preview ή δημιουργείται virtual αρχείο· η επεξεργασία πλήκτρων δεν υλοποιείται."),
+    output: both("An opened-file message is a simulator notice, not proof that editor keystrokes were saved.", "Το μήνυμα ανοίγματος είναι ειδοποίηση προσομοιωτή, όχι απόδειξη αποθήκευσης πληκτρολογήσεων."),
+    syntax: "nano FILE", example: "nano /etc/hosts",
+  },
+  {
+    key: "ssh", aliases: ["ssh"], title: both("Open a secure shell session", "Άνοιγμα ασφαλούς shell"),
+    purpose: both("Connect to a remote shell using the SSH protocol.", "Συνδέσου σε απομακρυσμένο shell με SSH."),
+    mechanics: both("SSH encrypts the connection. The lab recognizes its named fake hosts and changes the simulated session only.", "Το SSH κρυπτογραφεί τη σύνδεση. Το lab αναγνωρίζει ψεύτικους hosts και αλλάζει μόνο εικονική συνεδρία."),
+    output: both("A welcome banner means the simulator accepted the lab route. Connection errors mean the host or route is not configured in the VFS.", "Το welcome banner σημαίνει ότι ο προσομοιωτής δέχτηκε τη lab διαδρομή. Σφάλμα σύνδεσης σημαίνει ότι ο host/route δεν υπάρχει στο VFS."),
+    syntax: "ssh USER@HOST", example: "ssh ignite@192.168.0.11", caution: both("Use SSH only for systems where you have authorization. All HackForge hosts are fictional.", "Χρησιμοποίησε SSH μόνο σε συστήματα με άδεια. Οι hosts του HackForge είναι φανταστικοί."),
+  },
+  {
+    key: "ftp", aliases: ["ftp"], title: both("Transfer files with FTP", "Μεταφορά αρχείων με FTP"),
+    purpose: both("Practice listing and downloading files from a simulated FTP server.", "Εξασκήσου σε λίστα και λήψη αρχείων από προσομοιωμένο FTP server."),
+    mechanics: both("The lab's ftp.forge.lab is fictional. Login prompts accept the lesson's anonymous example; ls lists fake files, get copies a fake file into the VFS, and bye exits.", "Το ftp.forge.lab είναι φανταστικό. Το login δέχεται το anonymous του μαθήματος· ls εμφανίζει ψεύτικα αρχεία, get τα αντιγράφει στο VFS και bye βγαίνει."),
+    output: both("220/230 are greeting/login status codes, 226 indicates a completed transfer, and 221 means the session ended.", "Τα 220/230 είναι greeting/login status, το 226 δηλώνει ολοκληρωμένη μεταφορά και το 221 κλείσιμο συνεδρίας."),
+    syntax: "ftp HOST → ls → get FILE → bye", example: "ftp ftp.forge.lab", caution: both("FTP does not encrypt credentials. The exercise is a fake local service, not a public server.", "Το FTP δεν κρυπτογραφεί credentials. Η άσκηση είναι τοπική προσομοίωση, όχι δημόσιος server."),
+  },
+  {
+    key: "sudo", aliases: ["sudo"], title: both("Run a command with elevated privileges", "Εκτέλεση εντολής με αυξημένα δικαιώματα"),
+    purpose: both("Understand delegated administrative access and why it must be limited.", "Κατανόησε delegated πρόσβαση διαχειριστή και γιατί πρέπει να περιορίζεται."),
+    mechanics: both("sudo -l lists configured grants. In this simulator, privilege demonstrations are mocked and never affect the host operating system.", "Το sudo -l εμφανίζει grants. Στον προσομοιωτή οι επιδείξεις προνομίων είναι εικονικές και δεν επηρεάζουν το λειτουργικό."),
+    output: both("A grant describes which command and user context are allowed. No grant or an error means the requested action was not authorized.", "Ένα grant περιγράφει ποια εντολή και context επιτρέπονται. Κενό grant/σφάλμα σημαίνει ότι δεν εγκρίθηκε η ενέργεια."),
+    syntax: "sudo -l | sudo COMMAND", example: "sudo -l", caution: both("Never use privilege escalation on systems without written permission. These outcomes are simulated.", "Μην κάνεις privilege escalation σε συστήματα χωρίς γραπτή άδεια. Αυτά τα αποτελέσματα είναι εικονικά."),
+  },
+  {
+    key: "hydra", aliases: ["hydra"], title: both("Credential testing (simulated)", "Έλεγχος διαπιστευτηρίων (προσομοίωση)"),
+    purpose: both("Understand how weak passwords can be tested in a deliberately vulnerable lab.", "Κατανόησε πώς ελέγχονται αδύναμοι κωδικοί σε σκόπιμα ευάλωτο lab."),
+    mechanics: both("This educational terminal only prints canned outcomes for designated fictional hosts. It does not send authentication attempts to a network.", "Το εκπαιδευτικό terminal εμφανίζει προκαθορισμένα αποτελέσματα για φανταστικούς hosts. Δεν στέλνει login attempts στο δίκτυο."),
+    output: both("A valid credential row is a lab answer. Defenders should prefer keys/MFA, rate limits, and alerts for repeated failures.", "Γραμμή valid credential είναι απάντηση lab. Άμυνα: keys/MFA, rate limits και alerts επαναλαμβανόμενων αποτυχιών."),
+    syntax: "hydra ... (fictional lab target only)", example: "hydra -l labuser -P tools/wordlist.txt ssh://10.10.10.12", caution: both("Credential attacks against real accounts require explicit authorization. This implementation is a sandbox mock only.", "Επιθέσεις credentials σε πραγματικούς λογαριασμούς απαιτούν ρητή άδεια. Αυτή η υλοποίηση είναι μόνο sandbox."),
+  },
+  {
+    key: "sqlmap", aliases: ["sqlmap"], title: both("SQL injection detection (simulated)", "Ανίχνευση SQL injection (προσομοίωση)"),
+    purpose: both("Show how automated testing can identify an unsafe lab parameter.", "Δείξε πώς αυτοματοποιημένος έλεγχος εντοπίζει μη ασφαλή lab parameter."),
+    mechanics: both("The simulator returns a canned finding for a designated fake URL. No HTTP requests leave the browser.", "Ο προσομοιωτής επιστρέφει προκαθορισμένο εύρημα για ψεύτικο URL. Δεν φεύγει HTTP request από τον browser."),
+    output: both("An injection point names a parameter; database/table rows are illustrative fake data. The defense is parameterized queries and least privilege.", "Το injection point ονομάζει parameter· οι πίνακες/δεδομένα είναι ψεύτικα. Άμυνα: parameterized queries και least privilege."),
+    syntax: "sqlmap -u LAB_URL", example: "sqlmap -u http://10.10.10.8/login.php?id=1", caution: both("Only test owned or explicitly authorized apps. This command is a local simulator response.", "Έλεγχε μόνο δικές σου ή ρητά εξουσιοδοτημένες εφαρμογές. Εδώ είναι τοπική προσομοίωση."),
+  },
+  {
+    key: "submit", aliases: ["submit"], title: both("Submit a lab flag", "Υποβολή lab flag"),
+    purpose: both("Record that you found a training flag.", "Κατέγραψε ότι βρήκες εκπαιδευτικό flag."),
+    mechanics: both("submit validates the FLAG{...} format and records it in the virtual lab state; flags are fictional and local.", "Το submit ελέγχει τη μορφή FLAG{...} και το αποθηκεύει στην εικονική κατάσταση lab· τα flags είναι φανταστικά."),
+    output: both("Flag accepted means the virtual submission was accepted. It does not submit data anywhere online.", "Το Flag accepted σημαίνει αποδοχή στην εικονική άσκηση, όχι αποστολή δεδομένων online."),
+    syntax: "submit FLAG{...}", example: "submit FLAG{sudo_run_complete}",
+  },
+  {
+    key: "volatility", aliases: ["volatility"], title: both("Read a tool's built-in help", "Βοήθεια ενσωματωμένου εργαλείου"),
+    purpose: both("Practice discovering options before using a specialist program.", "Εξασκήσου στην εύρεση επιλογών πριν χρησιμοποιήσεις ειδικό πρόγραμμα."),
+    mechanics: both("--help prints usage and option information. This lab returns a small stub, not a memory-forensics engine.", "Το --help εμφανίζει χρήση και επιλογές. Το lab επιστρέφει μικρό stub, όχι memory-forensics engine."),
+    output: both("The option list describes what a real program accepts; the named plugins are placeholders in this sandbox.", "Η λίστα επιλογών περιγράφει τι δέχεται πραγματικό πρόγραμμα· τα plugins είναι placeholders στο sandbox."),
+    syntax: "PROGRAM --help", example: "volatility --help",
+  },
+  {
+    key: "clear", aliases: ["clear"], title: both("Clear the visible terminal", "Καθαρισμός ορατού terminal"),
+    purpose: both("Remove old output from the screen so current work is easier to read.", "Αφαίρεσε παλιά έξοδο από την οθόνη για να διαβάζεται ευκολότερα η τρέχουσα εργασία."),
+    mechanics: both("clear changes only the visible terminal buffer. It does not delete files, undo commands, or erase shell history.", "Το clear αλλάζει μόνο το ορατό buffer. Δεν σβήνει αρχεία, δεν αναιρεί εντολές και δεν διαγράφει ιστορικό."),
+    output: both("There is intentionally no output: the screen itself is cleared.", "Δεν υπάρχει έξοδος επίτηδες: καθαρίζεται η ίδια η οθόνη."),
+    syntax: "clear", example: "clear",
+  },
+  {
+    key: "history", aliases: ["history"], title: both("Review command history", "Έλεγχος ιστορικού εντολών"),
+    purpose: both("Recall commands entered earlier in this shell session.", "Θυμήσου εντολές που έγραψες νωρίτερα στη συνεδρία."),
+    mechanics: both("history lists previously entered command lines with sequence numbers. Up/down arrows recall individual entries in this terminal.", "Το history εμφανίζει προηγούμενες γραμμές με αριθμούς. Τα βελάκια πάνω/κάτω ανακαλούν εντολές στο terminal."),
+    output: both("Each row is a prior command, not a new execution. Treat history as potentially sensitive because it can contain typed arguments.", "Κάθε γραμμή είναι προηγούμενη εντολή, όχι νέα εκτέλεση. Το ιστορικό μπορεί να περιέχει ευαίσθητα ορίσματα."),
+    syntax: "history", example: "history",
+  },
+  {
+    key: "man", aliases: ["man"], title: both("Open a manual page", "Άνοιγμα manual page"),
+    purpose: both("Read detailed usage and options for a command.", "Διάβασε αναλυτική χρήση και επιλογές μιας εντολής."),
+    mechanics: both("man PROGRAM opens that program's manual page. Manuals are organized by sections; command help is a useful quick alternative.", "Το man PROGRAM ανοίγει το εγχειρίδιο. Τα manuals οργανώνονται σε sections· το help είναι γρήγορη εναλλακτική."),
+    output: both("The headings describe the program name, usage, and options. This simulator renders a small excerpt instead of a full pager.", "Οι επικεφαλίδες περιγράφουν όνομα, χρήση και επιλογές. Ο προσομοιωτής εμφανίζει μικρό απόσπασμα αντί για πλήρες pager."),
+    syntax: "man COMMAND", example: "man ls",
+  },
+  {
+    key: "date", aliases: ["date"], title: both("Show date and time", "Εμφάνιση ημερομηνίας και ώρας"),
+    purpose: both("Read the current system clock as seen by the shell.", "Δες το ρολόι συστήματος όπως το βλέπει το shell."),
+    mechanics: both("date formats the machine's current date and time. It does not change the clock unless a separate privileged setting is used.", "Το date μορφοποιεί ημερομηνία και ώρα. Δεν αλλάζει το ρολόι."),
+    output: both("The printed timestamp is the value returned by the simulator's local clock.", "Η χρονική σήμανση προέρχεται από το τοπικό ρολόι του προσομοιωτή."),
+    syntax: "date", example: "date",
+  },
+  {
+    key: "cut", aliases: ["cut"], title: both("Select fields from lines", "Επιλογή πεδίων από γραμμές"),
+    purpose: both("Extract a chosen delimiter-separated field from text.", "Εξήγαγε πεδίο κειμένου που χωρίζεται με delimiter."),
+    mechanics: both("cut -d sets the delimiter and -f selects a one-based field number. It is commonly used after a pipe.", "Το cut -d ορίζει delimiter και το -f επιλέγει αριθμημένο πεδίο. Χρησιμοποιείται συχνά μετά από pipe."),
+    output: both("Each output line contains only the selected field. If the delimiter or field index is wrong, the result may be blank.", "Κάθε γραμμή εξόδου έχει μόνο το επιλεγμένο πεδίο. Λάθος delimiter/αριθμός μπορεί να δώσει κενό αποτέλεσμα."),
+    syntax: "cut -d DELIMITER -f FIELD", example: 'echo "alpha,beta" | cut -d , -f 2',
+  },
+  {
+    key: "python", aliases: ["python", "python3"], title: both("Python runtime", "Εκτέλεση Python"),
+    purpose: both("Identify the Python interpreter available in the simulated lab.", "Αναγνώρισε τον Python interpreter στο προσομοιωμένο lab."),
+    mechanics: both("The training terminal prints a fixed version response; it does not open an unrestricted programming runtime.", "Το εκπαιδευτικό terminal εμφανίζει σταθερή έκδοση· δεν ανοίγει απεριόριστο runtime."),
+    output: both("The version banner confirms the simulator's declared Python version.", "Το banner έκδοσης επιβεβαιώνει την Python που δηλώνει ο προσομοιωτής."),
+    syntax: "python3", example: "python3",
+  },
+  {
+    key: "scp", aliases: ["scp"], title: both("Secure copy (simulated)", "Ασφαλής αντιγραφή (προσομοίωση)"),
+    purpose: both("Learn the shape of a secure remote file-copy command.", "Μάθε τη μορφή εντολής ασφαλούς απομακρυσμένης αντιγραφής αρχείου."),
+    mechanics: both("scp copies a source to a destination over SSH on real systems. HackForge reports a canned transfer and never contacts a remote host.", "Το scp αντιγράφει πηγή σε προορισμό μέσω SSH σε πραγματικά συστήματα. Το HackForge εμφανίζει εικονική μεταφορά."),
+    output: both("Transfer complete means only that the sandbox stub accepted the training command.", "Το Transfer complete σημαίνει μόνο ότι το sandbox stub δέχτηκε την εντολή."),
+    syntax: "scp SOURCE USER@HOST:PATH", example: "scp report.txt operator@lab:/tmp/",
+  },
+  {
+    key: "file", aliases: ["file"], title: both("Identify a file by content", "Αναγνώριση αρχείου από περιεχόμενο"),
+    purpose: both("Determine a likely file format from its bytes/signature rather than trusting its extension.", "Εκτίμησε format από bytes/signature, όχι μόνο από κατάληξη."),
+    mechanics: both("file compares known format signatures and metadata. In the DFIR track the output is a fictional evidence-fixture description.", "Το file συγκρίνει γνωστά signatures και metadata. Στο DFIR εμφανίζει περιγραφή φανταστικού evidence fixture."),
+    output: both("The text after the colon is the detected or suspected type. A damaged signature should be reported as a limitation, not silently repaired in the original.", "Το κείμενο μετά την άνω κάτω τελεία είναι ο εντοπισμένος/ύποπτος τύπος. Damaged signature καταγράφεται ως περιορισμός."),
+    syntax: "file PATH", example: "file /cases/IR-2404/evidence/01-intake/challenge-corrupt.png",
+  },
+  {
+    key: "strings", aliases: ["strings"], title: both("Extract printable strings", "Εξαγωγή εκτυπώσιμων strings"),
+    purpose: both("Recover readable fragments from a file for initial triage.", "Ανάκτησε αναγνώσιμα fragments για αρχική διαλογή."),
+    mechanics: both("strings scans bytes for printable sequences. It does not preserve program context, prove execution, or prove that a fragment is malicious.", "Το strings ψάχνει printable ακολουθίες. Δεν διατηρεί πλαίσιο προγράμματος και δεν αποδεικνύει εκτέλεση ή κακοβουλία."),
+    output: both("Each output line is a candidate text fragment. Correlate domains, API names, and paths with other artifacts.", "Κάθε γραμμή είναι υποψήφιο text fragment. Συσχέτισε domains, API names και paths με άλλα artifacts."),
+    syntax: "strings PATH", example: "strings /cases/IR-2404/evidence/07-malware/sample.bin",
+  },
+  {
+    key: "md5sum", aliases: ["md5sum"], title: both("Calculate an MD5 digest", "Υπολογισμός MD5 digest"),
+    purpose: both("Record a legacy digest for file comparison or lookup.", "Κατέγραψε legacy digest για σύγκριση ή αναζήτηση."),
+    mechanics: both("MD5 maps file bytes to a 128-bit digest. It is useful for legacy identification but not collision-resistant and must not be used for modern integrity guarantees or password storage.", "Το MD5 χαρτογραφεί bytes σε digest 128-bit. Χρήσιμο για legacy αναγνώριση, αλλά όχι collision-resistant ή σύγχρονη προστασία."),
+    output: both("The first field is the digest; the final field is the filename. A matching digest supports identical bytes, not authenticity by itself.", "Το πρώτο πεδίο είναι digest και το τελευταίο filename. Ίδιο digest υποστηρίζει ίδια bytes, όχι αυθεντικότητα από μόνο του."),
+    syntax: "md5sum FILE", example: "md5sum /cases/IR-2404/evidence/01-intake/hash_sample.txt",
+  },
+  {
+    key: "sha1sum", aliases: ["sha1sum"], title: both("Calculate a SHA-1 digest", "Υπολογισμός SHA-1 digest"),
+    purpose: both("Create a digest used by older workflows and sample databases.", "Δημιούργησε digest για legacy workflows και sample databases."),
+    mechanics: both("SHA-1 outputs 160 bits. It remains useful for some legacy references but is no longer collision-resistant enough for security-sensitive integrity claims.", "Το SHA-1 παράγει 160 bits. Χρήσιμο σε legacy references, αλλά όχι αρκετά collision-resistant για σύγχρονους security ισχυρισμούς."),
+    output: both("Compare the full digest and filename with an independently recorded manifest value.", "Σύγκρινε ολόκληρο digest και filename με ανεξάρτητη manifest τιμή."),
+    syntax: "sha1sum FILE", example: "sha1sum /cases/IR-2404/evidence/01-intake/hash_sample.txt",
+  },
+  {
+    key: "sha256sum", aliases: ["sha256sum"], title: both("Calculate a SHA-256 digest", "Υπολογισμός SHA-256 digest"),
+    purpose: both("Record a modern cryptographic digest for the evidence bytes.", "Κατέγραψε σύγχρονο cryptographic digest των bytes τεκμηρίου."),
+    mechanics: both("SHA-256 returns a 256-bit digest. A digest match is a strong byte-integrity check when acquisition values are recorded independently.", "Το SHA-256 δίνει digest 256-bit. Ίδιο digest είναι ισχυρός έλεγχος ακεραιότητας bytes όταν έχει καταγραφεί ανεξάρτητα."),
+    output: both("The long hexadecimal field is the digest and the trailing field identifies the file. HackForge computes the exact known test vector; other fixture digests are explicitly labeled.", "Το μεγάλο hexadecimal πεδίο είναι digest και το τελευταίο filename. Το HackForge υπολογίζει ακριβώς το γνωστό test vector· άλλα fixture digests επισημαίνονται."),
+    syntax: "sha256sum FILE", example: "sha256sum /cases/IR-2404/evidence/01-intake/hash_sample.txt",
+  },
+  {
+    key: "xxd", aliases: ["xxd", "hexdump"], title: both("Inspect hexadecimal bytes", "Έλεγχος bytes σε hexadecimal"),
+    purpose: both("View raw bytes and recognize file-format magic signatures.", "Δες raw bytes και αναγνώρισε magic signatures."),
+    mechanics: both("xxd prints byte offsets, hexadecimal values, and an ASCII preview. It is a read operation; it does not repair or modify the file.", "Το xxd τυπώνει offsets, hexadecimal τιμές και ASCII preview. Είναι ανάγνωση· δεν αλλάζει αρχείο."),
+    output: both("For PNG, the initial bytes normally start 89 50 4e 47 0d 0a 1a 0a. Confirm format with file and compare a trusted reference.", "Το PNG ξεκινά συνήθως 89 50 4e 47 0d 0a 1a 0a. Επιβεβαίωσε με file και trusted reference."),
+    syntax: "xxd FILE", example: "xxd /cases/IR-2404/evidence/01-intake/challenge-corrupt.png",
+  },
+  {
+    key: "hexedit", aliases: ["hexedit"], title: both("Inspect a virtual hex editor", "Έλεγχος virtual hex editor"),
+    purpose: both("Demonstrate a byte-level repair on a disposable derived image copy.", "Δείξε byte-level επισκευή σε αναλώσιμο παράγωγο αντίγραφο."),
+    mechanics: both("Real hexedit changes the opened file. HackForge accepts this command only for its virtual damaged-image fixture and writes a simulated derived copy state.", "Πραγματικό hexedit αλλάζει αρχείο. Το HackForge το δέχεται μόνο για virtual damaged-image fixture."),
+    output: both("The repaired signature is evidence about the derived lab copy only. Preserve and report the original acquisition separately.", "Η επισκευασμένη signature αφορά μόνο παράγωγο lab αντίγραφο. Διατήρησε και ανέφερε ξεχωριστά την αρχική απόκτηση."),
+    syntax: "hexedit DERIVED_COPY", example: "hexedit /cases/IR-2404/evidence/01-intake/challenge-corrupt.png",
+    caution: both("Do not edit original evidence. The lab restricts this operation to a fictional virtual copy.", "Μην επεξεργάζεσαι πρωτότυπο evidence. Το lab περιορίζει την ενέργεια σε φανταστικό virtual αντίγραφο."),
+  },
+  {
+    key: "exiftool", aliases: ["exiftool"], title: both("Inspect media metadata", "Έλεγχος metadata πολυμέσων"),
+    purpose: both("Read image and document metadata that may inform provenance or timeline work.", "Διάβασε image/document metadata για provenance και timeline."),
+    mechanics: both("Metadata can contain author, timestamps, dimensions, software, or location fields. Values can be missing or altered, so corroborate them.", "Metadata μπορεί να περιέχει δημιουργό, χρόνους, διαστάσεις, λογισμικό ή τοποθεσία. Μπορεί να λείπουν ή να έχουν αλλοιωθεί."),
+    output: both("Field/value rows describe embedded metadata in the artifact fixture; they do not authenticate the content.", "Οι γραμμές field/value περιγράφουν embedded metadata fixture, όχι αυθεντικότητα περιεχομένου."),
+    syntax: "exiftool FILE", example: "exiftool /cases/IR-2404/evidence/03-documents/starry_night.png",
+  },
+  {
+    key: "oleid", aliases: ["oleid"], title: both("Identify Office document indicators", "Αναγνώριση Office indicators"),
+    purpose: both("Triage document format, encryption, macros, and external relationships.", "Κάνε triage format, encryption, macros και external relationships."),
+    mechanics: both("oleid reports structural indicators. A macro-present result is a reason for static inspection, not a reason to execute the document.", "Το oleid αναφέρει structural indicators. Macro-present σημαίνει στατική εξέταση, όχι εκτέλεση εγγράφου."),
+    output: both("Read the file/container type, encryption, macro indicator, and relationship count, then corroborate with extracted streams.", "Διάβασε type, encryption, macro indicator και relationship count· επιβεβαίωσε με extracted streams."),
+    syntax: "oleid DOCUMENT", example: "oleid /cases/IR-2404/evidence/03-documents/QuarterlyForecast.docm",
+  },
+  {
+    key: "olevba", aliases: ["olevba"], title: both("Extract VBA for static review", "Εξαγωγή VBA για static review"),
+    purpose: both("Inspect macro text without opening or running an Office document.", "Έλεγξε macro text χωρίς άνοιγμα ή εκτέλεση Office εγγράφου."),
+    mechanics: both("olevba extracts VBA streams and searches for suspicious patterns. HackForge returns harmless, fictional, defanged indicator text only.", "Το olevba εξάγει VBA streams και ψάχνει patterns. Το HackForge επιστρέφει ακίνδυνο, φανταστικό defanged κείμενο."),
+    output: both("Procedure names, API references, and defanged URLs are leads for correlation; static strings do not prove execution.", "Procedure names, API references και defanged URLs είναι leads· static strings δεν αποδεικνύουν εκτέλεση."),
+    syntax: "olevba DOCUMENT", example: "olevba /cases/IR-2404/evidence/03-documents/QuarterlyForecast.docm",
+    caution: both("Never enable macros in untrusted documents on a production workstation.", "Μην ενεργοποιείς macros σε μη έμπιστα έγγραφα production workstation."),
+  },
+  {
+    key: "zsteg", aliases: ["zsteg", "steghide"], title: both("Triage possible steganography", "Triage πιθανής steganography"),
+    purpose: both("Check a supplied image fixture for a known training marker.", "Έλεγξε image fixture για γνωστό training marker."),
+    mechanics: both("Steganography tools inspect format-specific channels such as PNG least-significant bits. A suspicious extraction should be preserved and validated independently.", "Εργαλεία steganography ελέγχουν format-specific κανάλια όπως PNG LSB. Ύποπτη εξαγωγή διατηρείται και επικυρώνεται."),
+    output: both("The marker printed in this lab is synthetic text, not a hidden executable or external payload.", "Το marker του lab είναι συνθετικό κείμενο, όχι κρυφό executable ή εξωτερικό payload."),
+    syntax: "zsteg IMAGE", example: "zsteg /cases/IR-2404/evidence/03-documents/starry_night.png",
+  },
+  {
+    key: "audio-analyze", aliases: ["audio-analyze", "sonic-visualiser", "sonic-visualizer"], title: both("Inspect a spectrogram summary", "Έλεγχος σύνοψης spectrogram"),
+    purpose: both("Learn how a narrow-band spectral feature can become an investigative clue.", "Μάθε πώς ένα στενό spectral feature γίνεται investigative clue."),
+    mechanics: both("Spectrograms visualize signal energy over time and frequency. The HackForge exercise displays a deterministic synthetic plot and text note instead of playing an audio payload.", "Τα spectrograms δείχνουν ενέργεια σήματος σε χρόνο/συχνότητα. Η άσκηση δείχνει συνθετικό διάγραμμα αντί να παίξει payload."),
+    output: both("A frequency marker is only a lead; preserve the source audio, analysis settings, and extracted interpretation.", "Frequency marker είναι lead· διατήρησε audio, ρυθμίσεις και ερμηνεία."),
+    syntax: "audio-analyze AUDIO", example: "audio-analyze /cases/IR-2404/evidence/03-documents/super_secret_audio.wav",
+  },
+  {
+    key: "tshark", aliases: ["tshark", "tcpdump", "wireshark"], title: both("Analyze an authorized packet capture", "Ανάλυση εξουσιοδοτημένου packet capture"),
+    purpose: both("Summarize, filter, and inspect the fictional HF-2404 network capture.", "Σύνοψε και έλεγξε το φανταστικό capture HF-2404."),
+    mechanics: both("Wireshark/tshark inspect saved PCAP data. Display filters such as http narrow the view but do not alter the capture. Follow-stream reconstructs a conversation; object export creates a derivative file.", "Wireshark/tshark εξετάζουν αποθηκευμένο PCAP. Display filter περιορίζει προβολή, όχι capture. Follow-stream ανασυνθέτει συνομιλία· export δημιουργεί παράγωγο."),
+    output: both("Protocol counts, packet fields, stream content, and exported objects each answer different questions. Record frame numbers and source capture.", "Protocol counts, packet fields, stream και exported objects απαντούν διαφορετικά ερωτήματα. Κατέγραψε frame numbers και capture."),
+    syntax: "tshark -r CAPTURE -Y FILTER", example: "tshark -r /cases/IR-2404/evidence/05-network/capture.pcapng -Y http",
+    caution: both("Capture only networks for which you have authority. This simulator reads a local fictional fixture.", "Κατέγραψε μόνο δίκτυα με άδεια. Ο προσομοιωτής διαβάζει τοπικό φανταστικό fixture."),
+  },
+  {
+    key: "ewfacquire", aliases: ["ewfacquire", "ftkimager"], title: both("Acquire a forensic image", "Απόκτηση forensic image"),
+    purpose: both("Practice a read-only acquisition workflow and documentation.", "Εξασκήσου σε read-only απόκτηση και τεκμηρίωση."),
+    mechanics: both("Imagers create a sector-level copy and can record metadata and verification digests. This command only emits a sandbox receipt; it never accesses a physical device.", "Imager δημιουργεί sector-level αντίγραφο και metadata/digests. Η εντολή εμφανίζει sandbox receipt και δεν αγγίζει φυσική συσκευή."),
+    output: both("The receipt identifies a derived copy, verification state, and evidence ID. A real workflow also records source media identifiers and write-blocker state.", "Το receipt δείχνει αντίγραφο, verification και evidence ID. Πραγματική ροή καταγράφει source identifiers και write-blocker."),
+    syntax: "ewfacquire SOURCE", example: "ewfacquire /cases/IR-2404/evidence/06-disk/usb.dd",
+  },
+  {
+    key: "fls", aliases: ["fls", "mmls", "mftecmd"], title: both("Enumerate disk filesystem structures", "Απαρίθμηση filesystem δομών δίσκου"),
+    purpose: both("Inspect partitions, file entries, and NTFS metadata records.", "Έλεγξε partitions, file entries και NTFS metadata records."),
+    mechanics: both("mmls summarizes partitions; fls lists filesystem entries and may show deleted entries; MFTECmd parses MFT metadata into tabular timelines. These lab outputs are safe text fixtures.", "Το mmls συνοψίζει partitions, το fls entries/deleted entries και το MFTECmd κάνει parse MFT metadata σε timeline. Οι έξοδοι είναι text fixtures."),
+    output: both("Record filesystem offset, record number, parent, timestamps, and deletion state. Metadata alone may not recover file content.", "Κατέγραψε offset, record number, parent, χρόνους και deletion state. Metadata μόνη της δεν ανακτά περιεχόμενο."),
+    syntax: "fls -r IMAGE | mftecmd MFT.csv", example: "mftecmd /cases/IR-2404/evidence/06-disk/$MFT.csv",
+  },
+  {
+    key: "icat", aliases: ["icat"], title: both("Read a file by filesystem record", "Ανάγνωση αρχείου μέσω filesystem record"),
+    purpose: both("Demonstrate targeted extraction from an evidence image.", "Επίδειξη στοχευμένης εξαγωγής από evidence image."),
+    mechanics: both("icat writes content for a filesystem metadata address to standard output. The lab maps a known record to a harmless note fixture.", "Το icat τυπώνει περιεχόμενο metadata address. Το lab αντιστοιχίζει γνωστό record σε ακίνδυνο note fixture."),
+    output: both("Treat output as a derived file view and record image, record ID, and extraction tool in the case notes.", "Αντιμετώπισε την έξοδο ως παράγωγη προβολή και κατέγραψε image, record ID και εργαλείο."),
+    syntax: "icat IMAGE RECORD", example: "icat /cases/IR-2404/evidence/06-disk/usb.dd 42",
+  },
+  {
+    key: "volatility", aliases: ["volatility", "vol.py", "vol"], title: both("Query a memory image", "Ερώτημα σε memory image"),
+    purpose: both("Inspect process, socket, environment, and volatile user artifacts in a saved dump.", "Έλεγξε processes, sockets, environment και volatile artifacts σε saved dump."),
+    mechanics: both("Volatility plugins parse a memory image using an OS/profile model. imageinfo suggests a profile; pslist/pstree inspect process structures; netscan inspects sockets; envars/clipboard/cmdline inspect volatile context. HackForge returns fixture output only.", "Plugins Volatility κάνουν parse memory image με OS/profile. imageinfo προτείνει profile· pslist/pstree processes· netscan sockets· envars/clipboard/cmdline volatile context. Το HackForge δίνει fixture output."),
+    output: both("Treat plugins as different views into one capture. Correlate process IDs, timestamps, owners, and connections with endpoint and network records.", "Τα plugins είναι διαφορετικές όψεις ενός capture. Συσχέτισε IDs, χρόνους, owners και connections με endpoint/network records."),
+    syntax: "volatility -f DUMP PLUGIN", example: "volatility -f /cases/IR-2404/evidence/08-memory/workstation.raw pstree",
+    caution: both("A memory image can contain sensitive data. Handle only with authority and restrict report disclosure.", "Memory image μπορεί να περιέχει ευαίσθητα δεδομένα· τήρησε άδεια και περιορισμένη κοινοποίηση."),
+  },
+  {
+    key: "docker", aliases: ["docker"], title: both("Inspect a container as evidence", "Έλεγχος container ως τεκμήριο"),
+    purpose: both("Review configuration, runtime changes, logs, and image-layer history.", "Έλεγξε config, runtime changes, logs και image layers."),
+    mechanics: both("inspect returns configuration/state; diff shows added/deleted/changed paths; logs show recorded output; history shows image layers; export simulates a filesystem snapshot. No Docker daemon is connected in this lab.", "inspect δείχνει config/state, diff αλλαγές paths, logs output, history layers και export snapshot. Δεν υπάρχει σύνδεση με Docker daemon."),
+    output: both("Compare the writable-container diff with the image history. Removed files can remain in earlier immutable layers.", "Σύγκρινε writable diff με image history. Διαγραμμένα αρχεία μπορεί να παραμένουν σε παλιότερα immutable layers."),
+    syntax: "docker inspect|diff|logs|history CONTAINER", example: "docker diff HF-2404",
+  },
+  {
+    key: "hash-identifier", aliases: ["hash-identifier"], title: both("Classify a hash candidate", "Ταξινόμηση hash candidate"),
+    purpose: both("Generate possible hash-family leads from a digest's format.", "Παρήγαγε πιθανούς hash-family leads από τη μορφή digest."),
+    mechanics: both("Length, alphabet, separators, and prefixes can suggest candidate formats. Multiple algorithms share formats; use application context and metadata to confirm.", "Μήκος, alphabet, separators και prefixes προτείνουν formats. Πολλοί αλγόριθμοι έχουν ίδια μορφή· επιβεβαίωσε από context."),
+    output: both("Possible formats are hypotheses, not identification certainty. A digest is not encrypted text that can simply be reversed.", "Πιθανά formats είναι υποθέσεις, όχι βεβαιότητα. Digest δεν είναι κρυπτογραφημένο κείμενο που αντιστρέφεται."),
+    syntax: "hash-identifier DIGEST", example: "hash-identifier 098f6bcd4621d373cade4e832627b4f6",
+  },
+  {
+    key: "john", aliases: ["john"], title: both("Authorized wordlist audit (simulated)", "Εξουσιοδοτημένος έλεγχος wordlist (προσομοίωση)"),
+    purpose: both("Demonstrate candidate/hash comparison on fictional classroom hashes.", "Επίδειξη σύγκρισης candidates/hashes σε φανταστικά classroom hashes."),
+    mechanics: both("John the Ripper hashes candidate words and compares digests. The HackForge output is canned; it does not read arbitrary hashes or test external accounts.", "Το John κάνει hash candidates και συγκρίνει digests. Η έξοδος HackForge είναι προκαθορισμένη· δεν διαβάζει αυθαίρετα hashes ούτε ελέγχει λογαριασμούς."),
+    output: both("A candidate match means that candidate produces the displayed training digest. It does not establish who set or used the password.", "Το candidate match σημαίνει ότι candidate παράγει training digest· δεν αποδεικνύει ποιος έθεσε/χρησιμοποίησε κωδικό."),
+    syntax: "john --wordlist=LIST HASHFILE", example: "john --wordlist=wordlist.txt hashes.txt",
+    caution: both("Only audit hashes you are explicitly authorized to handle. Use password cracking for defensive assessment, not account access.", "Έλεγχε μόνο hashes με ρητή άδεια. Password cracking για αμυντικό assessment, όχι πρόσβαση."),
+  },
+  {
+    key: "hashcat", aliases: ["hashcat"], title: both("Bounded hash candidate test (simulated)", "Bounded hash test (προσομοίωση)"),
+    purpose: both("Explain how hash mode and a constrained candidate mask work in a classroom example.", "Εξήγησε hash mode και περιορισμένο mask σε classroom παράδειγμα."),
+    mechanics: both("Hashcat uses -m for hash mode and -a for attack mode. The HackForge fixture reports only a predefined toy result; it does not calculate candidates or access hardware.", "Το Hashcat χρησιμοποιεί -m για hash mode και -a για attack mode. Το HackForge εμφανίζει μόνο προκαθορισμένο toy result."),
+    output: both("A cracked status applies only to the toy vector in this lesson. Modern password storage should use salted, adaptive KDFs such as Argon2id.", "Το cracked status αφορά μόνο toy vector. Σύγχρονη αποθήκευση: salted adaptive KDF όπως Argon2id."),
+    syntax: "hashcat -m MODE -a MODE HASH MASK", example: "hashcat -m 0 -a 3 098f6bcd4621d373cade4e832627b4f6 ?l?l?l?l",
+    caution: both("Do not test third-party credentials. This UI returns fictional training output only.", "Μην ελέγχεις credentials τρίτων. Το UI επιστρέφει μόνο φανταστική εκπαιδευτική έξοδο."),
+  },
+  {
+    key: "netstat", aliases: ["netstat", "ss"], title: both("Inspect network sockets", "Έλεγχος network sockets"),
+    purpose: both("Review a point-in-time list of local and remote connections.", "Έλεγξε στιγμιότυπο τοπικών και απομακρυσμένων συνδέσεων."),
+    mechanics: both("netstat/ss can display protocol, local and foreign endpoints, state, and process owner. The DFIR response is a fixed case fixture.", "netstat/ss εμφανίζουν protocol, endpoints, state και process owner. Η έξοδος DFIR είναι σταθερό case fixture."),
+    output: both("Match PID and owner to process evidence, then compare timestamps with network capture records.", "Συσχέτισε PID/owner με processes και χρόνο με network capture."),
+    syntax: "netstat -antp", example: "netstat -antp",
+  },
+  {
+    key: "reg", aliases: ["reg"], title: both("Query a registry-hive export", "Ερώτημα σε registry-hive export"),
+    purpose: both("Read selected registry values from a simulated, acquired user hive.", "Διάβασε registry values από προσομοιωμένο acquired user hive."),
+    mechanics: both("The lab's reg query command searches its text-export fixture for common user settings, typed paths, and Run-key values. It never edits the hive.", "Το reg query ψάχνει text-export fixture για user settings, typed paths και Run key. Δεν αλλάζει hive."),
+    output: both("Key/value rows identify stored configuration; verify the hive identity and correlate values with execution evidence.", "Οι γραμμές key/value δείχνουν ρυθμίσεις· επιβεβαίωσε hive identity και συσχέτισε με execution evidence."),
+    syntax: "reg query HIVE_FILE", example: "reg query /cases/IR-2404/evidence/02-windows/NTUSER.DAT",
+  },
+  {
+    key: "lecmd", aliases: ["lecmd"], title: both("Parse Windows shortcut metadata", "Ανάλυση Windows shortcut metadata"),
+    purpose: both("Recover a shortcut's target path and time metadata.", "Ανάκτησε target path και time metadata shortcut."),
+    mechanics: both("LECmd parses .lnk structures. This fixture exposes target and timestamps as a short text summary.", "Το LECmd αναλύει δομές .lnk. Το fixture εμφανίζει target και timestamps."),
+    output: both("Compare the shortcut's file times with the target's times; they describe distinct objects/events.", "Σύγκρινε χρόνους shortcut και target· αφορούν διαφορετικά objects/events."),
+    syntax: "LECmd -f SHORTCUT.lnk", example: "LECmd -f /cases/IR-2404/evidence/02-windows/Recent/QuarterlyForecast.lnk",
+  },
+  {
+    key: "sqlitebrowser", aliases: ["sqlitebrowser", "sqlite3"], title: both("Inspect a browser SQLite database", "Έλεγχος browser SQLite database"),
+    purpose: both("Review fictional browser-history rows without extracting credentials.", "Έλεγξε browser-history rows χωρίς εξαγωγή credentials."),
+    mechanics: both("Firefox and Chrome commonly keep history in SQLite databases. The sandbox stores readable table exports, not live databases.", "Firefox/Chrome αποθηκεύουν history σε SQLite. Το sandbox περιέχει readable table exports."),
+    output: both("Rows can include URL, title, visit count, and timestamps. Correlate with shortcuts and logs.", "Rows περιέχουν URL, τίτλο, visits και timestamps. Συσχέτισε με shortcuts και logs."),
+    syntax: "sqlitebrowser DATABASE", example: "sqlitebrowser /cases/IR-2404/evidence/02-windows/Firefox/places.sqlite",
+  },
+  {
+    key: "evtx", aliases: ["evtx", "wevtutil", "get-winevent"], title: both("Review Windows event records", "Έλεγχος Windows event records"),
+    purpose: both("Filter simulated Windows Security or PowerShell event logs.", "Φίλτραρε προσομοιωμένα Windows Security ή PowerShell event logs."),
+    mechanics: both("Security IDs such as 4624, 4625, 1102, and 4720 describe event classes. PowerShell 4104 records script-block logging in this fixture.", "Security IDs 4624, 4625, 1102, 4720 περιγράφουν event classes. PowerShell 4104 καταγράφει script-block events."),
+    output: both("An event ID is a pivot, not a verdict. Validate account, source, host, time zone, and nearby events.", "Event ID είναι pivot, όχι verdict. Επικύρωσε account, source, host, timezone και γειτονικά events."),
+    syntax: "evtx FILE [event ID]", example: "wevtutil qe Security.evtx /q:4625",
+  },
+  {
+    key: "oleobj", aliases: ["oleobj"], title: both("Inventory embedded Office objects", "Απογραφή embedded Office objects"),
+    purpose: both("Inspect simulated external and embedded relationships in an Office container.", "Έλεγξε προσομοιωμένες external/embedded relationships σε Office container."),
+    mechanics: both("OOXML relationships can point to embedded media or external templates. The HackForge summary does not fetch referenced content.", "OOXML relationships δείχνουν embedded media ή external templates. Η σύνοψη δεν κατεβάζει referenced content."),
+    output: both("A relationship is a pivot to review and defang; it is not proof the remote item was retrieved.", "Relationship είναι pivot προς έλεγχο/defang· δεν αποδεικνύει retrieval."),
+    syntax: "oleobj DOCUMENT", example: "oleobj /cases/IR-2404/evidence/03-documents/Presentation.pptx",
+  },
+  {
+    key: "tshark", aliases: ["tshark", "tcpdump", "wireshark"], title: both("Analyze an authorized packet capture", "Ανάλυση εξουσιοδοτημένου packet capture"),
+    purpose: both("Summarize, filter, and inspect the fictional HF-2404 network capture.", "Σύνοψε και έλεγξε το φανταστικό capture HF-2404."),
+    mechanics: both("Protocol hierarchy gives the overview; display filters narrow a view; packet/frame detail shows one packet; Follow TCP Stream reconstructs one conversation; object export creates derived evidence.", "Protocol hierarchy δίνει επισκόπηση· filters περιορίζουν θέαση· packet detail δείχνει frame· Follow TCP Stream ανασυνθέτει συνομιλία· export δημιουργεί derived evidence."),
+    output: both("The simulated capture reports TCP/HTTP/DNS/FTP. Cite frame/stream and retain the original capture hash.", "Το capture αναφέρει TCP/HTTP/DNS/FTP. Ανέφερε frame/stream και διατήρησε hash του original."),
+    syntax: "tshark -r CAPTURE -Y FILTER", example: "tshark -r /cases/IR-2404/evidence/05-network/capture.pcapng -Y http",
+    caution: both("Capture only traffic you are authorized to inspect; this sample is local fictional evidence.", "Κατέγραψε μόνο κίνηση που έχεις άδεια να εξετάσεις· αυτό το δείγμα είναι τοπικό και φανταστικό."),
+  },
+  {
+    key: "packet", aliases: ["packet", "frame"], title: both("Inspect packet fields and bytes", "Έλεγχος packet fields και bytes"),
+    purpose: both("Read one frame's protocol layers, endpoints, and payload preview.", "Διάβασε protocol layers, endpoints και payload preview ενός frame."),
+    mechanics: both("Packet details decode headers layer by layer; the byte pane shows hex and ASCII. The simulator renders a selected synthetic frame.", "Packet details αποκωδικοποιούν headers ανά layer· το byte pane δείχνει hex/ASCII. Ο προσομοιωτής εμφανίζει synthetic frame."),
+    output: both("A decoded field is evidence about the captured packet; it does not by itself prove application impact.", "Decoded field είναι evidence του packet· δεν αποδεικνύει μόνο του impact."),
+    syntax: "packet FRAME_NUMBER", example: "packet 13",
+  },
+  {
+    key: "fls", aliases: ["fls", "mmls", "mftecmd"], title: both("Enumerate disk structures", "Απαρίθμηση δομών δίσκου"),
+    purpose: both("Inspect partitions, filesystem entries, and NTFS metadata records.", "Έλεγξε partitions, filesystem entries και NTFS metadata records."),
+    mechanics: both("mmls summarizes partitions, fls lists entries and deleted records, and MFTECmd converts MFT metadata into a timeline-like table.", "Το mmls συνοψίζει partitions, το fls entries/deleted records και το MFTECmd μετατρέπει MFT metadata σε timeline."),
+    output: both("Record partition offsets, record IDs, parent relationships, timestamps, and deletion state. A metadata record is not always a recoverable file.", "Κατέγραψε offsets, record IDs, parent, timestamps και deletion state. Metadata record δεν σημαίνει πάντα ανακτήσιμο αρχείο."),
+    syntax: "mmls IMAGE | fls -r IMAGE | mftecmd MFT", example: "mftecmd /cases/IR-2404/evidence/06-disk/$MFT.csv",
+  },
+  {
+    key: "icat", aliases: ["icat"], title: both("Extract a file by record ID", "Εξαγωγή αρχείου με record ID"),
+    purpose: both("Read a selected file's content from a filesystem image record.", "Διάβασε περιεχόμενο επιλεγμένου filesystem record."),
+    mechanics: both("icat uses an image and metadata address/record ID to write the recovered view to standard output. This lab maps a record ID to a safe note fixture.", "Το icat χρησιμοποιεί image και record ID για να εμφανίσει recovered view. Το lab αντιστοιχίζει ID σε ασφαλές note fixture."),
+    output: both("Record the image and record number as provenance for any exported content.", "Κατέγραψε image και record number ως provenance του exported content."),
+    syntax: "icat IMAGE RECORD", example: "icat /cases/IR-2404/evidence/06-disk/usb.dd 42",
+  },
+  {
+    key: "timeline", aliases: ["timeline"], title: both("Correlate timestamps", "Συσχέτιση timestamps"),
+    purpose: both("Arrange events from multiple evidence sources into a shared chronology.", "Οργάνωσε συμβάντα από πολλές πηγές σε κοινή χρονολογική σειρά."),
+    mechanics: both("A timeline view aligns timestamps but does not automatically resolve timezone differences or clock drift. Preserve source timestamps and normalize carefully.", "Timeline ευθυγραμμίζει timestamps αλλά δεν διορθώνει αυτόματα timezone/clock drift. Διατήρησε αρχικές τιμές και κανονικοποίησε προσεκτικά."),
+    output: both("The ordered rows are a chronology of reported evidence. Confidence depends on source reliability and timestamp context.", "Οι ταξινομημένες γραμμές είναι χρονολογία evidence. Confidence εξαρτάται από πηγή και timezone."),
+    syntax: "timeline web|disk|memory", example: "timeline web",
+  },
+  {
+    key: "volatility", aliases: ["volatility", "vol.py", "vol"], title: both("Query a memory image", "Ερώτημα σε memory image"),
+    purpose: both("Inspect process, socket, environment, browser, and volatile user artifacts.", "Έλεγξε processes, sockets, environment, browser και volatile artifacts."),
+    mechanics: both("imageinfo suggests OS/profile; pslist and pstree inspect processes; netscan examines sockets; envars/cmdline/cmdscan/consoles recover process context; clipboard, chromehistory, and MSPaint plugins can expose volatile artifacts. HackForge returns fixture output only.", "imageinfo προτείνει OS/profile· pslist/pstree processes· netscan sockets· envars/cmdline/cmdscan/consoles process context· clipboard/browser/MSPaint volatile artifacts. Το HackForge δίνει μόνο fixtures."),
+    output: both("Treat plugins as views into one capture. Correlate PIDs, timestamps, owner, and network endpoints with disk and event evidence.", "Τα plugins είναι όψεις ενός capture. Συσχέτισε PIDs, χρόνους, owner και endpoints με disk/events."),
+    syntax: "volatility -f DUMP PLUGIN", example: "volatility -f /cases/IR-2404/evidence/08-memory/workstation.raw pstree",
+    caution: both("Memory images can contain sensitive data. Only acquire and disclose them under proper authority.", "Memory images περιέχουν ευαίσθητα δεδομένα· απόκτησε/κοινοποίησε μόνο με άδεια."),
+  },
+  {
+    key: "gcore", aliases: ["gcore"], title: both("Acquire a process core (simulated)", "Απόκτηση process core (προσομοίωση)"),
+    purpose: both("Explain how a process memory snapshot can support volatile analysis.", "Εξήγησε πώς process memory snapshot βοηθά volatile analysis."),
+    mechanics: both("gcore creates a core dump for a selected PID on a real system. HackForge writes a harmless text fixture and never reads host process memory.", "Το gcore δημιουργεί core dump PID σε πραγματικό σύστημα. Το HackForge γράφει ακίνδυνο text fixture και δεν διαβάζει host memory."),
+    output: both("The reported path is a derived sandbox artifact; document target PID, acquisition time, and authority.", "Η διαδρομή είναι derived sandbox artifact· κατέγραψε PID, χρόνο και εξουσιοδότηση."),
+    syntax: "gcore PID", example: "gcore 2112",
+  },
+  {
+    key: "memory-acquire", aliases: ["memory-acquire"], title: both("Acquire volatile memory (simulated)", "Απόκτηση volatile μνήμης (προσομοίωση)"),
+    purpose: both("Understand why a live memory capture must be authorized, time-stamped, and verified.", "Κατανόησε γιατί live memory capture θέλει άδεια, timestamp και verification."),
+    mechanics: both("DumpIt, FTK Imager, and Redline are examples of acquisition tools. HackForge prints a receipt and creates no host memory image.", "DumpIt, FTK Imager και Redline είναι εργαλεία acquisition. Το HackForge εμφανίζει receipt χωρίς host memory image."),
+    output: both("The receipt describes a virtual copy and verification note; it does not capture the browser's or computer's real RAM.", "Το receipt περιγράφει virtual copy· δεν συλλαμβάνει πραγματική RAM."),
+    syntax: "memory-acquire SOURCE", example: "memory-acquire /cases/IR-2404/evidence/08-memory/workstation.raw",
+  },
+  {
+    key: "static-report", aliases: ["static-report", "cutter-report"], title: both("Review static sample analysis", "Έλεγχος static sample analysis"),
+    purpose: both("Review safe metadata, readable strings, and synthetic disassembly notes without executing a sample.", "Έλεγξε ασφαλή metadata, strings και synthetic disassembly χωρίς εκτέλεση."),
+    mechanics: both("Static analysis includes file identification, hashes, strings, and reverse-engineering views. The case sample is text-only and non-executable.", "Static analysis περιλαμβάνει file, hashes, strings και reverse engineering. Το case sample είναι text-only και μη εκτελέσιμο."),
+    output: both("Treat APIs, URLs, and decoded markers as indicators that require corroboration.", "Αντιμετώπισε APIs, URLs και markers ως indicators προς συσχέτιση."),
+    syntax: "static-report SAMPLE | cutter-report", example: "cutter-report",
+    caution: both("Do not execute untrusted samples on a production workstation.", "Μην εκτελείς άγνωστα samples σε production workstation."),
+  },
+  {
+    key: "trace-report", aliases: ["strace-report", "ltrace-report"], title: both("Review simulated call traces", "Έλεγχος simulated call traces"),
+    purpose: both("Learn how system-call and library-call traces help describe program behavior.", "Μάθε πώς system-call και library-call traces περιγράφουν συμπεριφορά."),
+    mechanics: both("strace observes system calls; ltrace observes library calls. These HackForge commands show a synthetic report and never attach to a process.", "Το strace παρατηρεί system calls· το ltrace library calls. Αυτές οι εντολές δείχνουν synthetic report και δεν συνδέονται σε process."),
+    output: both("Use a call as an investigation lead and corroborate it with endpoint, file, or network evidence.", "Χρησιμοποίησε call ως lead και επιβεβαίωσέ το με endpoint, file ή network evidence."),
+    syntax: "strace PROGRAM | ltrace PROGRAM", example: "strace-report",
+  },
+  {
+    key: "vt-report", aliases: ["vt-report"], title: both("Review a reputation lookup", "Έλεγχος reputation lookup"),
+    purpose: both("Understand the context and limitations of public malware-reputation services.", "Κατανόησε πλαίσιο και περιορισμούς public malware reputation services."),
+    mechanics: both("A multi-engine result is one signal at one time. A zero-detection report does not prove a file is benign; public upload may disclose sensitive evidence.", "Multi-engine result είναι μία ένδειξη σε μία στιγμή. Μηδέν detections δεν αποδεικνύουν καλοήθεια· public upload μπορεί να εκθέσει evidence."),
+    output: both("Record lookup date and privacy approval. This command displays an offline fictional report.", "Κατέγραψε χρόνο lookup και privacy approval. Η εντολή εμφανίζει offline φανταστική αναφορά."),
+    syntax: "vt-report", example: "vt-report",
+  },
+  {
+    key: "reg", aliases: ["reg"], title: both("Query a registry-hive export", "Ερώτημα σε registry-hive export"),
+    purpose: both("Read selected registry values from a simulated, acquired user hive.", "Διάβασε registry values από προσομοιωμένο acquired user hive."),
+    mechanics: both("The lab's reg query searches its text-export fixture for user settings, typed paths, and Run-key values; it never edits the hive.", "Το reg query ψάχνει text-export fixture για user settings, typed paths και Run key· δεν αλλάζει hive."),
+    output: both("Key/value rows identify stored configuration. Verify the hive identity and correlate values with execution evidence.", "Οι γραμμές key/value δείχνουν ρυθμίσεις. Επιβεβαίωσε hive identity και συσχέτισε με execution evidence."),
+    syntax: "reg query HIVE_FILE", example: "reg query /cases/IR-2404/evidence/02-windows/NTUSER.DAT",
+  },
+  {
+    key: "lecmd", aliases: ["lecmd"], title: both("Parse Windows shortcut metadata", "Ανάλυση Windows shortcut metadata"),
+    purpose: both("Recover a shortcut target, source timestamps, and volume information.", "Ανάκτησε shortcut target, source timestamps και volume information."),
+    mechanics: both("LECmd parses .lnk structures. The fixture exposes a text summary rather than opening a Windows shortcut.", "Το LECmd αναλύει .lnk. Το fixture εμφανίζει text summary χωρίς άνοιγμα Windows shortcut."),
+    output: both("Compare shortcut metadata to the target and other timeline sources; their timestamps may describe distinct events.", "Σύγκρινε metadata με target και timeline· timestamps μπορεί να αφορούν διαφορετικά events."),
+    syntax: "LECmd -f SHORTCUT.lnk", example: "LECmd -f /cases/IR-2404/evidence/02-windows/Recent/QuarterlyForecast.lnk",
+  },
+  {
+    key: "sqlitebrowser", aliases: ["sqlitebrowser", "sqlite3"], title: both("Inspect a browser SQLite database", "Έλεγχος browser SQLite database"),
+    purpose: both("Review fictional browser-history rows without exposing credentials.", "Έλεγξε browser-history rows χωρίς έκθεση credentials."),
+    mechanics: both("Browser profiles commonly store history and related artifacts in SQLite. The sandbox keeps readable table exports instead of a live database.", "Browser profiles αποθηκεύουν history σε SQLite. Το sandbox χρησιμοποιεί readable table export."),
+    output: both("Rows can include URL, title, visit count, and timestamp; correlate with shortcut and event-log evidence.", "Rows περιέχουν URL, τίτλο, visits και timestamp· συσχέτισε με shortcut και event logs."),
+    syntax: "sqlitebrowser DATABASE", example: "sqlitebrowser /cases/IR-2404/evidence/02-windows/Firefox/places.sqlite",
+  },
+  {
+    key: "evtx", aliases: ["evtx", "wevtutil", "get-winevent"], title: both("Review Windows event records", "Έλεγχος Windows event records"),
+    purpose: both("Filter simulated Windows Security or PowerShell event logs.", "Φίλτραρε προσομοιωμένα Windows Security ή PowerShell event logs."),
+    mechanics: both("Event IDs such as 4624, 4625, 1102, 4720, and PowerShell 4104 describe event classes. Query the supplied case fixture and keep the original context.", "Event IDs όπως 4624, 4625, 1102, 4720 και PowerShell 4104 περιγράφουν event classes. Έλεγξε το case fixture με πλαίσιο."),
+    output: both("An ID is an investigation pivot, not a verdict. Validate account, source, host, time zone, and adjacent events.", "ID είναι pivot, όχι verdict. Επικύρωσε account, source, host, timezone και γειτονικά events."),
+    syntax: "evtx FILE | wevtutil qe FILE /q:EVENT_ID", example: "wevtutil qe Security.evtx /q:4625",
+  },
+  {
+    key: "oleobj", aliases: ["oleobj"], title: both("Inventory embedded Office objects", "Απογραφή embedded Office objects"),
+    purpose: both("Inspect embedded and external relationships in an Office container.", "Έλεγξε embedded και external relationships σε Office container."),
+    mechanics: both("OOXML relationships can refer to embedded media or external templates. The simulator inventories a fictional reference and does not fetch it.", "OOXML relationships αναφέρονται σε media ή templates. Ο προσομοιωτής καταγράφει φανταστική αναφορά χωρίς fetch."),
+    output: both("An external relationship is a lead to review and defang, not proof that the remote object was retrieved.", "External relationship είναι lead προς έλεγχο/defang, όχι απόδειξη retrieval."),
+    syntax: "oleobj DOCUMENT", example: "oleobj /cases/IR-2404/evidence/03-documents/Presentation.pptx",
+  },
+  {
+    key: "mmls", aliases: ["mmls", "fls", "mftecmd"], title: both("Enumerate disk structures", "Απαρίθμηση δομών δίσκου"),
+    purpose: both("Inspect partition boundaries, directory entries, and NTFS metadata records.", "Έλεγξε partition boundaries, directory entries και NTFS metadata records."),
+    mechanics: both("mmls summarizes partitions; fls lists filesystem entries and can show deleted records; MFTECmd parses MFT metadata into timelines. HackForge uses text fixtures.", "Το mmls συνοψίζει partitions· το fls εμφανίζει entries/deleted records· το MFTECmd αναλύει MFT σε timelines. Το HackForge χρησιμοποιεί text fixtures."),
+    output: both("Record partition offsets and file record/parent IDs. Metadata does not guarantee file-content recovery.", "Κατέγραψε offsets και record/parent IDs. Metadata δεν εγγυάται ανάκτηση περιεχομένου."),
+    syntax: "mmls IMAGE | fls -r IMAGE | mftecmd MFT.csv", example: "mftecmd /cases/IR-2404/evidence/06-disk/$MFT.csv",
+  },
+  {
+    key: "icat", aliases: ["icat"], title: both("Extract a file by filesystem record", "Εξαγωγή αρχείου με filesystem record"),
+    purpose: both("Read a selected file's content from an evidence-image record.", "Διάβασε περιεχόμενο από evidence-image record."),
+    mechanics: both("icat uses an image and metadata address/record number to emit a derived content view. The lab maps known IDs to harmless fixtures.", "Το icat χρησιμοποιεί image και record number για derived view. Το lab αντιστοιχίζει γνωστά IDs σε ακίνδυνα fixtures."),
+    output: both("Record source image, record ID, and extraction method with every derived output.", "Κατέγραψε source image, record ID και extraction method για κάθε παράγωγο."),
+    syntax: "icat IMAGE RECORD", example: "icat /cases/IR-2404/evidence/06-disk/usb.dd 42",
+  },
+  {
+    key: "timeline", aliases: ["timeline"], title: both("Correlate evidence timestamps", "Συσχέτιση timestamps τεκμηρίων"),
+    purpose: both("Arrange events from multiple evidence sources into one chronology.", "Οργάνωσε events από πολλές πηγές σε κοινή χρονολογία."),
+    mechanics: both("Timeline views align recorded timestamps but cannot automatically resolve timezone differences, clock drift, or source reliability.", "Timeline ευθυγραμμίζει timestamps αλλά δεν διορθώνει αυτόματα timezone, clock drift ή αξιοπιστία πηγής."),
+    output: both("Treat the sorted list as a working chronology. Preserve original time values and document normalization decisions.", "Αντιμετώπισε τη λίστα ως working chronology. Διατήρησε αρχικούς χρόνους και τεκμηρίωσε normalization."),
+    syntax: "timeline web|disk|memory", example: "timeline web",
+  },
+  {
+    key: "volatility", aliases: ["volatility", "vol.py", "vol"], title: both("Query a memory image", "Ερώτημα σε memory image"),
+    purpose: both("Inspect process, socket, environment, browser, command-line, and volatile-user artifacts.", "Έλεγξε process, socket, environment, browser, command-line και volatile-user artifacts."),
+    mechanics: both("imageinfo suggests OS/profile; pslist/pstree inspect processes; netscan inspects sockets; envars/cmdline/cmdscan/consoles inspect context; clipboard, browser-history, and MSPaint plugins may recover volatile clues. HackForge returns fixtures only.", "imageinfo προτείνει OS/profile· pslist/pstree processes· netscan sockets· envars/cmdline/cmdscan/consoles context· clipboard/browser/MSPaint volatile clues. Το HackForge δίνει fixtures."),
+    output: both("Treat plugins as views into one capture. Correlate PID, owner, time, and endpoint with disk, event, and packet evidence.", "Τα plugins είναι όψεις ενός capture. Συσχέτισε PID, owner, χρόνο και endpoint με disk/event/packet evidence."),
+    syntax: "volatility -f DUMP PLUGIN", example: "volatility -f /cases/IR-2404/evidence/08-memory/workstation.raw pstree",
+    caution: both("Memory can contain sensitive data. Acquire, analyze, and report it only under proper authority.", "Η μνήμη μπορεί να περιέχει ευαίσθητα δεδομένα· απαιτείται εξουσιοδότηση."),
+  },
+  {
+    key: "memory-acquire", aliases: ["memory-acquire"], title: both("Acquire volatile memory (simulated)", "Απόκτηση volatile μνήμης (προσομοίωση)"),
+    purpose: both("Understand why live-memory acquisition must be authorized, timestamped, and verified.", "Κατανόησε γιατί live-memory acquisition θέλει άδεια, timestamp και verification."),
+    mechanics: both("DumpIt, FTK Imager, and Redline are acquisition-tool examples. HackForge prints a receipt and creates no host-memory image.", "DumpIt, FTK Imager και Redline είναι εργαλεία acquisition. Το HackForge εμφανίζει receipt και δεν συλλέγει host memory."),
+    output: both("The receipt describes a virtual training copy; it does not capture the browser or computer's real RAM.", "Το receipt περιγράφει virtual training copy· δεν συλλαμβάνει πραγματική RAM."),
+    syntax: "memory-acquire SOURCE", example: "memory-acquire /cases/IR-2404/evidence/08-memory/workstation.raw",
+  },
+  {
+    key: "gcore", aliases: ["gcore"], title: both("Acquire a process core (simulated)", "Απόκτηση process core (προσομοίωση)"),
+    purpose: both("Understand how a process-memory snapshot can support volatile analysis.", "Κατανόησε πώς process-memory snapshot βοηθά volatile analysis."),
+    mechanics: both("gcore creates a core dump for a selected PID on real systems. HackForge writes a harmless text fixture and never reads host process memory.", "Το gcore δημιουργεί core dump PID σε πραγματικά συστήματα. Το HackForge γράφει ακίνδυνο text fixture."),
+    output: both("The reported path is a derived sandbox artifact; document target PID, acquisition time, and authority.", "Η διαδρομή είναι derived sandbox artifact· κατέγραψε PID, χρόνο και εξουσιοδότηση."),
+    syntax: "gcore PID", example: "gcore 2112",
+  },
+  {
+    key: "docker", aliases: ["docker"], title: both("Inspect a container as evidence", "Έλεγχος container ως τεκμήριο"),
+    purpose: both("Review configuration, runtime changes, logs, image layers, exports, and memory context.", "Έλεγξε config, runtime changes, logs, image layers, exports και memory."),
+    mechanics: both("inspect shows config/state; diff reports A/D/C paths; logs show output; history lists image layers; export is a filesystem snapshot without layer history. No Docker daemon is connected.", "inspect δείχνει config/state· diff A/D/C paths· logs output· history layers· export snapshot χωρίς layer history. Δεν υπάρχει Docker daemon."),
+    output: both("Compare the writable-container diff with image history. A later deletion does not erase a secret in an earlier immutable layer.", "Σύγκρινε writable diff με image history. Μεταγενέστερη διαγραφή δεν αφαιρεί secret από παλιότερο immutable layer."),
+    syntax: "docker inspect|diff|logs|history|export CONTAINER", example: "docker diff HF-2404",
+  },
+  {
+    key: "rainbow-demo", aliases: ["rainbow-demo"], title: both("Rainbow-table concept (simulated)", "Έννοια rainbow-table (προσομοίωση)"),
+    purpose: both("Compare precomputed lookup with salted password storage.", "Σύγκρινε precomputed lookup με salted αποθήκευση κωδικών."),
+    mechanics: both("Rainbow tables trade storage for faster lookup against unsalted hashes. Unique salts and slow adaptive KDFs make table reuse impractical.", "Rainbow tables ανταλλάσσουν χώρο για γρήγορο lookup unsalted hashes. Μοναδικά salts και αργά KDFs εμποδίζουν reuse."),
+    output: both("The lab returns a canned classroom result, not a computed crack. A salted variant has no match in the toy unsalted table.", "Το lab επιστρέφει canned αποτέλεσμα, όχι crack. Salted variant δεν ταιριάζει σε toy unsalted table."),
+    syntax: "rainbow-demo HASH", example: "rainbow-demo 098f6bcd4621d373cade4e832627b4f6",
+  },
+  {
+    key: "docker", aliases: ["docker"], title: both("Inspect a container as evidence", "Έλεγχος container ως τεκμήριο"),
+    purpose: both("Review configuration, runtime changes, logs, image layers, export, and memory context.", "Έλεγξε config, runtime changes, logs, image layers, export και memory."),
+    mechanics: both("inspect shows config/state; diff reports A/D/C paths; logs show recorded output; history lists build layers; export is a filesystem snapshot and omits image-layer history. No Docker daemon is connected.", "inspect δείχνει config/state· diff A/D/C paths· logs output· history layers· export snapshot χωρίς image history. Δεν υπάρχει Docker daemon."),
+    output: both("Compare a container's writable layer with its image history. A later deletion does not erase a secret stored in an earlier immutable layer.", "Σύγκρινε writable layer με image history. Μεταγενέστερη διαγραφή δεν αφαιρεί secret από παλιό immutable layer."),
+    syntax: "docker inspect|diff|logs|history|export CONTAINER", example: "docker diff HF-2404",
+  },
+  {
+    key: "rainbow-demo", aliases: ["rainbow-demo"], title: both("Rainbow-table concept (simulated)", "Έννοια rainbow-table (προσομοίωση)"),
+    purpose: both("Compare precomputed lookup with salted password storage.", "Σύγκρινε precomputed lookup με salted αποθήκευση κωδικών."),
+    mechanics: both("Rainbow tables trade storage for faster lookup against unsalted hashes. Unique salts and slow adaptive password KDFs make table reuse impractical.", "Rainbow tables ανταλλάσσουν χώρο για γρήγορο lookup unsalted hashes. Μοναδικά salts και αργά KDFs εμποδίζουν reuse."),
+    output: both("The lab returns a canned classroom result, not a computed crack. A salted variant correctly has no match in the toy unsalted table.", "Το lab επιστρέφει canned αποτέλεσμα, όχι crack υπολογισμένο. Salted variant δεν ταιριάζει σε toy unsalted table."),
+    syntax: "rainbow-demo HASH", example: "rainbow-demo 098f6bcd4621d373cade4e832627b4f6",
+  },
+];
+
+export function commandLessonForName(name: string): CommandLesson | undefined {
+  const normalized = name.toLowerCase();
+  const matches = COMMAND_GUIDE.filter((lesson) => lesson.key === normalized || lesson.aliases.some((alias) => alias === normalized));
+  return matches[matches.length - 1];
+}
+
+function fallbackLesson(command: string): CommandLesson {
+  return {
+    key: "fallback",
+    aliases: [],
+    title: both(`Result from ${command || "shell"}`, `Αποτέλεσμα από ${command || "shell"}`),
+    purpose: both("See how the shell or lab tool responded to this input.", "Δες πώς απάντησε το shell ή το εργαλείο του lab σε αυτή την είσοδο."),
+    mechanics: both("This command does not have a dedicated entry in the command library yet. Use its help/manual page and compare the syntax with the lab output.", "Αυτή η εντολή δεν έχει ακόμη ξεχωριστή εγγραφή στη βιβλιοθήκη. Χρησιμοποίησε help/manual και σύγκρινε σύνταξη με έξοδο."),
+    output: both("Use the terminal output and exit status below as the source of truth. Errors usually point to spelling, arguments, path, or permissions.", "Χρησιμοποίησε την έξοδο και το exit status παρακάτω. Τα σφάλματα συνήθως δείχνουν ορθογραφία, ορίσματα, διαδρομή ή δικαιώματα."),
+    syntax: command || "COMMAND",
+    example: command || "help",
+  };
+}
+
+export function commandLessonForLabel(label: string): CommandLesson | undefined {
+  const text = label.toLowerCase();
+  if (text.includes("|")) return commandLessonForName("pipeline");
+  if (/\bsudo\b/.test(text)) return commandLessonForName("sudo");
+  if (/^\s*\d+\s+\d+\s+\*/.test(text)) return commandLessonForName("crontab");
+  if (/\b(get|bye|anonymous)\b/.test(text)) return commandLessonForName("ftp");
+  if (/&/.test(text) && /cmd|background|nano/.test(text)) return commandLessonForName("jobs");
+  if (/^\s*histsize\s*=/.test(text)) return commandLessonForName("env");
+  if (/rot13|decode/.test(text)) return commandLessonForName("rot13");
+  if (/tab/.test(text)) return commandLessonForName("tab");
+  if (/↑|↓|history/.test(text)) return commandLessonForName("history");
+  const candidates = COMMAND_GUIDE
+    .flatMap((lesson) => lesson.aliases.map((alias) => ({ lesson, alias })) )
+    .sort((a, b) => b.alias.length - a.alias.length);
+  return candidates.reverse().find(({ alias }) => {
+    const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(^|[\\s/])${escaped}(?=$|[\\s/])`, "i").test(text);
+  })?.lesson;
+}
+
+function commandNames(raw: string, terminal?: Terminal, respectSessionState = true) {
+  if (respectSessionState && terminal?.ftp && !/^ftp\b/i.test(raw.trim())) return ["ftp"];
+  return splitPipes(raw.replace(/\s+>>?\s+\S+\s*$/, "")).map((part) => {
+    const args = parseArgs(part.replace(/^\s*/, ""));
+    const first = args[0] || "";
+    if (first === "sudo") return "sudo";
+    if (first.startsWith("./") || first.startsWith("/")) return "bash";
+    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(first)) return "export";
+    return first.toLowerCase();
+  });
+}
+
+function referenceCommandNames(reference: string) {
+  const expanded = reference.split(/\s+\/\s+(?=[A-Za-z0-9_.])/);
+  return expanded.flatMap((entry) => commandNames(entry, undefined, false));
+}
+
+export function relevantCommandFamiliesForModule(module: Module, raw: string, terminal: Terminal): string[] {
+  const executedNames = commandNames(raw, terminal);
+  if (executedNames.length === 0) return [];
+
+  const references = [
+    ...module.cheats.map((item) => item.cmd),
+    ...module.tasks.flatMap((task) => [task.hint.en, task.hint.el]),
+    ...module.theory.flatMap((section) => section.shots?.flatMap((shot) => shot.cmd ? [shot.cmd] : []) || []),
+  ];
+  const covered = new Set<string>();
+  for (const reference of references) {
+    for (const name of referenceCommandNames(reference)) {
+      const lesson = commandLessonForName(name);
+      if (lesson) covered.add(lesson.key);
+    }
+  }
+
+  const families = executedNames.map((name) => commandLessonForName(name)?.key);
+  if (families.some((family) => !family) || families.some((family) => !covered.has(family!))) return [];
+  return [...new Set(families as string[])];
+}
+
+function resultReading(
+  raw: string,
+  names: string[],
+  lines: TermLine[],
+  terminal: Terminal,
+  lang: Lang
+) {
+  const output = lines.filter((line) => line.kind !== "in");
+  const text = output.map((line) => line.text).join("\n");
+  const first = names[0] || "";
+  const error = output.some((line) => line.kind === "err") || terminal.lastExit !== 0;
+
+  if (first === "clear") {
+    return lang === "en"
+      ? "The screen was cleared. The terminal state and your history remain; only visible lines were removed."
+      : "Η οθόνη καθαρίστηκε. Η κατάσταση και το ιστορικό παραμένουν· αφαιρέθηκαν μόνο οι ορατές γραμμές.";
+  }
+  if (error) {
+    if (text.includes("Permission denied")) {
+      return lang === "en"
+        ? "The account does not have permission for this path or action. Check the path and the owner/group/other bits with ls -l; do not assume that adding privileges is the right fix."
+        : "Ο λογαριασμός δεν έχει δικαίωμα σε αυτή τη διαδρομή ή ενέργεια. Έλεγξε διαδρομή και owner/group/other με ls -l· μην υποθέτεις ότι η λύση είναι περισσότερα προνόμια.";
+    }
+    if (/No such file|cannot access|not found/i.test(text)) {
+      return lang === "en"
+        ? "The requested command, file, or directory was not found. Confirm spelling, capitalization (Linux paths are case-sensitive), and the current directory with pwd/ls."
+        : "Δεν βρέθηκε η εντολή, το αρχείο ή ο φάκελος. Έλεγξε ορθογραφία, κεφαλαία (οι Linux διαδρομές είναι case-sensitive) και θέση με pwd/ls.";
+    }
+    if (terminal.lastExit === 127) {
+      return lang === "en"
+        ? "Exit code 127 means the shell could not find this command. Check its spelling, use help to see this lab's commands, or use which for a known program."
+        : "Exit code 127 σημαίνει ότι το shell δεν βρήκε την εντολή. Έλεγξε ορθογραφία, δες help ή χρησιμοποίησε which για γνωστό πρόγραμμα.";
+    }
+    return lang === "en"
+      ? "The terminal reported an error. Read the error line first; it normally identifies a missing argument, inaccessible path, or unsupported action. No live system was contacted."
+      : "Το terminal ανέφερε σφάλμα. Διάβασε πρώτα τη γραμμή σφάλματος· συνήθως δείχνει ελλιπές όρισμα, απρόσιτη διαδρομή ή μη υποστηριζόμενη ενέργεια. Δεν έγινε επαφή με live σύστημα.";
+  }
+
+  if (/\s>>?\s*\S+/.test(raw)) {
+    const target = raw.match(/>>?\s*(\S+)\s*$/)?.[1] || "the target file";
+    return lang === "en"
+      ? `The redirection wrote output to ${target}, so the terminal can be silent. A single > replaces the file; >> appends. Read the file to verify the change.`
+      : `Η ανακατεύθυνση έγραψε την έξοδο στο ${target}, γι' αυτό το terminal μπορεί να μείνει σιωπηλό. Το > αντικαθιστά, το >> προσθέτει. Διάβασε το αρχείο για επιβεβαίωση.`;
+  }
+
+  if (first === "cd") {
+    return lang === "en"
+      ? `The shell moved to ${terminal.cwd}. cd is normally silent; the changed prompt and pwd confirm your new working directory.`
+      : `Το shell μετακινήθηκε στο ${terminal.cwd}. Το cd συνήθως δεν τυπώνει κάτι· το prompt και το pwd επιβεβαιώνουν τη νέα θέση.`;
+  }
+  if (["touch", "mkdir", "cp", "mv", "rm", "rmdir", "chmod", "chown", "chgrp"].includes(first) && output.length === 0) {
+    const verify = first === "chmod" || first === "chown" || first === "chgrp" ? "ls -l" : first === "rm" || first === "rmdir" ? "ls" : "ls -la";
+    return lang === "en"
+      ? `This file operation succeeded without printing text. That is normal for Unix commands. Verify the changed filesystem with ${verify}.`
+      : `Η λειτουργία αρχείου πέτυχε χωρίς κείμενο εξόδου. Αυτό είναι φυσιολογικό στο Unix. Επιβεβαίωσε το σύστημα αρχείων με ${verify}.`;
+  }
+  if ((first === "apt-get" || first === "apt") && /Abort\./.test(text)) {
+    return lang === "en"
+      ? "The simulated package confirmation was answered with n, so the removal was aborted. No package was removed; this is the safe version of the guide's exercise."
+      : "Η εικονική επιβεβαίωση πακέτου απαντήθηκε με n, άρα η αφαίρεση ακυρώθηκε. Δεν αφαιρέθηκε πακέτο· αυτή είναι η ασφαλής εκδοχή της άσκησης.";
+  }
+  if (first === "ps" && names.includes("grep")) {
+    return lang === "en"
+      ? "The pipe passed the process list to grep, which kept only rows matching the requested process name. PID identifies a process; %CPU and %MEM are resource snapshots."
+      : "Το pipe έδωσε τη λίστα διεργασιών στο grep, που κράτησε γραμμές με το όνομα που ζήτησες. Το PID είναι αναγνωριστικό διεργασίας· %CPU και %MEM είναι στιγμιότυπα πόρων.";
+  }
+  if (names.length > 1) {
+    const last = names[names.length - 1];
+    if (last === "grep") {
+      const parts = splitPipes(raw);
+      const pattern = parseArgs(parts[parts.length - 1] || "").slice(1).find((arg) => !arg.startsWith("-")) || "the requested pattern";
+      return lang === "en"
+        ? `The pipeline passed output to grep, which kept rows matching ${pattern}. The displayed lines are a filtered view; the original output and files were not changed.`
+        : `Το pipeline έδωσε την έξοδο στο grep, που κράτησε γραμμές οι οποίες ταιριάζουν στο ${pattern}. Οι γραμμές είναι φιλτραρισμένη προβολή· η πηγή δεν άλλαξε.`;
+    }
+    return lang === "en"
+      ? `This pipeline connects ${names.join(" → ")}. Each | passes the previous command's standard output into the next command's input; the displayed lines are the final result.`
+      : `Αυτό το pipeline συνδέει ${names.join(" → ")}. Κάθε | στέλνει το standard output της προηγούμενης εντολής ως είσοδο στην επόμενη· οι γραμμές είναι το τελικό αποτέλεσμα.`;
+  }
+  if (first === "grep" && output.length === 0) {
+    return lang === "en"
+      ? "No lines matched the pattern. grep normally prints nothing for zero matches; refine the pattern or inspect the source with cat."
+      : "Καμία γραμμή δεν ταίριαξε στο μοτίβο. Το grep συνήθως δεν τυπώνει τίποτα όταν δεν υπάρχουν αποτελέσματα· άλλαξε μοτίβο ή διάβασε την πηγή με cat.";
+  }
+  if (first === "grep") {
+    const args = parseArgs(raw);
+    const pattern = args.find((arg, index) => index > 0 && !arg.startsWith("-")) || "the requested pattern";
+    const inverted = args.includes("-v") || args.some((arg) => arg.includes("v") && arg.startsWith("-"));
+    return lang === "en"
+      ? `${inverted ? "The -v option kept lines that do not match" : "grep kept lines that match"} ${pattern}. The output is a filtered view; the source file or earlier pipeline output was not changed.`
+      : `${inverted ? "Η επιλογή -v κράτησε γραμμές που δεν ταιριάζουν στο" : "Το grep κράτησε γραμμές που ταιριάζουν στο"} ${pattern}. Η έξοδος είναι φιλτραρισμένη προβολή· η πηγή δεν άλλαξε.`;
+  }
+  if (first === "find" || first === "locate") {
+    const count = output.filter((line) => line.text.startsWith("/")).length;
+    return lang === "en"
+      ? `${count} matching path${count === 1 ? "" : "s"} ${count === 1 ? "was" : "were"} printed. Each path is a candidate location; find walks the live virtual tree while locate searches its name index.`
+      : `Εμφανίστηκαν ${count} διαδρομ${count === 1 ? "ή" : "ές"}. Κάθε διαδρομή είναι υποψήφια τοποθεσία· το find διασχίζει το virtual tree, ενώ το locate ψάχνει το ευρετήριο ονομάτων.`;
+  }
+  if (first === "whereis" || first === "which") {
+    return lang === "en"
+      ? "The path identifies the simulated executable location. which checks PATH; whereis may also show a manual-page location."
+      : "Η διαδρομή δείχνει την εικονική θέση εκτελέσιμου. Το which ελέγχει PATH· το whereis μπορεί να εμφανίσει και man page.";
+  }
+  if (first === "man") {
+    return lang === "en"
+      ? "The manual excerpt describes command usage and options. Read the option names before trying them; the terminal provides a short simulated page."
+      : "Το απόσπασμα manual περιγράφει χρήση και επιλογές. Διάβασε τις επιλογές πριν τις δοκιμάσεις· το terminal δίνει σύντομη προσομοιωμένη σελίδα.";
+  }
+  if (first === "apt-cache") {
+    return lang === "en"
+      ? "Each row is a package candidate plus a short description. Search does not install anything; review the package and repository before installing on a real machine."
+      : "Κάθε γραμμή είναι υποψήφιο πακέτο με περιγραφή. Η αναζήτηση δεν εγκαθιστά· έλεγξε πακέτο και repository πριν από πραγματική εγκατάσταση.";
+  }
+  if (first === "apt-get" || first === "apt") {
+    return lang === "en"
+      ? "The package-manager summary describes the requested simulated action. Read the package list and confirmation carefully; this local exercise makes no changes to your computer."
+      : "Η σύνοψη διαχειριστή πακέτων περιγράφει την εικονική ενέργεια. Διάβασε λίστα και επιβεβαίωση· η τοπική άσκηση δεν αλλάζει τον υπολογιστή σου.";
+  }
+  if (first === "date") {
+    return lang === "en"
+      ? "The line is the simulator's current local date and time. It is informational; date without a setting does not change the clock."
+      : "Η γραμμή είναι τοπική ημερομηνία και ώρα του προσομοιωτή. Είναι πληροφοριακή· το date χωρίς ρύθμιση δεν αλλάζει το ρολόι.";
+  }
+  if (first === "history") {
+    return lang === "en"
+      ? "Each numbered row is a previously entered command in this shell session. The history list is for review, not a replay unless you explicitly run a command again."
+      : "Κάθε αριθμημένη γραμμή είναι προηγούμενη εντολή της συνεδρίας. Το history είναι για έλεγχο, όχι επανεκτέλεση.";
+  }
+  if (first === "echo") {
+    return lang === "en"
+      ? "The printed text is the expanded argument. A $NAME expression is replaced with the current value of that shell variable."
+      : "Το κείμενο είναι το expanded όρισμα. Η έκφραση $NAME αντικαθίσταται από την τρέχουσα τιμή της shell variable.";
+  }
+  if (output.length === 0) {
+    return lang === "en"
+      ? "The command completed without text output. Many Linux commands are intentionally silent on success; use the state shown in the prompt or inspect the affected file/service to confirm."
+      : "Η εντολή ολοκληρώθηκε χωρίς κείμενο εξόδου. Πολλές Linux εντολές είναι σιωπηλές στην επιτυχία· έλεγξε το prompt ή το αρχείο/υπηρεσία που επηρεάστηκε.";
+  }
+  if (first === "pwd") {
+    return lang === "en"
+      ? `The path ${text.trim()} is your current working directory. Relative paths are resolved from here.`
+      : `Η διαδρομή ${text.trim()} είναι ο τρέχων φάκελός σου. Οι σχετικές διαδρομές λύνονται από εδώ.`;
+  }
+  if (first === "whoami") {
+    return lang === "en"
+      ? `The effective account is ${text.trim()}. Commands and file access are evaluated using this identity.`
+      : `Ο ενεργός λογαριασμός είναι ${text.trim()}. Οι εντολές και η πρόσβαση σε αρχεία ελέγχονται με αυτή την ταυτότητα.`;
+  }
+  if (first === "ls") {
+    return lang === "en"
+      ? "The names shown are entries in the requested directory. With -a, dotfiles are included; with -l, read the mode and owner/group columns before changing anything."
+      : "Τα ονόματα είναι εγγραφές του ζητημένου φακέλου. Με -a εμφανίζονται dotfiles· με -l έλεγξε mode και owner/group πριν αλλάξεις κάτι.";
+  }
+  if (["cat", "head", "tail", "nl", "more", "less"].includes(first)) {
+    return lang === "en"
+      ? "The output is file data. cat prints the whole file, head its beginning, tail its end, nl adds line numbers, and more/less are pagers in a real terminal. Treat the text as data, not as instructions to execute."
+      : "Η έξοδος είναι δεδομένα αρχείου. cat τυπώνει όλο το αρχείο, head την αρχή, tail το τέλος, nl βάζει αριθμούς και more/less είναι pagers σε πραγματικό terminal. Αντιμετώπισε το κείμενο ως δεδομένα, όχι ως εντολές.";
+  }
+  if (first === "dig") {
+    return lang === "en"
+      ? "Read the ANSWER SECTION: A maps a name to an address, MX lists mail exchangers, and NS lists name servers. These are fictional HackForge records."
+      : "Διάβασε το ANSWER SECTION: A αντιστοιχίζει όνομα σε διεύθυνση, MX εμφανίζει mail exchangers και NS name servers. Είναι φανταστικές εγγραφές HackForge.";
+  }
+  if (first === "ifconfig" || first === "ip" || first === "iwconfig") {
+    return lang === "en"
+      ? "The output describes the simulator's virtual network interfaces. inet is an IPv4 address, netmask describes the subnet, broadcast is the subnet broadcast, and ether is the MAC address. No real adapter was changed."
+      : "Η έξοδος περιγράφει εικονικές διεπαφές δικτύου. inet είναι IPv4, netmask το subnet, broadcast η διεύθυνση broadcast και ether η MAC. Δεν άλλαξε πραγματικός adapter.";
+  }
+  if (first === "service") {
+    return lang === "en"
+      ? "The service message reports a simulated state change. status tells you whether the named daemon is running; no real service on your computer was started or stopped."
+      : "Το μήνυμα υπηρεσίας αναφέρει εικονική αλλαγή κατάστασης. Το status δείχνει αν το daemon θεωρείται ενεργό· δεν ξεκίνησε ούτε σταμάτησε πραγματική υπηρεσία.";
+  }
+  if (first === "ssh" || first === "ftp") {
+    return lang === "en"
+      ? "This response comes from a fictional HackForge host inside the local virtual filesystem. A welcome/status banner means the simulator accepted the training step; no external server was contacted."
+      : "Η απόκριση προέρχεται από φανταστικό host HackForge μέσα στο εικονικό σύστημα αρχείων. Banner υποδοχής/status σημαίνει αποδοχή του βήματος· δεν επικοινωνήθηκε εξωτερικός server.";
+  }
+  if (first === "echo") {
+    return lang === "en"
+      ? "The printed text is the expanded argument. A $NAME expression is replaced with the current value of that shell variable."
+      : "Το κείμενο είναι το expanded όρισμα. Η έκφραση $NAME αντικαθίσταται από την τρέχουσα τιμή της shell variable.";
+  }
+  if (first === "bash") {
+    return lang === "en"
+      ? "These lines were printed by the simulated script. A script can run several commands in sequence; inspect its contents first and check its shebang and execute permission before running it on a real system."
+      : "Αυτές οι γραμμές τυπώθηκαν από το προσομοιωμένο script. Ένα script εκτελεί διαδοχικές εντολές· διάβασε περιεχόμενα, shebang και δικαιώματα πριν το τρέξεις σε πραγματικό σύστημα.";
+  }
+  if (first === "nmap" || first === "hydra" || first === "sqlmap" || first === "sudo") {
+    return lang === "en"
+      ? "This is a canned educational result for the isolated HackForge sandbox. It does not scan, authenticate to, or exploit a real system. Read each row as simulated lab data."
+      : "Αυτό είναι προκαθορισμένο εκπαιδευτικό αποτέλεσμα του απομονωμένου HackForge sandbox. Δεν σαρώθηκε, δεν έγινε login ούτε exploit σε πραγματικό σύστημα. Διάβασε κάθε γραμμή ως εικονικά δεδομένα.";
+  }
+  return lang === "en"
+    ? `The terminal returned ${output.length} output line${output.length === 1 ? "" : "s"}. Read the output panel above as the command's direct response; compare it with the command's purpose and the current lab state.`
+    : `Το terminal επέστρεψε ${output.length} γραμμή${output.length === 1 ? "" : "ές"}. Διάβασε τον πίνακα εξόδου ως άμεση απόκριση και σύγκρινέ τον με τον σκοπό της εντολής και την κατάσταση του lab.`;
+}
+
+export function explainCommandResult(raw: string, lines: TermLine[], terminal: Terminal, lang: Lang): CommandExplanation {
+  const names = commandNames(raw, terminal);
+  const first = names[0] || "";
+  const lesson = raw.includes("|")
+    ? commandLessonForName("pipeline")!
+    : commandLessonForName(first) || fallbackLesson(first);
+  const output = lines.filter((line) => line.kind !== "in").slice(0, 80);
+  return {
+    command: raw.trim(),
+    lesson,
+    reading: resultReading(raw, names, output, terminal, lang),
+    output,
+    exitCode: terminal.lastExit,
+  };
+}
+
+export function studyItemsForModule(module: Module) {
+  return module.cheats.map((cheat) => ({
+    ...cheat,
+    guide: commandLessonForLabel(cheat.cmd),
+  }));
+}

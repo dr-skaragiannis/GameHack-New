@@ -1,54 +1,43 @@
-// HACKFORGE platform data layer.
-// A fully client-side "backend" persisted in localStorage. It stores users
-// (players + educators), per-user lab progress, gamification metrics, badges,
-// a live activity feed, tickets, direct/broadcast messages and player chat.
-//
-// Everything is namespaced under one key and loaded/saved as a single blob.
-
 import type { Lang } from "../i18n";
 
 export type Role = "player" | "educator";
-
-// Reading-column width preference for theory/content.
 export type ContentWidth = "centered" | "wide" | "full";
-
 export type ModProgress = { completed: boolean; done: string[] };
 
-// Scientific-ish learning metrics tracked per user.
 export type Metrics = {
-  xp: number; // effective XP already awarded (after rate modifiers)
+  xp: number;
   commandsRun: number;
-  pasteCount: number; // commands that were pasted (lowers fidelity)
-  typedCount: number; // commands typed by hand
-  typoCount: number; // mistyped / command-not-found events
+  pasteCount: number;
+  typedCount: number;
+  typoCount: number;
   hintsUsed: number;
   challengeAttempts: number;
   challengeSolves: number;
   secondsActive: number;
   streakDays: number;
-  lastActiveDay: string; // yyyy-mm-dd
+  lastActiveDay: string;
 };
 
 export type User = {
   id: string;
   username: string;
-  password: string; // plaintext for this local simulation only
+  password: string;
   role: Role;
   displayName: string;
-  avatar: string; // data-url or "" (fallback to generated)
+  avatar: string;
   bio: string;
   interests: string[];
   createdAt: number;
-  lastSeen?: number; // ms epoch — presence heartbeat for the learning map
+  lastSeen?: number;
+  activeCampaignId?: string;
+  activeModuleId?: string;
   lang: Lang;
   accepted: boolean;
-  // UI preferences
-  contentWidth?: ContentWidth; // theory/reading column width
-  sidebarCollapsed?: boolean; // left sidebar minimized
-  // learning data
-  progress: Record<string, ModProgress>; // moduleId -> progress
+  contentWidth?: ContentWidth;
+  sidebarCollapsed?: boolean;
+  progress: Record<string, ModProgress>;
   metrics: Metrics;
-  badges: string[]; // badge ids earned
+  badges: string[];
 };
 
 export type FeedEvent = {
@@ -65,7 +54,7 @@ export type Ticket = {
   playerId: string;
   playerName: string;
   subject: string;
-  moduleId: string | null; // lab-specific or general
+  moduleId: string | null;
   status: "open" | "answered" | "closed";
   priority: "low" | "normal" | "high";
   createdAt: number;
@@ -117,7 +106,7 @@ export type Badge = {
   desc: string;
   icon: string;
   tier: "bronze" | "silver" | "gold";
-  blurb: string; // longer certification-style description
+  blurb: string;
 };
 
 export const BADGES: Record<string, Badge> = {
@@ -198,18 +187,123 @@ export const BADGES: Record<string, Badge> = {
     tier: "silver",
     blurb: "Honours consistency — returning to train three days in a row and keeping the streak alive.",
   },
+  ssh_walker: {
+    name: "Wirewalker",
+    desc: "Completed the SSH labyrinth",
+    icon: "key",
+    tier: "gold",
+    blurb: "Mastery of SSH keys, hopping and tunnels across a segmented lab network.",
+  },
+  sudo_run: {
+    name: "Sudo_Run",
+    desc: "Finished Linux for Beginners",
+    icon: "terminal",
+    tier: "gold",
+    blurb: "Certifies the full Sudo_Run path: files, permissions, networks, processes, bash, cron and core Linux services in the HackForge sandbox.",
+  },
+  evidence_custodian: {
+    name: "Evidence Custodian",
+    desc: "Completed DFIR intake and integrity",
+    icon: "shield",
+    tier: "bronze",
+    blurb: "Demonstrates evidence handling, provenance, hashes, file identification, and read-only analysis habits.",
+  },
+  artifact_mapper: {
+    name: "Artifact Mapper",
+    desc: "Correlated Windows artifacts",
+    icon: "settings",
+    tier: "silver",
+    blurb: "Correlated registry, shortcut, browser, and event-log artifacts into a defensible timeline.",
+  },
+  document_analyst: {
+    name: "Document Analyst",
+    desc: "Completed document and steganography triage",
+    icon: "file-text",
+    tier: "silver",
+    blurb: "Inspected office-container metadata, extracted macro indicators statically, and evaluated image/audio clues without executing content.",
+  },
+  web_correlator: {
+    name: "Web Correlator",
+    desc: "Correlated application and WAF logs",
+    icon: "globe",
+    tier: "silver",
+    blurb: "Correlated timestamps, web access events, server errors, and WAF rule identifiers while distinguishing evidence from attribution.",
+  },
+  packet_analyst: {
+    name: "Packet Analyst",
+    desc: "Completed network traffic analysis",
+    icon: "share",
+    tier: "silver",
+    blurb: "Reviewed protocol summaries, display-filtered packets, reconstructed a training stream, and preserved export provenance.",
+  },
+  disk_examiner: {
+    name: "Disk Examiner",
+    desc: "Completed disk image analysis",
+    icon: "hard-drive",
+    tier: "silver",
+    blurb: "Practiced read-only acquisition, integrity verification, filesystem enumeration, and cautious MFT timeline interpretation.",
+  },
+  static_analyst: {
+    name: "Static Analyst",
+    desc: "Completed safe malware triage",
+    icon: "bug",
+    tier: "gold",
+    blurb: "Triaged file type, hashes, printable strings, and isolated behavior notes without executing a sample.",
+  },
+  memory_analyst: {
+    name: "Memory Analyst",
+    desc: "Completed memory artifact analysis",
+    icon: "cpu",
+    tier: "gold",
+    blurb: "Correlated a memory profile, process tree, sockets, environment, and volatile user artifacts as a training investigation.",
+  },
+  container_examiner: {
+    name: "Container Examiner",
+    desc: "Completed container forensics",
+    icon: "layers",
+    tier: "silver",
+    blurb: "Reviewed container configuration, runtime differences, logs, and image history while accounting for immutable layers.",
+  },
+  hash_examiner: {
+    name: "Hash Examiner",
+    desc: "Completed password hash analysis",
+    icon: "key",
+    tier: "gold",
+    blurb: "Reviewed hash formats, candidate comparison, salts, adaptive password KDFs, authorization boundaries, and remediation.",
+  },
+  incident_reporter: {
+    name: "Incident Reporter",
+    desc: "Completed the DFIR fieldwork path",
+    icon: "file-text",
+    tier: "gold",
+    blurb: "Completed the ten-lab DFIR Fieldwork path and practiced reporting evidence with limitations and defensive recommendations.",
+  },
 };
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-// Pick a random themed icon avatar ("ic:<key>:<hex>") for new accounts.
 const DEFAULT_ICON_KEYS = [
-  "skull", "terminal", "ghost", "dragon", "bug", "shield", "radar", "wolf",
-  "owl", "raven", "phoenix", "atom", "cpu", "qubit", "cybereye", "wyvern",
+  "skull",
+  "terminal",
+  "ghost",
+  "dragon",
+  "bug",
+  "shield",
+  "radar",
+  "wolf",
+  "owl",
+  "raven",
+  "phoenix",
+  "atom",
+  "cpu",
+  "qubit",
+  "cybereye",
+  "wyvern",
 ];
 const DEFAULT_ICON_HEXES = ["#ff6a2b", "#22d3ee", "#3ddc84", "#a78bfa", "#fcd34d", "#f472b6", "#38bdf8"];
+
 export function randomIconAvatar(seed = Math.random()): string {
   const k = DEFAULT_ICON_KEYS[Math.floor(seed * 997) % DEFAULT_ICON_KEYS.length];
   const c = DEFAULT_ICON_HEXES[Math.floor(seed * 613) % DEFAULT_ICON_HEXES.length];
@@ -236,8 +330,6 @@ export function freshMetrics(): Metrics {
   };
 }
 
-// Tailwind classes for the reading/content column width preference.
-// On small screens content is always full width; the preference applies at lg+.
 export function contentWidthClass(w?: ContentWidth): string {
   switch (w) {
     case "centered":
@@ -250,35 +342,26 @@ export function contentWidthClass(w?: ContentWidth): string {
   }
 }
 
-// ---------------- derived gamification scores ----------------
-
-// Fidelity = share of commands typed by hand (not pasted). High fidelity means
-// the learner is genuinely practicing rather than copy-pasting solutions.
 export function fidelityScore(m: Metrics): number {
   const total = m.pasteCount + m.typedCount;
   if (total === 0) return 100;
   return Math.round((m.typedCount / total) * 100);
 }
 
-// Accuracy = share of commands that were not typos.
 export function accuracyScore(m: Metrics): number {
   if (m.commandsRun === 0) return 100;
   const good = Math.max(0, m.commandsRun - m.typoCount);
   return Math.round((good / m.commandsRun) * 100);
 }
 
-// The XP rate multiplier applied to every award. Pasting and typos reduce it,
-// so sloppy copy-paste runs earn less XP than careful hands-on practice.
 export function xpRate(m: Metrics): number {
-  const fid = fidelityScore(m) / 100; // 0..1
-  const acc = accuracyScore(m) / 100; // 0..1
-  // weight fidelity heavier; floor at 0.4 so progress never fully stalls
+  const fid = fidelityScore(m) / 100;
+  const acc = accuracyScore(m) / 100;
   const rate = 0.4 + 0.45 * fid + 0.15 * acc;
   return Math.min(1, Math.round(rate * 100) / 100);
 }
 
 export function levelFromXp(xp: number): { level: number; into: number; span: number; pct: number } {
-  // Small, memorable thresholds: level 1→2 needs 10 XP, then +5 per level.
   let level = 1;
   let remaining = xp;
   let span = 10;
@@ -290,13 +373,42 @@ export function levelFromXp(xp: number): { level: number; into: number; span: nu
   return { level, into: remaining, span, pct: Math.round((remaining / span) * 100) };
 }
 
-// ---------------- persistence ----------------
-
 let cache: DB | null = null;
+const dbListeners = new Set<() => void>();
+let storageListenerAttached = false;
+
+function notifyDBChange() {
+  dbListeners.forEach((listener) => listener());
+}
+
+export function subscribeDB(listener: () => void) {
+  dbListeners.add(listener);
+  if (!storageListenerAttached && typeof window !== "undefined") {
+    storageListenerAttached = true;
+    window.addEventListener("storage", (event) => {
+      if (event.key !== KEY && event.key !== null) return;
+      try {
+        cache = event.newValue ? JSON.parse(event.newValue) : null;
+      } catch {
+        cache = null;
+      }
+      notifyDBChange();
+    });
+  }
+  return () => {
+    dbListeners.delete(listener);
+  };
+}
+
+export const PRESENCE_WINDOW_MS = 45_000;
+
+export function isOnline(user: User, now = Date.now()) {
+  return !!user.lastSeen && user.lastSeen > 0 && now - user.lastSeen < PRESENCE_WINDOW_MS;
+}
 
 function seed(): DB {
   const db: DB = { users: [], sessionUserId: null, feed: [], tickets: [], messages: [], chats: [] };
-  // a default educator so the educator dashboard is reachable out of the box
+
   const edu: User = {
     id: uid(),
     username: "educator",
@@ -314,12 +426,13 @@ function seed(): DB {
     badges: [],
   };
   db.users.push(edu);
-  // a couple of demo players to populate leaderboards & charts
+
   const demoNames = [
     ["nova", "Nova Reyes", ["Web Security", "Python"], 82],
     ["byte", "Byte Walker", ["Networking", "Red Team"], 54],
     ["cipher", "Cipher Kaur", ["Cryptography", "OSINT"], 124],
   ] as const;
+
   for (const [u, dn, ints, xp] of demoNames) {
     const m = freshMetrics();
     m.xp = xp;
@@ -360,19 +473,17 @@ function seed(): DB {
   return db;
 }
 
-// One-time idempotent enrichment so the learning map looks alive out of the
-// box: demo players get lab progress (so they pin to different map nodes) and
-// staggered presence timestamps (a mix of online / offline markers).
-const DEMO_MAP_MARK = "mapDemoV1";
+const DEMO_MAP_MARK = "mapDemoV2";
+
 function enrichDemoPresence(db: DB) {
   if ((db as unknown as Record<string, unknown>)[DEMO_MAP_MARK]) return;
   const now = Date.now();
   const plans: Record<string, { done: string[]; seenAgoMs: number }> = {
-    nova: { done: ["linux-basics", "files"], seenAgoMs: 2 * 60_000 }, // online now
-    byte: { done: ["linux-basics"], seenAgoMs: 26 * 3_600_000 }, // offline since yesterday
+    nova: { done: ["linux-basics", "files"], seenAgoMs: 8_000 },
+    byte: { done: ["linux-basics"], seenAgoMs: 26 * 3_600_000 },
     cipher: {
       done: ["linux-basics", "files", "permissions", "networking", "recon", "scanning"],
-      seenAgoMs: 45_000, // online now
+      seenAgoMs: 18_000,
     },
   };
   for (const [uname, plan] of Object.entries(plans)) {
@@ -381,7 +492,11 @@ function enrichDemoPresence(db: DB) {
     if (Object.keys(u.progress).length === 0) {
       for (const mid of plan.done) u.progress[mid] = { completed: true, done: [] };
     }
-    if (u.lastSeen === undefined) u.lastSeen = now - plan.seenAgoMs;
+    if (!u.activeCampaignId) {
+      u.activeCampaignId = "forge";
+      u.activeModuleId = uname === "cipher" ? "bruteforce" : uname === "nova" ? "permissions" : "files";
+    }
+    if (u.lastSeen === undefined || uname === "nova" || uname === "cipher") u.lastSeen = now - plan.seenAgoMs;
   }
   (db as unknown as Record<string, unknown>)[DEMO_MAP_MARK] = 1;
 }
@@ -412,9 +527,8 @@ export function saveDB() {
   } catch {
     /* ignore */
   }
+  notifyDBChange();
 }
-
-// ---------------- auth ----------------
 
 export function register(
   username: string,
@@ -425,8 +539,8 @@ export function register(
   const db = getDB();
   const uname = username.trim().toLowerCase();
   if (!uname || !password) return { ok: false, error: "Username and password required" };
-  if (uname.length < 3) return { ok: false, error: "Username must be at least 3 characters" };
-  if (db.users.some((u) => u.username === uname)) return { ok: false, error: "Username already taken" };
+  if (uname.length < 3) return { ok: false, error: "Username too short" };
+  if (db.users.find((x) => x.username === uname)) return { ok: false, error: "Username already taken" };
   const user: User = {
     id: uid(),
     username: uname,
@@ -437,6 +551,9 @@ export function register(
     bio: "",
     interests: [],
     createdAt: Date.now(),
+    lastSeen: Date.now(),
+    activeCampaignId: "forge",
+    activeModuleId: "linux-basics",
     lang: "en",
     accepted: false,
     progress: {},
@@ -464,7 +581,6 @@ export function login(username: string, password: string): { ok: boolean; error?
 
 export function logout() {
   const db = getDB();
-  // mark the departing user offline so the learning map greys them out
   const departing = db.sessionUserId ? db.users.find((x) => x.id === db.sessionUserId) : null;
   if (departing) departing.lastSeen = 0;
   db.sessionUserId = null;
@@ -488,14 +604,14 @@ export function updateUser(id: string, patch: Partial<User>) {
 export function allPlayers(): User[] {
   return getDB().users.filter((u) => u.role === "player");
 }
+
 export function allEducators(): User[] {
   return getDB().users.filter((u) => u.role === "educator");
 }
+
 export function userById(id: string): User | undefined {
   return getDB().users.find((u) => u.id === id);
 }
-
-// ---------------- feed ----------------
 
 export function pushFeed(user: User, kind: FeedEvent["kind"], text: string) {
   const db = getDB();
@@ -515,8 +631,6 @@ function touchStreak(u: User) {
   u.metrics.lastActiveDay = t;
 }
 
-// ---------------- gamification events ----------------
-
 export function recordCommand(userId: string, opts: { pasted: boolean; typo: boolean }) {
   const db = getDB();
   const u = db.users.find((x) => x.id === userId);
@@ -528,7 +642,6 @@ export function recordCommand(userId: string, opts: { pasted: boolean; typo: boo
   saveDB();
 }
 
-// Award XP for a task/challenge, scaled by the current XP rate modifier.
 export function awardXp(userId: string, base: number): { gained: number; leveledUp: boolean } {
   const db = getDB();
   const u = db.users.find((x) => x.id === userId);
@@ -550,8 +663,6 @@ export function grantBadge(userId: string, badgeId: string): boolean {
   saveDB();
   return true;
 }
-
-// ---------------- tickets ----------------
 
 export function createTicket(
   player: User,
@@ -600,8 +711,6 @@ export function ticketsFor(user: User): Ticket[] {
   return user.role === "educator" ? db.tickets : db.tickets.filter((t) => t.playerId === user.id);
 }
 
-// ---------------- messages (educator -> players, broadcast) ----------------
-
 export function sendMessage(from: User, toId: string | "broadcast", text: string) {
   const db = getDB();
   if (toId === "broadcast") {
@@ -618,7 +727,15 @@ export function sendMessage(from: User, toId: string | "broadcast", text: string
       });
     }
   } else {
-    db.messages.unshift({ id: uid(), ts: Date.now(), fromId: from.id, fromName: from.displayName, toId, text, read: false });
+    db.messages.unshift({
+      id: uid(),
+      ts: Date.now(),
+      fromId: from.id,
+      fromName: from.displayName,
+      toId,
+      text,
+      read: false,
+    });
   }
   saveDB();
 }
@@ -634,8 +751,6 @@ export function markMessagesRead(userId: string) {
   });
   saveDB();
 }
-
-// ---------------- player-to-player chat ----------------
 
 export function getThread(aId: string, bId: string): ChatThread {
   const db = getDB();
@@ -665,4 +780,15 @@ export function resetAll() {
   } catch {
     /* ignore */
   }
+  notifyDBChange();
 }
+
+export function heartbeat(userId: string) {
+  const u = userById(userId);
+  if (!u) return;
+  u.lastSeen = Date.now();
+  u.metrics.secondsActive += 15;
+  saveDB();
+}
+
+export { uid };
