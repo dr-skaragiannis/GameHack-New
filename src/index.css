@@ -2719,3 +2719,147 @@ body {
   min-width: 44px;
   height: 24px;
 }
+
+/* Compact module controls and metadata into a sticky course toolbar. */
+.module-topbar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 11, 0.96);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(16px);
+}
+.module-topbar__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.module-topbar__back {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  color: #a1a1aa;
+  font-size: var(--type-small);
+  white-space: nowrap;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.module-topbar__back:hover {
+  border-color: rgba(255, 106, 43, 0.35);
+  background: rgba(255, 106, 43, 0.06);
+  color: #ffad83;
+}
+.module-topbar__lab {
+  min-width: 220px;
+  flex: 1 1 280px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.module-topbar__icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 11px;
+  box-shadow: 0 0 16px rgba(255, 106, 43, 0.14);
+}
+.module-topbar__copy {
+  min-width: 0;
+}
+.module-topbar__title {
+  overflow: hidden;
+  color: #f4f4f5;
+  font-size: 18px;
+  font-weight: 750;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.module-topbar__subtitle {
+  overflow: hidden;
+  margin-top: 2px;
+  color: #92929a;
+  font-size: var(--type-small);
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.module-topbar__difficulty,
+.module-topbar__progress-copy {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.025);
+}
+.module-topbar__difficulty > span,
+.module-topbar__progress-copy > span {
+  color: #8e8e96;
+  font-size: var(--type-small);
+  white-space: nowrap;
+}
+.module-topbar__difficulty > b {
+  color: #ff9c6b;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.module-topbar__difficulty > b i {
+  color: #58585f;
+  font-style: normal;
+}
+.module-topbar__progress-copy > b {
+  color: #ff8a4c;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.module-topbar__track {
+  height: 3px;
+  overflow: hidden;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: #25252a;
+}
+.module-topbar__track > div {
+  border-radius: inherit;
+}
+
+.terminal-window {
+  height: 560px;
+  min-height: 560px;
+  max-height: 560px;
+}
+.terminal-window__scroll {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+@media (max-width: 760px) {
+  .module-topbar__lab {
+    order: 1;
+    flex-basis: calc(100% - 12px);
+  }
+  .module-topbar__back {
+    order: 0;
+  }
+  .module-topbar__difficulty,
+  .module-topbar__progress-copy {
+    order: 2;
+  }
+  .module-topbar__progress-copy {
+    margin-left: auto;
+  }
+  .terminal-window {
+    height: min(62vh, 560px);
+    min-height: 360px;
+    max-height: 560px;
+  }
+}

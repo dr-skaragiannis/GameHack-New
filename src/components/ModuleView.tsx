@@ -30,6 +30,7 @@ export default function ModuleView({
   module,
   userId,
   lang,
+  initialTab,
   done,
   contentWidth,
   onWidth,
@@ -42,6 +43,7 @@ export default function ModuleView({
   module: Module;
   userId: string;
   lang: Lang;
+  initialTab?: "theory" | "guide" | "lab";
   done: string[];
   contentWidth?: ContentWidth;
   onWidth: (w: ContentWidth) => void;
@@ -51,7 +53,7 @@ export default function ModuleView({
   onComplete: () => void;
   onBack: () => void;
 }) {
-  const [tab, setTab] = useState<"theory" | "guide" | "lab">(done.length ? "lab" : "theory");
+  const [tab, setTab] = useState<"theory" | "guide" | "lab">(initialTab || (done.length ? "lab" : "theory"));
   const [term, setTerm] = useState<Terminal>(() =>
     createTerminal({
       fs: module.labFS
@@ -129,36 +131,40 @@ export default function ModuleView({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-3">
-        <button type="button" onClick={onBack} className="text-sm text-iron-400 hover:text-ember-400">
-          ← {t("backToMap", lang)}
-        </button>
-        <div className="flex-1" />
-        <WidthControl value={activeContentWidth} onChange={onWidth} />
+      <div className="module-topbar sticky top-16 z-10 -mx-4 -mt-4 px-4 py-3 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8">
+        <div className="module-topbar__row">
+          <button type="button" onClick={onBack} className="module-topbar__back">
+            ← {t("backToMap", lang)}
+          </button>
+
+          <div className="module-topbar__lab">
+            <div className={`module-topbar__icon bg-gradient-to-br ${module.color}`}>
+              <Icon name={module.icon} className="w-5 h-5 text-white" />
+            </div>
+            <div className="module-topbar__copy">
+              <h1 className="module-topbar__title">{bi(module.title, lang)}</h1>
+              <p className="module-topbar__subtitle">{bi(module.subtitle, lang)}</p>
+            </div>
+          </div>
+
+          <div className="module-topbar__difficulty" aria-label={`${t("difficulty", lang)} ${module.difficulty} of 5`}>
+            <span>{t("difficulty", lang)}</span>
+            <b>{"▲".repeat(module.difficulty)}<i>{"△".repeat(5 - module.difficulty)}</i></b>
+          </div>
+
+          <div className="module-topbar__progress-copy">
+            <b>{progress}%</b>
+            <span>{t("progress", lang)}</span>
+          </div>
+
+          <WidthControl value={activeContentWidth} onChange={onWidth} />
+        </div>
+        <div className="module-topbar__track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+          <div className="h-full bg-gradient-to-r from-ember-600 to-ember-400 bar-grow" style={{ width: `${progress}%` }} />
+        </div>
       </div>
 
       <div className={contentWidthClass(activeContentWidth)}>
-        <div className="flex items-start gap-4 mb-4">
-          <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${module.color} grid place-items-center forge-glow`}>
-            <Icon name={module.icon} className="w-6 h-6 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm uppercase tracking-[0.2em] text-ember-400">
-              {t("difficulty", lang)} {"▲".repeat(module.difficulty)}
-              {"△".repeat(5 - module.difficulty)}
-            </div>
-            <h1 className="text-2xl font-bold text-zinc-100">{bi(module.title, lang)}</h1>
-            <p className="text-sm text-iron-400">{bi(module.subtitle, lang)}</p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-ember-400">{progress}%</div>
-            <div className="text-sm text-iron-500">{t("progress", lang)}</div>
-          </div>
-        </div>
-        <div className="h-1.5 rounded-full bg-forge-panel2 overflow-hidden mb-6">
-          <div className="h-full bg-gradient-to-r from-ember-600 to-ember-400 bar-grow" style={{ width: `${progress}%` }} />
-        </div>
-
         <div className="flex rounded-xl bg-forge-panel border border-forge-border p-1 mb-6 w-fit">
           {(["theory", "guide", "lab"] as const).map((k) => (
             <button

@@ -17,12 +17,12 @@ export default function PlayerDashboard({
   user,
   lang,
   onOpen,
-  onMap,
+  onCampaign,
 }: {
   user: User;
   lang: Lang;
   onOpen: (cid: string, mid: string) => void;
-  onMap: (campaignId: string) => void;
+  onCampaign: (campaignId: string) => void;
 }) {
   const lv = levelFromXp(user.metrics.xp);
   const allMods = LEARNING_PATHS.flatMap((c) => c.modules);
@@ -112,7 +112,7 @@ export default function PlayerDashboard({
                 <button
                   key={c.id}
                   type="button"
-                  onClick={() => onMap(c.id)}
+                  onClick={() => onCampaign(c.id)}
                   className="glass rounded-2xl border border-forge-border p-4 text-left card-hover"
                 >
                   <div className="text-sm font-bold text-zinc-100">

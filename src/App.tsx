@@ -21,6 +21,7 @@ import QuizPopup from "./components/QuizPopup";
 
 
 type View = "dashboard" | "educator" | "campaigns" | "map" | "module" | "messages" | "tickets" | "profile";
+type ModuleTab = "theory" | "guide" | "lab";
 
 const MODULE_BADGE: Record<string, string> = {
   "linux-basics": "shell_initiate",
@@ -74,6 +75,7 @@ export default function App() {
   const [view, setView] = useState<View>("dashboard");
   const [campaignId, setCampaignId] = useState(LEARNING_PATHS[0].id);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [moduleInitialTab, setModuleInitialTab] = useState<ModuleTab | undefined>();
   const [profileId, setProfileId] = useState<string | null>(null);
   const [chatWith, setChatWith] = useState<string | null>(null);
   const [mobile, setMobile] = useState(false);
@@ -123,12 +125,26 @@ export default function App() {
     window.scrollTo(0, 0);
   };
 
-  const openModule = (cid: string, mid: string) => {
+  const openModule = (cid: string, mid: string, initialTab?: ModuleTab) => {
     db.updateUser(user.id, { activeCampaignId: cid, activeModuleId: mid });
     setCampaignId(cid);
     setActiveId(mid);
+    setModuleInitialTab(initialTab);
     setView("module");
+    setMobile(false);
     window.scrollTo(0, 0);
+  };
+
+  const openCampaign = (cid: string) => {
+    const selectedCampaign = campaignById(cid);
+    if (!selectedCampaign) return;
+    const modules = [...selectedCampaign.modules].sort((a, b) => a.order - b.order);
+    const firstAvailable = modules.find((module, index) =>
+      !user.progress[module.id]?.completed &&
+      (index === 0 || !!user.progress[modules[index - 1].id]?.completed)
+    );
+    const selectedModule = firstAvailable || modules[0];
+    if (selectedModule) openModule(cid, selectedModule.id, "theory");
   };
 
   const awardMetricBadges = () => {
@@ -319,10 +335,7 @@ export default function App() {
               user={db.userById(user.id)!}
               lang={lang}
               onOpen={openModule}
-              onMap={(selectedPathId) => {
-                setCampaignId(selectedPathId);
-                go("map");
-              }}
+              onCampaign={openCampaign}
             />
           )}
           {view === "dashboard" && user.role === "educator" && (
@@ -361,10 +374,7 @@ export default function App() {
                     <button
                       key={c.id}
                       type="button"
-                      onClick={() => {
-                        setCampaignId(c.id);
-                        go("map");
-                      }}
+                      onClick={() => openCampaign(c.id)}
                       className={cn("text-left glass rounded-2xl border border-forge-border p-5 card-hover enter", `enter-${i + 1}`)}
                     >
                       <div className="h-1.5 rounded-full bg-gradient-to-r from-ember-500 via-amber-300 to-ember-700 strip-anim mb-4" />
@@ -391,10 +401,11 @@ export default function App() {
           )}
           {view === "module" && active && (
             <ModuleView
-              key={`${user.id}:${active.id}`}
+              key={`${user.id}:${active.id}:${moduleInitialTab || "auto"}`}
               module={active}
               userId={user.id}
               lang={lang}
+              initialTab={moduleInitialTab}
               done={user.progress[active.id]?.done || []}
               contentWidth={user.contentWidth}
               onWidth={(w) => {
