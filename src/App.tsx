@@ -448,6 +448,7 @@ export default function App() {
               <div className="grid md:grid-cols-3 gap-4">
                 {LEARNING_PATHS.map((c, i) => {
                   const n = c.modules.filter((m) => user.progress[m.id]?.completed).length;
+                  const pct = c.modules.length ? Math.round((n / c.modules.length) * 100) : 0;
                   return (
                     <button
                       key={c.id}
@@ -465,11 +466,14 @@ export default function App() {
                       </h2>
                       <p className="text-sm text-iron-400 mt-1">{c.subtitle[lang]}</p>
                       <p className="text-sm text-zinc-400 mt-3 leading-relaxed">{c.blurb[lang]}</p>
-                      <div className="mt-4 h-1.5 rounded-full bg-forge-bg overflow-hidden">
-                        <div className="h-full bg-ember-500" style={{ width: `${(n / c.modules.length) * 100}%` }} />
+                      <div className="mt-4 flex items-center justify-between gap-3 text-sm text-iron-400">
+                        <span>{n}/{c.modules.length} {t("modules", lang)}</span>
+                        <span className="font-mono font-semibold text-ember-300" aria-label={`${t("overallProgress", lang)} ${pct}%`}>
+                          {pct}%
+                        </span>
                       </div>
-                      <div className="text-sm text-iron-500 mt-1">
-                        {n}/{c.modules.length} {t("modules", lang)}
+                      <div className="mt-2 h-1.5 rounded-full bg-forge-bg overflow-hidden" aria-hidden="true">
+                        <div className="h-full bg-ember-500" style={{ width: `${pct}%` }} />
                       </div>
                     </button>
                   );
