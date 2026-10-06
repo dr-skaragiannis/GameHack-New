@@ -92,72 +92,73 @@ export default function TerminalView({
             {l.text}
           </div>
         ))}
-      </div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          submit(buf);
-        }}
-        className="terminal-window__input flex min-w-0 shrink-0 items-center gap-2 border-t border-white/5 bg-zinc-950/80 px-3 py-3"
-      >
-        <span className="min-w-0 max-w-[55%] shrink truncate text-ember-400" title={prompt(term)}>{prompt(term)}</span>
-        {!inputFocused && !buf && (
-          <span className="inline-block h-[1.1em] w-[0.55em] shrink-0 bg-ember-400 cursor-blink" aria-hidden="true" />
-        )}
-        <input
-          ref={input}
-          type="text"
-          value={buf}
-          autoFocus
-          autoComplete="off"
-          spellCheck={false}
-          autoCapitalize="off"
-          autoCorrect="off"
-          aria-label={t("typeCommand", lang)}
-          onFocus={() => setInputFocused(true)}
-          onBlur={() => setInputFocused(false)}
-          onChange={(e) => setBuf(e.target.value)}
-          onPaste={() => {
-            pasteRef.current = true;
+        <form
+          key="terminal-command-line"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit(buf);
           }}
-          onKeyDown={(e) => {
-            if (e.key === " ") sound.space();
-            else if (e.key === "Tab") {
-              e.preventDefault();
-              sound.tab();
-              const hits = complete(term, buf);
-              if (hits.length === 1) {
-                const parts = buf.split(/\s+/);
-                parts[parts.length - 1] = hits[0];
-                setBuf(parts.join(" "));
-              } else if (hits.length > 1) {
-                term.lines.push({ kind: "sys", text: hits.join("  ") });
-                bumpScreen((n) => n + 1);
-              }
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault();
-              const h = term.history;
-              if (!h.length) return;
-              const ni = histIdx < 0 ? h.length - 1 : Math.max(0, histIdx - 1);
-              setHistIdx(ni);
-              setBuf(h[ni]);
-            } else if (e.key === "ArrowDown") {
-              e.preventDefault();
-              const h = term.history;
-              if (histIdx < 0) return;
-              const ni = histIdx + 1;
-              if (ni >= h.length) {
-                setHistIdx(-1);
-                setBuf("");
-              } else {
+          className="terminal-window__command flex min-w-0 items-center gap-2 leading-relaxed"
+        >
+          <span className="min-w-0 max-w-[55%] shrink truncate text-ember-400" title={prompt(term)}>{prompt(term)}</span>
+          {!inputFocused && !buf && (
+            <span className="inline-block h-[1.1em] w-[0.55em] shrink-0 bg-ember-400 cursor-blink" aria-hidden="true" />
+          )}
+          <input
+            ref={input}
+            type="text"
+            value={buf}
+            autoFocus
+            autoComplete="off"
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
+            aria-label={t("typeCommand", lang)}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
+            onChange={(e) => setBuf(e.target.value)}
+            onPaste={() => {
+              pasteRef.current = true;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === " ") sound.space();
+              else if (e.key === "Tab") {
+                e.preventDefault();
+                sound.tab();
+                const hits = complete(term, buf);
+                if (hits.length === 1) {
+                  const parts = buf.split(/\s+/);
+                  parts[parts.length - 1] = hits[0];
+                  setBuf(parts.join(" "));
+                } else if (hits.length > 1) {
+                  term.lines.push({ kind: "sys", text: hits.join("  ") });
+                  bumpScreen((n) => n + 1);
+                }
+              } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                const h = term.history;
+                if (!h.length) return;
+                const ni = histIdx < 0 ? h.length - 1 : Math.max(0, histIdx - 1);
                 setHistIdx(ni);
                 setBuf(h[ni]);
-              }
-            } else if (e.key.length === 1) sound.key();
-          }}
-          className="min-w-0 flex-1 bg-transparent text-base text-zinc-100 outline-none caret-ember-400"
-        />
-      </form>
+              } else if (e.key === "ArrowDown") {
+                e.preventDefault();
+                const h = term.history;
+                if (histIdx < 0) return;
+                const ni = histIdx + 1;
+                if (ni >= h.length) {
+                  setHistIdx(-1);
+                  setBuf("");
+                } else {
+                  setHistIdx(ni);
+                  setBuf(h[ni]);
+                }
+              } else if (e.key.length === 1) sound.key();
+            }}
+            className="min-w-0 flex-1 bg-transparent p-0 font-mono text-sm leading-relaxed text-zinc-100 outline-none caret-ember-400"
+          />
+        </form>
+      </div>
     </div>
   );
 }

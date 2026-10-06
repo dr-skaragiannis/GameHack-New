@@ -2836,7 +2836,7 @@ body {
   min-height: min(90vh, 560px);
   max-height: 90vh;
 }
-.terminal-window__input {
+.terminal-window__command {
   position: relative;
   z-index: 6;
 }
