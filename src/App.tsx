@@ -71,7 +71,7 @@ function EthicsGate({ lang, onAccept }: { lang: Lang; onAccept: () => void }) {
 }
 
 export default function App() {
-  const { user, logout, refresh } = useAuth();
+  const { user, logout, refresh, authReady } = useAuth();
   const [view, setView] = useState<View>("dashboard");
   const [campaignId, setCampaignId] = useState(LEARNING_PATHS[0].id);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -91,6 +91,9 @@ export default function App() {
 
   useEffect(() => db.subscribeDB(refresh), [refresh]);
 
+  if (!authReady) {
+    return <div className="forge-grid min-h-screen grid place-items-center text-sm text-iron-300">Checking session…</div>;
+  }
   if (!user) return <AuthScreen />;
 
   const lang: Lang = user.lang || "en";

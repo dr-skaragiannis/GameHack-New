@@ -1,57 +1,146 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import * as db from "./db";
 import type { User } from "./db";
 
+type AuthResult = { ok: boolean; error?: string; message?: string };
+type RemoteAccount = { email: string; nickname: string; role: "player" };
 type AuthCtx = {
   user: User | null;
   version: number;
+  authReady: boolean;
   refresh: () => void;
-  login: (u: string, p: string) => { ok: boolean; error?: string };
-  register: (u: string, p: string, role: db.Role, dn: string) => { ok: boolean; error?: string };
+  login: (identity: string, password: string) => Promise<AuthResult>;
+  register: (email: string, password: string, nickname: string) => Promise<AuthResult>;
+  activate: (token: string) => Promise<AuthResult>;
+  requestPasswordReset: (email: string) => Promise<AuthResult>;
+  resetPassword: (token: string, password: string) => Promise<AuthResult>;
   logout: () => void;
 };
 
 const Ctx = createContext<AuthCtx | null>(null);
 
+async function postAuth(path: string, payload: Record<string, string>): Promise<AuthResult & { account?: RemoteAccount }> {
+  try {
+    const response = await fetch(path, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json().catch(() => ({}));
+    return response.ok
+      ? { ok: true, ...result }
+      : { ok: false, error: result.error || "authServerUnavailable" };
+  } catch {
+    return { ok: false, error: "authServerUnavailable" };
+  }
+}
+
+async function getRemoteSession(): Promise<RemoteAccount | null> {
+  try {
+    const response = await fetch("/api/auth/me", { credentials: "same-origin", cache: "no-store" });
+    if (!response.ok) return null;
+    const result = await response.json();
+    return result.account || null;
+  } catch {
+    return null;
+  }
+}
+
+function hasUniversityId(user: User | null): user is User {
+  return !!user?.id.toLowerCase().endsWith("@ionio.gr");
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const u = db.currentUser();
-    return u ? { ...u } : null;
+  const [initialSession] = useState(() => {
+    const cached = db.currentUser();
+    const url = new URL(window.location.href);
+    const authLink = url.searchParams.has("activate") || url.searchParams.has("reset");
+    return {
+      cached,
+      authLink,
+      serverAccountId: hasUniversityId(cached) ? cached.id : null,
+      shouldRestoreServerSession: !authLink && (!cached || hasUniversityId(cached)),
+    };
   });
+  const [user, setUser] = useState<User | null>(
+    initialSession.authLink || initialSession.serverAccountId
+      ? null
+      : initialSession.cached
+        ? { ...initialSession.cached }
+        : null
+  );
+  const [authReady, setAuthReady] = useState(initialSession.authLink || !initialSession.shouldRestoreServerSession);
   const [version, setVersion] = useState(0);
 
   const snapshot = () => {
-    const u = db.currentUser();
-    return u ? { ...u } : null;
+    const current = db.currentUser();
+    return current ? { ...current } : null;
   };
 
   const refresh = useCallback(() => {
     setUser(snapshot());
-    setVersion((v) => v + 1);
+    setVersion((value) => value + 1);
   }, []);
 
-  const doLogin = useCallback((u: string, p: string) => {
-    const res = db.login(u, p);
-    if (res.ok) {
-      setUser(snapshot());
-      setVersion((v) => v + 1);
+  useEffect(() => {
+    if (!initialSession.shouldRestoreServerSession) return;
+    let cancelled = false;
+    getRemoteSession()
+      .then((account) => {
+        if (cancelled) return;
+        if (account) {
+          db.establishAuthenticatedUser(account.email, account.nickname);
+          setUser(snapshot());
+        } else if (initialSession.serverAccountId) {
+          db.logout();
+          setUser(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setAuthReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialSession]);
+
+  const doLogin = useCallback(async (identity: string, password: string): Promise<AuthResult> => {
+    if (identity.includes("@")) {
+      const result = await postAuth("/api/auth/login", { email: identity, password });
+      if (!result.ok || !result.account) return { ok: false, error: result.error || "invalidCredentials" };
+      try {
+        db.establishAuthenticatedUser(result.account.email, result.account.nickname);
+        setUser(snapshot());
+        setVersion((value) => value + 1);
+        return { ok: true };
+      } catch {
+        return { ok: false, error: "authServerUnavailable" };
+      }
     }
-    return { ok: res.ok, error: res.error };
+
+    const result = db.login(identity, password);
+    if (result.ok) {
+      setUser(snapshot());
+      setVersion((value) => value + 1);
+    }
+    return { ok: result.ok, error: result.error };
   }, []);
 
-  const doRegister = useCallback((u: string, p: string, role: db.Role, dn: string) => {
-    const res = db.register(u, p, role, dn);
-    if (res.ok) {
-      setUser(snapshot());
-      setVersion((v) => v + 1);
-    }
-    return { ok: res.ok, error: res.error };
-  }, []);
+  const doRegister = useCallback((email: string, password: string, nickname: string) =>
+    postAuth("/api/auth/register", { email, password, nickname }), []);
+
+  const activate = useCallback((token: string) => postAuth("/api/auth/activate", { token }), []);
+  const requestPasswordReset = useCallback((email: string) =>
+    postAuth("/api/auth/forgot-password", { email }), []);
+  const resetPassword = useCallback((token: string, password: string) =>
+    postAuth("/api/auth/reset-password", { token, password }), []);
 
   const doLogout = useCallback(() => {
+    void fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => {});
     db.logout();
     setUser(null);
-    setVersion((v) => v + 1);
+    setVersion((value) => value + 1);
   }, []);
 
   return (
@@ -59,9 +148,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         version,
+        authReady,
         refresh,
         login: doLogin,
         register: doRegister,
+        activate,
+        requestPasswordReset,
+        resetPassword,
         logout: doLogout,
       }}
     >
@@ -71,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
-  const c = useContext(Ctx);
-  if (!c) throw new Error("useAuth must be used within AuthProvider");
-  return c;
+  const context = useContext(Ctx);
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  return context;
 }

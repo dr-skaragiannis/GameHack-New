@@ -531,52 +531,46 @@ export function saveDB() {
   notifyDBChange();
 }
 
-export function register(
-  email: string,
-  password: string,
-  role: Role,
-  nickname: string
-): { ok: boolean; error?: string; user?: User } {
-  const db = getDB();
+export function establishAuthenticatedUser(email: string, nickname: string): User {
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedNickname = nickname.trim();
-  if (!password.trim()) return { ok: false, error: "passwordRequired" };
-  if (!/^[^\s@]+@ionio\.gr$/.test(normalizedEmail)) {
-    return { ok: false, error: "universityEmailOnly" };
+  if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@ionio\.gr$/i.test(normalizedEmail) || !normalizedNickname) {
+    throw new Error("Invalid authenticated university account");
   }
-  if (!normalizedNickname) return { ok: false, error: "nicknameRequired" };
-  if (normalizedNickname.length > 32) return { ok: false, error: "nicknameTooLong" };
-  const duplicate = db.users.some(
-    (user) =>
-      user.id.trim().toLowerCase() === normalizedEmail ||
-      user.username.trim().toLowerCase() === normalizedEmail
-  );
-  if (duplicate) return { ok: false, error: "emailAlreadyRegistered" };
 
-  const user: User = {
-    id: normalizedEmail,
-    username: normalizedEmail,
-    password,
-    role,
-    displayName: normalizedNickname,
-    avatar: randomIconAvatar(),
-    bio: "",
-    interests: [],
-    createdAt: Date.now(),
-    lastSeen: Date.now(),
-    activeCampaignId: "forge",
-    activeModuleId: "linux-basics",
-    lang: "en",
-    accepted: false,
-    progress: {},
-    metrics: freshMetrics(),
-    badges: [],
-  };
-  db.users.push(user);
+  const db = getDB();
+  let user = db.users.find((item) => item.id.toLowerCase() === normalizedEmail);
+  if (!user) {
+    user = {
+      id: normalizedEmail,
+      username: normalizedEmail,
+      password: "",
+      role: "player",
+      displayName: normalizedNickname,
+      avatar: randomIconAvatar(),
+      bio: "",
+      interests: [],
+      createdAt: Date.now(),
+      lang: "en",
+      accepted: false,
+      progress: {},
+      metrics: freshMetrics(),
+      badges: [],
+    };
+    db.users.push(user);
+    pushFeed(user, "join", `${user.displayName} joined HACKFORGE`);
+  } else {
+    user.username = normalizedEmail;
+    user.role = "player";
+    if (!user.displayName) user.displayName = normalizedNickname;
+  }
+
   db.sessionUserId = user.id;
-  pushFeed(user, "join", `${user.displayName} joined HACKFORGE`);
+  touchStreak(user);
+  user.lastSeen = Date.now();
+  pushFeed(user, "login", `${user.displayName} logged in`);
   saveDB();
-  return { ok: true, user };
+  return user;
 }
 
 export function login(username: string, password: string): { ok: boolean; error?: string; user?: User } {
