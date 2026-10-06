@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import type { Module, Task } from "../data/lessons";
 import { bi, t, type Lang } from "../i18n";
 import {
@@ -136,6 +137,7 @@ export default function ModuleView({
   userId,
   lang,
   initialTab,
+  topbarTools,
   done,
   contentWidth,
   onWidth,
@@ -149,6 +151,7 @@ export default function ModuleView({
   userId: string;
   lang: Lang;
   initialTab?: "theory" | "guide" | "lab";
+  topbarTools: ReactNode;
   done: string[];
   contentWidth?: ContentWidth;
   onWidth: (w: ContentWidth) => void;
@@ -211,11 +214,11 @@ export default function ModuleView({
     if (!root || !topbar) return;
 
     const updateStickyOffset = () => {
-      const appHeaderHeight = document.querySelector("main")?.previousElementSibling?.getBoundingClientRect().height ?? 64;
+      const topbarStickyInset = Number.parseFloat(getComputedStyle(topbar).top) || 0;
       const topbarGap = 12;
       root.style.setProperty(
         "--terminal-sticky-top",
-        `${Math.ceil(appHeaderHeight + topbar.getBoundingClientRect().height + topbarGap)}px`,
+        `${Math.ceil(topbarStickyInset + topbar.getBoundingClientRect().height + topbarGap)}px`,
       );
     };
 
@@ -283,7 +286,7 @@ export default function ModuleView({
 
   return (
     <div ref={moduleViewRef} className="space-y-3">
-      <div ref={moduleTopbarRef} className="module-topbar sticky top-16 z-10 -mx-4 -mt-4 px-4 py-2 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8">
+      <div ref={moduleTopbarRef} className="module-topbar sticky top-0 z-10 -mx-4 -mt-4 px-4 py-2 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8">
         <div className="module-topbar__row">
           <button type="button" onClick={onBack} className="module-topbar__back">
             ← {t("backToMap", lang)}
@@ -325,6 +328,8 @@ export default function ModuleView({
             </nav>
             <WidthControl value={activeContentWidth} onChange={onWidth} />
           </div>
+
+          {topbarTools}
         </div>
         <div className="module-topbar__track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
           <div className="h-full bg-gradient-to-r from-ember-600 to-ember-400 bar-grow" style={{ width: `${progress}%` }} />
@@ -421,7 +426,7 @@ export default function ModuleView({
         )}
 
         {tab === "lab" && (
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
+          <div className="module-lab-layout grid lg:grid-cols-[320px_minmax(0,1fr)] gap-4">
             <TerminalView
               term={term}
               lang={lang}
@@ -461,7 +466,7 @@ export default function ModuleView({
                 bump((x) => x + 1);
               }}
             />
-            <aside className="space-y-4">
+            <aside className="module-objectives space-y-4">
               <div className="glass rounded-2xl border border-forge-border p-4">
                 <div className="text-sm uppercase tracking-widest text-ember-400 mb-3">{t("objectives", lang)}</div>
                 <ol className="space-y-3">

@@ -2828,6 +2828,13 @@ body {
   gap: 8px;
   margin-left: auto;
 }
+.module-topbar__app-tools,
+.module-topbar__account-tools {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .module-topbar__tabs {
   min-width: 0;
   display: inline-flex;
@@ -2890,9 +2897,17 @@ body {
 @media (min-width: 1024px) {
   .terminal-window {
     position: sticky;
-    top: var(--terminal-sticky-top, 9rem);
+    top: var(--terminal-sticky-top, 4.5rem);
     align-self: start;
     z-index: 1;
+  }
+  .module-lab-layout > .module-objectives {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .module-lab-layout > .terminal-window {
+    grid-column: 2;
+    grid-row: 1;
   }
 }
 @media (max-width: 760px) {
@@ -2905,6 +2920,10 @@ body {
   }
   .module-topbar__back {
     order: 0;
+  }
+  .module-topbar__app-tools {
+    order: 0;
+    margin-left: auto;
   }
   .module-topbar__difficulty {
     order: 1;

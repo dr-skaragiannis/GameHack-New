@@ -235,6 +235,37 @@ export default function App() {
     { id: "tickets", icon: "ticket", label: t("tickets", lang), show: true, badge: openTickets },
     { id: "profile", icon: "user", label: t("profile", lang), show: true },
   ];
+  const mobileMenuButton = (
+    <button
+      type="button"
+      aria-label="Open navigation"
+      className="lg:hidden text-iron-300"
+      onClick={() => setMobile(true)}
+    >
+      <Icon name="git" className="w-5 h-5" />
+    </button>
+  );
+  const accountTools = (
+    <div className="module-topbar__account-tools">
+      <button
+        type="button"
+        onClick={() => setLang(lang === "en" ? "el" : "en")}
+        className="h-9 px-3 rounded-lg border border-forge-border text-sm font-bold tracking-widest text-iron-400 hover:text-ember-400"
+      >
+        {t("langLabel", lang)}
+      </button>
+      <MuteButton lang={lang} />
+      <button type="button" onClick={() => { setProfileId(user.id); go("profile"); }} className="flex items-center gap-2">
+        <Avatar src={user.avatar} name={user.displayName} size={32} />
+      </button>
+    </div>
+  );
+  const moduleTopbarTools = (
+    <div className="module-topbar__app-tools">
+      {mobileMenuButton}
+      {accountTools}
+    </div>
+  );
 
   return (
     <div className="forge-grid min-h-full flex">
@@ -320,23 +351,13 @@ export default function App() {
       {mobile && <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={() => setMobile(false)} />}
 
       <div className="flex-1 min-w-0 flex flex-col relative z-10">
-        <header className="sticky top-0 z-20 flex items-center gap-3 h-16 px-4 border-b border-forge-border bg-forge-bg/80 backdrop-blur">
-          <button type="button" className="lg:hidden text-iron-300" onClick={() => setMobile(true)}>
-            <Icon name="git" className="w-5 h-5" />
-          </button>
-          <div className="flex-1" />
-          <button
-            type="button"
-            onClick={() => setLang(lang === "en" ? "el" : "en")}
-            className="h-9 px-3 rounded-lg border border-forge-border text-sm font-bold tracking-widest text-iron-400 hover:text-ember-400"
-          >
-            {t("langLabel", lang)}
-          </button>
-          <MuteButton lang={lang} />
-          <button type="button" onClick={() => { setProfileId(user.id); go("profile"); }} className="flex items-center gap-2">
-            <Avatar src={user.avatar} name={user.displayName} size={32} />
-          </button>
-        </header>
+        {view !== "module" && (
+          <header className="sticky top-0 z-20 flex items-center gap-3 h-16 px-4 border-b border-forge-border bg-forge-bg/80 backdrop-blur">
+            {mobileMenuButton}
+            <div className="flex-1" />
+            {accountTools}
+          </header>
+        )}
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {view === "dashboard" && user.role === "player" && (
@@ -415,6 +436,7 @@ export default function App() {
               userId={user.id}
               lang={lang}
               initialTab={moduleInitialTab}
+              topbarTools={moduleTopbarTools}
               done={user.progress[active.id]?.done || []}
               contentWidth={user.contentWidth}
               onWidth={(w) => {
