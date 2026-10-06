@@ -1,163 +1,450 @@
+import { useEffect, useState } from "react";
 import { LEARNING_PATHS } from "../data/lessons";
 import {
   accuracyScore,
   BADGES,
   fidelityScore,
   levelFromXp,
+  overallScoreboard,
   type User,
 } from "../lib/db";
 import { bi, t, uppercaseLabel, type Lang } from "../i18n";
-import Icon, { MODULE_ICON } from "./Icon";
+import Icon from "./Icon";
 import LiveFeed from "./LiveFeed";
 import Avatar from "./Avatar";
 import { cn } from "../utils/cn";
 import InteractiveMap from "./InteractiveMap";
+
+function nextUnlockedModule(campaign: (typeof LEARNING_PATHS)[number], user: User, preferActive: boolean) {
+  const ordered = [...campaign.modules].sort((a, b) => a.order - b.order);
+  if (preferActive) {
+    const active = ordered.find((module) => module.id === user.activeModuleId && !user.progress[module.id]?.completed);
+    if (active) return active;
+  }
+  return ordered.find((module, index) =>
+    !user.progress[module.id]?.completed &&
+    (index === 0 || !!user.progress[ordered[index - 1].id]?.completed)
+  ) || null;
+}
+
+function campaignIcon(campaign: (typeof LEARNING_PATHS)[number]) {
+  if (campaign.scenario === "raven") return "crown";
+  if (campaign.scenario === "ssh") return "key";
+  if (campaign.scenario === "dfir") return "shield";
+  if (campaign.scenario === "sudorun") return "book";
+  return "terminal";
+}
+
+function DashboardMapPreview({
+  user,
+  lang,
+  currentCampaignId,
+  onExpand,
+}: {
+  user: User;
+  lang: Lang;
+  currentCampaignId: string;
+  onExpand: (campaignId: string) => void;
+}) {
+  return (
+    <section className="player-dashboard__card player-dashboard__map-panel" aria-labelledby="dashboard-map-title">
+      <header className="player-dashboard__section-heading player-dashboard__map-heading">
+        <div>
+          <div className="player-dashboard__eyebrow">{uppercaseLabel(t("map", lang), lang)}</div>
+          <h2 id="dashboard-map-title">{t("map", lang)}</h2>
+        </div>
+        <button
+          type="button"
+          className="player-dashboard__expand-map dashboard-action"
+          onClick={() => onExpand(currentCampaignId)}
+          aria-label={t("expandMap", lang)}
+          title={t("expandMap", lang)}
+        >
+          <Icon name="maximize" className="h-4 w-4" />
+          <span>{t("expandMap", lang)}</span>
+        </button>
+      </header>
+
+      <p className="player-dashboard__map-intro">{t("mapExplore", lang)}</p>
+
+      <div className="player-dashboard__map-routes" role="group" aria-label={t("mapCampaigns", lang)}>
+        {LEARNING_PATHS.map((campaign, index) => {
+          const ordered = [...campaign.modules].sort((a, b) => a.order - b.order);
+          const completed = ordered.filter((module) => user.progress[module.id]?.completed).length;
+          const percent = Math.round((completed / Math.max(1, ordered.length)) * 100);
+          const isCurrent = campaign.id === currentCampaignId;
+          return (
+            <button
+              key={campaign.id}
+              type="button"
+              className={cn("player-dashboard__map-route dashboard-action", isCurrent && "is-current")}
+              onClick={() => onExpand(campaign.id)}
+              aria-label={`${String(campaign.pathNumber).padStart(2, "0")}. ${bi(campaign.title, lang)} — ${completed} of ${ordered.length} modules, ${percent}%`}
+            >
+              <span className="player-dashboard__map-route-number">{String(campaign.pathNumber).padStart(2, "0")}</span>
+              <span className="player-dashboard__map-route-copy">
+                <span className="player-dashboard__map-route-title">{bi(campaign.title, lang)}</span>
+                <span className="player-dashboard__map-route-meta">{completed}/{ordered.length} {t("modules", lang)} · {percent}%</span>
+                <span className="player-dashboard__map-route-track" aria-hidden="true">
+                  <span style={{ width: `${percent}%` }} />
+                </span>
+                <span className="player-dashboard__map-route-nodes" aria-hidden="true">
+                  {ordered.slice(0, 8).map((module) => {
+                    const progress = user.progress[module.id];
+                    return (
+                      <i
+                        key={module.id}
+                        className={cn(progress?.completed && "is-complete", !progress?.completed && !!progress?.done.length && "is-in-progress")}
+                      />
+                    );
+                  })}
+                  {ordered.length > 8 && <b>+{ordered.length - 8}</b>}
+                </span>
+              </span>
+              <span className="player-dashboard__map-route-icon"><Icon name={campaignIcon(campaign)} className="h-4 w-4" /></span>
+              {isCurrent && <span className="player-dashboard__map-current">{index + 1}</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      <button type="button" className="player-dashboard__map-open-link dashboard-action" onClick={() => onExpand(currentCampaignId)}>
+        <span>{lang === "en" ? "Open interactive map" : "Άνοιγμα διαδραστικού χάρτη"}</span>
+        <Icon name="chevron" className="h-4 w-4" />
+      </button>
+    </section>
+  );
+}
+
+function DashboardMapDialog({
+  user,
+  lang,
+  selectedCampaignId,
+  onOpen,
+  onClose,
+}: {
+  user: User;
+  lang: Lang;
+  selectedCampaignId: string;
+  onOpen: (campaignId: string, moduleId: string) => void;
+  onClose: () => void;
+}) {
+  const [isMinimizing, setIsMinimizing] = useState(false);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsMinimizing(true);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isMinimizing) return;
+    const timer = window.setTimeout(onClose, 190);
+    return () => window.clearTimeout(timer);
+  }, [isMinimizing, onClose]);
+
+  const minimizeMap = () => setIsMinimizing(true);
+  return (
+    <div
+      className={`dashboard-modal-backdrop player-dashboard__map-backdrop${isMinimizing ? " is-closing" : ""}`}
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) minimizeMap();
+      }}
+    >
+      <section className="player-dashboard__map-dialog dashboard-modal-surface" role="dialog" aria-modal="true" aria-labelledby="dashboard-map-dialog-title">
+        <header className="player-dashboard__map-dialog-header">
+          <div>
+            <div className="player-dashboard__eyebrow">{uppercaseLabel(t("mapExpanded", lang), lang)}</div>
+            <h2 id="dashboard-map-dialog-title">{t("map", lang)}</h2>
+          </div>
+          <button
+            type="button"
+            className="player-dashboard__icon-button dashboard-action"
+            onClick={minimizeMap}
+            aria-label={t("minimizeMap", lang)}
+            title={t("minimizeMap", lang)}
+          >
+            <Icon name="minimize" className="h-4 w-4" />
+          </button>
+        </header>
+        <div className="player-dashboard__map-dialog-body">
+          <InteractiveMap
+            user={user}
+            lang={lang}
+            onOpen={onOpen}
+            selectedCampaignId={selectedCampaignId}
+          />
+        </div>
+      </section>
+    </div>
+  );
+}
 
 export default function PlayerDashboard({
   user,
   lang,
   onOpen,
   onCampaign,
+  onOpenScoreboard,
+  onBadge,
 }: {
   user: User;
   lang: Lang;
   onOpen: (cid: string, mid: string) => void;
   onCampaign: (campaignId: string) => void;
+  onOpenScoreboard: () => void;
+  onBadge: (badgeId: string) => void;
 }) {
+  const [mapExpanded, setMapExpanded] = useState(false);
   const lv = levelFromXp(user.metrics.xp);
-  const allMods = LEARNING_PATHS.flatMap((c) => c.modules);
-  const completed = allMods.filter((m) => user.progress[m.id]?.completed).length;
-  const next =
-    LEARNING_PATHS.map((c) => {
-      const ordered = [...c.modules].sort((a, b) => a.order - b.order);
-      const idx = ordered.findIndex((m, i) => {
-        const unlocked = i === 0 || !!user.progress[ordered[i - 1].id]?.completed;
-        return unlocked && !user.progress[m.id]?.completed;
-      });
-      return idx >= 0 ? { c, m: ordered[idx] } : null;
-    }).find(Boolean) || null;
+  const allMods = LEARNING_PATHS.flatMap((campaign) => campaign.modules);
+  const completedModules = allMods.filter((module) => user.progress[module.id]?.completed).length;
+  const scoreboard = overallScoreboard();
+  const myStanding = scoreboard.find((entry) => entry.user.id === user.id);
+  const mvpEntries = scoreboard.slice(0, 3);
+
+  const savedCampaign = LEARNING_PATHS.find((campaign) => campaign.id === user.activeCampaignId);
+  const savedModule = savedCampaign ? nextUnlockedModule(savedCampaign, user, true) : null;
+  const nextByPath = LEARNING_PATHS
+    .map((campaign) => ({ campaign, module: nextUnlockedModule(campaign, user, false) }))
+    .find((entry) => entry.module) || null;
+  const currentCampaign = (savedModule ? savedCampaign : nextByPath?.campaign) || savedCampaign || LEARNING_PATHS[0];
+  const currentModule = savedModule || (nextByPath?.campaign.id === currentCampaign.id ? nextByPath.module : null);
+  const currentPathCompleted = currentCampaign.modules.filter((module) => user.progress[module.id]?.completed).length;
+  const currentPathPercent = Math.round((currentPathCompleted / Math.max(1, currentCampaign.modules.length)) * 100);
+  const [selectedMapCampaign, setSelectedMapCampaign] = useState(currentCampaign.id);
+  const openMap = (campaignId: string) => {
+    setSelectedMapCampaign(campaignId);
+    setMapExpanded(true);
+  };
+
+  const stats = [
+    { label: t("level", lang), value: `LVL ${lv.level}`, icon: "crown", detail: `${lv.into}/${lv.span} XP` },
+    { label: t("xp", lang), value: user.metrics.xp.toLocaleString(), icon: "spark", detail: lang === "en" ? "total experience" : "συνολική εμπειρία" },
+    { label: t("modules", lang), value: `${completedModules}/${allMods.length}`, icon: "flag", detail: lang === "en" ? "completed" : "ολοκληρωμένες" },
+    { label: t("fidelity", lang), value: `${fidelityScore(user.metrics)}%`, icon: "check", detail: lang === "en" ? "commands typed" : "εντολές πληκτρολογημένες" },
+    { label: t("accuracy", lang), value: `${accuracyScore(user.metrics)}%`, icon: "target", detail: lang === "en" ? "command accuracy" : "ακρίβεια εντολών" },
+    { label: t("streak", lang), value: `${user.metrics.streakDays}`, icon: "medal", detail: `${t("days", lang)} ${lang === "en" ? "in a row" : "σερί"}` },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="player-dashboard space-y-6">
+      <header className="player-dashboard__hero dashboard-enter">
         <div>
-          <div className="text-sm uppercase tracking-[0.25em] text-ember-400">{uppercaseLabel(t("dashboard", lang), lang)}</div>
-          <h1 className="text-3xl font-bold text-zinc-50 mt-1">
+          <div className="player-dashboard__eyebrow">{uppercaseLabel(t("dashboard", lang), lang)}</div>
+          <h1>
             {t("welcomeBack", lang)}, {user.displayName.split(" ")[0]}
           </h1>
-          <p className="text-iron-400 text-sm mt-1">{t("forgeReady", lang)}</p>
+          <p>{t("forgeReady", lang)}</p>
         </div>
-        <div className="flex items-center gap-3 glass rounded-2xl border border-forge-border px-4 py-3">
-          <Avatar src={user.avatar} name={user.displayName} size={44} />
+        <div className="player-dashboard__hero-level">
+          <Avatar src={user.avatar} name={user.displayName} size={46} />
+          <div className="player-dashboard__hero-level-copy">
+            <span>{t("level", lang)} {lv.level}</span>
+            <strong>{user.metrics.xp.toLocaleString()} XP</strong>
+            <div className="player-dashboard__hero-progress" aria-label={`${lv.pct}% to next level`}>
+              <span style={{ width: `${lv.pct}%` }} />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="player-dashboard__layout">
+        <div className="player-dashboard__main">
+          <div className="player-dashboard__leaderboards">
+            <section className="player-dashboard__card player-dashboard__mvp-card" aria-labelledby="mvp-leaderboard-title">
+              <div className="player-dashboard__section-heading">
+                <div>
+                  <div className="player-dashboard__eyebrow">{uppercaseLabel(t("leaderboard", lang), lang)}</div>
+                  <h2 id="mvp-leaderboard-title">{t("mvpLeaderboard", lang)}</h2>
+                </div>
+                <span className="player-dashboard__mvp-crown"><Icon name="crown" className="h-5 w-5" /></span>
+              </div>
+              <div className="player-dashboard__leader-list">
+                {mvpEntries.map(({ user: player, rank }) => (
+                  <div key={player.id} className={cn("player-dashboard__leader-row", rank === 1 && "is-mvp", player.id === user.id && "is-self")}>
+                    <span className="player-dashboard__leader-rank">{rank === 1 ? <Icon name="crown" className="h-4 w-4" /> : `#${rank}`}</span>
+                    <Avatar src={player.avatar} name={player.displayName} size={34} />
+                    <span className="player-dashboard__leader-info">
+                      <strong>{player.displayName}</strong>
+                      <small>LVL {levelFromXp(player.metrics.xp).level}{player.id === user.id ? ` · ${lang === "en" ? "You" : "Εσύ"}` : ""}</small>
+                    </span>
+                    <span className="player-dashboard__leader-xp">{player.metrics.xp.toLocaleString()} <small>XP</small></span>
+                  </div>
+                ))}
+                {mvpEntries.length === 0 && <p className="player-dashboard__empty">{lang === "en" ? "No players on the leaderboard yet." : "Δεν υπάρχουν ακόμη παίκτες στην κατάταξη."}</p>}
+              </div>
+            </section>
+
+            <section className="player-dashboard__card player-dashboard__scoreboard-card" aria-labelledby="dashboard-scoreboard-title">
+              <div className="player-dashboard__section-heading">
+                <div>
+                  <div className="player-dashboard__eyebrow">{uppercaseLabel(t("position", lang), lang)}</div>
+                  <h2 id="dashboard-scoreboard-title">{t("scoreboard", lang)}</h2>
+                </div>
+                <span className="player-dashboard__scoreboard-icon"><Icon name="chart" className="h-5 w-5" /></span>
+              </div>
+              <div className="player-dashboard__standing">
+                <strong>#{myStanding?.rank ?? "—"}</strong>
+                <span>{t("position", lang)} / {scoreboard.length}</span>
+              </div>
+              <div className="player-dashboard__scoreboard-xp">
+                <span>{lang === "en" ? "Your total XP" : "Τα συνολικά XP σου"}</span>
+                <strong>{user.metrics.xp.toLocaleString()} <small>XP</small></strong>
+              </div>
+              <button type="button" className="player-dashboard__scoreboard-button dashboard-action" onClick={onOpenScoreboard}>
+                <span>{t("viewFullScoreboard", lang)}</span><Icon name="chevron" className="h-4 w-4" />
+              </button>
+            </section>
+          </div>
+          <section className="player-dashboard__card player-dashboard__stats-card" aria-labelledby="player-statistics-title">
+            <div className="player-dashboard__section-heading">
+              <div>
+                <div className="player-dashboard__eyebrow">{uppercaseLabel(t("playerStatistics", lang), lang)}</div>
+                <h2 id="player-statistics-title">{t("playerStatistics", lang)}</h2>
+              </div>
+              <span className="player-dashboard__live-status"><i />{lang === "en" ? "YOUR PROGRESS" : "Η ΠΡΟΟΔΟΣ ΣΟΥ"}</span>
+            </div>
+            <div className="player-dashboard__stats-grid">
+              {stats.map((stat, index) => (
+                <article key={stat.label} className="player-dashboard__stat dashboard-stagger" style={{ animationDelay: `${index * 45}ms` }}>
+                  <span className="player-dashboard__stat-icon"><Icon name={stat.icon} className="h-4 w-4" /></span>
+                  <span className="player-dashboard__stat-copy">
+                    <span>{uppercaseLabel(stat.label, lang)}</span>
+                    <strong>{stat.value}</strong>
+                    <small>{stat.detail}</small>
+                  </span>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="player-dashboard__card player-dashboard__current-path" aria-labelledby="current-learning-path-title">
+            <div className="player-dashboard__path-heading">
+              <span className="player-dashboard__path-icon"><Icon name={campaignIcon(currentCampaign)} className="h-5 w-5" /></span>
+              <div className="player-dashboard__path-copy">
+                <div className="player-dashboard__eyebrow">{uppercaseLabel(t("currentLearningPath", lang), lang)}</div>
+                <h2 id="current-learning-path-title">
+                  <span>{String(currentCampaign.pathNumber).padStart(2, "0")}.</span> {bi(currentCampaign.title, lang)}
+                </h2>
+                <p>{bi(currentCampaign.subtitle, lang)}</p>
+              </div>
+              <div className="player-dashboard__path-percent">{currentPathPercent}%</div>
+            </div>
+            <div className="player-dashboard__path-progress" role="progressbar" aria-label={`${t("pathProgress", lang)}: ${currentPathPercent}%`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={currentPathPercent}>
+              <span style={{ width: `${currentPathPercent}%` }} />
+            </div>
+            <div className="player-dashboard__path-footer">
+              <div className="player-dashboard__path-next">
+                {currentModule ? (
+                  <>
+                    <span>{t("continueLearning", lang)}</span>
+                    <strong>{bi(currentModule.title, lang)}</strong>
+                  </>
+                ) : (
+                  <>
+                    <span>{t("pathCompleted", lang)}</span>
+                    <strong>{currentPathCompleted}/{currentCampaign.modules.length} {t("modules", lang)}</strong>
+                  </>
+                )}
+              </div>
+              {currentModule ? (
+                <button type="button" className="player-dashboard__primary-button dashboard-action" onClick={() => onOpen(currentCampaign.id, currentModule.id)}>
+                  <span>{t("continueLearning", lang)}</span><Icon name="chevron" className="h-4 w-4" />
+                </button>
+              ) : (
+                <button type="button" className="player-dashboard__secondary-button dashboard-action" onClick={() => onCampaign(currentCampaign.id)}>
+                  <span>{t("reviewPath", lang)}</span><Icon name="chevron" className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </section>
+
+        </div>
+
+        <aside className="player-dashboard__map-aside">
+          <DashboardMapPreview
+            user={user}
+            lang={lang}
+            currentCampaignId={currentCampaign.id}
+            onExpand={openMap}
+          />
+        </aside>
+      </div>
+
+      <section className="player-dashboard__card player-dashboard__badges" aria-labelledby="player-badges-title">
+        <div className="player-dashboard__section-heading">
           <div>
-            <div className="text-sm text-iron-400">
-              {t("level", lang)} {lv.level}
-            </div>
-            <div className="text-lg font-bold text-ember-400">{user.metrics.xp} XP</div>
-            <div className="h-1.5 w-32 rounded-full bg-forge-bg overflow-hidden mt-1">
-              <div className="h-full bg-ember-500" style={{ width: `${lv.pct}%` }} />
-            </div>
+            <div className="player-dashboard__eyebrow">{uppercaseLabel(t("earnedBadges", lang), lang)}</div>
+            <h2 id="player-badges-title">{t("badges", lang)}</h2>
           </div>
+          <span className="player-dashboard__badge-count">{user.badges.length}</span>
         </div>
-      </div>
-
-      <LiveFeed compact />
-
-      <InteractiveMap user={user} lang={lang} onOpen={onOpen} embedded />
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { k: t("modules", lang), v: `${completed}/${allMods.length}`, ic: "flag" },
-          { k: t("fidelity", lang), v: `${fidelityScore(user.metrics)}%`, ic: "check" },
-          { k: t("accuracy", lang), v: `${accuracyScore(user.metrics)}%`, ic: "target" },
-          { k: t("streak", lang), v: `${user.metrics.streakDays} ${t("days", lang)}`, ic: "medal" },
-        ].map((s, i) => (
-          <div key={s.k} className={cn("glass rounded-2xl border border-forge-border p-4 enter", `enter-${i + 1}`)}>
-            <div className="flex items-center gap-2 text-iron-400 text-sm uppercase tracking-widest">
-              <Icon name={s.ic} className="w-4 h-4 text-ember-400" />
-              {uppercaseLabel(s.k, lang)}
-            </div>
-            <div className="text-2xl font-bold mt-2 text-zinc-100">{s.v}</div>
-          </div>
-        ))}
-      </div>
-
-      {next && (
-        <button
-          type="button"
-          onClick={() => onOpen(next.c.id, next.m.id)}
-          className="w-full text-left glass rounded-2xl border border-ember-600/40 p-5 forge-glow card-hover flex items-center gap-4"
-        >
-          <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${next.m.color} grid place-items-center`}>
-            <Icon name={MODULE_ICON[next.m.id] || next.m.icon} className="w-7 h-7 text-white" />
-          </div>
-          <div className="flex-1">
-            <div className="text-sm uppercase tracking-widest text-ember-400">{uppercaseLabel(t("continueLearning", lang), lang)}</div>
-            <div className="text-lg font-bold text-zinc-100">{bi(next.m.title, lang)}</div>
-            <div className="text-sm text-iron-400">
-              {bi(next.c.title, lang)} · {bi(next.m.subtitle, lang)}
-            </div>
-          </div>
-          <Icon name="chevron" className="w-6 h-6 text-ember-400" />
-        </button>
-      )}
-
-      <div className="grid lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 space-y-3">
-          <h3 className="text-sm font-semibold text-zinc-300">{t("campaigns", lang)}</h3>
-          <div className="grid sm:grid-cols-3 gap-3">
-            {LEARNING_PATHS.map((c) => {
-              const n = c.modules.filter((m) => user.progress[m.id]?.completed).length;
+        {user.badges.length ? (
+          <div className="player-dashboard__badge-grid">
+            {user.badges.map((id, index) => {
+              const badge = BADGES[id];
+              if (!badge) return null;
               return (
                 <button
-                  key={c.id}
+                  key={id}
                   type="button"
-                  onClick={() => onCampaign(c.id)}
-                  className="glass rounded-2xl border border-forge-border p-4 text-left card-hover"
+                  className="player-dashboard__badge-card dashboard-action dashboard-stagger"
+                  data-tier={badge.tier}
+                  style={{ animationDelay: `${index * 45}ms` }}
+                  title={`${badge.name} — ${badge.desc}`}
+                  aria-label={`${badge.name}. ${badge.desc}. ${lang === "en" ? "Open certificate" : "Άνοιγμα πιστοποιητικού"}`}
+                  onClick={() => onBadge(id)}
                 >
-                  <div className="text-sm font-bold text-zinc-100">
-                    <span className="font-mono text-sm tracking-widest text-ember-400 mr-2">{String(c.pathNumber).padStart(2, "0")}.</span>
-                    {bi(c.title, lang)}
-                  </div>
-                  <div className="text-sm text-iron-400 mt-1 line-clamp-2">{bi(c.subtitle, lang)}</div>
-                  <div className="mt-3 h-1.5 rounded-full bg-forge-bg overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-ember-600 to-ember-400"
-                      style={{ width: `${(n / c.modules.length) * 100}%` }}
-                    />
-                  </div>
-                  <div className="text-sm text-iron-500 mt-1">
-                    {n}/{c.modules.length}
-                  </div>
+                  <span className="player-dashboard__badge-medallion"><Icon name={badge.icon} className="h-6 w-6" /></span>
+                  <span className="player-dashboard__badge-copy">
+                    <strong>{badge.name}</strong>
+                    <small>{badge.desc}</small>
+                  </span>
+                  <Icon name="chevron" className="player-dashboard__badge-chevron h-4 w-4" />
                 </button>
               );
             })}
           </div>
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold text-zinc-300 mb-3">{t("badges", lang)}</h3>
-          <div className="flex flex-wrap gap-2">
-            {user.badges.length === 0 && <span className="text-sm text-iron-500">—</span>}
-            {user.badges.map((id) => {
-              const b = BADGES[id];
-              if (!b) return null;
-              return (
-                <div
-                  key={id}
-                  title={b.desc}
-                  className="h-12 w-12 rounded-xl border border-forge-border bg-forge-panel2 grid place-items-center text-ember-400"
-                >
-                  <Icon name={b.icon} className="w-6 h-6" />
-                </div>
-              );
-            })}
+        ) : (
+          <div className="player-dashboard__badge-empty">
+            <span className="player-dashboard__badge-empty-icon"><Icon name="medal" className="h-6 w-6" /></span>
+            <div>
+              <strong>{t("noBadgesYet", lang)}</strong>
+              <p>{lang === "en" ? "Your certificates will appear here as you progress." : "Τα πιστοποιητικά σου θα εμφανίζονται εδώ καθώς προχωράς."}</p>
+            </div>
           </div>
-          <h3 className="text-sm font-semibold text-zinc-300 mt-6 mb-3">{t("liveFeed", lang)}</h3>
-          <div className="glass rounded-2xl border border-forge-border p-4 max-h-64 overflow-auto">
-            <LiveFeed />
+        )}
+      </section>
+
+      <section className="player-dashboard__card player-dashboard__activity" aria-labelledby="player-activity-title">
+        <div className="player-dashboard__section-heading">
+          <div>
+            <div className="player-dashboard__eyebrow">{uppercaseLabel(t("liveFeed", lang), lang)}</div>
+            <h2 id="player-activity-title">{t("liveFeed", lang)}</h2>
           </div>
+          <span className="player-dashboard__activity-pulse"><i /></span>
         </div>
-      </div>
+        <div className="player-dashboard__activity-list"><LiveFeed /></div>
+      </section>
+
+      {mapExpanded && (
+        <DashboardMapDialog
+          user={user}
+          lang={lang}
+          selectedCampaignId={selectedMapCampaign}
+          onOpen={onOpen}
+          onClose={() => setMapExpanded(false)}
+        />
+      )}
     </div>
   );
 }

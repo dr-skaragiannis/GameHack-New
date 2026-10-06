@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { LEARNING_PATHS } from "../data/lessons";
 import { levelFromXp, overallScoreboard } from "../lib/db";
 import { t, type Lang } from "../i18n";
@@ -16,27 +16,40 @@ export default function OverallScoreboardPopup({
 }) {
   const entries = overallScoreboard();
   const totalModules = LEARNING_PATHS.reduce((total, campaign) => total + campaign.modules.length, 0);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") setIsClosing(true);
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
 
+  useEffect(() => {
+    if (!isClosing) return;
+    const timer = window.setTimeout(onClose, 190);
+    return () => window.clearTimeout(timer);
+  }, [isClosing, onClose]);
+
+  const closeWithAnimation = () => setIsClosing(true);
   return (
     <div
-      className="fixed inset-0 z-[60] grid place-items-center bg-black/75 p-3 backdrop-blur-sm"
+      className={`dashboard-modal-backdrop fixed inset-0 z-[60] grid place-items-center bg-black/75 p-3 backdrop-blur-sm${isClosing ? " is-closing" : ""}`}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) closeWithAnimation();
       }}
     >
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby="overall-scoreboard-title"
-        className="glass flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-forge-border shadow-2xl"
+        className="dashboard-modal-surface glass flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-forge-border shadow-2xl"
       >
         <header className="flex items-start justify-between gap-4 border-b border-forge-border px-4 py-4 sm:px-6">
           <div>
@@ -53,8 +66,8 @@ export default function OverallScoreboardPopup({
           <button
             type="button"
             aria-label={t("close", lang)}
-            onClick={onClose}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-forge-border text-iron-300 hover:bg-white/5"
+            onClick={closeWithAnimation}
+            className="dashboard-action grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-forge-border text-iron-300 hover:bg-white/5"
           >
             <Icon name="close" className="h-4 w-4" />
           </button>

@@ -414,6 +414,8 @@ export default function App() {
               lang={lang}
               onOpen={openModule}
               onCampaign={openCampaign}
+              onOpenScoreboard={() => setScoreboardOpen(true)}
+              onBadge={setBadgeId}
             />
           )}
           {view === "dashboard" && user.role === "educator" && (
