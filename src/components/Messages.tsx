@@ -66,7 +66,7 @@ export default function Messages({
               }}
               className="glass rounded-2xl border border-forge-border p-4 space-y-2"
             >
-              <div className="text-xs uppercase tracking-widest text-iron-400">{t("broadcast", lang)}</div>
+              <div className="text-sm uppercase tracking-widest text-iron-400">{t("broadcast", lang)}</div>
               <textarea
                 value={broadcast}
                 onChange={(e) => setBroadcast(e.target.value)}
@@ -84,7 +84,7 @@ export default function Messages({
               markMessagesRead(user.id);
               onChange();
             }}
-            className="text-xs text-iron-400 hover:text-ember-400"
+            className="text-sm text-iron-400 hover:text-ember-400"
           >
             mark read
           </button>
@@ -94,7 +94,7 @@ export default function Messages({
               key={m.id}
               className={cn("glass rounded-xl border p-3 text-sm", m.read ? "border-forge-border" : "border-ember-600/40")}
             >
-              <div className="text-[11px] text-iron-400">
+              <div className="text-sm text-iron-400">
                 {m.fromName} {m.broadcast ? `· ${t("broadcast", lang)}` : ""} · {new Date(m.ts).toLocaleString()}
               </div>
               <div className="mt-1 text-zinc-200">{m.text}</div>
@@ -111,7 +111,7 @@ export default function Messages({
                 key={p.id}
                 type="button"
                 onClick={() => setTo(p.id)}
-                className={cn("flex items-center gap-2 rounded-full border px-2 py-1 text-xs", to === p.id ? "border-ember-500" : "border-forge-border")}
+                className={cn("flex items-center gap-2 rounded-full border px-2 py-1 text-sm", to === p.id ? "border-ember-500" : "border-forge-border")}
               >
                 <Avatar src={p.avatar} name={p.displayName} size={18} />
                 {p.displayName.split(" ")[0]}

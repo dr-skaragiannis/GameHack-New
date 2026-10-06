@@ -23,7 +23,7 @@ export default function WidthControl({
           type="button"
           onClick={() => onChange(o.id)}
           className={cn(
-            "h-7 min-w-7 px-2 rounded-md text-[11px] font-bold tracking-wide",
+            "h-7 min-w-7 px-2 rounded-md text-sm font-bold tracking-wide",
             cur === o.id ? "bg-ember-600/90 text-white" : "text-iron-400 hover:text-zinc-200"
           )}
         >

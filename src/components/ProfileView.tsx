@@ -74,7 +74,7 @@ export default function ProfileView({
       </div>
 
       <div className="glass rounded-2xl border border-forge-border p-5">
-        <div className="text-xs uppercase tracking-widest text-iron-400 mb-2">{t("bio", lang)}</div>
+        <div className="text-sm uppercase tracking-widest text-iron-400 mb-2">{t("bio", lang)}</div>
         {mine ? (
           <>
             <textarea
@@ -100,7 +100,7 @@ export default function ProfileView({
       </div>
 
       <div className="glass rounded-2xl border border-forge-border p-5">
-        <div className="text-xs uppercase tracking-widest text-iron-400 mb-3">{t("interests", lang)}</div>
+        <div className="text-sm uppercase tracking-widest text-iron-400 mb-3">{t("interests", lang)}</div>
         <div className="flex flex-wrap gap-2">
           {(mine ? INTERESTS_POOL : user.interests).map((i) => {
             const on = user.interests.includes(i);
@@ -111,7 +111,7 @@ export default function ProfileView({
                 disabled={!mine}
                 onClick={() => mine && toggleInterest(i)}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-xs",
+                  "rounded-full border px-3 py-1 text-sm",
                   on ? "border-ember-500 bg-ember-500/15 text-ember-300" : "border-forge-border text-iron-400"
                 )}
               >
@@ -123,7 +123,7 @@ export default function ProfileView({
       </div>
 
       <div className="glass rounded-2xl border border-forge-border p-5">
-        <div className="text-xs uppercase tracking-widest text-iron-400 mb-3">{t("badges", lang)}</div>
+        <div className="text-sm uppercase tracking-widest text-iron-400 mb-3">{t("badges", lang)}</div>
         <div className="grid sm:grid-cols-2 gap-3">
           {user.badges.map((id) => {
             const b = BADGES[id];
@@ -135,7 +135,7 @@ export default function ProfileView({
                 </div>
                 <div>
                   <div className="font-semibold text-sm">{b.name}</div>
-                  <div className="text-xs text-iron-400">{b.desc}</div>
+                  <div className="text-sm text-iron-400">{b.desc}</div>
                 </div>
               </div>
             );

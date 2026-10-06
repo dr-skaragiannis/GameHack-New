@@ -57,7 +57,7 @@ export default function EducatorDashboard({
   return (
     <div className="space-y-6">
       <div>
-        <div className="text-[10px] uppercase tracking-[0.25em] text-ember-400">{t("educator", lang)}</div>
+        <div className="text-sm uppercase tracking-[0.25em] text-ember-400">{t("educator", lang)}</div>
         <h1 className="text-3xl font-bold text-zinc-50 mt-1">{t("dashboard", lang)}</h1>
       </div>
 
@@ -69,7 +69,7 @@ export default function EducatorDashboard({
           { k: t("completion", lang), v: `${completion}%` },
         ].map((s) => (
           <div key={s.k} className="glass rounded-2xl border border-forge-border p-4">
-            <div className="text-[11px] uppercase tracking-widest text-iron-400">{s.k}</div>
+            <div className="text-sm uppercase tracking-widest text-iron-400">{s.k}</div>
             <div className="text-2xl font-bold mt-1">{s.v}</div>
           </div>
         ))}
@@ -100,7 +100,7 @@ export default function EducatorDashboard({
         <div className="px-4 py-3 border-b border-forge-border text-sm font-semibold">{t("students", lang)}</div>
         <div className="overflow-auto">
           <table className="w-full text-sm">
-            <thead className="text-[11px] uppercase tracking-widest text-iron-500">
+            <thead className="text-sm uppercase tracking-widest text-iron-500">
               <tr>
                 <th className="text-left px-4 py-2 font-medium">{t("player", lang)}</th>
                 <th className="text-left px-4 py-2 font-medium">{t("level", lang)}</th>
@@ -128,7 +128,7 @@ export default function EducatorDashboard({
                           <Avatar src={p.avatar} name={p.displayName} size={28} />
                           <div>
                             <div className="font-medium">{p.displayName}</div>
-                            <div className="text-[11px] text-iron-500">@{p.username}</div>
+                            <div className="text-sm text-iron-500">@{p.username}</div>
                           </div>
                         </div>
                       </td>

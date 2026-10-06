@@ -42,7 +42,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
                 )}
               >
                 <div className="font-semibold truncate">{x.subject}</div>
-                <div className="text-[11px] text-iron-400">
+                <div className="text-sm text-iron-400">
                   {x.playerName} · {t(x.status, lang)} · {t(x.priority, lang)}
                 </div>
               </button>
@@ -54,7 +54,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
             <div className="flex items-center justify-between gap-2 mb-3">
               <div>
                 <div className="font-bold">{tk.subject}</div>
-                <div className="text-xs text-iron-400">
+                <div className="text-sm text-iron-400">
                   {tk.playerName} · {tk.moduleId || t("general", lang)}
                 </div>
               </div>
@@ -65,7 +65,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
                     setTicketStatus(tk.id, e.target.value as Ticket["status"]);
                     onChange();
                   }}
-                  className="bg-forge-bg border border-forge-border rounded-lg text-xs px-2 py-1"
+                  className="bg-forge-bg border border-forge-border rounded-lg text-sm px-2 py-1"
                 >
                   <option value="open">{t("open", lang)}</option>
                   <option value="answered">{t("answered", lang)}</option>
@@ -76,7 +76,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
             <div className="space-y-2 max-h-80 overflow-auto mb-3">
               {tk.messages.map((m, i) => (
                 <div key={i} className="rounded-xl bg-forge-bg border border-forge-line p-3 text-sm">
-                  <div className="text-[11px] text-iron-400">
+                  <div className="text-sm text-iron-400">
                     {m.fromName} · {new Date(m.ts).toLocaleString()}
                   </div>
                   <div className="mt-1">{m.text}</div>

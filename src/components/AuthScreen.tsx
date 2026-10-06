@@ -33,7 +33,7 @@ export default function AuthScreen() {
       <button
         type="button"
         onClick={() => setLang(lang === "en" ? "el" : "en")}
-        className="absolute top-4 right-4 z-10 text-xs font-bold tracking-widest text-iron-400 hover:text-ember-400 border border-forge-border rounded-lg px-3 py-1.5"
+        className="absolute top-4 right-4 z-10 text-sm font-bold tracking-widest text-iron-400 hover:text-ember-400 border border-forge-border rounded-lg px-3 py-1.5"
       >
         {t("langLabel", lang)}
       </button>
@@ -100,7 +100,7 @@ export default function AuthScreen() {
                     type="button"
                     onClick={() => setRole(r)}
                     className={cn(
-                      "rounded-xl border py-2 text-xs font-semibold",
+                      "rounded-xl border py-2 text-sm font-semibold",
                       role === r
                         ? "border-ember-500 bg-ember-500/15 text-ember-300"
                         : "border-forge-border text-iron-400"
@@ -111,7 +111,7 @@ export default function AuthScreen() {
                 ))}
               </div>
             )}
-            {error && <div className="text-rose-400 text-xs">{error}</div>}
+            {error && <div className="text-rose-400 text-sm">{error}</div>}
             <button
               type="submit"
               className="w-full rounded-xl bg-gradient-to-r from-ember-600 to-ember-500 py-2.5 font-bold text-white shimmer-hover"
@@ -120,7 +120,7 @@ export default function AuthScreen() {
             </button>
           </form>
 
-          <div className="mt-5 pt-4 border-t border-forge-line text-[11px] text-iron-500 space-y-1">
+          <div className="mt-5 pt-4 border-t border-forge-line text-sm text-iron-500 space-y-1">
             <div className="uppercase tracking-widest text-iron-400 mb-1">{t("demoHint", lang)}</div>
             <div>
               player — <span className="text-zinc-400 font-mono">nova / demo</span>

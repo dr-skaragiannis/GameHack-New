@@ -61,10 +61,10 @@ export default function TerminalView({
 
   return (
     <div
-      className="relative flex flex-col h-full min-h-[420px] rounded-xl border border-forge-border bg-black/80 crt overflow-hidden font-mono text-[13px]"
+      className="relative flex flex-col h-full min-h-[420px] rounded-xl border border-forge-border bg-black/80 crt overflow-hidden font-mono text-sm"
       onClick={() => input.current?.focus()}
     >
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5 bg-zinc-900/80 text-[11px] text-iron-400">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5 bg-zinc-900/80 text-sm text-iron-400">
         <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
         <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
         <span className="h-2.5 w-2.5 rounded-full bg-neon-green/80" />

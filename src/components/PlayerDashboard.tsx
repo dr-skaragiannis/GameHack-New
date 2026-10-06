@@ -41,7 +41,7 @@ export default function PlayerDashboard({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.25em] text-ember-400">{t("dashboard", lang)}</div>
+          <div className="text-sm uppercase tracking-[0.25em] text-ember-400">{t("dashboard", lang)}</div>
           <h1 className="text-3xl font-bold text-zinc-50 mt-1">
             {t("welcomeBack", lang)}, {user.displayName.split(" ")[0]}
           </h1>
@@ -50,7 +50,7 @@ export default function PlayerDashboard({
         <div className="flex items-center gap-3 glass rounded-2xl border border-forge-border px-4 py-3">
           <Avatar src={user.avatar} name={user.displayName} size={44} />
           <div>
-            <div className="text-xs text-iron-400">
+            <div className="text-sm text-iron-400">
               {t("level", lang)} {lv.level}
             </div>
             <div className="text-lg font-bold text-ember-400">{user.metrics.xp} XP</div>
@@ -73,7 +73,7 @@ export default function PlayerDashboard({
           { k: t("streak", lang), v: `${user.metrics.streakDays} ${t("days", lang)}`, ic: "medal" },
         ].map((s, i) => (
           <div key={s.k} className={cn("glass rounded-2xl border border-forge-border p-4 enter", `enter-${i + 1}`)}>
-            <div className="flex items-center gap-2 text-iron-400 text-xs uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-iron-400 text-sm uppercase tracking-widest">
               <Icon name={s.ic} className="w-4 h-4 text-ember-400" />
               {s.k}
             </div>
@@ -92,7 +92,7 @@ export default function PlayerDashboard({
             <Icon name={MODULE_ICON[next.m.id] || next.m.icon} className="w-7 h-7 text-white" />
           </div>
           <div className="flex-1">
-            <div className="text-[10px] uppercase tracking-widest text-ember-400">{t("continueLearning", lang)}</div>
+            <div className="text-sm uppercase tracking-widest text-ember-400">{t("continueLearning", lang)}</div>
             <div className="text-lg font-bold text-zinc-100">{bi(next.m.title, lang)}</div>
             <div className="text-sm text-iron-400">
               {bi(next.c.title, lang)} · {bi(next.m.subtitle, lang)}
@@ -116,17 +116,17 @@ export default function PlayerDashboard({
                   className="glass rounded-2xl border border-forge-border p-4 text-left card-hover"
                 >
                   <div className="text-sm font-bold text-zinc-100">
-                    <span className="font-mono text-[10px] tracking-widest text-ember-400 mr-2">{String(c.pathNumber).padStart(2, "0")}.</span>
+                    <span className="font-mono text-sm tracking-widest text-ember-400 mr-2">{String(c.pathNumber).padStart(2, "0")}.</span>
                     {bi(c.title, lang)}
                   </div>
-                  <div className="text-xs text-iron-400 mt-1 line-clamp-2">{bi(c.subtitle, lang)}</div>
+                  <div className="text-sm text-iron-400 mt-1 line-clamp-2">{bi(c.subtitle, lang)}</div>
                   <div className="mt-3 h-1.5 rounded-full bg-forge-bg overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-ember-600 to-ember-400"
                       style={{ width: `${(n / c.modules.length) * 100}%` }}
                     />
                   </div>
-                  <div className="text-[11px] text-iron-500 mt-1">
+                  <div className="text-sm text-iron-500 mt-1">
                     {n}/{c.modules.length}
                   </div>
                 </button>
@@ -137,7 +137,7 @@ export default function PlayerDashboard({
         <div>
           <h3 className="text-sm font-semibold text-zinc-300 mb-3">{t("badges", lang)}</h3>
           <div className="flex flex-wrap gap-2">
-            {user.badges.length === 0 && <span className="text-xs text-iron-500">—</span>}
+            {user.badges.length === 0 && <span className="text-sm text-iron-500">—</span>}
             {user.badges.map((id) => {
               const b = BADGES[id];
               if (!b) return null;

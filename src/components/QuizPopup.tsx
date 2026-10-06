@@ -31,8 +31,8 @@ export default function QuizPopup({
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
       <div className="w-full max-w-lg rounded-2xl border border-forge-border bg-forge-panel p-6 scale-in">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-ember-400 mb-1">{t("quickQuiz", lang)}</div>
-        <div className="text-xs text-iron-400 mb-4">
+        <div className="text-sm uppercase tracking-[0.2em] text-ember-400 mb-1">{t("quickQuiz", lang)}</div>
+        <div className="text-sm text-iron-400 mb-4">
           {i + 1} {t("of", lang)} {qs.length}
         </div>
         <h3 className="text-lg font-semibold text-zinc-100 mb-4">{bi(q.q, lang)}</h3>

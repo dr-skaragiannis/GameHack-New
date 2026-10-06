@@ -26,7 +26,7 @@ export default function LiveFeed({ compact }: { compact?: boolean }) {
     const loop = [...items, ...items];
     return (
       <div className="overflow-hidden border-y border-forge-border bg-forge-panel/80">
-        <div className="marquee-track py-2 gap-8 px-4 text-xs text-iron-400">
+        <div className="marquee-track py-2 gap-8 px-4 text-sm text-iron-400">
           {loop.map((e, i) => (
             <span key={e.id + i} className="inline-flex items-center gap-2">
               <span className="text-ember-400">◆</span>
@@ -47,7 +47,7 @@ export default function LiveFeed({ compact }: { compact?: boolean }) {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-zinc-300 truncate">{e.text}</div>
-            <div className="text-[11px] text-zinc-600">{ago(e.ts)}</div>
+            <div className="text-sm text-zinc-600">{ago(e.ts)}</div>
           </div>
         </li>
       ))}

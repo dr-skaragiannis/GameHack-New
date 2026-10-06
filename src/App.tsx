@@ -50,7 +50,7 @@ function EthicsGate({ lang, onAccept }: { lang: Lang; onAccept: () => void }) {
   return (
     <div className="forge-grid min-h-full grid place-items-center p-4">
       <div className="relative z-10 max-w-lg glass rounded-2xl border border-ember-600/40 p-8 forge-glow scale-in">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-ember-400 mb-2">{t("appName", lang)}</div>
+        <div className="text-sm uppercase tracking-[0.3em] text-ember-400 mb-2">{t("appName", lang)}</div>
         <h1 className="text-2xl font-bold text-shine mb-4">{t("ethicsTitle", lang)}</h1>
         <p className="text-zinc-300 leading-relaxed text-sm">{t("ethicsBody", lang)}</p>
         <button
@@ -226,8 +226,8 @@ export default function App() {
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <div className="font-extrabold tracking-[0.18em] text-xs text-shine">{t("appName", lang)}</div>
-              <div className="text-[10px] text-iron-500 truncate">{t("tagline", lang)}</div>
+              <div className="font-extrabold tracking-[0.18em] text-sm text-shine">{t("appName", lang)}</div>
+              <div className="text-sm text-iron-500 truncate">{t("tagline", lang)}</div>
             </div>
           )}
         </div>
@@ -258,7 +258,7 @@ export default function App() {
                   <>
                     <span className="flex-1 text-left">{n.label}</span>
                     {!!n.badge && n.badge > 0 && (
-                      <span className="text-[10px] bg-ember-600 text-white rounded-full px-1.5">{n.badge}</span>
+                      <span className="text-sm bg-ember-600 text-white rounded-full px-1.5">{n.badge}</span>
                     )}
                   </>
                 )}
@@ -272,7 +272,7 @@ export default function App() {
               db.updateUser(user.id, { sidebarCollapsed: !collapsed });
               refresh();
             }}
-            className="w-full text-[11px] text-iron-500 hover:text-iron-300 py-1"
+            className="w-full text-sm text-iron-500 hover:text-iron-300 py-1"
           >
             {collapsed ? "»" : "«"}
           </button>
@@ -298,7 +298,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => setLang(lang === "en" ? "el" : "en")}
-            className="h-9 px-3 rounded-lg border border-forge-border text-xs font-bold tracking-widest text-iron-400 hover:text-ember-400"
+            className="h-9 px-3 rounded-lg border border-forge-border text-sm font-bold tracking-widest text-iron-400 hover:text-ember-400"
           >
             {t("langLabel", lang)}
           </button>
@@ -346,7 +346,7 @@ export default function App() {
           {view === "campaigns" && (
             <div className="space-y-6">
               <div>
-                <div className="text-[10px] uppercase tracking-[0.25em] text-ember-400">{t("campaigns", lang)}</div>
+                <div className="text-sm uppercase tracking-[0.25em] text-ember-400">{t("campaigns", lang)}</div>
                 <h1 className="text-3xl font-bold mt-1">{t("chooseCampaign", lang)}</h1>
               </div>
               <div className="grid md:grid-cols-3 gap-4">
@@ -363,7 +363,7 @@ export default function App() {
                       className={cn("text-left glass rounded-2xl border border-forge-border p-5 card-hover enter", `enter-${i + 1}`)}
                     >
                       <div className="h-1.5 rounded-full bg-gradient-to-r from-ember-500 via-amber-300 to-ember-700 strip-anim mb-4" />
-                      <div className="text-[10px] uppercase tracking-widest text-ember-400">
+                      <div className="text-sm uppercase tracking-widest text-ember-400">
                         {c.scenario === "lab" || c.scenario === "sudorun" ? t("courseLabel", lang) : t("ctfLabel", lang)}
                       </div>
                       <h2 className="flex items-baseline gap-2 text-xl font-bold mt-1">
@@ -375,7 +375,7 @@ export default function App() {
                       <div className="mt-4 h-1.5 rounded-full bg-forge-bg overflow-hidden">
                         <div className="h-full bg-ember-500" style={{ width: `${(n / c.modules.length) * 100}%` }} />
                       </div>
-                      <div className="text-xs text-iron-500 mt-1">
+                      <div className="text-sm text-iron-500 mt-1">
                         {n}/{c.modules.length} {t("modules", lang)}
                       </div>
                     </button>

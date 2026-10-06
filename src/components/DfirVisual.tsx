@@ -20,7 +20,7 @@ function NetworkGraphic({ items, lang }: { items: VisualItem[]; lang: Lang }) {
   }));
 
   return (
-    <svg className="dfir-network" viewBox="0 0 600 190" role="img" aria-label={lang === "en" ? "Network evidence diagram" : "Διάγραμμα δικτυακών στοιχείων"}>
+    <svg className="dfir-network" viewBox="0 0 600 240" role="img" aria-label={lang === "en" ? "Network evidence diagram" : "Διάγραμμα δικτυακών στοιχείων"}>
       <defs>
         <linearGradient id="dfir-network-line" x1="0" x2="1">
           <stop offset="0" stopColor="#ff8a4c" stopOpacity=".25" />
@@ -37,7 +37,7 @@ function NetworkGraphic({ items, lang }: { items: VisualItem[]; lang: Lang }) {
           <circle cx={x} cy={y} r="23" />
           <circle className="dfir-network__pulse" cx={x} cy={y} r="29" />
           <text x={x} y={y + 4} textAnchor="middle">{String(index + 1).padStart(2, "0")}</text>
-          <foreignObject x={x - 62} y={y + 31} width="124" height="60">
+          <foreignObject x={x - 62} y={y + 31} width="124" height="72">
             <div className="dfir-network__label">{bi(item.label, lang)}{item.value && <small>{bi(item.value, lang)}</small>}</div>
           </foreignObject>
         </g>

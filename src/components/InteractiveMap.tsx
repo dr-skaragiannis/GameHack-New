@@ -285,9 +285,9 @@ function CampaignUniverse({
   onToggle: (campaignId: string) => void;
   onOpen: (campaignId: string, moduleId: string) => void;
 }) {
-  const cardCenterX = 155;
-  const cardRight = 299;
-  const firstNodeX = 382;
+  const cardCenterX = 168;
+  const cardRight = 336;
+  const firstNodeX = 414;
   const nodeSpacing = 148;
   const rowHeight = 182;
   const topPadding = 28;

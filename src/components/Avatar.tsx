@@ -53,7 +53,7 @@ export default function Avatar({
       {src ? (
         <Icon name={a.name} className="w-[58%] h-[58%]" />
       ) : (
-        <span className="text-[0.65em] font-bold tracking-wide">{initials}</span>
+        <span className="font-bold tracking-wide" style={{ fontSize: Math.max(14, Math.round(size * 0.32)) }}>{initials}</span>
       )}
     </div>
   );

@@ -143,7 +143,7 @@ export default function ModuleView({
             <Icon name={module.icon} className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] uppercase tracking-[0.2em] text-ember-400">
+            <div className="text-sm uppercase tracking-[0.2em] text-ember-400">
               {t("difficulty", lang)} {"▲".repeat(module.difficulty)}
               {"△".repeat(5 - module.difficulty)}
             </div>
@@ -152,7 +152,7 @@ export default function ModuleView({
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-ember-400">{progress}%</div>
-            <div className="text-[11px] text-iron-500">{t("progress", lang)}</div>
+            <div className="text-sm text-iron-500">{t("progress", lang)}</div>
           </div>
         </div>
         <div className="h-1.5 rounded-full bg-forge-panel2 overflow-hidden mb-6">
@@ -182,11 +182,11 @@ export default function ModuleView({
                 <h2 className="text-lg font-semibold text-zinc-100 mb-2">{bi(s.heading, lang)}</h2>
                 <p className="text-sm text-zinc-300 leading-relaxed">{bi(s.body, lang)}</p>
                 {s.tip && (
-                  <p className="mt-3 text-xs text-neon-cyan/90 border-l-2 border-neon-cyan/40 pl-3">{bi(s.tip, lang)}</p>
+                  <p className="mt-3 text-sm text-neon-cyan/90 border-l-2 border-neon-cyan/40 pl-3">{bi(s.tip, lang)}</p>
                 )}
                 {s.shots?.map((sh, si) => (
-                  <div key={si} className="mt-4 rounded-xl border border-forge-border bg-black/70 overflow-hidden font-mono text-[12px]">
-                    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 text-[10px] text-iron-500">
+                  <div key={si} className="mt-4 rounded-xl border border-forge-border bg-black/70 overflow-hidden font-mono text-sm">
+                    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 text-sm text-iron-500">
                       <span className="h-2 w-2 rounded-full bg-rose-500/80" />
                       <span className="h-2 w-2 rounded-full bg-amber-400/80" />
                       <span className="h-2 w-2 rounded-full bg-neon-green/80" />
@@ -269,7 +269,7 @@ export default function ModuleView({
             />
             <aside className="space-y-4">
               <div className="glass rounded-2xl border border-forge-border p-4">
-                <div className="text-[10px] uppercase tracking-widest text-ember-400 mb-3">{t("objectives", lang)}</div>
+                <div className="text-sm uppercase tracking-widest text-ember-400 mb-3">{t("objectives", lang)}</div>
                 <ol className="space-y-3">
                   {module.tasks.map((task, idx) => {
                     const ok = done.includes(task.id) || task.check(term);
@@ -290,21 +290,21 @@ export default function ModuleView({
                                   setHints((h) => ({ ...h, [task.id]: true }));
                                   onHint();
                                 }}
-                                className="text-[11px] text-ember-400 hover:underline"
+                                className="text-sm text-ember-400 hover:underline"
                               >
                                 {t("showHint", lang)}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setExplain(explain === task.id ? null : task.id)}
-                                className="text-[11px] text-neon-cyan hover:underline"
+                                className="text-sm text-neon-cyan hover:underline"
                               >
                                 {t("whyHow", lang)}
                               </button>
                             </div>
-                            {hints[task.id] && <div className="mt-1 font-mono text-[11px] text-amber-300">{bi(task.hint, lang)}</div>}
+                            {hints[task.id] && <div className="mt-1 font-mono text-sm text-amber-300">{bi(task.hint, lang)}</div>}
                             {explain === task.id && (
-                              <div className="mt-1 text-[11px] text-zinc-400 leading-relaxed">{bi(task.explain, lang)}</div>
+                              <div className="mt-1 text-sm text-zinc-400 leading-relaxed">{bi(task.explain, lang)}</div>
                             )}
                           </div>
                         </div>
@@ -315,12 +315,12 @@ export default function ModuleView({
               </div>
 
               <div className="glass rounded-2xl border border-forge-border p-4">
-                <div className="text-[10px] uppercase tracking-widest text-ember-400 mb-2">{t("finalChallenges", lang)}</div>
+                <div className="text-sm uppercase tracking-widest text-ember-400 mb-2">{t("finalChallenges", lang)}</div>
                 {!allTasks ? (
-                  <p className="text-xs text-iron-500">{t("challengeLocked", lang)}</p>
+                  <p className="text-sm text-iron-500">{t("challengeLocked", lang)}</p>
                 ) : (
                   <div className="space-y-3">
-                    <p className="text-[11px] text-iron-400">{t("solveBothToProceed", lang)}</p>
+                    <p className="text-sm text-iron-400">{t("solveBothToProceed", lang)}</p>
                     {module.challenges.map((ch, i) => {
                       const ok = i === 0 ? ch1 : ch2;
                       return (
@@ -329,9 +329,9 @@ export default function ModuleView({
                             <span className={ok ? "text-neon-green" : "text-ember-400"}>{ok ? "✔" : "◆"}</span>
                             <span className="font-semibold text-zinc-100">{bi(ch.title, lang)}</span>
                           </div>
-                          <p className="text-xs text-zinc-400 mt-1 ml-5">{bi(ch.brief, lang)}</p>
-                          <p className="text-[11px] text-zinc-600 ml-5">{t("noHints", lang)}</p>
-                          {ok && <p className="text-xs text-neon-green ml-5 mt-1">{bi(ch.success, lang)}</p>}
+                          <p className="text-sm text-zinc-400 mt-1 ml-5">{bi(ch.brief, lang)}</p>
+                          <p className="text-sm text-zinc-600 ml-5">{t("noHints", lang)}</p>
+                          {ok && <p className="text-sm text-neon-green ml-5 mt-1">{bi(ch.success, lang)}</p>}
                         </div>
                       );
                     })}
@@ -340,10 +340,10 @@ export default function ModuleView({
               </div>
 
               <details className="glass rounded-2xl border border-forge-border p-4">
-                <summary className="text-[10px] uppercase tracking-widest text-iron-400 cursor-pointer">
+                <summary className="text-sm uppercase tracking-widest text-iron-400 cursor-pointer">
                   {t("cheatsheet", lang)}
                 </summary>
-                <ul className="mt-3 space-y-1 font-mono text-[12px]">
+                <ul className="mt-3 space-y-1 font-mono text-sm">
                   {module.cheats.map((c) => (
                     <li key={c.cmd} className="flex justify-between gap-2">
                       <span className="text-ember-300">{c.cmd}</span>
