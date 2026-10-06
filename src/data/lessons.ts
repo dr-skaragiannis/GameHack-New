@@ -59,6 +59,7 @@ export type Module = {
 
 export type Campaign = {
   id: string;
+  pathNumber: number;
   title: Bi;
   subtitle: Bi;
   blurb: Bi;
@@ -1092,6 +1093,7 @@ export const MODULES: Module[] = [
 export const CAMPAIGNS: Campaign[] = [
   {
     id: "forge",
+    pathNumber: 2,
     title: { en: "The Forge", el: "Το Καμίνι" },
     subtitle: { en: "Foundations of the operator", el: "Θεμέλια του χειριστή" },
     blurb: {
@@ -1106,6 +1108,7 @@ export const CAMPAIGNS: Campaign[] = [
   },
   {
     id: "raven",
+    pathNumber: 4,
     title: { en: "Operation Raven", el: "Επιχείρηση Raven" },
     subtitle: { en: "A boot2root CTF box", el: "Ένα κουτί boot2root CTF" },
     blurb: {
@@ -1118,6 +1121,7 @@ export const CAMPAIGNS: Campaign[] = [
   },
   {
     id: "wirewalk",
+    pathNumber: 3,
     title: { en: "Wirewalk", el: "Wirewalk" },
     subtitle: { en: "SSH labyrinth", el: "Λαβύρινθος SSH" },
     blurb: {
@@ -1130,6 +1134,7 @@ export const CAMPAIGNS: Campaign[] = [
   },
   {
     id: "sudorun",
+    pathNumber: 1,
     title: { en: "Sudo_Run", el: "Sudo_Run" },
     subtitle: { en: "Linux for Beginners", el: "Linux για αρχάριους" },
     blurb: {
@@ -1142,6 +1147,7 @@ export const CAMPAIGNS: Campaign[] = [
   },
   {
     id: "dfir-fieldwork",
+    pathNumber: 5,
     title: { en: "DFIR Fieldwork", el: "Επιτόπια Ψηφιακή Εγκληματολογία" },
     subtitle: { en: "Digital Forensics & Incident Response", el: "Digital Forensics & Incident Response" },
     blurb: {
@@ -1153,6 +1159,8 @@ export const CAMPAIGNS: Campaign[] = [
     modules: DFIR_MODULES,
   },
 ];
+
+export const LEARNING_PATHS = [...CAMPAIGNS].sort((a, b) => a.pathNumber - b.pathNumber);
 
 export function moduleById(id: string): Module | undefined {
   return MODULES.find((m) => m.id === id) || SUDO_RUN_ALL.find((m) => m.id === id) || DFIR_MODULES.find((m) => m.id === id);

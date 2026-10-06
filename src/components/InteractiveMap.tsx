@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CAMPAIGNS, type Campaign, type Module } from "../data/lessons";
+import { CAMPAIGNS, LEARNING_PATHS, type Campaign, type Module } from "../data/lessons";
 import {
   allPlayers,
   isOnline,
@@ -44,7 +44,7 @@ function resolveLocation(player: User): MapLocation {
     return { campaignId: activeCampaign.id, moduleId: (next || ordered.at(-1) || activeModule).id };
   }
 
-  const started = CAMPAIGNS.map((campaign) => {
+  const started = LEARNING_PATHS.map((campaign) => {
     const ordered = orderedModules(campaign);
     const touched = ordered.filter((module) => player.progress[module.id]);
     const complete = touched.filter((module) => player.progress[module.id]?.completed).length;
@@ -60,7 +60,7 @@ function resolveLocation(player: User): MapLocation {
     if (next) return { campaignId: campaign.id, moduleId: next.id };
   }
 
-  const firstCampaign = CAMPAIGNS[0];
+  const firstCampaign = LEARNING_PATHS[0];
   return { campaignId: firstCampaign.id, moduleId: orderedModules(firstCampaign)[0].id };
 }
 
@@ -75,11 +75,13 @@ export default function InteractiveMap({
   user,
   onOpen,
   embedded = false,
+  selectedCampaignId,
 }: {
   lang: Lang;
   user: User;
   onOpen: (campaignId: string, moduleId: string) => void;
   embedded?: boolean;
+  selectedCampaignId?: string;
 }) {
   const [revision, setRevision] = useState(0);
   const [now, setNow] = useState(Date.now());
@@ -89,7 +91,7 @@ export default function InteractiveMap({
   const playerMenu = useRef<HTMLDivElement>(null);
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(CAMPAIGNS.map((campaign) => [campaign.id, false]))
+    Object.fromEntries(LEARNING_PATHS.map((campaign) => [campaign.id, false]))
   );
 
   useEffect(() => {
@@ -116,6 +118,15 @@ export default function InteractiveMap({
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [playerMenuOpen]);
+
+  useEffect(() => {
+    if (!selectedCampaignId || embedded) return;
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById(`map-campaign-card-${selectedCampaignId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+    });
+  }, [embedded, selectedCampaignId]);
 
   const liveViewer = userById(user.id) || user;
   const players = useMemo(
@@ -231,12 +242,13 @@ export default function InteractiveMap({
       </header>
 
       <CampaignUniverse
-        campaigns={CAMPAIGNS}
+        campaigns={LEARNING_PATHS}
         locations={visibleLocations}
         viewer={liveViewer}
         lang={lang}
         collapsed={collapsed}
         focusedPlayerId={focusedPlayerId}
+        selectedCampaignId={selectedCampaignId}
         onToggle={toggleCampaign}
         onOpen={onOpen}
       />
@@ -259,6 +271,7 @@ function CampaignUniverse({
   lang,
   collapsed,
   focusedPlayerId,
+  selectedCampaignId,
   onToggle,
   onOpen,
 }: {
@@ -268,178 +281,142 @@ function CampaignUniverse({
   lang: Lang;
   collapsed: Record<string, boolean>;
   focusedPlayerId: string | null;
+  selectedCampaignId?: string;
   onToggle: (campaignId: string) => void;
   onOpen: (campaignId: string, moduleId: string) => void;
 }) {
-  const width = 1600;
-  const height = 1120;
-  const core = { x: 800, y: 545 };
-  const routeLayouts: Record<string, { hub: { x: number; y: number }; nodes: { x: number; y: number }[] }> = {
-    forge: {
-      hub: { x: 470, y: 265 },
-      nodes: [
-        { x: 135, y: 200 }, { x: 280, y: 105 }, { x: 450, y: 95 },
-        { x: 620, y: 135 }, { x: 735, y: 245 }, { x: 700, y: 380 },
-        { x: 550, y: 430 }, { x: 380, y: 410 }, { x: 235, y: 335 },
-      ],
-    },
-    raven: {
-      hub: { x: 1115, y: 290 },
-      nodes: [
-        { x: 1010, y: 125 }, { x: 1190, y: 105 },
-        { x: 1380, y: 190 }, { x: 1355, y: 410 },
-      ],
-    },
-    wirewalk: {
-      hub: { x: 1115, y: 695 },
-      nodes: [
-        { x: 1000, y: 510 }, { x: 1210, y: 525 }, { x: 1390, y: 665 },
-      ],
-    },
-    sudorun: {
-      hub: { x: 470, y: 690 },
-      nodes: [
-        { x: 125, y: 825 }, { x: 315, y: 825 }, { x: 505, y: 825 },
-        { x: 695, y: 825 }, { x: 885, y: 825 }, { x: 1075, y: 825 },
-        { x: 1265, y: 825 }, { x: 1455, y: 825 }, { x: 1455, y: 1010 },
-        { x: 1265, y: 1010 }, { x: 1075, y: 1010 }, { x: 885, y: 1010 },
-        { x: 695, y: 1010 },
-      ],
-    },
-    "dfir-fieldwork": {
-      hub: { x: 355, y: 830 },
-      nodes: [
-        { x: 520, y: 880 }, { x: 640, y: 760 }, { x: 760, y: 880 },
-        { x: 880, y: 760 }, { x: 1000, y: 880 }, { x: 1120, y: 760 },
-        { x: 1240, y: 880 }, { x: 1360, y: 760 }, { x: 1470, y: 880 },
-        { x: 1450, y: 1015 },
-      ],
-    },
-  };
+  const cardCenterX = 155;
+  const cardRight = 299;
+  const firstNodeX = 382;
+  const nodeSpacing = 148;
+  const rowHeight = 182;
+  const topPadding = 28;
+  const maxModules = Math.max(1, ...campaigns.map((campaign) => campaign.modules.length));
+  const width = Math.max(1500, firstNodeX + (maxModules - 1) * nodeSpacing + 88);
+  const height = topPadding + campaigns.length * rowHeight + 28;
+
   const lanes = campaigns.map((campaign, campaignIndex) => {
     const ordered = orderedModules(campaign);
-    const layout = routeLayouts[campaign.id] || { hub: { x: 800, y: 300 + campaignIndex * 150 }, nodes: [] };
+    const layoutY = topPadding + (campaignIndex + 0.5) * rowHeight;
     const modules = ordered.map((module, index) => ({
-      x: layout.nodes[index]?.x ?? layout.hub.x + 160 + index * 150,
-      y: layout.nodes[index]?.y ?? layout.hub.y,
+      x: firstNodeX + index * nodeSpacing,
+      y: layoutY,
       module,
       state: progressState(module, index, ordered, viewer.progress),
     }));
     return {
       campaign,
       ordered,
-      hub: layout.hub,
       modules,
       campaignIndex,
+      y: layoutY,
       isCollapsed: !!collapsed[campaign.id],
     };
   });
 
-  const curveBetween = (from: { x: number; y: number }, to: { x: number; y: number }, radius = 34) => {
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const distance = Math.max(1, Math.hypot(dx, dy));
-    const sx = from.x + (dx / distance) * radius;
-    const sy = from.y + (dy / distance) * radius;
-    const ex = to.x - (dx / distance) * radius;
-    const ey = to.y - (dy / distance) * radius;
-    const bend = dx * 0.38;
-    return `M ${sx} ${sy} C ${sx + bend} ${sy + dy * 0.08}, ${ex - bend} ${ey - dy * 0.08}, ${ex} ${ey}`;
-  };
+  const campaignAccent = (campaign: Campaign) =>
+    campaign.scenario === "raven" ? "raven"
+      : campaign.scenario === "ssh" ? "wirewalk"
+        : campaign.scenario === "sudorun" ? "sudorun"
+          : campaign.scenario === "dfir" ? "dfir" : "forge";
+  const campaignIcon = (campaign: Campaign) =>
+    campaign.scenario === "raven" ? "crown"
+      : campaign.scenario === "ssh" ? "key"
+        : campaign.scenario === "dfir" ? "shield" : "terminal";
+  const campaignKicker = (campaign: Campaign) =>
+    campaign.scenario === "sudorun" ? "LINUX FOR BEGINNERS"
+      : campaign.scenario === "raven" ? "CTF CAMPAIGN"
+        : campaign.scenario === "ssh" ? "SSH CAMPAIGN"
+          : campaign.scenario === "dfir" ? "INCIDENT RESPONSE" : "FOUNDATION CAMPAIGN";
 
   return (
     <div className="map-universe-scroll" aria-label={t("mapCampaigns", lang)}>
       <div className="map-universe" style={{ width, height }}>
         <div className="map-universe-stars" />
+        {lanes.map(({ campaign, campaignIndex, y }) => (
+          <div
+            key={`lane-backdrop-${campaign.id}`}
+            className={cn("map-lane-backdrop", campaignIndex % 2 === 1 && "is-alternate", `map-lane-backdrop--${campaignAccent(campaign)}`)}
+            style={{ left: 10, top: y - rowHeight / 2 + 8, width: width - 20, height: rowHeight - 16 }}
+            aria-hidden="true"
+          />
+        ))}
+
         <svg className="map-universe-svg" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <radialGradient id="map-core-gradient">
-              <stop offset="0%" stopColor="#ff8a4c" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#ff6a2b" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          {lanes.map(({ campaign, hub, modules, isCollapsed, campaignIndex }) => {
-            const accent = campaign.scenario === "raven" ? "raven" : campaign.scenario === "ssh" ? "wirewalk" : campaign.scenario === "sudorun" ? "sudorun" : campaign.scenario === "dfir" ? "dfir" : "forge";
-            const routeNodes = isCollapsed ? [] : modules;
-            const routePoints = [
-              { ...hub, state: "open", id: `hub-${campaign.id}` },
-              ...routeNodes.map((node) => ({ x: node.x, y: node.y, state: node.state, id: node.module.id })),
-            ];
-            const branch = curveBetween(core, hub, 42);
+          {lanes.map(({ campaign, modules, isCollapsed, y }) => {
+            const segments: { fromX: number; toX: number; done: boolean; current: boolean; delay: number }[] = [];
+            if (!isCollapsed && modules.length > 0) {
+              segments.push({
+                fromX: cardRight,
+                toX: modules[0].x - 35,
+                done: false,
+                current: viewer.activeCampaignId === campaign.id && viewer.activeModuleId === modules[0].module.id,
+                delay: 0,
+              });
+              for (let index = 0; index < modules.length - 1; index += 1) {
+                const from = modules[index];
+                const to = modules[index + 1];
+                segments.push({
+                  fromX: from.x + 35,
+                  toX: to.x - 35,
+                  done: from.state === "done",
+                  current: viewer.activeCampaignId === campaign.id &&
+                    (viewer.activeModuleId === from.module.id || viewer.activeModuleId === to.module.id),
+                  delay: index + 1,
+                });
+              }
+            }
             return (
-              <g key={`route-${campaign.id}`} className={`map-path-group map-path-group--${accent}`}>
-                <path d={branch} className="map-network-branch" />
-                <path d={branch} className="map-network-energy" style={{ animationDelay: `${campaignIndex * -0.8}s` }} />
-                {routePoints.slice(0, -1).map((point, index) => {
-                  const next = routePoints[index + 1];
-                  const d = curveBetween(point, next, 35);
-                  const done = point.state === "done";
-                  const active = point.id === viewer.activeModuleId && campaign.id === viewer.activeCampaignId;
+              <g key={`route-${campaign.id}`} className={`map-path-group map-path-group--${campaignAccent(campaign)}`}>
+                {segments.map((segment, index) => {
+                  const d = `M ${segment.fromX} ${y} L ${segment.toX} ${y}`;
                   return (
-                    <g key={`${campaign.id}-${point.id}-${next.id}`}>
+                    <g key={`${campaign.id}-segment-${index}`}>
                       <path d={d} className="map-route-underlay" />
-                      <path d={d} className={cn("map-route-segment", done && "is-done", active && "is-current")} />
-                      <path d={d} className="map-route-energy" style={{ animationDelay: `${(index % 5) * -0.72}s` }} />
+                      <path d={d} className={cn("map-route-segment", segment.done && "is-done", segment.current && "is-current")} />
+                      <path d={d} className="map-route-energy" style={{ animationDelay: `${(segment.delay % 5) * -0.72}s` }} />
                     </g>
                   );
                 })}
               </g>
             );
           })}
-          <circle cx={core.x} cy={core.y} r="76" fill="url(#map-core-gradient)" />
-          {lanes.map(({ hub, campaign }, index) => (
-            <circle key={`pulse-${campaign.id}`} cx={hub.x} cy={hub.y} r="17" className={`map-hub-signal map-hub-signal--${index}`} />
-          ))}
         </svg>
 
-        <div className="map-network-core" style={{ left: core.x - 30, top: core.y - 30 }} aria-hidden="true">
-          <span className="map-core-orbit map-core-orbit--outer" />
-          <span className="map-core-orbit map-core-orbit--inner" />
-          <span className="map-core-center"><Icon name="hammer" className="h-5 w-5" /></span>
-          <span className="map-core-label">HACKFORGE<br />NETWORK</span>
-        </div>
-
-        {lanes.map(({ campaign, ordered, hub, modules, campaignIndex, isCollapsed }) => {
+        {lanes.map(({ campaign, ordered, modules, campaignIndex, y, isCollapsed }) => {
           const completed = ordered.filter((module) => viewer.progress[module.id]?.completed).length;
           const percent = Math.round((completed / Math.max(1, ordered.length)) * 100);
           const routePlayers = locations.filter((entry) => entry.campaignId === campaign.id);
           const routeOnline = routePlayers.filter((entry) => entry.online).length;
-          const accent = campaign.scenario === "raven" ? "raven" : campaign.scenario === "ssh" ? "wirewalk" : campaign.scenario === "sudorun" ? "sudorun" : campaign.scenario === "dfir" ? "dfir" : "forge";
+          const accent = campaignAccent(campaign);
+          const selected = selectedCampaignId === campaign.id;
           return (
-            <div key={campaign.id} className={cn("map-universe-lane", `map-universe-lane--${accent}`, `map-universe-lane-enter-${campaignIndex + 1}`)}>
+            <div key={campaign.id} className={cn("map-universe-lane", `map-universe-lane--${accent}`)}>
               <button
+                id={`map-campaign-card-${campaign.id}`}
                 type="button"
-                className="map-campaign-card"
+                className={cn("map-campaign-card map-campaign-card--linear", selected && "is-selected", `map-campaign-card-enter-${campaignIndex + 1}`)}
                 aria-expanded={!isCollapsed}
-                aria-label={`${isCollapsed ? t("mapExpand", lang) : t("mapCollapse", lang)}: ${bi(campaign.title, lang)}`}
+                aria-label={`${isCollapsed ? t("mapExpand", lang) : t("mapCollapse", lang)}: ${String(campaign.pathNumber).padStart(2, "0")}. ${bi(campaign.title, lang)}`}
                 onClick={() => onToggle(campaign.id)}
-                style={{ left: hub.x - 137, top: hub.y }}
+                style={{ left: cardCenterX, top: y }}
               >
-                <span className="map-campaign-card__icon"><Icon name={campaign.scenario === "raven" ? "crown" : campaign.scenario === "ssh" ? "key" : campaign.scenario === "dfir" ? "shield" : "terminal"} className="h-5 w-5" /></span>
+                <span className="map-path-number" aria-hidden="true">{String(campaign.pathNumber).padStart(2, "0")}</span>
+                <span className="map-campaign-card__icon"><Icon name={campaignIcon(campaign)} className="h-5 w-5" /></span>
                 <span className="map-campaign-card__copy">
-                  <span className="map-campaign-card__kicker">{campaign.scenario === "sudorun" ? "LINUX FOR BEGINNERS" : campaign.scenario === "raven" ? "CTF CAMPAIGN" : campaign.scenario === "ssh" ? "SSH CAMPAIGN" : campaign.scenario === "dfir" ? "INCIDENT RESPONSE" : "FOUNDATION CAMPAIGN"}</span>
+                  <span className="map-campaign-card__kicker">{campaignKicker(campaign)}</span>
                   <span className="map-campaign-card__name">{bi(campaign.title, lang)}</span>
                   <span className="map-campaign-card__progress">{completed}/{ordered.length} labs <i>·</i> {percent}%</span>
                   <span className="map-campaign-card__bar"><i style={{ width: `${percent}%` }} /></span>
                 </span>
-                <span className="map-campaign-card__presence"><i className="map-status-dot is-online" />{routeOnline}<i className="map-status-dot is-offline" />{routePlayers.length - routeOnline}</span>
+                <span className="map-campaign-card__presence" aria-label={`${routeOnline} online, ${routePlayers.length - routeOnline} offline`}>
+                  <i className="map-status-dot is-online" />{routeOnline}
+                  <i className="map-status-dot is-offline" />{routePlayers.length - routeOnline}
+                </span>
                 <Icon name="chevron" className={cn("map-campaign-card__chevron h-4 w-4", !isCollapsed && "is-open")} />
               </button>
 
-              <button
-                type="button"
-                className={cn("map-campaign-hub", `map-campaign-hub--${accent}`, isCollapsed && "is-collapsed")}
-                aria-label={`${bi(campaign.title, lang)} ${isCollapsed ? t("mapExpand", lang) : t("mapCollapse", lang)}`}
-                title={`${bi(campaign.title, lang)} · ${completed}/${ordered.length}`}
-                onClick={() => onToggle(campaign.id)}
-                style={{ left: hub.x, top: hub.y }}
-              >
-                <span className="map-hub-aura" />
-                <span className="map-hub-icon"><Icon name={campaign.scenario === "raven" ? "crown" : campaign.scenario === "ssh" ? "key" : campaign.scenario === "dfir" ? "shield" : "terminal"} className="h-5 w-5" /></span>
-                <span className="map-hub-label">{isCollapsed ? `${ordered.length} LABS` : "ROUTE"}</span>
-              </button>
-
-              {!isCollapsed && modules.map(({ x, y, module, state }, index) => {
+              {!isCollapsed && modules.map(({ x, y: nodeY, module, state }, index) => {
                 const nodePlayers = locations.filter((entry) => entry.campaignId === campaign.id && entry.moduleId === module.id);
                 const current = viewer.activeCampaignId === campaign.id && viewer.activeModuleId === module.id;
                 const clickable = state !== "locked";
@@ -453,7 +430,7 @@ function CampaignUniverse({
                     key={module.id}
                     id={`map-node-${campaign.id}-${module.id}`}
                     className={cn("map-node", `map-node--${state}`, `map-node--${accent}`, current && "is-current", `map-node-enter-${Math.min(index + 1, 8)}`)}
-                    style={{ left: x, top: y, width: 134 }}
+                    style={{ left: x, top: nodeY, width: 134 }}
                   >
                     <button
                       type="button"
@@ -493,7 +470,7 @@ function CampaignUniverse({
               })}
 
               {isCollapsed && (
-                <button type="button" className="map-collapsed-route" onClick={() => onToggle(campaign.id)} style={{ left: hub.x + 78, top: hub.y + 57 }}>
+                <button type="button" className="map-collapsed-route" onClick={() => onToggle(campaign.id)} style={{ left: firstNodeX, top: y }}>
                   <span className="map-collapsed-route__dots">{ordered.slice(0, 8).map((module) => <i key={module.id} className={viewer.progress[module.id]?.completed ? "is-complete" : ""} />)}</span>
                   <span>{t("mapExpand", lang)} · {ordered.length} labs</span>
                 </button>

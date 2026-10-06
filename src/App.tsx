@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CAMPAIGNS, campaignById, moduleById } from "./data/lessons";
+import { CAMPAIGNS, LEARNING_PATHS, campaignById, moduleById } from "./data/lessons";
 import { t, type Lang } from "./i18n";
 import * as db from "./lib/db";
 import { useAuth } from "./lib/useAuth";
@@ -72,7 +72,7 @@ function EthicsGate({ lang, onAccept }: { lang: Lang; onAccept: () => void }) {
 export default function App() {
   const { user, logout, refresh } = useAuth();
   const [view, setView] = useState<View>("dashboard");
-  const [campaignId, setCampaignId] = useState(CAMPAIGNS[0].id);
+  const [campaignId, setCampaignId] = useState(LEARNING_PATHS[0].id);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [chatWith, setChatWith] = useState<string | null>(null);
@@ -109,7 +109,7 @@ export default function App() {
     );
   }
 
-  const campaign = campaignById(campaignId) || CAMPAIGNS[0];
+  const campaign = campaignById(campaignId) || LEARNING_PATHS[0];
   const ordered = [...campaign.modules].sort((a, b) => a.order - b.order);
   const active = activeId ? moduleById(activeId) : null;
   const collapsed = !!user.sidebarCollapsed;
@@ -310,7 +310,15 @@ export default function App() {
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {view === "dashboard" && user.role === "player" && (
-            <PlayerDashboard user={db.userById(user.id)!} lang={lang} onOpen={openModule} onMap={() => go("map")} />
+            <PlayerDashboard
+              user={db.userById(user.id)!}
+              lang={lang}
+              onOpen={openModule}
+              onMap={(selectedPathId) => {
+                setCampaignId(selectedPathId);
+                go("map");
+              }}
+            />
           )}
           {view === "dashboard" && user.role === "educator" && (
             <EducatorDashboard
@@ -333,7 +341,7 @@ export default function App() {
             />
           )}
           {view === "map" && (
-            <InteractiveMap lang={lang} user={db.userById(user.id)!} onOpen={openModule} />
+            <InteractiveMap lang={lang} user={db.userById(user.id)!} onOpen={openModule} selectedCampaignId={campaignId} />
           )}
           {view === "campaigns" && (
             <div className="space-y-6">
@@ -342,7 +350,7 @@ export default function App() {
                 <h1 className="text-3xl font-bold mt-1">{t("chooseCampaign", lang)}</h1>
               </div>
               <div className="grid md:grid-cols-3 gap-4">
-                {CAMPAIGNS.map((c, i) => {
+                {LEARNING_PATHS.map((c, i) => {
                   const n = c.modules.filter((m) => user.progress[m.id]?.completed).length;
                   return (
                     <button
@@ -358,7 +366,10 @@ export default function App() {
                       <div className="text-[10px] uppercase tracking-widest text-ember-400">
                         {c.scenario === "lab" || c.scenario === "sudorun" ? t("courseLabel", lang) : t("ctfLabel", lang)}
                       </div>
-                      <h2 className="text-xl font-bold mt-1">{c.title[lang]}</h2>
+                      <h2 className="flex items-baseline gap-2 text-xl font-bold mt-1">
+                        <span className="font-mono text-sm tracking-widest text-ember-400">{String(c.pathNumber).padStart(2, "0")}.</span>
+                        <span>{c.title[lang]}</span>
+                      </h2>
                       <p className="text-sm text-iron-400 mt-1">{c.subtitle[lang]}</p>
                       <p className="text-sm text-zinc-400 mt-3 leading-relaxed">{c.blurb[lang]}</p>
                       <div className="mt-4 h-1.5 rounded-full bg-forge-bg overflow-hidden">

@@ -1,4 +1,4 @@
-import { CAMPAIGNS } from "../data/lessons";
+import { LEARNING_PATHS } from "../data/lessons";
 import {
   accuracyScore,
   BADGES,
@@ -22,13 +22,13 @@ export default function PlayerDashboard({
   user: User;
   lang: Lang;
   onOpen: (cid: string, mid: string) => void;
-  onMap: () => void;
+  onMap: (campaignId: string) => void;
 }) {
   const lv = levelFromXp(user.metrics.xp);
-  const allMods = CAMPAIGNS.flatMap((c) => c.modules);
+  const allMods = LEARNING_PATHS.flatMap((c) => c.modules);
   const completed = allMods.filter((m) => user.progress[m.id]?.completed).length;
   const next =
-    CAMPAIGNS.map((c) => {
+    LEARNING_PATHS.map((c) => {
       const ordered = [...c.modules].sort((a, b) => a.order - b.order);
       const idx = ordered.findIndex((m, i) => {
         const unlocked = i === 0 || !!user.progress[ordered[i - 1].id]?.completed;
@@ -106,16 +106,19 @@ export default function PlayerDashboard({
         <div className="lg:col-span-2 space-y-3">
           <h3 className="text-sm font-semibold text-zinc-300">{t("campaigns", lang)}</h3>
           <div className="grid sm:grid-cols-3 gap-3">
-            {CAMPAIGNS.map((c) => {
+            {LEARNING_PATHS.map((c) => {
               const n = c.modules.filter((m) => user.progress[m.id]?.completed).length;
               return (
                 <button
                   key={c.id}
                   type="button"
-                  onClick={onMap}
+                  onClick={() => onMap(c.id)}
                   className="glass rounded-2xl border border-forge-border p-4 text-left card-hover"
                 >
-                  <div className="text-sm font-bold text-zinc-100">{bi(c.title, lang)}</div>
+                  <div className="text-sm font-bold text-zinc-100">
+                    <span className="font-mono text-[10px] tracking-widest text-ember-400 mr-2">{String(c.pathNumber).padStart(2, "0")}.</span>
+                    {bi(c.title, lang)}
+                  </div>
                   <div className="text-xs text-iron-400 mt-1 line-clamp-2">{bi(c.subtitle, lang)}</div>
                   <div className="mt-3 h-1.5 rounded-full bg-forge-bg overflow-hidden">
                     <div
