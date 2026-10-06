@@ -2,6 +2,7 @@ import type { Terminal } from "../lib/terminal";
 import { usedCmd } from "../lib/terminal";
 import { SUDO_RUN_ALL } from "./sudorun-lessons";
 import { DFIR_MODULES } from "./dfir-lessons";
+import { LINUX_BEGINNERS_2_MODULES } from "./linux-beginners-2";
 
 export type Bi = { en: string; el: string };
 
@@ -1089,7 +1090,9 @@ export const MODULES: Module[] = [
   },
 ];
 
-export const CAMPAIGNS: Campaign[] = [
+const LINUX_BEGINNERS_2_REUSED_MODULE_IDS = new Set(["sr-net", "sr-proc", "sr-env"]);
+
+export const CAMPAIGNS: Campaign[] = ([
   {
     id: "forge",
     pathNumber: 1,
@@ -1107,7 +1110,7 @@ export const CAMPAIGNS: Campaign[] = [
   },
   {
     id: "raven",
-    pathNumber: 4,
+    pathNumber: 5,
     title: { en: "Operation Raven", el: "Επιχείρηση Raven" },
     subtitle: { en: "A boot2root CTF box", el: "Ένα κουτί boot2root CTF" },
     blurb: {
@@ -1120,7 +1123,7 @@ export const CAMPAIGNS: Campaign[] = [
   },
   {
     id: "wirewalk",
-    pathNumber: 3,
+    pathNumber: 4,
     title: { en: "Wirewalk", el: "Wirewalk" },
     subtitle: { en: "SSH labyrinth", el: "Λαβύρινθος SSH" },
     blurb: {
@@ -1137,16 +1140,34 @@ export const CAMPAIGNS: Campaign[] = [
     title: { en: "Sudo_Run", el: "Sudo_Run" },
     subtitle: { en: "Linux for Beginners", el: "Linux για αρχάριους" },
     blurb: {
-      en: "Thirteen labs from pwd to Apache, SSH and FTP. Every command from the classic beginner path — rewritten for HackForge, simulated in a safe VFS.",
-      el: "Δεκατρία εργαστήρια από pwd μέχρι Apache, SSH και FTP. Όλες οι εντολές του κλασικού οδηγού αρχαρίων — στο HackForge.",
+      en: "Ten practical labs from pwd to Apache, SSH and FTP, all simulated in a safe, persistent virtual filesystem.",
+      el: "Δέκα πρακτικά εργαστήρια από το pwd μέχρι Apache, SSH και FTP, όλα σε ασφαλές και μόνιμο εικονικό σύστημα αρχείων.",
     },
     scenario: "sudorun",
     accent: "lime",
-    modules: SUDO_RUN_ALL,
+    modules: SUDO_RUN_ALL
+      .filter((module) => !LINUX_BEGINNERS_2_REUSED_MODULE_IDS.has(module.id))
+      .map((module, index) => ({ ...module, order: index + 1 })),
+  },
+  {
+    id: "linux-beginners-2",
+    pathNumber: 3,
+    title: { en: "Linux for Beginners #2", el: "Linux για αρχάριους #2" },
+    subtitle: {
+      en: "Networks, processes, scheduling and the shell environment",
+      el: "Δίκτυα, διεργασίες, προγραμματισμός και περιβάλλον shell",
+    },
+    blurb: {
+      en: "Read and configure fictional interfaces, resolve lab names, inspect and signal processes, schedule safe simulated jobs, and manage shell variables without touching the host system.",
+      el: "Έλεγξε εικονικές διεπαφές, επίλυσε ονόματα του εργαστηρίου, παρατήρησε διεργασίες, δοκίμασε προγραμματισμένες εργασίες και διαχειρίσου μεταβλητές shell χωρίς να επηρεάσεις το πραγματικό σύστημα.",
+    },
+    scenario: "sudorun",
+    accent: "cyan",
+    modules: LINUX_BEGINNERS_2_MODULES,
   },
   {
     id: "dfir-fieldwork",
-    pathNumber: 5,
+    pathNumber: 6,
     title: { en: "DFIR Fieldwork", el: "Επιτόπια Ψηφιακή Εγκληματολογία" },
     subtitle: { en: "Digital Forensics & Incident Response", el: "Digital Forensics & Incident Response" },
     blurb: {
@@ -1157,12 +1178,18 @@ export const CAMPAIGNS: Campaign[] = [
     accent: "cyan",
     modules: DFIR_MODULES,
   },
-];
+] as Campaign[]).sort((a, b) => a.pathNumber - b.pathNumber);
 
-export const LEARNING_PATHS = [...CAMPAIGNS].sort((a, b) => a.pathNumber - b.pathNumber);
+export const LEARNING_PATHS = [...CAMPAIGNS];
 
 export function moduleById(id: string): Module | undefined {
-  return MODULES.find((m) => m.id === id) || SUDO_RUN_ALL.find((m) => m.id === id) || DFIR_MODULES.find((m) => m.id === id);
+  return (
+    MODULES.find((module) => module.id === id) ||
+    CAMPAIGNS.flatMap((campaign) => campaign.modules).find((module) => module.id === id) ||
+    SUDO_RUN_ALL.find((module) => module.id === id) ||
+    LINUX_BEGINNERS_2_MODULES.find((module) => module.id === id) ||
+    DFIR_MODULES.find((module) => module.id === id)
+  );
 }
 
 export function campaignById(id: string): Campaign | undefined {

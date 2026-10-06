@@ -48,6 +48,7 @@ export type Terminal = {
   lines: TermLine[];
   fs: FileNode;
   env: Record<string, string>;
+  shellVars: Record<string, string>;
   flags: Set<string>;
   filesRead: string[];
   hosts: HostInfo[];
@@ -273,6 +274,9 @@ function defaultProcs(): Proc[] {
     { pid: 880, user: "root", cpu: "1.2", mem: "2.1", cmd: "msfconsole", nice: 0, alive: true },
     { pid: 4378, user: "root", cpu: "8.4", mem: "6.2", cmd: "[zombie-lab]", nice: 5, alive: true },
     { pid: 6242, user: "root", cpu: "0.3", mem: "0.8", cmd: "/usr/bin/ssh-agent", nice: 0, alive: true },
+    { pid: 7440, user: "root", cpu: "0.4", mem: "0.2", cmd: "training-worker --batch", nice: 0, alive: true },
+    { pid: 7441, user: "root", cpu: "0.1", mem: "0.1", cmd: "training-reporter", nice: 0, alive: true },
+    { pid: 7442, user: "root", cpu: "0.2", mem: "0.1", cmd: "training-cleanup", nice: 0, alive: true },
     { pid: 9001, user: "root", cpu: "0.0", mem: "0.2", cmd: "cron", nice: 0, alive: true },
   ];
 }
@@ -296,6 +300,12 @@ export function createTerminal(opts?: { fs?: FileNode; user?: string; host?: str
     ],
     fs: opts?.fs || defaultFS(),
     env: {
+      HOME: home,
+      USER: account,
+      PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin",
+      SHELL: "/bin/bash",
+    },
+    shellVars: {
       HOME: home,
       USER: account,
       PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin",
@@ -367,6 +377,8 @@ export function setTerminalScenario(
   t.cwd = normalize(overrides.cwd ?? defaults.cwd);
   t.env.HOME = normalize(overrides.home ?? defaults.home);
   t.env.USER = t.user;
+  t.shellVars.HOME = t.env.HOME;
+  t.shellVars.USER = t.user;
   t.isRoot = overrides.isRoot ?? defaults.isRoot;
   t.ftp = null;
 }
@@ -514,8 +526,17 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
   const out: TermLine[] = capturing ? [] : [{ kind: "in", text: `${promptOf(t)} ${input}` }];
   const stdin = inner?.stdin ?? null;
 
-  if (!capturing && /&\s*$/.test(input) && !input.trim().startsWith("nano") === false) {
-    /* background handled in sudo handler too */
+  if (!capturing && !input.includes("|") && /(^|[^&])&\s*$/.test(input)) {
+    const command = input.slice(0, input.lastIndexOf("&")).trim();
+    const backgroundOutput = runCommand(t, command, { capture: true, stdin });
+    const jobNumber = t.jobs.length + 1;
+    const pid = 7100 + t.jobs.length;
+    t.jobs.push({ pid, cmd: command });
+    t.flags.add("bg");
+    out.push({ kind: "out", text: `[${jobNumber}] ${pid}` });
+    backgroundOutput.filter((line) => line.kind !== "in").forEach((line) => out.push(line));
+    t.lastExit = backgroundOutput.some((line) => line.kind === "err") ? 1 : 0;
+    return out;
   }
 
   if (!capturing && input.includes("|") && !input.includes("||")) {
@@ -633,7 +654,7 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
         break;
       case "echo": {
         const rawE = rest.join(" ");
-        const expanded = rawE.replace(/\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?/g, (_, k) => t.env[k] ?? "");
+        const expanded = rawE.replace(/\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?/g, (_, k) => t.shellVars[k] ?? t.env[k] ?? "");
         print(expanded.replace(/^["']|["']$/g, ""));
         t.flags.add("echo");
         break;
@@ -1124,13 +1145,16 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
         if (rest[0] && privilegedCommands.has(rest[0])) {
           const previousUser = t.user;
           const previousEnvUser = t.env.USER;
+          const previousShellUser = t.shellVars.USER;
           const previousRoot = t.isRoot;
           t.user = "root";
           t.env.USER = "root";
+          t.shellVars.USER = "root";
           t.isRoot = true;
           const result = runCommand(t, rest.join(" "), { capture: true, stdin });
           t.user = previousUser;
           t.env.USER = previousEnvUser;
+          t.shellVars.USER = previousShellUser;
           t.isRoot = previousRoot;
           result.filter((line) => line.kind !== "in").forEach((line) => out.push(line));
           break;

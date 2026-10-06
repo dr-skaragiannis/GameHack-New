@@ -294,7 +294,7 @@ export default function PlayerDashboard({
   ];
 
   return (
-    <div className="player-dashboard space-y-6">
+    <div className="player-dashboard space-y-4">
       <header className="player-dashboard__hero dashboard-enter">
         <div className="player-dashboard__hero-copy">
           <div className="player-dashboard__hero-status"><i />{uppercaseLabel(t("dashboardSession", lang), lang)}</div>
@@ -345,6 +345,19 @@ export default function PlayerDashboard({
           </div>
         </div>
       </header>
+
+      <section className="player-dashboard__feed-ticker" aria-label={t("liveFeed", lang)}>
+        <div className="player-dashboard__feed-ticker-label">
+          <span><i /><Icon name="wifi" className="h-4 w-4" /></span>
+          <div>
+            <small>{uppercaseLabel(t("liveFeed", lang), lang)}</small>
+            <strong>{t("networkActivity", lang)}</strong>
+          </div>
+        </div>
+        <div className="player-dashboard__feed-ticker-window">
+          <LiveFeed compact excludeUserId={user.id} excludeUsername={user.displayName} playersOnly lang={lang} />
+        </div>
+      </section>
 
       <div className="player-dashboard__layout">
         <div className="player-dashboard__main">
@@ -477,63 +490,65 @@ export default function PlayerDashboard({
         </aside>
       </div>
 
-      <section className="player-dashboard__card player-dashboard__badges" aria-labelledby="player-badges-title">
-        <div className="player-dashboard__section-heading">
-          <div>
-            <div className="player-dashboard__eyebrow">{uppercaseLabel(t("earnedBadges", lang), lang)}</div>
-            <h2 id="player-badges-title">{t("badges", lang)}</h2>
-          </div>
-          <span className="player-dashboard__badge-count">{user.badges.length}</span>
-        </div>
-        {user.badges.length ? (
-          <div className="player-dashboard__badge-grid">
-            {user.badges.map((id, index) => {
-              const badge = BADGES[id];
-              if (!badge) return null;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className="player-dashboard__badge-card dashboard-action dashboard-stagger"
-                  data-tier={badge.tier}
-                  style={{ animationDelay: `${index * 45}ms` }}
-                  title={`${badge.name} — ${badge.desc}`}
-                  aria-label={`${badge.name}. ${badge.desc}. ${lang === "en" ? "Open certificate" : "Άνοιγμα πιστοποιητικού"}`}
-                  onClick={() => onBadge(id)}
-                >
-                  <span className="player-dashboard__badge-medallion"><Icon name={badge.icon} className="h-6 w-6" /></span>
-                  <span className="player-dashboard__badge-copy">
-                    <strong>{badge.name}</strong>
-                    <small>{badge.desc}</small>
-                  </span>
-                  <Icon name="chevron" className="player-dashboard__badge-chevron h-4 w-4" />
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="player-dashboard__badge-empty">
-            <span className="player-dashboard__badge-empty-icon"><Icon name="medal" className="h-6 w-6" /></span>
+      <div className="player-dashboard__support-grid">
+        <section className="player-dashboard__card player-dashboard__badges" aria-labelledby="player-badges-title">
+          <div className="player-dashboard__section-heading">
             <div>
-              <strong>{t("noBadgesYet", lang)}</strong>
-              <p>{lang === "en" ? "Your certificates will appear here as you progress." : "Τα πιστοποιητικά σου θα εμφανίζονται εδώ καθώς προχωράς."}</p>
+              <div className="player-dashboard__eyebrow">{uppercaseLabel(t("earnedBadges", lang), lang)}</div>
+              <h2 id="player-badges-title">{t("badges", lang)}</h2>
             </div>
+            <span className="player-dashboard__badge-count">{user.badges.length}</span>
           </div>
-        )}
-      </section>
+          {user.badges.length ? (
+            <div className="player-dashboard__badge-grid">
+              {user.badges.map((id, index) => {
+                const badge = BADGES[id];
+                if (!badge) return null;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    className="player-dashboard__badge-card dashboard-action dashboard-stagger"
+                    data-tier={badge.tier}
+                    style={{ animationDelay: `${index * 45}ms` }}
+                    title={`${badge.name} — ${badge.desc}`}
+                    aria-label={`${badge.name}. ${badge.desc}. ${lang === "en" ? "Open certificate" : "Άνοιγμα πιστοποιητικού"}`}
+                    onClick={() => onBadge(id)}
+                  >
+                    <span className="player-dashboard__badge-medallion"><Icon name={badge.icon} className="h-6 w-6" /></span>
+                    <span className="player-dashboard__badge-copy">
+                      <strong>{badge.name}</strong>
+                      <small>{badge.desc}</small>
+                    </span>
+                    <Icon name="chevron" className="player-dashboard__badge-chevron h-4 w-4" />
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="player-dashboard__badge-empty">
+              <span className="player-dashboard__badge-empty-icon"><Icon name="medal" className="h-6 w-6" /></span>
+              <div>
+                <strong>{t("noBadgesYet", lang)}</strong>
+                <p>{lang === "en" ? "Your certificates will appear here as you progress." : "Τα πιστοποιητικά σου θα εμφανίζονται εδώ καθώς προχωράς."}</p>
+              </div>
+            </div>
+          )}
+        </section>
 
-      <PlayerTeamPanel user={user} lang={lang} />
+        <PlayerTeamPanel user={user} lang={lang} />
 
-      <section className="player-dashboard__card player-dashboard__activity" aria-labelledby="player-activity-title">
-        <div className="player-dashboard__section-heading">
-          <div>
-            <div className="player-dashboard__eyebrow">{uppercaseLabel(t("liveFeed", lang), lang)}</div>
-            <h2 id="player-activity-title">{t("liveFeed", lang)}</h2>
+        <section className="player-dashboard__card player-dashboard__activity player-dashboard__support-feed" aria-labelledby="player-activity-title">
+          <div className="player-dashboard__section-heading">
+            <div>
+              <div className="player-dashboard__eyebrow">{uppercaseLabel(t("liveFeed", lang), lang)}</div>
+              <h2 id="player-activity-title">{t("liveFeed", lang)}</h2>
+            </div>
+            <span className="player-dashboard__activity-pulse"><i /></span>
           </div>
-          <span className="player-dashboard__activity-pulse"><i /></span>
-        </div>
-        <div className="player-dashboard__activity-list"><LiveFeed /></div>
-      </section>
+          <div className="player-dashboard__activity-list"><LiveFeed lang={lang} /></div>
+        </section>
+      </div>
 
       {mapExpanded && (
         <DashboardMapDialog

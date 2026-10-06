@@ -26,7 +26,7 @@ export const SUDO_RUN_MODULES_C: Module[] = [
       {
         heading: { en: "Shebang #!", el: "Shebang #!" },
         body: {
-          en: "First line of a script tells the kernel which interpreter: #!/bin/bash  (the original typed #! /bin/bash). File: first_script",
+          en: "First line of a script tells the kernel which interpreter: #!/bin/bash . File: first_script",
           el: "Πρώτη γραμμή: #!/bin/bash",
         },
         shots: [shot("cat first_script", ["#!/bin/bash", 'echo "Hello World"'])],
@@ -112,7 +112,7 @@ export const SUDO_RUN_MODULES_C: Module[] = [
       {
         heading: { en: "Start cron, edit crontab", el: "Start cron, επεξεργασία" },
         body: {
-          en: "service cron status  (may be inactive). service cron start. crontab -e  opens your user table (nano = option 1 in the original). Schedule the scanner every night at 23:55:  55 23 * * * /root/scanner",
+          en: "service cron status  (may be inactive). service cron start. crontab -e  opens your user table. Schedule the scanner every night at 23:55:  55 23 * * * /root/scanner",
           el: "service cron start και crontab -e με 55 23 * * * /root/scanner",
         },
         shots: [
@@ -196,7 +196,7 @@ export const SUDO_RUN_MODULES_C: Module[] = [
       {
         heading: { en: "OpenSSH", el: "OpenSSH" },
         body: {
-          en: "SSH is encrypted remote shell (telnet was the insecure ancestor). service ssh start  then  ssh ignite@192.168.0.11  — in the original this was the author's ubuntu host. Here it is a simulated ubuntu with user ignite.",
+          en: "SSH is encrypted remote shell (telnet was the insecure ancestor). service ssh start  then  ssh ignite@192.168.0.11  — the lab hostname and account are fictional fixtures; no external SSH server is contacted.",
           el: "service ssh start και ssh ignite@192.168.0.11",
         },
         shots: [
@@ -207,7 +207,7 @@ export const SUDO_RUN_MODULES_C: Module[] = [
       {
         heading: { en: "FTP", el: "FTP" },
         body: {
-          en: "File Transfer Protocol moves files over the command line. ftp ftp.forge.lab  (the original public mirror is replaced by a HackForge sandbox). Name: anonymous  Password: anonymous  then ls, cd into a folder, get favicon.ico, bye, then ls locally to see the download.",
+          en: "File Transfer Protocol moves files over the command line. ftp ftp.forge.lab  (the lab FTP service is a local simulation with fictional files). Name: anonymous  Password: anonymous  then ls, cd into a folder, get favicon.ico, bye, then ls locally to see the download.",
           el: "ftp ftp.forge.lab → anonymous / anonymous → get favicon.ico → bye",
         },
         shots: [

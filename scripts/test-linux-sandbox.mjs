@@ -10,10 +10,11 @@ const server = await createServer({
 });
 
 try {
-  const [{ ALL_LINUX_COMMANDS }, terminal, playerTerminal] = await Promise.all([
+  const [{ ALL_LINUX_COMMANDS }, terminal, playerTerminal, lessons] = await Promise.all([
     server.ssrLoadModule("/src/lib/linuxCommandCatalog.ts"),
     server.ssrLoadModule("/src/lib/terminal.ts"),
     server.ssrLoadModule("/src/lib/playerTerminal.ts"),
+    server.ssrLoadModule("/src/data/lessons.ts"),
   ]);
 
   const failedCommands = [];
@@ -44,6 +45,66 @@ try {
     }
   }
   assert.deepEqual(failedCommands, [], "every advertised Linux command should produce visible output");
+
+  const backgroundTerm = playerTerminal.createPlayerTerminal();
+  playerTerminal.activateTerminalForModule(backgroundTerm, "sr-proc", "sudorun");
+  terminal.runCommand(backgroundTerm, "sleep 10 &");
+  const backgroundList = terminal.runCommand(backgroundTerm, "jobs").map((line) => line.text).join("\\n");
+  assert.match(backgroundList, /sleep 10/);
+  assert.ok(backgroundTerm.flags.has("bg"));
+
+  const learningPath = lessons.campaignById("linux-beginners-2");
+  assert.ok(learningPath, "Linux for Beginners #2 should be registered as a learning path");
+  assert.equal(learningPath.pathNumber, 3);
+  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.pathNumber), [1, 2, 3, 4, 5, 6]);
+  assert.deepEqual(learningPath.modules.map((module) => module.id), ["sr-net", "sr-proc", "sr-env"]);
+  const allPathModuleIds = lessons.LEARNING_PATHS.flatMap((path) => path.modules.map((module) => module.id));
+  assert.equal(new Set(allPathModuleIds).size, allPathModuleIds.length, "reused modules should appear in exactly one learning path");
+  assert.equal(lessons.campaignById("sudorun")?.modules.length, 10, "the existing path should retain its other modules without duplicates");
+  assert.equal(lessons.moduleById("sr-net")?.title.en, learningPath.modules[0].title.en, "existing network module progress should route to the updated lesson");
+  const courseText = JSON.stringify(learningPath);
+  assert.doesNotMatch(courseText, /hackingarticles|author|publisher/i, "the course must not retain source branding");
+  for (const module of learningPath.modules) {
+    for (const section of module.theory) {
+      for (const language of ["en", "el"]) {
+        const paragraphs = section.body[language].split(/\n\s*\n/).filter((paragraph) => paragraph.trim());
+        assert.ok(paragraphs.length >= 2, `${module.id}/${section.heading[language]} should have two readable ${language} paragraphs`);
+      }
+    }
+  }
+
+  const courseTerm = playerTerminal.createPlayerTerminal();
+  const courseFixtures = [
+    "/root/linux-beginners-2/README.txt",
+    "/root/linux-beginners-2/network/interfaces.txt",
+    "/root/linux-beginners-2/network/dns-records.txt",
+    "/root/linux-beginners-2/network/hosts-plan.txt",
+    "/root/linux-beginners-2/processes/roster.txt",
+    "/root/linux-beginners-2/processes/schedule-notes.txt",
+    "/root/linux-beginners-2/processes/notes.txt",
+    "/root/linux-beginners-2/environment/variable-notes.txt",
+    "/root/linux-beginners-2/environment/defaults.txt",
+    "/root/.bashrc",
+  ];
+  for (const path of courseFixtures) {
+    assert.ok(terminal.getNode(courseTerm.fs, path), `missing virtual course fixture: ${path}`);
+  }
+  for (const module of learningPath.modules) {
+    playerTerminal.activateTerminalForModule(courseTerm, module.id, "sudorun");
+    for (const objective of module.tasks) {
+      for (const command of objective.hint.en.split(/\r?\n/).filter(Boolean)) terminal.runCommand(courseTerm, command);
+      assert.ok(objective.check(courseTerm), `${module.id}/${objective.id} should complete from its exact hint`);
+    }
+  }
+  assert.equal(courseTerm.net.ip, "10.10.10.42", "the simulated DHCP lease should replace the temporary interface address");
+  assert.equal(courseTerm.procs.find((process) => process.pid === 7440)?.nice, 10, "renice should update the simulated process");
+  assert.equal(courseTerm.procs.find((process) => process.pid === 7440)?.alive, false, "SIGTERM should stop only the selected virtual process");
+  assert.equal(courseTerm.procs.find((process) => process.pid === 7441)?.alive, true, "SIGHUP should be recorded without assuming every program exits");
+  assert.equal(courseTerm.shellVars.HISTSIZE, "0");
+  assert.equal(courseTerm.env.HISTSIZE, "0", "export should pass HISTSIZE into the simulated environment");
+  assert.equal(terminal.getNode(courseTerm.fs, "/root/linux-beginners-2/environment/histsize-before-change.txt")?.content?.trim(), "1000");
+  assert.match(terminal.getNode(courseTerm.fs, "/etc/hosts")?.content || "", /docs\.hackforge\.lab/);
+  assert.match(terminal.getNode(courseTerm.fs, "/etc/resolv.conf")?.content || "", /10\.10\.10\.53/);
 
   const aptTerm = playerTerminal.createPlayerTerminal();
   const aptOutput = terminal.runCommand(aptTerm, "apt install hydra").map((line) => line.text).join("\n");

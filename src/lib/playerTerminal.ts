@@ -82,6 +82,16 @@ function mergeAccountLines(existing: string, incoming: string): string {
   return [...accounts.values()].join("\n") + (accounts.size ? "\n" : "");
 }
 
+function mergeMissingNodes(target: FileNode, source: FileNode): void {
+  if (target.type !== "dir" || source.type !== "dir") return;
+  target.children ||= {};
+  for (const [name, sourceNode] of Object.entries(source.children || {})) {
+    const existing = target.children[name];
+    if (!existing) target.children[name] = cloneNode(sourceNode);
+    else if (existing.type === "dir" && sourceNode.type === "dir") mergeMissingNodes(existing, sourceNode);
+  }
+}
+
 function setNodeAtPath(root: FileNode, path: string, node: FileNode): void {
   const normalized = normalize(path);
   const parentPath = normalized.slice(0, normalized.lastIndexOf("/")) || "/";
@@ -299,6 +309,17 @@ export function activateTerminalForModule(term: Terminal, moduleId: string, scen
   const scenarioChanged = term.scenario !== scenario;
   if (scenarioChanged) setTerminalScenario(term, scenario);
 
+  if (scenario === "sudorun" && moduleId === "sr-proc") {
+    const trainingProcesses = [
+      { pid: 7440, user: "root", cpu: "0.4", mem: "0.2", cmd: "training-worker --batch", nice: 0, alive: true },
+      { pid: 7441, user: "root", cpu: "0.1", mem: "0.1", cmd: "training-reporter", nice: 0, alive: true },
+      { pid: 7442, user: "root", cpu: "0.2", mem: "0.1", cmd: "training-cleanup", nice: 0, alive: true },
+    ];
+    for (const process of trainingProcesses) {
+      if (!term.procs.some((existing) => existing.pid === process.pid)) term.procs.push(process);
+    }
+  }
+
   if (term.activeModuleId !== moduleId) {
     term.lines = [
       {
@@ -353,17 +374,23 @@ export function loadPlayerTerminal(userId: string): Terminal {
     if ((parsed.version !== 1 && parsed.version !== 2) || !parsed.fs || parsed.fs.type !== "dir") return fresh;
 
     const fs = parsed.version === 1 ? migrateLegacyFileSystem(parsed.fs) : parsed.fs;
+    mergeMissingNodes(fs, createPlayerFileSystem());
+    const env = parsed.env && typeof parsed.env === "object" ? parsed.env : fresh.env;
+    const shellVars = parsed.shellVars && typeof parsed.shellVars === "object"
+      ? parsed.shellVars
+      : { ...fresh.shellVars, ...env };
     return {
       ...fresh,
       ...parsed,
       fs,
+      shellVars,
       flags: new Set(Array.isArray(parsed.flags) ? parsed.flags.filter((value): value is string => typeof value === "string") : []),
       packages: new Set(Array.isArray(parsed.packages) ? parsed.packages.filter((value): value is string => typeof value === "string") : []),
       history: Array.isArray(parsed.history) ? parsed.history.filter((value): value is string => typeof value === "string").slice(-MAX_SAVED_HISTORY) : fresh.history,
       ran: Array.isArray(parsed.ran) ? parsed.ran.filter((value): value is string => typeof value === "string").slice(-MAX_SAVED_COMMANDS) : fresh.ran,
       lines: Array.isArray(parsed.lines) ? parsed.lines.slice(-MAX_SAVED_LINES) : fresh.lines,
       filesRead: Array.isArray(parsed.filesRead) ? parsed.filesRead.filter((value): value is string => typeof value === "string").slice(-MAX_SAVED_READS) : fresh.filesRead,
-      env: parsed.env && typeof parsed.env === "object" ? parsed.env : fresh.env,
+      env,
       activeModuleId: typeof parsed.activeModuleId === "string" ? parsed.activeModuleId : undefined,
     } as Terminal;
   } catch {

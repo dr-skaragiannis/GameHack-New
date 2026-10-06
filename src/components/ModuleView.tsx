@@ -370,7 +370,11 @@ export default function ModuleView({
             {module.theory.map((s, i) => (
               <section key={i} className="glass rounded-2xl border border-forge-border p-5">
                 <h2 className="text-lg font-semibold text-zinc-100 mb-2">{bi(s.heading, lang)}</h2>
-                <p className="text-sm text-zinc-300 leading-relaxed">{bi(s.body, lang)}</p>
+                <div className="space-y-3">
+                  {bi(s.body, lang).split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean).map((paragraph, paragraphIndex) => (
+                    <p key={paragraphIndex} className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">{paragraph}</p>
+                  ))}
+                </div>
                 {s.tip && (
                   <p className="mt-3 text-sm text-neon-cyan/90 border-l-2 border-neon-cyan/40 pl-3">{bi(s.tip, lang)}</p>
                 )}

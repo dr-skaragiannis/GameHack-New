@@ -133,7 +133,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "help / --help", el: "help / --help" },
         body: {
-          en: "Nearly every command, application or utility on Linux has a dedicated help file. If you are stuck, -h / --help is your friend. Example from the original guide: volatility --help (Volatility is a memory-forensics framework). In HackForge the same pattern applies to every tool.",
+          en: "Nearly every command, application or utility on Linux has a dedicated help file. If you are stuck, -h / --help is your friend. Example: volatility --help (Volatility is a memory-forensics framework). In HackForge the same pattern applies to every tool.",
           el: "Σχεδόν κάθε εντολή έχει --help. Π.χ. volatility --help.",
         },
         shots: [shot("volatility --help", ["Volatility Foundation Volatility Framework", "-h, --help   show help message and exit", "Plugins: pslist, netscan, filescan (lab stub)"])],
@@ -255,7 +255,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "find — the flexible hunter", el: "find — κυνηγός" },
         body: {
-          en: "find is the most powerful search: name, type, owner, size, mtime… find / -type f -name hackforge starts at / (root of the tree), looking for a regular file named hackforge. (The original write-up used a different filename; in HackForge the marker is called hackforge.) Permission denied noise: append 2>&1 | grep -v \"Permission Denied\" to hide errors you cannot read.",
+          en: "find is the most powerful search: name, type, owner, size, mtime… find / -type f -name hackforge starts at / (root of the tree), looking for a regular file named hackforge. (In this lab the marker file is named hackforge.) Permission denied noise: append 2>&1 | grep -v \"Permission Denied\" to hide errors you cannot read.",
           el: "find / -type f -name hackforge και προαιρετικά 2>&1 | grep -v \"Permission Denied\".",
         },
         shots: [
@@ -321,7 +321,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "cat", el: "cat" },
         body: {
-          en: "cat prints a file on the terminal. From /root: cat hackforge.txt  (the original guide used a different notes filename; here it is branded HackForge).",
+          en: "cat prints a file on the terminal. From /root: cat hackforge.txt  (the lab notes are stored in hackforge.txt).",
           el: "cat hackforge.txt από /root.",
         },
         shots: [shot("cat hackforge.txt", ["Welcome to HackForge — Linux for Beginners (Sudo_Run).", "Keep notes here. Practice every command in the lab, not on the internet."])],
@@ -337,7 +337,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "mkdir", el: "mkdir" },
         body: {
-          en: "mkdir creates a directory. Create Documents/ignite (the ignite folder from the original lab, kept as a team name).",
+          en: "mkdir creates a directory. Create Documents/ignite (a shared folder for the simulated ignite team).",
           el: "mkdir Documents/ignite",
         },
         shots: [shot("mkdir Documents/ignite", [""])],
@@ -473,7 +473,7 @@ export const SUDO_RUN_MODULES: Module[] = [
           en: "sed can search a pattern and act on it. s/WWW/www/g means substitute WWW with www, globally. Run: sed s/WWW/www/g hackforge.in",
           el: "sed s/WWW/www/g hackforge.in",
         },
-        shots: [shot("sed s/WWW/www/g hackforge.in", ["Visit www.HACKFORGE.LAB for the lab portal.", "www banners should be rewritten to www with sed.", "HackForge — not articles, a forge."])],
+        shots: [shot("sed s/WWW/www/g hackforge.in", ["Visit www.HACKFORGE.LAB for the lab portal.", "www banners should be rewritten to www with sed.", "Linux training portal (simulated)."])],
       },
       {
         heading: { en: "more and less", el: "more και less" },

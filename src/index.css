@@ -6085,3 +6085,286 @@ button.player-quick-stats__item:hover {
 .player-constellation--compact.player-constellation--top10 .player-constellation__node-rank { right: 0; min-width: 22px; height: 14px; font-size: 0.49rem; }
 .player-constellation--compact.player-constellation--top10 .player-constellation__node-name { max-width: 62px; padding-inline: 3px; font-size: 0.53rem; }
 .player-constellation--compact.player-constellation--top10 .player-constellation__node-meta { gap: 2px; font-size: 0.47rem; }
+
+/* Compact dashboard activity and support cards. */
+.player-dashboard__feed-ticker {
+  position: relative;
+  min-width: 0;
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 176px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  padding: 9px 13px;
+  border: 1px solid rgba(94, 190, 209, 0.2);
+  border-radius: 13px;
+  background:
+    radial-gradient(ellipse at 0 50%, rgba(21, 127, 143, 0.13), transparent 42%),
+    linear-gradient(105deg, rgba(13, 23, 27, 0.97), rgba(13, 16, 20, 0.96));
+  box-shadow: inset 0 1px rgba(178, 243, 246, 0.035), 0 10px 30px -25px rgba(0, 0, 0, 0.9);
+}
+.player-dashboard__feed-ticker-label {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.player-dashboard__feed-ticker-label > span {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(83, 216, 227, 0.24);
+  border-radius: 9px;
+  background: rgba(35, 153, 169, 0.09);
+  color: #7de4ed;
+}
+.player-dashboard__feed-ticker-label > span i {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #77e6a4;
+  box-shadow: 0 0 7px rgba(119, 230, 164, 0.72);
+  animation: dashboard-status-pulse 2.2s ease-in-out infinite;
+}
+.player-dashboard__feed-ticker-label > div { min-width: 0; display: grid; gap: 2px; }
+.player-dashboard__feed-ticker-label small {
+  overflow: hidden;
+  color: #77939a;
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  font-weight: 750;
+  letter-spacing: 0.11em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.player-dashboard__feed-ticker-label strong {
+  overflow: hidden;
+  color: #d9ebed;
+  font-size: 0.72rem;
+  font-weight: 740;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.player-dashboard__feed-ticker-window { min-width: 0; overflow: hidden; }
+.player-dashboard .live-feed__ticker { min-width: 0; overflow: hidden; }
+.player-dashboard .live-feed__ticker-track {
+  width: max-content;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  animation-duration: 38s;
+}
+.player-dashboard .live-feed__ticker-item {
+  min-width: 0;
+  min-height: 33px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 9px;
+  border: 1px solid rgba(99, 183, 198, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  color: #aebdc0;
+  font-size: 0.67rem;
+}
+.player-dashboard .live-feed__ticker-item > strong {
+  max-width: 130px;
+  overflow: hidden;
+  color: #e0f0f1;
+  font-size: 0.67rem;
+  font-weight: 740;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.player-dashboard .live-feed__ticker-item > span:nth-of-type(2) {
+  max-width: 260px;
+  overflow: hidden;
+  color: #a9b7ba;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.player-dashboard .live-feed__ticker-icon {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(90, 205, 217, 0.16);
+  border-radius: 6px;
+  background: rgba(47, 173, 186, 0.07);
+  color: #7bd9e3;
+}
+.player-dashboard .live-feed__ticker-item time {
+  flex: 0 0 auto;
+  color: #738b90;
+  font-family: var(--font-mono);
+  font-size: 0.57rem;
+  font-variant-numeric: tabular-nums;
+}
+.player-dashboard .live-feed__ticker-empty {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px;
+  border: 1px dashed rgba(105, 191, 204, 0.19);
+  border-radius: 8px;
+  color: #91a6aa;
+  font-size: 0.68rem;
+}
+.player-dashboard .live-feed__ticker-empty > span { display: grid; flex: 0 0 auto; place-items: center; color: #70cbd4; }
+.player-dashboard__support-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 12px;
+}
+.player-dashboard__support-grid > .player-dashboard__badges,
+.player-dashboard__support-grid > .player-team-panel,
+.player-dashboard__support-grid > .player-dashboard__support-feed { min-width: 0; padding: 13px; }
+.player-dashboard__support-grid .player-dashboard__section-heading { margin-bottom: 8px; }
+.player-dashboard__badges .player-dashboard__badge-grid {
+  max-height: 140px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 195px), 1fr));
+  gap: 6px;
+  overflow: auto;
+  padding: 1px 2px 2px 1px;
+  scrollbar-color: #414148 transparent;
+}
+.player-dashboard__badges .player-dashboard__badge-card {
+  min-height: 57px;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 10px;
+}
+.player-dashboard__badges .player-dashboard__badge-medallion { width: 34px; height: 34px; }
+.player-dashboard__badges .player-dashboard__badge-medallion svg { width: 19px; height: 19px; }
+.player-dashboard__badges .player-dashboard__badge-copy { gap: 1px; }
+.player-dashboard__badges .player-dashboard__badge-copy strong { font-size: 0.72rem; }
+.player-dashboard__badges .player-dashboard__badge-copy small { font-size: 0.61rem; -webkit-line-clamp: 1; }
+.player-dashboard__badges .player-dashboard__badge-count { min-width: 26px; height: 26px; border-radius: 7px; font-size: 0.7rem; }
+.player-dashboard__badges .player-dashboard__badge-empty { gap: 8px; padding: 9px; border-radius: 10px; }
+.player-dashboard__badges .player-dashboard__badge-empty-icon { width: 32px; height: 32px; border-radius: 9px; }
+.player-dashboard__badges .player-dashboard__badge-empty-icon svg { width: 19px; height: 19px; }
+.player-dashboard__badges .player-dashboard__badge-empty strong { font-size: 0.74rem; }
+.player-dashboard__badges .player-dashboard__badge-empty p { font-size: 0.64rem; }
+.player-dashboard__support-grid .player-team-panel { padding: 13px; }
+.player-dashboard__support-grid .player-team-panel__header { gap: 8px; margin-bottom: 8px; }
+.player-dashboard__support-grid .player-team-panel__header h2 { font-size: 0.88rem; }
+.player-dashboard__support-grid .player-team-panel__icon { width: 31px; height: 31px; border-radius: 8px; }
+.player-dashboard__support-grid .player-team-panel__icon svg { width: 17px; height: 17px; }
+.player-dashboard__support-grid .player-team-panel__count { font-size: 0.62rem; }
+.player-dashboard__support-grid .player-team-panel__options { max-height: 133px; overflow: auto; padding-right: 2px; scrollbar-color: #414148 transparent; }
+.player-dashboard__support-grid .player-team-panel__current,
+.player-dashboard__support-grid .player-team-panel__pending,
+.player-dashboard__support-grid .player-team-panel__option { gap: 7px; padding: 8px; border-radius: 9px; }
+.player-dashboard__support-grid .player-team-panel__team-mark { width: 31px; height: 31px; border-radius: 8px; }
+.player-dashboard__support-grid .player-team-panel__current h3 { font-size: 0.75rem; }
+.player-dashboard__support-grid .player-team-panel__current p,
+.player-dashboard__support-grid .player-team-panel__option p { font-size: 0.61rem; -webkit-line-clamp: 1; }
+.player-dashboard__support-grid .player-team-panel__members { transform: scale(0.88); transform-origin: right center; }
+.player-dashboard__support-grid .player-team-panel__apply,
+.player-dashboard__support-grid .player-team-panel__withdraw { min-height: 29px; padding: 5px 7px; font-size: 0.6rem; }
+.player-dashboard__support-grid .player-team-panel__empty { padding: 9px; }
+.player-dashboard__support-grid .player-team-panel__empty p { font-size: 0.66rem; }
+.player-dashboard__support-feed { grid-column: 1 / -1; }
+.player-dashboard__support-feed .player-dashboard__section-heading { margin-bottom: 7px; }
+.player-dashboard__support-feed .player-dashboard__section-heading h2 { font-size: 0.9rem; }
+.player-dashboard__support-feed .player-dashboard__activity-list { max-height: 138px; padding: 1px; }
+.player-dashboard .live-feed__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 8px;
+  margin: 0;
+  padding: 1px;
+  list-style: none;
+}
+.player-dashboard .live-feed__event {
+  min-width: 0;
+  min-height: 35px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.018);
+}
+.player-dashboard .live-feed__event-icon {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.025);
+  color: #83d4de;
+}
+.player-dashboard .live-feed__event-copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.player-dashboard .live-feed__event-copy > div {
+  min-width: 0;
+  overflow: hidden;
+  color: #ced4d5;
+  font-size: 0.66rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.player-dashboard .live-feed__event-copy time {
+  flex: 0 0 auto;
+  color: #828d92;
+  font-family: var(--font-mono);
+  font-size: 0.57rem;
+  font-variant-numeric: tabular-nums;
+}
+.player-dashboard .live-feed__empty {
+  grid-column: 1 / -1;
+  padding: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  color: #92929a;
+  font-size: 0.68rem;
+}
+@media (max-width: 760px) {
+  .player-dashboard__support-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .player-dashboard__feed-ticker { grid-template-columns: 142px minmax(0, 1fr); gap: 8px; padding: 8px 10px; }
+  .player-dashboard__feed-ticker-label { gap: 7px; }
+  .player-dashboard__feed-ticker-label > span { width: 29px; height: 29px; }
+  .player-dashboard__support-feed { grid-column: auto; }
+  .player-dashboard__support-grid .player-team-panel__options { max-height: 118px; }
+}
+@media (max-width: 520px) {
+  .player-dashboard__feed-ticker { grid-template-columns: 112px minmax(0, 1fr); gap: 6px; padding: 7px; }
+  .player-dashboard__feed-ticker-label { gap: 6px; }
+  .player-dashboard__feed-ticker-label > span { width: 26px; height: 26px; border-radius: 7px; }
+  .player-dashboard__feed-ticker-label > span svg { width: 14px; height: 14px; }
+  .player-dashboard__feed-ticker-label small { font-size: 0.45rem; letter-spacing: 0.07em; }
+  .player-dashboard__feed-ticker-label strong { font-size: 0.58rem; }
+  .player-dashboard .live-feed__ticker-track { min-height: 34px; gap: 5px; }
+  .player-dashboard .live-feed__ticker-item { min-height: 30px; gap: 5px; padding: 4px 6px; font-size: 0.61rem; }
+  .player-dashboard .live-feed__ticker-item > strong { max-width: 83px; font-size: 0.61rem; }
+  .player-dashboard .live-feed__ticker-item > span:nth-of-type(2) { max-width: 130px; }
+  .player-dashboard .live-feed__ticker-icon { width: 19px; height: 19px; }
+  .player-dashboard .live-feed__ticker-item time { font-size: 0.51rem; }
+  .player-dashboard .live-feed__list { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-dashboard .live-feed__ticker-track { animation: none; }
+}
+.player-dashboard .live-feed__list > .live-feed__event { margin: 0; }

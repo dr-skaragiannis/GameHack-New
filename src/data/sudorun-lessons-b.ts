@@ -34,7 +34,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       {
         heading: { en: "Install, remove, purge", el: "Install, remove, purge" },
         body: {
-          en: "apt-get install git   pulls git (useful to clone GitHub repos later). apt-get remove git   removes the package but may leave config. apt-get purge git   wipes residual files too. The original guide said press n to abort remove/purge — this sandbox prints Abort for those two so you can practise the command safely.",
+          en: "apt-get install git   pulls git (useful to clone GitHub repos later). apt-get remove git   removes the package but may leave config. apt-get purge git   wipes residual files too. The sandbox stops remove and purge before changing package state, so you can practise the command syntax safely.",
           el: "install / remove / purge. Εδώ το remove/purge κάνουν Abort όπως το 'press n' του οδηγού.",
         },
         shots: [
@@ -74,7 +74,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
     tasks: [
       { id: "search", instruction: { en: "apt-cache search hydra", el: "apt-cache search hydra" }, hint: { en: "apt-cache search hydra", el: "apt-cache search hydra" }, explain: { en: "Search before you install.", el: "Ψάξε πριν εγκαταστήσεις." }, check: (t) => t.flags.has("apt-search") },
       { id: "install", instruction: { en: "apt-get install git", el: "apt-get install git" }, hint: { en: "apt-get install git", el: "apt-get install git" }, explain: { en: "Install from the repo.", el: "Εγκατάσταση από το repo." }, check: (t) => t.flags.has("apt-install") },
-      { id: "remove", instruction: { en: "apt-get remove git  (sandbox aborts like pressing n)", el: "apt-get remove git" }, hint: { en: "apt-get remove git", el: "apt-get remove git" }, explain: { en: "Original guide: press n to abort.", el: "Στον οδηγό: n για abort." }, check: (t) => t.flags.has("apt-remove") },
+      { id: "remove", instruction: { en: "apt-get remove git  (sandbox aborts like pressing n)", el: "apt-get remove git" }, hint: { en: "apt-get remove git", el: "apt-get remove git" }, explain: { en: "The sandbox stops before removing the package.", el: "Το sandbox σταματά πριν αφαιρέσει το πακέτο." }, check: (t) => t.flags.has("apt-remove") },
       { id: "purge", instruction: { en: "apt-get purge git", el: "apt-get purge git" }, hint: { en: "apt-get purge git", el: "apt-get purge git" }, explain: { en: "Purge leftover configs.", el: "Καθαρίζει configs." }, check: (t) => t.flags.has("apt-purge") },
       { id: "update", instruction: { en: "apt-get update", el: "apt-get update" }, hint: { en: "apt-get update", el: "apt-get update" }, explain: { en: "Refresh package lists.", el: "Ανανέωση λιστών." }, check: (t) => t.flags.has("apt-update") },
       { id: "upgrade", instruction: { en: "apt-get upgrade", el: "apt-get upgrade" }, hint: { en: "apt-get upgrade", el: "apt-get upgrade" }, explain: { en: "Apply the index from update.", el: "Εφαρμογή του update." }, check: (t) => t.flags.has("apt-upgrade") },
@@ -207,20 +207,20 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       {
         heading: { en: "Change IP", el: "Αλλαγή IP" },
         body: {
-          en: "ifconfig eth0 192.168.1.13   assigns that address. Run ifconfig again to see it.",
-          el: "ifconfig eth0 192.168.1.13",
+          en: "ifconfig eth0 10.10.10.13   assigns that address. Run ifconfig again to see it.",
+          el: "ifconfig eth0 10.10.10.13",
         },
-        shots: [shot("ifconfig eth0 192.168.1.13", ["eth0 inet 192.168.1.13"])],
+        shots: [shot("ifconfig eth0 10.10.10.13", ["eth0 inet 10.10.10.13"])],
       },
       {
         heading: { en: "Spoof MAC (lab only)", el: "Spoof MAC (μόνο lab)" },
         body: {
-          en: "MAC addresses are unique and sometimes used as a weak access-control. In a LAB you may see: ifconfig eth0 down ; ifconfig eth0 hw ether 00:11:22:33:44:55 ; ifconfig eth0 up. Doing this on someone else's network to bypass controls is illegal. HackForge simulates the commands so you understand what defenders look for.",
-          el: "down → hw ether → up. Μόνο στο lab που σου ανήκει.",
+          en: "A MAC address identifies an interface on its local link; it is not reliable proof of a person's identity. In an authorized lab, the locally administered test value 02:00:00:00:00:13 can be set with ifconfig eth0 down, ifconfig eth0 hw ether 02:00:00:00:00:13, then ifconfig eth0 up. This simulator changes only the fictional interface; never use a MAC change to bypass access controls.",
+          el: "Η MAC χαρακτηρίζει διεπαφή στο τοπικό δίκτυο· δεν αποδεικνύει την ταυτότητα ανθρώπου. Σε εξουσιοδοτημένο εργαστήριο μπορείς να ορίσεις τη δοκιμαστική, τοπικά διαχειριζόμενη τιμή 02:00:00:00:00:13 με τη σειρά ifconfig eth0 down, ifconfig eth0 hw ether 02:00:00:00:00:13 και ifconfig eth0 up. Ο προσομοιωτής αλλάζει μόνο την εικονική διεπαφή· μην χρησιμοποιείς αλλαγή MAC για παράκαμψη ελέγχων πρόσβασης."
         },
         shots: [
           shot("ifconfig eth0 down", [""]),
-          shot("ifconfig eth0 hw ether 00:11:22:33:44:55", ["ether 00:11:22:33:44:55"]),
+          shot("ifconfig eth0 hw ether 02:00:00:00:00:13", ["ether 02:00:00:00:00:13"]),
           shot("ifconfig eth0 up", [""]),
         ],
       },
@@ -235,7 +235,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       {
         heading: { en: "dig — DNS", el: "dig — DNS" },
         body: {
-          en: "DNS maps names to IPs. dig hackforge.lab   (A record). dig hackforge.lab mx   (mail). dig hackforge.lab ns   (nameservers). The original used a public site; we resolve hackforge.lab inside the sandbox.",
+          en: "DNS maps names to IPs. dig hackforge.lab   (A record). dig hackforge.lab mx   (mail). dig hackforge.lab ns   (nameservers). All answers for hackforge.lab are fictional fixtures served inside the sandbox; no public domain is queried.",
           el: "dig hackforge.lab  / mx / ns",
         },
         shots: [
@@ -247,12 +247,12 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       {
         heading: { en: "resolv.conf and hosts", el: "resolv.conf και hosts" },
         body: {
-          en: "Your DNS resolver is /etc/resolv.conf. echo \"nameserver 1.1.1.1\" > /etc/resolv.conf  writes Cloudflare DNS (8.8.8.8 is Google). /etc/hosts is a static name→IP table. Mapping a name to YOUR IP is how malicious DNS tricks work on a LAN — we show the FILE so you can defend (monitor hosts + DNS). nano /etc/hosts  and look at the lab entries. Never poison DNS on a network you do not own.",
-          el: "echo nameserver 1.1.1.1 > /etc/resolv.conf και nano /etc/hosts. Μόνο lab.",
+          en: "The resolver reads DNS server addresses from /etc/resolv.conf. In this isolated lab, echo \"nameserver 10.10.10.53\" > /etc/resolv.conf writes the fictional lab resolver. /etc/hosts is a static name-to-address table for this machine only; it does not publish DNS or redirect another user's traffic. Use nano /etc/hosts to inspect the entries, and add only authorized local training names.",
+          el: "Ο resolver διαβάζει διευθύνσεις DNS από το /etc/resolv.conf. Στο απομονωμένο εργαστήριο, η εντολή echo \"nameserver 10.10.10.53\" > /etc/resolv.conf γράφει τον εικονικό resolver. Το /etc/hosts είναι στατικός πίνακας ονομάτων για αυτόν τον υπολογιστή· δεν δημοσιεύει εγγραφή DNS ούτε αλλάζει την κίνηση άλλου χρήστη. Με το nano /etc/hosts ελέγχεις τις εγγραφές και προσθέτεις μόνο εξουσιοδοτημένα ονόματα εκπαίδευσης."
         },
         shots: [
-          shot('echo "nameserver 1.1.1.1" > /etc/resolv.conf', [""]),
-          shot("cat /etc/resolv.conf", ["nameserver 1.1.1.1"]),
+          shot('echo "nameserver 10.10.10.53" > /etc/resolv.conf', [""]),
+          shot("cat /etc/resolv.conf", ["nameserver 10.10.10.53"]),
           shot("nano /etc/hosts", ["127.0.0.1 localhost", "10.10.10.8 hackforge.lab www.hackforge.lab"]),
         ],
       },
@@ -260,28 +260,28 @@ export const SUDO_RUN_MODULES_B: Module[] = [
     cheats: [
       { cmd: "ifconfig", desc: { en: "interfaces", el: "διεπαφές" } },
       { cmd: "iwconfig", desc: { en: "wifi info", el: "wifi" } },
-      { cmd: "ifconfig eth0 192.168.1.13", desc: { en: "set IP", el: "ορισμός IP" } },
+      { cmd: "ifconfig eth0 10.10.10.13", desc: { en: "set IP", el: "ορισμός IP" } },
       { cmd: "ifconfig eth0 hw ether MAC", desc: { en: "set MAC (lab)", el: "MAC (lab)" } },
       { cmd: "dhclient eth0", desc: { en: "DHCP lease", el: "DHCP" } },
       { cmd: "dig hackforge.lab mx", desc: { en: "DNS MX", el: "DNS MX" } },
-      { cmd: "echo nameserver 1.1.1.1 > /etc/resolv.conf", desc: { en: "set DNS", el: "DNS" } },
+      { cmd: "echo nameserver 10.10.10.53 > /etc/resolv.conf", desc: { en: "set DNS", el: "DNS" } },
     ],
     tasks: [
       { id: "ifc", instruction: { en: "ifconfig", el: "ifconfig" }, hint: { en: "ifconfig", el: "ifconfig" }, explain: { en: "See eth0 and lo.", el: "eth0 και lo." }, check: (t) => t.flags.has("ip") || usedCmd(t, /^\s*ifconfig\b/) },
       { id: "iw", instruction: { en: "iwconfig", el: "iwconfig" }, hint: { en: "iwconfig", el: "iwconfig" }, explain: { en: "Wireless info.", el: "Ασύρματα." }, check: (t) => t.flags.has("iwconfig") },
-      { id: "ipset", instruction: { en: "ifconfig eth0 192.168.1.13", el: "ifconfig eth0 192.168.1.13" }, hint: { en: "ifconfig eth0 192.168.1.13", el: "ifconfig eth0 192.168.1.13" }, explain: { en: "Static IP in the lab.", el: "Στατική IP." }, check: (t) => t.flags.has("ip-set") || usedCmd(t, /ifconfig\s+eth0\s+192/) },
-      { id: "mac", instruction: { en: "ifconfig eth0 down ; ifconfig eth0 hw ether 00:11:22:33:44:55 ; ifconfig eth0 up  (one at a time is fine)", el: "down, hw ether, up" }, hint: { en: "ifconfig eth0 down\nifconfig eth0 hw ether 00:11:22:33:44:55\nifconfig eth0 up", el: "ifconfig eth0 down\nifconfig eth0 hw ether 00:11:22:33:44:55\nifconfig eth0 up" }, explain: { en: "Lab-only MAC change.", el: "Αλλαγή MAC μόνο lab." }, check: (t) => t.flags.has("mac-spoof") || usedCmd(t, /hw\s+ether/) },
+      { id: "ipset", instruction: { en: "ifconfig eth0 10.10.10.13", el: "ifconfig eth0 10.10.10.13" }, hint: { en: "ifconfig eth0 10.10.10.13", el: "ifconfig eth0 10.10.10.13" }, explain: { en: "Static IP in the lab.", el: "Στατική IP." }, check: (t) => t.flags.has("ip-set") || usedCmd(t, /ifconfig\s+eth0\s+10\.10\.10\.13/) },
+      { id: "mac", instruction: { en: "ifconfig eth0 down ; ifconfig eth0 hw ether 02:00:00:00:00:13 ; ifconfig eth0 up  (one at a time is fine)", el: "down, hw ether, up" }, hint: { en: "ifconfig eth0 down\nifconfig eth0 hw ether 02:00:00:00:00:13\nifconfig eth0 up", el: "ifconfig eth0 down\nifconfig eth0 hw ether 02:00:00:00:00:13\nifconfig eth0 up" }, explain: { en: "Lab-only MAC change.", el: "Αλλαγή MAC μόνο lab." }, check: (t) => t.flags.has("mac-spoof") || usedCmd(t, /hw\s+ether/) },
       { id: "dhcp", instruction: { en: "dhclient eth0", el: "dhclient eth0" }, hint: { en: "dhclient eth0", el: "dhclient eth0" }, explain: { en: "Ask DHCP for an address.", el: "Ζήτα DHCP." }, check: (t) => t.flags.has("dhclient") },
       { id: "dig", instruction: { en: "dig hackforge.lab", el: "dig hackforge.lab" }, hint: { en: "dig hackforge.lab", el: "dig hackforge.lab" }, explain: { en: "A record.", el: "A record." }, check: (t) => t.flags.has("dig-a") || t.flags.has("dig") },
       { id: "digmx", instruction: { en: "dig hackforge.lab mx  AND  dig hackforge.lab ns", el: "dig mx και ns" }, hint: { en: "dig hackforge.lab mx", el: "dig hackforge.lab mx" }, explain: { en: "Mail and nameserver records.", el: "MX και NS." }, check: (t) => t.flags.has("dig-mx") || t.flags.has("dig-ns") || usedCmd(t, /dig\s+.*mx/) },
-      { id: "dns", instruction: { en: 'echo "nameserver 1.1.1.1" > /etc/resolv.conf', el: "echo nameserver στο resolv.conf" }, hint: { en: 'echo "nameserver 1.1.1.1" > /etc/resolv.conf', el: "echo … > /etc/resolv.conf" }, explain: { en: "Overwrite resolver.", el: "Overwrite resolver." }, check: (t) => t.flags.has("dns-set") || usedCmd(t, /resolv\.conf/) },
+      { id: "dns", instruction: { en: 'echo "nameserver 10.10.10.53" > /etc/resolv.conf', el: "echo nameserver στο resolv.conf" }, hint: { en: 'echo "nameserver 10.10.10.53" > /etc/resolv.conf', el: "echo … > /etc/resolv.conf" }, explain: { en: "Overwrite resolver.", el: "Overwrite resolver." }, check: (t) => t.flags.has("dns-set") || usedCmd(t, /resolv\.conf/) },
       { id: "hosts", instruction: { en: "nano /etc/hosts  (or cat it)", el: "nano /etc/hosts" }, hint: { en: "nano /etc/hosts", el: "nano /etc/hosts" }, explain: { en: "Static names.", el: "Στατικά ονόματα." }, check: (t) => t.flags.has("nano-hosts") || t.flags.has("read-hosts") || usedCmd(t, /\/etc\/hosts/) },
     ],
     challenges: [
       {
         title: { en: "Prove the new DNS", el: "Νέο DNS" },
         brief: { en: "cat /etc/resolv.conf after the echo redirect.", el: "cat /etc/resolv.conf" },
-        success: { en: "1.1.1.1 is in the file.", el: "1.1.1.1 στο αρχείο." },
+        success: { en: "10.10.10.53 is in the file.", el: "10.10.10.53 στο αρχείο." },
         check: (t) => t.flags.has("dns-set") || t.filesRead.some((p) => p.includes("resolv")),
       },
       {
@@ -325,23 +325,23 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       {
         heading: { en: "nice / renice", el: "nice / renice" },
         body: {
-          en: "nice -n -10 /usr/bin/ssh-agent  starts a process with a nicer (here, higher) priority. renice 20 6242  sets an absolute niceness (-20..19) on PID 6242.",
-          el: "nice στην εκκίνηση, renice σε υπάρχον PID.",
+          en: "nice -n 10 /usr/bin/ssh-agent starts a command with lower scheduling priority. Linux niceness ranges from -20 (highest priority) to 19 (lowest); renice 19 6242 sets the absolute value for PID 6242.",
+          el: "Η nice ορίζει τιμή κατά την εκκίνηση· η renice αλλάζει υπάρχον PID. Πιο θετική τιμή σημαίνει χαμηλότερη προτεραιότητα.",
         },
         shots: [
-          shot("nice -n -10 /usr/bin/ssh-agent", ["nice: launched /usr/bin/ssh-agent with adjusted priority (simulated)"]),
-          shot("renice 20 6242", ["6242: old priority 0, new priority 20"]),
+          shot("nice -n 10 /usr/bin/ssh-agent", ["would start /usr/bin/ssh-agent with nice 10 (simulated; positive values lower scheduling priority)"]),
+          shot("renice 19 6242", ["6242: old priority 0, new priority 19"]),
         ],
       },
       {
         heading: { en: "kill", el: "kill" },
         body: {
-          en: "Zombie / runaway processes get kill. Signal 1 = hangup (stop politely). Signal 9 = force, discard resources. kill -1 6242   then   kill -9 4378. Killing security tools on a machine you do not own is a crime; here PIDs are fake.",
-          el: "kill -1 ήπιο, kill -9 βίαιο. Μόνο lab.",
+          en: "kill sends a signal to a PID. SIGTERM (15) requests a normal stop; SIGHUP (1) reports a hangup and some programs use it to reload configuration, so it is not a universal gentle-stop command. SIGKILL (9) forces termination without cleanup. Verify the PID first; every process here is fictional.",
+          el: "Το SIGHUP μπορεί να προκαλέσει επαναφόρτωση ή τερματισμό· το SIGKILL επιβάλλει άμεσο τερματισμό. Έλεγξε το PID και μείνε στο lab.",
         },
         shots: [
-          shot("kill -1 6242", ["killed 6242 with -1"]),
-          shot("kill -9 4378", ["killed 4378 with -9"]),
+          shot("kill -1 6242", ["sent SIGHUP to 6242; outcome depends on the process (simulated)."]),
+          shot("kill -9 4378", ["sent SIGKILL to 4378; process stopped (simulated)."]),
         ],
       },
       {
@@ -362,8 +362,8 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       { cmd: "ps aux", desc: { en: "all processes", el: "όλες" } },
       { cmd: "ps aux | grep msfconsole", desc: { en: "filter", el: "φίλτρο" } },
       { cmd: "top", desc: { en: "live resource view", el: "πόροι live" } },
-      { cmd: "nice -n -10 CMD", desc: { en: "start with priority", el: "προτεραιότητα εκκίνησης" } },
-      { cmd: "renice 20 PID", desc: { en: "reprioritise", el: "αλλαγή nice" } },
+      { cmd: "nice -n 10 CMD", desc: { en: "start at lower priority", el: "εκκίνηση με χαμηλότερη προτεραιότητα" } },
+      { cmd: "renice 19 PID", desc: { en: "reprioritise", el: "αλλαγή nice" } },
       { cmd: "kill -9 PID", desc: { en: "force stop", el: "βίαιο stop" } },
       { cmd: "CMD &", desc: { en: "background", el: "παρασκήνιο" } },
       { cmd: "jobs / fg", desc: { en: "job control", el: "jobs" } },
@@ -374,8 +374,8 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       { id: "aux", instruction: { en: "ps aux", el: "ps aux" }, hint: { en: "ps aux", el: "ps aux" }, explain: { en: "Everyone's processes.", el: "Όλων." }, check: (t) => t.flags.has("ps-aux") || usedCmd(t, /ps\s+aux/) },
       { id: "psg", instruction: { en: "ps aux | grep msfconsole", el: "ps aux | grep msfconsole" }, hint: { en: "ps aux | grep msfconsole", el: "ps aux | grep msfconsole" }, explain: { en: "Filter by name.", el: "Φίλτρο ονόματος." }, check: (t) => t.flags.has("ps-grep") || usedCmd(t, /ps\s+aux\s*\|/) },
       { id: "top", instruction: { en: "top", el: "top" }, hint: { en: "top", el: "top" }, explain: { en: "Greediest first.", el: "Οι πιο αχόρταγοι πρώτα." }, check: (t) => t.flags.has("top") },
-      { id: "nice", instruction: { en: "nice -n -10 /usr/bin/ssh-agent", el: "nice -n -10 /usr/bin/ssh-agent" }, hint: { en: "nice -n -10 /usr/bin/ssh-agent", el: "nice -n -10 /usr/bin/ssh-agent" }, explain: { en: "Start with priority.", el: "Εκκίνηση με προτεραιότητα." }, check: (t) => t.flags.has("nice") || usedCmd(t, /^\s*nice\b/) },
-      { id: "renice", instruction: { en: "renice 20 6242", el: "renice 20 6242" }, hint: { en: "renice 20 6242", el: "renice 20 6242" }, explain: { en: "Absolute nice value + PID.", el: "Τιμή + PID." }, check: (t) => t.flags.has("renice") || usedCmd(t, /renice/) },
+      { id: "nice", instruction: { en: "nice -n 10 /usr/bin/ssh-agent", el: "nice -n 10 /usr/bin/ssh-agent" }, hint: { en: "nice -n 10 /usr/bin/ssh-agent", el: "nice -n 10 /usr/bin/ssh-agent" }, explain: { en: "Start with priority.", el: "Εκκίνηση με προτεραιότητα." }, check: (t) => t.flags.has("nice") || usedCmd(t, /^\s*nice\b/) },
+      { id: "renice", instruction: { en: "renice 19 6242", el: "renice 19 6242" }, hint: { en: "renice 19 6242", el: "renice 19 6242" }, explain: { en: "Absolute nice value + PID.", el: "Τιμή + PID." }, check: (t) => t.flags.has("renice") || usedCmd(t, /renice/) },
       { id: "k1", instruction: { en: "kill -1 6242", el: "kill -1 6242" }, hint: { en: "kill -1 6242", el: "kill -1 6242" }, explain: { en: "SIGHUP.", el: "SIGHUP." }, check: (t) => t.flags.has("kill-1") || usedCmd(t, /kill\s+-1/) },
       { id: "k9", instruction: { en: "kill -9 4378", el: "kill -9 4378" }, hint: { en: "kill -9 4378", el: "kill -9 4378" }, explain: { en: "SIGKILL.", el: "SIGKILL." }, check: (t) => t.flags.has("kill-9") || usedCmd(t, /kill\s+-9/) },
       { id: "bg", instruction: { en: "nano hackforge.txt &", el: "nano hackforge.txt &" }, hint: { en: "nano hackforge.txt &", el: "nano hackforge.txt &" }, explain: { en: "& backgrounds.", el: "Το & πάει πίσω." }, check: (t) => t.flags.has("bg") || usedCmd(t, /&\s*$/) },

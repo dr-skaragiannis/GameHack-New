@@ -46,7 +46,7 @@ export function sudoRunFS(): FileNode {
       ),
       file(
         "hackforge.in",
-        "Visit WWW.HACKFORGE.LAB for the lab portal.\nWWW banners should be rewritten to www with sed.\nHackForge — not articles, a forge.\n"
+        "Visit WWW.HACKFORGE.LAB for the lab portal.\nWWW banners should be rewritten to www with sed.\nLinux training portal (simulated).\n"
       ),
       file(
         "simple_bash.sh",
@@ -62,6 +62,48 @@ export function sudoRunFS(): FileNode {
         "scanner",
         "#!/bin/bash\necho \"Enter the ip address\"\n# nmap -sn $ip/24 | grep scan | cut -d \" \" -f 5\nnmap -sn 10.10.10.0/24\n"
       ),
+      file(
+        ".bashrc",
+        "# Virtual startup file for Linux for Beginners #2\n# Add session-specific exports below this line.\n"
+      ),
+      dir("linux-beginners-2", [
+        file(
+          "README.txt",
+          "Linux for Beginners #2 — sandbox notes\nAll network devices, processes, schedules, and variables in these exercises are simulated.\nUse only the reserved hackforge.lab names and the files inside this virtual filesystem.\n"
+        ),
+        dir("network", [
+          file(
+            "interfaces.txt",
+            "eth0  wired  10.10.10.2/24  MAC 08:00:27:12:34:56\nwlan0 wireless  simulated, not associated\nlo    loopback 127.0.0.1\n"
+          ),
+          file(
+            "dns-records.txt",
+            "hackforge.lab A 10.10.10.8\nhackforge.lab MX 10 mail.hackforge.lab\nhackforge.lab NS ns1.hackforge.lab\nmail.hackforge.lab A 10.10.10.9\n"
+          ),
+          file(
+            "hosts-plan.txt",
+            "# Local-only training mapping\n10.10.10.30 docs.hackforge.lab\n"
+          ),
+        ]),
+        dir("processes", [
+          file(
+            "roster.txt",
+            "PID 7440  training-worker --batch  (safe to renice or stop in this lab)\nPID 7441  training-reporter           (SIGHUP demonstration)\nPID 7442  training-cleanup             (SIGKILL demonstration)\n"
+          ),
+          file(
+            "schedule-notes.txt",
+            "at TIME queues one command for one future run.\ncrontab uses minute hour day-of-month month day-of-week command fields for recurring work.\nThis simulator previews jobs; it never schedules work on the host.\n"
+          ),
+          file("notes.txt", "Training editor fixture. No host process is started.\n"),
+        ]),
+        dir("environment", [
+          file(
+            "variable-notes.txt",
+            "HISTSIZE begins at 1000 in the virtual shell. Save its value before experimenting.\nA shell assignment lasts for the current shell; export passes it to child commands.\n"
+          ),
+          file("defaults.txt", "LAB_MODE is unset until the learner creates it.\n"),
+        ]),
+      ]),
       dir("Desktop", [
         file("CTF-notes.txt", "CTF lab notes for Sudo_Run.\nFLAG{sudo_run_desktop}\n"),
         file("todo.txt", "1. Learn pwd/whoami/ls\n2. Never test systems you do not own\n"),
@@ -82,7 +124,7 @@ export function sudoRunFS(): FileNode {
       ),
       file("group", "root:x:0:\nignite:x:1002:Raj,ignite\nRaj:x:1001:\noperator:x:1000:\n"),
       file("hosts", "127.0.0.1 localhost\n127.0.1.1 kali\n10.10.10.8 hackforge.lab www.hackforge.lab\n192.168.0.11 ubuntu.lab\n"),
-      file("resolv.conf", "nameserver 8.8.8.8\n"),
+      file("resolv.conf", "nameserver 10.10.10.53\n"),
       file(
         "crontab",
         "# /etc/crontab: system crontab (HackForge lab)\nSHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n# m h dom mon dow user command\n17 *    * * *   root    cd / && run-parts --report /etc/cron.hourly\n"
@@ -619,26 +661,61 @@ ${t.procs
     }
     case "nice": {
       t.flags.add("nice");
-      print(`nice: launched ${pos[pos.length - 1] || "process"} with adjusted priority (simulated)`);
+      const priorityMatch = input.match(/(?:^|\s)-n\s+(-?\d+)/);
+      const requested = priorityMatch ? Number.parseInt(priorityMatch[1], 10) : 10;
+      const priority = Math.max(-20, Math.min(19, requested));
+      const command = input.trim().replace(/^nice\s+/, "").replace(/(?:^|\s)-n\s+-?\d+/, "").trim();
+      print(`would start ${command || "process"} with nice ${priority} (simulated; positive values lower scheduling priority)`);
       return true;
     }
     case "renice": {
       t.flags.add("renice");
-      const pid = parseInt(pos[1] || pos[0], 10);
-      const pr = t.procs.find((p) => p.pid === pid);
-      if (pr) pr.nice = parseInt(pos[0], 10);
-      print(`${pid}: old priority 0, new priority ${pos[0]}`);
+      const requested = Number.parseInt(pos[0] || "", 10);
+      const pid = Number.parseInt(pos[1] || "", 10);
+      if (!Number.isFinite(requested) || requested < -20 || requested > 19) {
+        print("renice: priority must be between -20 and 19", "err");
+        return true;
+      }
+      const pr = t.procs.find((process) => process.pid === pid && process.alive);
+      if (!pr) {
+        print(`renice: failed to get priority for ${pid}: no such process`, "err");
+        return true;
+      }
+      const previous = pr.nice;
+      pr.nice = requested;
+      print(`${pid}: old priority ${previous}, new priority ${requested}`);
       return true;
     }
     case "kill": {
       t.flags.add("kill");
-      const sig = rest.find((a) => a.startsWith("-")) || "-15";
-      const pid = parseInt(pos[pos.length - 1], 10);
-      const pr = t.procs.find((p) => p.pid === pid);
-      if (pr) pr.alive = false;
-      if (sig === "-9") t.flags.add("kill-9");
-      else t.flags.add("kill-1");
-      print(`killed ${pid} with ${sig}`);
+      const signalArg = rest.find((argument) => /^-(?:\d+|[A-Za-z]+)$/.test(argument)) || "-15";
+      const signalToken = signalArg.slice(1).toUpperCase();
+      const signalNames: Record<string, string> = {
+        "1": "SIGHUP", HUP: "SIGHUP", SIGHUP: "SIGHUP",
+        "2": "SIGINT", INT: "SIGINT", SIGINT: "SIGINT",
+        "9": "SIGKILL", KILL: "SIGKILL", SIGKILL: "SIGKILL",
+        "15": "SIGTERM", TERM: "SIGTERM", SIGTERM: "SIGTERM",
+      };
+      const signalName = signalNames[signalToken] || `SIG${signalToken}`;
+      const pid = Number.parseInt(pos[pos.length - 1] || "", 10);
+      const process = t.procs.find((entry) => entry.pid === pid && entry.alive);
+      if (!Number.isFinite(pid) || !process) {
+        print(`kill: (${Number.isFinite(pid) ? pid : "?"}) - No such process`, "err");
+        return true;
+      }
+      if (signalName === "SIGHUP") t.flags.add("kill-1");
+      if (signalName === "SIGTERM") {
+        t.flags.add("kill-term");
+        process.alive = false;
+      }
+      if (signalName === "SIGKILL") {
+        t.flags.add("kill-9");
+        process.alive = false;
+      }
+      if (signalName === "SIGINT") process.alive = false;
+      print(signalName === "SIGHUP"
+        ? `sent SIGHUP to ${pid}; outcome depends on the process (simulated).`
+        : `sent ${signalName} to ${pid}; process ${process.alive ? "remains running" : "stopped"} (simulated).`);
       return true;
     }
     case "jobs": {
@@ -659,26 +736,32 @@ at> (type a command then Ctrl-D in a real shell)
 job 1 at ${pos.join(" ") || "now"}`);
       return true;
     }
-    case "set":
+    case "set": {
+      t.flags.add("set");
+      print(Object.entries(t.shellVars).map(([key, value]) => `${key}=${value}`).join("\n"));
+      return true;
+    }
     case "env": {
-      if (cmd === "set") t.flags.add("set");
-      print(Object.entries(t.env).map(([k, v]) => `${k}=${v}`).join("\n"));
+      print(Object.entries(t.env).map(([key, value]) => `${key}=${value}`).join("\n"));
       return true;
     }
     case "export": {
       t.flags.add("export");
-      const kv = pos[0] || "";
-      if (kv.includes("=")) {
-        const separator = kv.indexOf("=");
-        const key = kv.slice(0, separator);
-        const value = kv.slice(separator + 1);
+      const declaration = pos[0] || "";
+      if (declaration.includes("=")) {
+        const separator = declaration.indexOf("=");
+        const key = declaration.slice(0, separator);
+        const value = declaration.slice(separator + 1).replace(/^["']|["']$/g, "");
+        t.shellVars[key] = value;
         t.env[key] = value;
+        if (key === "HISTSIZE") t.flags.add("export-hist");
         print(`${key} exported for this virtual shell.`);
-      } else if (pos[0] && t.env[pos[0]] !== undefined) {
-        t.flags.add("export-hist");
-        print(`${pos[0]}=${t.env[pos[0]]} exported for this virtual shell.`);
-      } else if (pos[0]) {
-        print(`export: ${pos[0]} is not set`, "err");
+      } else if (declaration && t.shellVars[declaration] !== undefined) {
+        t.env[declaration] = t.shellVars[declaration];
+        if (declaration === "HISTSIZE") t.flags.add("export-hist");
+        print(`${declaration}=${t.shellVars[declaration]} exported for this virtual shell.`);
+      } else if (declaration) {
+        print(`export: ${declaration} is not set`, "err");
       } else {
         print(Object.entries(t.env).map(([key, value]) => `declare -x ${key}="${value}"`).join("\n"));
       }
@@ -690,9 +773,10 @@ job 1 at ${pos.join(" ") || "now"}`);
         return true;
       }
       t.flags.add("unset");
-      const existed = Object.prototype.hasOwnProperty.call(t.env, pos[0]);
+      const existed = Object.prototype.hasOwnProperty.call(t.shellVars, pos[0]) || Object.prototype.hasOwnProperty.call(t.env, pos[0]);
+      delete t.shellVars[pos[0]];
       delete t.env[pos[0]];
-      print(existed ? `Removed ${pos[0]} from the virtual shell environment.` : `${pos[0]} was not set.`);
+      print(existed ? `Removed ${pos[0]} from the virtual shell.` : `${pos[0]} was not set.`);
       return true;
     }
     case "service": {
@@ -816,7 +900,9 @@ Plugins: pslist, netscan, filescan (lab stub)`);
 
   if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(input.trim()) && !input.includes(" ")) {
     const [k, v] = input.trim().split("=");
-    t.env[k] = v.replace(/^["']|["']$/g, "");
+    const value = v.replace(/^["']|["']$/g, "");
+    t.shellVars[k] = value;
+    if (Object.prototype.hasOwnProperty.call(t.env, k)) t.env[k] = value;
     t.flags.add("assign");
     if (k === "HISTSIZE") t.flags.add("histsize");
     if (/url/i.test(k)) t.flags.add("url-var");
@@ -902,7 +988,7 @@ export function applyRedirect(t: Terminal, _left: string, dest: string, append: 
   writeFile(t, dest, text.endsWith("\n") ? text : text + "\n", append);
   t.flags.add("redir");
   if (dest.includes("resolv.conf")) t.flags.add("dns-set");
-  if (dest.includes("valueofHISTSIZE")) t.flags.add("hist-save");
+  if (dest.includes("valueofHISTSIZE") || dest.endsWith("/histsize-before-change.txt")) t.flags.add("hist-save");
   if (dest.includes("crontab") || /scanner/.test(text)) t.flags.add("cron-line");
 }
 
