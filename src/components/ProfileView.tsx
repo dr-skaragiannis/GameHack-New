@@ -39,7 +39,7 @@ export default function ProfileView({
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       <div className="glass rounded-2xl border border-forge-border p-6 flex flex-wrap gap-5 items-start">
         <button type="button" disabled={!mine} onClick={() => mine && setPicker(true)} className="relative">
           <Avatar src={user.avatar} name={user.displayName} size={88} />

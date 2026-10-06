@@ -35,7 +35,7 @@ export default function Messages({
   const thread = peer ? getThread(user.id, peer.id) : null;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="w-full space-y-4">
       <h1 className="text-2xl font-bold">{t("messages", lang)}</h1>
       <div className="flex gap-2">
         {(["inbox", "chat"] as const).map((k) => (

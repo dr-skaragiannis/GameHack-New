@@ -97,6 +97,8 @@ export default function ModuleView({
     const n = (allTasks ? module.tasks.length : tasksDone.length) + (ch1 ? 1 : 0) + (ch2 ? 1 : 0);
     return Math.round((n / total) * 100);
   }, [allTasks, tasksDone.length, ch1, ch2, module.tasks.length]);
+  const defaultContentWidth: ContentWidth = tab === "theory" ? "wide" : "full";
+  const activeContentWidth = contentWidth ?? defaultContentWidth;
 
   const applyChecks = (t0: Terminal) => {
     for (const task of module.tasks) {
@@ -132,10 +134,10 @@ export default function ModuleView({
           ← {t("backToMap", lang)}
         </button>
         <div className="flex-1" />
-        <WidthControl value={contentWidth} onChange={onWidth} />
+        <WidthControl value={activeContentWidth} onChange={onWidth} />
       </div>
 
-      <div className={contentWidthClass(contentWidth)}>
+      <div className={contentWidthClass(activeContentWidth)}>
         <div className="flex items-start gap-4 mb-4">
           <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${module.color} grid place-items-center forge-glow`}>
             <Icon name={module.icon} className="w-6 h-6 text-white" />

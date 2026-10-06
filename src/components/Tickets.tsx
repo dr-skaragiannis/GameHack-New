@@ -17,7 +17,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
   const mods = CAMPAIGNS.flatMap((c) => c.modules);
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="w-full">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">{t("tickets", lang)}</h1>
         {user.role === "player" && (

@@ -337,8 +337,9 @@ export function contentWidthClass(w?: ContentWidth): string {
     case "full":
       return "w-full max-w-none";
     case "wide":
-    default:
       return "mx-auto w-full lg:max-w-[75%]";
+    default:
+      return "w-full max-w-none";
   }
 }
 

@@ -14,7 +14,7 @@ export default function WidthControl({
   value?: ContentWidth;
   onChange: (w: ContentWidth) => void;
 }) {
-  const cur = value || "wide";
+  const cur = value || "full";
   return (
     <div className="inline-flex rounded-lg border border-forge-border bg-forge-panel2 p-0.5">
       {OPTS.map((o) => (
