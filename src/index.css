@@ -2564,3 +2564,117 @@ body {
     padding: 9px;
   }
 }
+
+/* Readability pass: raise compact labels in the command tutor and campaign map. */
+.command-explanation__eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.11em;
+}
+.command-explanation__header h2 {
+  font-size: 19px;
+}
+.command-explanation__section-label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+.command-explanation__body p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.command-explanation__command code {
+  font-size: 13px;
+}
+.command-explanation__inline-code {
+  font-size: 12px;
+}
+.command-explanation__exit {
+  font-size: 10px;
+}
+.command-explanation__output {
+  font-size: 12px;
+}
+.command-explanation__footer {
+  font-size: 11px;
+}
+.command-explanation__footer button {
+  font-size: 12px;
+}
+
+.map-live-caption {
+  font-size: 11px;
+}
+.map-filter-button {
+  font-size: 11px;
+}
+.map-filter-button span {
+  font-size: 10px;
+}
+.map-player-row__name {
+  font-size: 13px;
+}
+.map-player-row__location {
+  font-size: 11px;
+}
+.map-presence-label {
+  font-size: 10px;
+}
+.map-campaign-card__kicker {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+.map-campaign-card__name {
+  font-size: 14px;
+}
+.map-campaign-card__progress {
+  font-size: 10px;
+}
+.map-campaign-card--linear .map-campaign-card__presence {
+  font-size: 9px;
+}
+.map-path-number {
+  font-size: 11px;
+}
+.map-node-progress {
+  min-width: 30px;
+  height: 20px;
+  font-size: 10px;
+}
+.map-node-label__state {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.map-node-label__name {
+  font-size: 12px;
+  line-height: 1.3;
+}
+.map-node-label__tasks {
+  font-size: 10px;
+}
+.map-pin-name,
+.map-more-players {
+  font-size: 9px;
+}
+.map-legend {
+  font-size: 10px;
+}
+.map-collapsed-route {
+  font-size: 11px;
+}
+
+@media (max-width: 760px) {
+  .command-explanation__eyebrow {
+    font-size: 11px;
+  }
+  .command-explanation__section-label {
+    font-size: 10px;
+  }
+  .command-explanation__body p {
+    font-size: 13px;
+  }
+  .map-live-caption {
+    font-size: 10px;
+  }
+  .map-legend {
+    font-size: 10px;
+  }
+}
