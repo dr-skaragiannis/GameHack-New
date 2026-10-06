@@ -2887,6 +2887,14 @@ body {
   overflow-y: auto;
   scrollbar-gutter: stable;
 }
+@media (min-width: 1024px) {
+  .terminal-window {
+    position: sticky;
+    top: var(--terminal-sticky-top, 9rem);
+    align-self: start;
+    z-index: 1;
+  }
+}
 @media (max-width: 760px) {
   .module-topbar {
     padding-top: 6px;

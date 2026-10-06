@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Module, Task } from "../data/lessons";
 import { bi, t, type Lang } from "../i18n";
 import {
@@ -202,6 +202,32 @@ export default function ModuleView({
     }
   });
   const [, bump] = useState(0);
+  const moduleViewRef = useRef<HTMLDivElement>(null);
+  const moduleTopbarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = moduleViewRef.current;
+    const topbar = moduleTopbarRef.current;
+    if (!root || !topbar) return;
+
+    const updateStickyOffset = () => {
+      const appHeaderHeight = document.querySelector("main")?.previousElementSibling?.getBoundingClientRect().height ?? 64;
+      const topbarGap = 12;
+      root.style.setProperty(
+        "--terminal-sticky-top",
+        `${Math.ceil(appHeaderHeight + topbar.getBoundingClientRect().height + topbarGap)}px`,
+      );
+    };
+
+    updateStickyOffset();
+    const observer = new ResizeObserver(updateStickyOffset);
+    observer.observe(topbar);
+    window.addEventListener("resize", updateStickyOffset);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateStickyOffset);
+    };
+  }, []);
 
   const tasksDone = module.tasks.filter((x) => done.includes(x.id) || x.check(term));
   const allTasks = tasksDone.length >= module.tasks.length;
@@ -256,8 +282,8 @@ export default function ModuleView({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="module-topbar sticky top-16 z-10 -mx-4 -mt-4 px-4 py-2 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8">
+    <div ref={moduleViewRef} className="space-y-3">
+      <div ref={moduleTopbarRef} className="module-topbar sticky top-16 z-10 -mx-4 -mt-4 px-4 py-2 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8">
         <div className="module-topbar__row">
           <button type="button" onClick={onBack} className="module-topbar__back">
             ← {t("backToMap", lang)}
