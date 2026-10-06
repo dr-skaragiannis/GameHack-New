@@ -433,22 +433,26 @@ qhydra - qt frontend`);
         return true;
       }
       const action = pos[0];
-      const pkg = pos[1] || "";
+      const packages = pos.slice(1);
+      const pkg = packages[0] || "";
       if (action === "search") {
         t.flags.add("apt-search");
         print(`hydra - very fast network logon cracker`);
         return true;
       }
       if (action === "install") {
-        t.packages.add(pkg);
+        if (!packages.length) {
+          print("E: install requires at least one package name", "err");
+          return true;
+        }
+        packages.forEach((packageName) => t.packages.add(packageName));
         t.flags.add("apt-install");
         print(`Reading package lists... Done
 Building dependency tree... Done
 The following NEW packages will be installed:
-  ${pkg}
-0 upgraded, 1 newly installed.
-Unpacking ${pkg} ...
-Setting up ${pkg} (lab) ...`);
+  ${packages.join("  ")}
+0 upgraded, ${packages.length} newly installed.
+${packages.map((packageName) => `Unpacking ${packageName} ...\nSetting up ${packageName} (lab) ...`).join("\n")}`);
         return true;
       }
       if (action === "remove") {

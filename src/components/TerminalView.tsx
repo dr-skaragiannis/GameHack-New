@@ -68,9 +68,22 @@ export default function TerminalView({
         <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
         <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
         <span className="h-2.5 w-2.5 rounded-full bg-neon-green/80" />
-        <span className="ml-2 tracking-wider">
+        <span className="ml-2 min-w-0 truncate tracking-wider">
           {term.user}@{term.host} — HACKFORGE
         </span>
+        <button
+          type="button"
+          aria-label="Show the shared 100-command Linux reference in this terminal"
+          title="Show the shared 100-command Linux reference"
+          onClick={(event) => {
+            event.stopPropagation();
+            sound.enter();
+            onCommand("help", false);
+          }}
+          className="ml-auto shrink-0 rounded-md border border-neon-cyan/30 bg-neon-cyan/10 px-2 py-1.5 text-sm font-semibold text-neon-cyan hover:bg-neon-cyan/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neon-cyan sm:px-3"
+        >
+          Top 100
+        </button>
       </div>
       <div ref={scroller} className="terminal-window__scroll flex-1 px-3 py-3 space-y-0.5 leading-relaxed">
         {term.lines.map((l, i) => (
@@ -91,10 +104,11 @@ export default function TerminalView({
           ref={input}
           value={buf}
           autoFocus
+          autoComplete="off"
           spellCheck={false}
           autoCapitalize="off"
           autoCorrect="off"
-          placeholder={t("typeCommand", lang)}
+          aria-label={t("typeCommand", lang)}
           onChange={(e) => setBuf(e.target.value)}
           onPaste={() => {
             pasteRef.current = true;

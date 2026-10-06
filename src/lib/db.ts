@@ -4,6 +4,9 @@ export type Role = "player" | "educator";
 export type ContentWidth = "centered" | "wide" | "full";
 export type ModProgress = { completed: boolean; done: string[] };
 
+// A revealed hint reduces that objective's base XP reward by this amount on completion.
+export const HINT_XP_PENALTY = 2;
+
 export type Metrics = {
   xp: number;
   commandsRun: number;

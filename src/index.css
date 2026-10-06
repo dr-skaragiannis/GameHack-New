@@ -2832,9 +2832,9 @@ body {
 }
 
 .terminal-window {
-  height: 560px;
-  min-height: 560px;
-  max-height: 560px;
+  height: 90vh;
+  min-height: min(90vh, 560px);
+  max-height: 90vh;
 }
 .terminal-window__scroll {
   min-height: 0;
@@ -2858,8 +2858,8 @@ body {
     margin-left: auto;
   }
   .terminal-window {
-    height: min(62vh, 560px);
-    min-height: 360px;
-    max-height: 560px;
+    height: 90vh;
+    min-height: min(90vh, 360px);
+    max-height: 90vh;
   }
 }

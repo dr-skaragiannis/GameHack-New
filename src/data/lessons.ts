@@ -129,7 +129,7 @@ export const MODULES: Module[] = [
       {
         id: "help",
         instruction: { en: "Type help to see every command available in this lab.", el: "Γράψε help για να δεις όλες τις εντολές." },
-        hint: { en: "Just type: help", el: "Γράψε: help" },
+        hint: { en: "help", el: "help" },
         explain: {
           en: "WHY: When you sit at an unfamiliar shell, learn what you can do first. HOW: type help and press Enter.",
           el: "ΓΙΑΤΙ: Σε άγνωστο shell, μάθε πρώτα τι μπορείς να κάνεις. ΠΩΣ: γράψε help και πάτα Enter.",
@@ -782,7 +782,7 @@ export const MODULES: Module[] = [
       {
         id: "hydra-r",
         instruction: { en: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5", el: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5" },
-        hint: { en: "Use the tools/wordlist.txt dictionary.", el: "Χρησιμοποίησε το wordlist." },
+        hint: { en: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5", el: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5" },
         explain: { en: "WHY: Weak passwords still exist. HOW: hydra.", el: "ΓΙΑΤΙ: Οι αδύναμοι κωδικοί υπάρχουν ακόμα." },
         check: (t) => t.flags.has("hydra-raven") || t.flags.has("hydra"),
       },
@@ -836,7 +836,7 @@ export const MODULES: Module[] = [
       {
         id: "cfg",
         instruction: { en: "SSH to raven if needed, then cat /var/www/html/config.php", el: "cat /var/www/html/config.php" },
-        hint: { en: "ssh raven@10.10.10.5 then cat the config", el: "ssh και μετά cat" },
+        hint: { en: "cat /var/www/html/config.php", el: "cat /var/www/html/config.php" },
         explain: { en: "WHY: App configs store DB passwords in plaintext far too often.", el: "ΓΙΑΤΙ: Τα configs έχουν κωδικούς σε plaintext." },
         check: (t) => t.flags.has("read-config") || t.flags.has("ssh-raven"),
       },
@@ -891,7 +891,7 @@ export const MODULES: Module[] = [
       {
         id: "readsh",
         instruction: { en: "cat /usr/local/bin/backup.sh", el: "cat /usr/local/bin/backup.sh" },
-        hint: { en: "ssh raven first if the file is missing", el: "ssh raven πρώτα" },
+        hint: { en: "cat /usr/local/bin/backup.sh", el: "cat /usr/local/bin/backup.sh" },
         explain: { en: "WHY: Always read before you write.", el: "ΓΙΑΤΙ: Διάβαζε πριν γράψεις." },
         check: (t) => t.flags.has("read-backup-script") || t.flags.has("ssh-raven"),
       },

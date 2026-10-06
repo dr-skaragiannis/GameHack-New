@@ -1,5 +1,11 @@
 import { applyRedirect, handleSudoRun, splitPipes } from "./sudorun";
 import { handleDfirCommand } from "./dfir";
+import {
+  ALL_LINUX_COMMANDS,
+  linuxHelpText,
+  linuxManPage,
+} from "./linuxCommandCatalog";
+import { runSharedLinuxCommand } from "./linuxCommandRuntime";
 export { splitPipes };
 
 export type FileNode = {
@@ -9,6 +15,7 @@ export type FileNode = {
   mode?: string;
   owner?: string;
   group?: string;
+  linkTarget?: string;
   children?: Record<string, FileNode>;
 };
 
@@ -281,8 +288,9 @@ export function createTerminal(opts?: { fs?: FileNode; user?: string; host?: str
     ran: [],
     history: [],
     lines: [
-      { kind: "sys", text: "HACKFORGE simulated terminal — educational sandbox only." },
-      { kind: "sys", text: "Type `help` for commands. Unauthorized access outside this lab is illegal." },
+      { kind: "sys", text: "HACKFORGE simulated Linux terminal — educational sandbox only." },
+      { kind: "sys", text: "Run `help` or use the Top 100 button for the shared command reference. Type `man COMMAND` for a manual." },
+      { kind: "sys", text: "All filesystem, package, network, and process activity stays inside this fictional lab." },
     ],
     fs: opts?.fs || defaultFS(),
     env: {
@@ -331,15 +339,35 @@ export function resolvePath(t: Terminal, p: string): string {
   return normalize(t.cwd + "/" + p);
 }
 
-export function getNode(root: FileNode, path: string): FileNode | null {
-  const norm = normalize(path);
-  if (norm === "/") return root;
-  let cur: FileNode | undefined = root;
-  for (const part of norm.split("/").filter(Boolean)) {
-    if (!cur || cur.type !== "dir" || !cur.children) return null;
-    cur = cur.children[part];
-  }
-  return cur || null;
+export function getNode(root: FileNode, path: string, followLinks = true): FileNode | null {
+  const lookup = (candidate: string, visitedLinks: Set<string>): FileNode | null => {
+    const norm = normalize(candidate);
+    if (norm === "/") return root;
+    const parts = norm.split("/").filter(Boolean);
+    let cur: FileNode | undefined = root;
+
+    for (let index = 0; index < parts.length; index += 1) {
+      if (!cur || cur.type !== "dir" || !cur.children) return null;
+      const nextNode: FileNode | undefined = cur.children[parts[index]];
+      if (!nextNode) return null;
+      cur = nextNode;
+
+      if (followLinks && nextNode.linkTarget) {
+        const linkPath = normalize("/" + parts.slice(0, index + 1).join("/"));
+        if (visitedLinks.has(linkPath)) return null;
+        const nextVisited = new Set(visitedLinks).add(linkPath);
+        const parent = linkPath.slice(0, linkPath.lastIndexOf("/")) || "/";
+        const target = nextNode.linkTarget.startsWith("/")
+          ? nextNode.linkTarget
+          : normalize(parent + "/" + nextNode.linkTarget);
+        const remaining = parts.slice(index + 1).join("/");
+        return lookup(remaining ? target + "/" + remaining : target, nextVisited);
+      }
+    }
+    return cur || null;
+  };
+
+  return lookup(path, new Set());
 }
 
 export function parentAndName(path: string): { parent: string; name: string } {
@@ -369,41 +397,12 @@ function canRead(t: Terminal, n: FileNode): boolean {
   return true;
 }
 
-const HELP = `HACKFORGE lab commands (simulated):
-  help                 this list
-  clear                clear the screen
-  whoami / id          current user
-  pwd                  print working directory
-  ls [-la] [path]      list files
-  cd [dir]             change directory
-  cat FILE             print file
-  head/tail FILE       first/last lines
-  grep PAT FILE        search file
-  find PATH -name GLOB search tree
-  echo TEXT            print text
-  uname -a             system info
-  hostname             host name
-  history              command history
-  env                  environment
-  which CMD            locate command
-  ping HOST            icmp echo (sim)
-  ip addr / ifconfig   interfaces (sim)
-  nmap [opts] TARGET   port scan (sim)
-  curl URL             fetch (sim)
-  hydra ...            password spray (sim)
-  ssh user@host        remote login (sim)
-  sudo -l / sudo su    privilege (sim)
-  file / strings       identify type and printable clues
-  md5sum / sha256sum   verify evidence identity (sim)
-  xxd / hexedit        inspect / repair a virtual copy
-  oleid / olevba       static Office triage
-  tshark / volatility  packet and memory fixtures
-  docker inspect/diff  container evidence fixtures
-  timeline CASE        correlate case timestamps
-  submit FLAG{...}     submit a captured flag
-  man CMD              short manual
+const HELP = linuxHelpText();
 
-This is a SAFE simulation. Never run these techniques on systems you do not own.`;
+const SPECIALIST_COMMAND_NAMES = [
+  "netcat", "python", "submit", "su", "useradd", "usermod", "groupadd", "umask", "unset",
+  "exit", "source", "type", "alias", "unalias", "whereis",
+];
 
 function globToRe(glob: string): RegExp {
   const esc = glob.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".");
@@ -447,96 +446,19 @@ export function complete(t: Terminal, partial: string): string[] {
   const parts = partial.split(/\s+/);
   const last = parts[parts.length - 1] || "";
   if (parts.length <= 1) {
-    const cmds = [
-      "help",
-      "clear",
-      "whoami",
-      "id",
-      "pwd",
-      "ls",
-      "cd",
-      "cat",
-      "head",
-      "tail",
-      "grep",
-      "find",
-      "echo",
-      "uname",
-      "hostname",
-      "history",
-      "env",
-      "which",
-      "ping",
-      "ip",
-      "ifconfig",
-      "nmap",
-      "curl",
-      "hydra",
-      "ssh",
-      "sudo",
-      "submit",
-      "man",
-      "locate",
-      "whereis",
-      "chmod",
-      "chown",
-      "chgrp",
-      "cp",
-      "mv",
-      "rm",
-      "rmdir",
-      "apt-get",
-      "apt-cache",
-      "dig",
-      "ps",
-      "top",
-      "kill",
-      "service",
-      "crontab",
-      "ftp",
-      "sed",
-      "nl",
-      "file",
-      "strings",
-      "md5sum",
-      "sha1sum",
-      "sha256sum",
-      "hashdeep",
-      "hash-identifier",
-      "xxd",
-      "hexdump",
-      "hexedit",
-      "exiftool",
-      "oleid",
-      "olevba",
-      "oleobj",
-      "zsteg",
-      "steghide",
-      "audio-analyze",
-      "tshark",
-      "tcpdump",
-      "wireshark",
-      "ewfacquire",
-      "ftkimager",
-      "mmls",
-      "fls",
-      "mftecmd",
-      "icat",
-      "timeline",
-      "memory-acquire",
-      "static-report",
-      "sandbox-report",
-      "volatility",
-      "docker",
-      "reg",
-      "sqlitebrowser",
-      "evtx",
-      "wevtutil",
-      "LECmd",
-      "john",
-      "hashcat",
-    ];
-    return cmds.filter((c) => c.startsWith(last));
+    const cmds = [...new Set([
+      ...ALL_LINUX_COMMANDS.map(({ name }) => name.split(" ")[0]),
+      ...SPECIALIST_COMMAND_NAMES,
+    ])];
+    return cmds
+      .filter((command) => command.toLowerCase().startsWith(last.toLowerCase()))
+      .sort((a, b) => a.localeCompare(b));
+  }
+  if (["help", "man"].includes((parts[0] || "").toLowerCase())) {
+    const topics = [...new Set([...ALL_LINUX_COMMANDS.map(({ name }) => name.split(" ")[0]), ...SPECIALIST_COMMAND_NAMES])];
+    return topics
+      .filter((topic) => topic.toLowerCase().startsWith(last.toLowerCase()))
+      .sort((a, b) => a.localeCompare(b));
   }
   const base = last.includes("/") ? last.slice(0, last.lastIndexOf("/") + 1) : "";
   const rest = last.includes("/") ? last.slice(last.lastIndexOf("/") + 1) : last;
@@ -548,17 +470,17 @@ export function complete(t: Terminal, partial: string): string[] {
     .map((n) => (base || "") + n + (node.children![n].type === "dir" ? "/" : ""));
 }
 
-let PIPE_STDIN: string | null = null;
-
 export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean; stdin?: string | null }): TermLine[] {
   let input = raw.replace(/\s+$/, "");
   if (!input.trim()) return [];
+  t.lastExit = 0;
   const capturing = !!inner?.capture;
   if (!capturing) {
     t.ran.push(input.trim());
     t.history.push(input.trim());
   }
   const out: TermLine[] = capturing ? [] : [{ kind: "in", text: `${promptOf(t)} ${input}` }];
+  const stdin = inner?.stdin ?? null;
 
   if (!capturing && /&\s*$/.test(input) && !input.trim().startsWith("nano") === false) {
     /* background handled in sudo handler too */
@@ -617,8 +539,6 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
   };
 
   try {
-    const prevStdin = PIPE_STDIN;
-    PIPE_STDIN = inner?.stdin ?? null;
     const context = {
       cmd,
       args,
@@ -627,22 +547,31 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
       flags,
       input,
       print,
-      stdin: PIPE_STDIN,
+      stdin,
+      execute: (nested: string, nestedStdin: string | null = null) =>
+        runCommand(t, nested, { capture: true, stdin: nestedStdin }),
     };
     const handled = t.scenario === "dfir" && handleDfirCommand(t, context)
       ? true
       : handleSudoRun(t, context);
-    PIPE_STDIN = prevStdin;
     if (handled) {
       t.lastExit = out.some((l) => l.kind === "err") ? 1 : 0;
       return out;
     }
 
     switch (cmd) {
-      case "help":
-        print(HELP, "sys");
+      case "help": {
+        const topic = pos.find((value) => !/^\d+$/.test(value));
+        if (!topic) {
+          print(HELP, "sys");
+        } else {
+          const page = linuxManPage(topic);
+          if (page) print(page, "sys");
+          else print(`bash: help: no help topic for '${topic}'`, "err");
+        }
         t.flags.add("used-help");
         break;
+      }
       case "clear":
         t.lines = [];
         t.lastExit = 0;
@@ -689,23 +618,25 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
         else print(`/usr/bin/${pos[0]}`);
         break;
       case "man": {
-        const m = pos[0] || cmd;
+        const isSearch = rest.some((value) => value === "-k" || value === "--apropos");
+        const topic = isSearch
+          ? pos[pos.length - 1] || ""
+          : [...pos].reverse().find((value) => !/^\d+$/.test(value)) || cmd;
         t.flags.add("man");
-        if (m === "ls") {
-          t.flags.add("man-ls");
-          print(`LS(1)                            User Commands                           LS(1)
-
-NAME
-       ls - list directory contents
-
-SYNOPSIS
-       ls [OPTION]... [FILE]...
-
-DESCRIPTION
-       -a  do not ignore entries starting with .
-       -l  use a long listing format
-       -h  with -l, print sizes in human readable format`);
-        } else print(`MAN ${m} — simulated. Try \`help\` for the lab command list.`, "sys");
+        if (isSearch) {
+          const matches = ALL_LINUX_COMMANDS.filter((entry) =>
+            `${entry.name} ${entry.category} ${entry.summary}`.toLowerCase().includes(topic.toLowerCase())
+          );
+          print(matches.map((entry) => `${entry.name.padEnd(15)} - ${entry.summary}`).join("\n") || `Nothing appropriate for ${topic}.`);
+        } else {
+          if (topic === "ls") t.flags.add("man-ls");
+          const page = linuxManPage(topic);
+          if (page) print(page, "sys");
+          else {
+            print(`No manual entry for ${topic}`, "err");
+            t.lastExit = 16;
+          }
+        }
         break;
       }
       case "ls": {
@@ -734,7 +665,8 @@ DESCRIPTION
             if (n === "." || n === "..") return `drwxr-xr-x 2 ${t.user} ${t.user}    4 ${n}`;
             const c = node.children![n];
             const sz = c.type === "file" ? String(c.content?.length || 0).padStart(4) : "   4";
-            return `${lsMode(c)} 1 ${c.owner || t.user} ${c.group || t.user} ${sz} ${n}`;
+            const label = c.linkTarget ? `${n} -> ${c.linkTarget}` : n;
+            return `${lsMode(c)} 1 ${c.owner || t.user} ${c.group || t.user} ${sz} ${label}`;
           });
           print("total " + shown.length + "\n" + rows.join("\n"));
         }
@@ -773,38 +705,41 @@ DESCRIPTION
       case "tail":
       case "less":
       case "more": {
-        if (!pos[0] && PIPE_STDIN != null) {
-          let content = PIPE_STDIN;
-          if (cmd === "head") content = content.split("\n").slice(0, 10).join("\n");
-          if (cmd === "tail") content = content.split("\n").slice(-10).join("\n");
+        const fileArg = pos.find((value) => !/^\d+$/.test(value));
+        const lineMatch = input.match(/(?:^|\s)-n\s*(\d+)|(?:^|\s)-([0-9]+)/);
+        const lineCount = Math.min(100, Math.max(1, Number(lineMatch?.[1] || lineMatch?.[2] || 10)));
+        if (!fileArg && stdin != null) {
+          let content = stdin;
+          if (cmd === "head") content = content.split("\n").slice(0, lineCount).join("\n");
+          if (cmd === "tail") content = content.split("\n").slice(-lineCount).join("\n");
           print(content);
           t.flags.add(cmd);
           break;
         }
-        if (!pos[0]) {
+        if (!fileArg) {
           print(`${cmd}: missing file operand`, "err");
           break;
         }
-        const p = resolvePath(t, pos[0]);
+        const p = resolvePath(t, fileArg);
         const node = getNode(t.fs, p);
         if (!node) {
-          print(`${cmd}: ${pos[0]}: No such file or directory`, "err");
+          print(`${cmd}: ${fileArg}: No such file or directory`, "err");
           t.lastExit = 1;
           break;
         }
         if (node.type === "dir") {
-          print(`${cmd}: ${pos[0]}: Is a directory`, "err");
+          print(`${cmd}: ${fileArg}: Is a directory`, "err");
           t.lastExit = 1;
           break;
         }
         if (!canRead(t, node)) {
-          print(`${cmd}: ${pos[0]}: Permission denied`, "err");
+          print(`${cmd}: ${fileArg}: Permission denied`, "err");
           t.lastExit = 1;
           break;
         }
         let content = node.content || "";
-        if (cmd === "head") content = content.split("\n").slice(0, 10).join("\n");
-        if (cmd === "tail") content = content.split("\n").slice(-10).join("\n");
+        if (cmd === "head") content = content.split("\n").slice(0, lineCount).join("\n");
+        if (cmd === "tail") content = content.split("\n").slice(-lineCount).join("\n");
         print(content.replace(/\n$/, ""));
         t.filesRead.push(p);
         t.flags.add("cat");
@@ -836,8 +771,14 @@ DESCRIPTION
       }
       case "grep": {
         const pat = (pos[0] || "").replace(/^["']|["']$/g, "");
-        const re = new RegExp(pat, "i");
-        let source = PIPE_STDIN;
+        let re: RegExp;
+        try {
+          re = new RegExp(pat, flags.has("i") ? "i" : "");
+        } catch {
+          print(`grep: invalid regular expression: ${pat}`, "err");
+          break;
+        }
+        let source = stdin;
         if (source == null && pos[1]) {
           const p = resolvePath(t, pos[1]);
           const node = getNode(t.fs, p);
@@ -845,14 +786,20 @@ DESCRIPTION
             print(`grep: ${pos[1]}: No such file`, "err");
             break;
           }
+          if (!canRead(t, node)) {
+            print(`grep: ${pos[1]}: Permission denied`, "err");
+            break;
+          }
           source = node.content || "";
           t.filesRead.push(p);
         }
         if (source == null) {
-          print("usage: grep PATTERN FILE", "err");
+          print("usage: grep [OPTIONS] PATTERN FILE", "err");
           break;
         }
-        const hits = source.split("\n").filter((l) => re.test(l));
+        const hits = source.split("\n").map((line, index) => ({ line, index }))
+          .filter(({ line }) => flags.has("v") ? !re.test(line) : re.test(line))
+          .map(({ line, index }) => flags.has("n") ? `${index + 1}:${line}` : line);
         print(hits.join("\n") || "");
         t.flags.add("grep");
         if (/echo/i.test(pat)) t.flags.add("grep-echo");
@@ -882,23 +829,37 @@ DESCRIPTION
         break;
       }
       case "ping": {
-        const target = pos[0];
+        const target = pos.find((value) => !/^\d+$/.test(value));
         if (!target) {
           print("ping: missing host", "err");
           break;
         }
-        const h = findHost(t, target) || { ip: target, hostname: target };
-        print(`PING ${h.hostname || target} (${h.ip || target}): 56 data bytes`);
-        print(`64 bytes from ${h.ip || target}: icmp_seq=1 ttl=64 time=0.4 ms`);
-        print(`64 bytes from ${h.ip || target}: icmp_seq=2 ttl=64 time=0.3 ms`);
-        print(`--- ${target} ping statistics ---`);
-        print(`2 packets transmitted, 2 received, 0% packet loss`);
-        t.flags.add("ping");
-        if (String(target).includes("10.10.10")) t.flags.add("ping-lab");
+        const countMatch = input.match(/(?:^|\s)-c\s*(\d+)|(?:^|\s)-c(\d+)/);
+        const count = Math.min(4, Math.max(1, Number(countMatch?.[1] || countMatch?.[2] || 2)));
+        const host = findHost(t, target);
+        const isLocal = ["localhost", "127.0.0.1", t.net.ip, t.host].includes(target);
+        const address = host?.ip || (isLocal ? (target === "localhost" || target === t.host ? "127.0.0.1" : target) : target);
+        print(`PING ${host?.hostname || target} (${address}): 56(84) bytes of data.`);
+        if (host || isLocal) {
+          for (let index = 1; index <= count; index += 1) {
+            print(`64 bytes from ${address}: icmp_seq=${index} ttl=64 time=${index === 1 ? "0.4" : "0.3"} ms`);
+          }
+          print(`--- ${target} ping statistics ---`);
+          print(`${count} packets transmitted, ${count} received, 0% packet loss`);
+          t.flags.add("ping");
+          if (String(target).includes("10.10.10")) t.flags.add("ping-lab");
+        } else {
+          print(`--- ${target} ping statistics ---`);
+          print(`${count} packets transmitted, 0 received, 100% packet loss`);
+          t.lastExit = 1;
+        }
         break;
       }
-      case "ifconfig":
-      case "ip": {
+      case "ifconfig": {
+        if (pos[0] === "eth0" && pos[1] && /^\d+\.\d+\.\d+\.\d+$/.test(pos[1])) {
+          t.net.ip = pos[1];
+          t.flags.add("ip-set");
+        }
         print(`eth0: flags=${t.net.up ? "4163<UP,BROADCAST,RUNNING>" : "4098<BROADCAST,MULTICAST>"} mtu 1500
         inet ${t.net.ip}  netmask ${t.net.mask}  broadcast ${t.net.bcast}
         inet6 fe80::a00:27ff:fe12:3456  prefixlen 64
@@ -906,10 +867,35 @@ DESCRIPTION
 lo: flags=73<UP,LOOPBACK,RUNNING> mtu 65536
         inet 127.0.0.1  netmask 255.0.0.0`);
         t.flags.add("ip");
-        if (/\d+\.\d+\.\d+\.\d+/.test(pos[0] || "") && /eth0/.test(input)) {
-          t.net.ip = pos.find((p) => /^\d+\.\d+\.\d+\.\d+$/.test(p)) || t.net.ip;
-          t.flags.add("ip-set");
+        break;
+      }
+      case "ip": {
+        const action = (pos[0] || "address").toLowerCase();
+        if ((action === "address" || action === "addr" || action === "a") && rest.includes("add")) {
+          const address = pos.find((value) => /^\d+\.\d+\.\d+\.\d+(?:\/\d+)?$/.test(value));
+          if (address && (rest.includes("dev") || pos.includes("eth0"))) {
+            t.net.ip = address.split("/")[0];
+            t.flags.add("ip-set");
+            print(`Added ${address} to eth0 (simulated).`);
+          } else print("ip: usage: ip addr add ADDRESS dev eth0", "err");
+        } else if (action === "link" && rest.includes("set")) {
+          if (rest.includes("down")) t.net.up = false;
+          if (rest.includes("up")) t.net.up = true;
+          const macIndex = rest.indexOf("address");
+          if (macIndex >= 0 && rest[macIndex + 1]) t.net.mac = rest[macIndex + 1];
+          print(`2: eth0: <BROADCAST,MULTICAST${t.net.up ? ",UP,LOWER_UP" : ""}> mtu 1500 link/ether ${t.net.mac}`);
+        } else if (action === "link") {
+          print(`1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 state UNKNOWN\n2: eth0: <BROADCAST,MULTICAST${t.net.up ? ",UP,LOWER_UP" : ""}> mtu 1500 state ${t.net.up ? "UP" : "DOWN"} link/ether ${t.net.mac}`);
+        } else if (action === "route" || action === "r") {
+          print(`default via ${t.net.ip.replace(/\.\d+$/, ".1")} dev eth0 proto dhcp metric 100\n10.10.10.0/24 dev eth0 proto kernel scope link src ${t.net.ip}`);
+        } else if (action === "neigh") {
+          print(`10.10.10.1 dev eth0 lladdr 08:00:27:aa:bb:01 REACHABLE\n10.10.10.8 dev eth0 lladdr 08:00:27:aa:bb:08 STALE`);
+        } else if (action === "address" || action === "addr" || action === "a") {
+          print(`1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 state UNKNOWN\n    inet 127.0.0.1/8 scope host lo\n2: eth0: <BROADCAST,MULTICAST${t.net.up ? ",UP,LOWER_UP" : ""}> mtu 1500 state ${t.net.up ? "UP" : "DOWN"} qdisc fq_codel state ${t.net.up ? "UP" : "DOWN"}\n    link/ether ${t.net.mac} brd ff:ff:ff:ff:ff:ff\n    inet ${t.net.ip}/24 brd ${t.net.bcast} scope global eth0\n    inet6 fe80::a00:27ff:fe12:3456/64 scope link`);
+        } else {
+          print("Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\nObjects: link, address, route, neigh", "err");
         }
+        t.flags.add("ip");
         break;
       }
       case "nmap": {
@@ -1098,7 +1084,25 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
           }
           break;
         }
-        print("sudo: a simulated password is not required in this lab. Try `sudo -l`.", "err");
+        const privilegedCommands = new Set([
+          "apt", "apt-get", "apt-cache", "chown", "chgrp", "chmod", "mount", "umount",
+          "systemctl", "service", "useradd", "usermod", "groupadd", "passwd", "rm", "cp", "mv", "ln",
+        ]);
+        if (rest[0] && privilegedCommands.has(rest[0])) {
+          const previousUser = t.user;
+          const previousEnvUser = t.env.USER;
+          const previousRoot = t.isRoot;
+          t.user = "root";
+          t.env.USER = "root";
+          t.isRoot = true;
+          const result = runCommand(t, rest.join(" "), { capture: true, stdin });
+          t.user = previousUser;
+          t.env.USER = previousEnvUser;
+          t.isRoot = previousRoot;
+          result.filter((line) => line.kind !== "in").forEach((line) => out.push(line));
+          break;
+        }
+        print("sudo: command is not permitted by this lab's simulated sudo policy. Try `sudo -l`.", "err");
         break;
       }
       case "chmod":
@@ -1184,10 +1188,13 @@ Table: users
         break;
       }
       default:
-        unknown();
-        return out;
+        if (!runSharedLinuxCommand(t, context)) {
+          unknown();
+          return out;
+        }
+        break;
     }
-    t.lastExit = out.some((l) => l.kind === "err") ? 1 : 0;
+    if (out.some((l) => l.kind === "err")) t.lastExit = 1;
   } catch (e) {
     print(String(e), "err");
     t.lastExit = 1;

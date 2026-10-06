@@ -602,6 +602,14 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     caution: both("Never enable macros in untrusted documents on a production workstation.", "Μην ενεργοποιείς macros σε μη έμπιστα έγγραφα production workstation."),
   },
   {
+    key: "rot13", aliases: ["rot13"], title: both("Transform text with ROT13", "Μετασχηματισμός κειμένου με ROT13"),
+    purpose: both("Decode an inert training marker by rotating each Latin letter by thirteen places.", "Αποκωδικοποίησε ένα αδρανές training marker μετακινώντας κάθε λατινικό γράμμα κατά δεκατρείς θέσεις."),
+    mechanics: both("ROT13 maps A to N, B to O, and so on, wrapping at the end of the alphabet. Applying it a second time restores the original text; it is an encoding, not encryption.", "Το ROT13 αντιστοιχίζει A σε N, B σε O κ.ο.κ., συνεχίζοντας από την αρχή του αλφαβήτου. Δεύτερη εφαρμογή επαναφέρει το αρχικό κείμενο· είναι κωδικοποίηση, όχι κρυπτογράφηση."),
+    output: both("The decoded string is a clue in this static-analysis exercise. It is harmless text and must not be treated as executable code.", "Το αποκωδικοποιημένο κείμενο είναι ένδειξη στην άσκηση static analysis. Είναι ακίνδυνο κείμενο, όχι κώδικας προς εκτέλεση."),
+    syntax: "rot13 TEXT", example: "rot13 Synt{fgngvp_nanlyfvf}",
+    caution: both("ROT13 provides no confidentiality or integrity; anyone can reverse it immediately.", "Το ROT13 δεν προσφέρει εμπιστευτικότητα ή ακεραιότητα· αντιστρέφεται αμέσως."),
+  },
+  {
     key: "zsteg", aliases: ["zsteg", "steghide"], title: both("Triage possible steganography", "Triage πιθανής steganography"),
     purpose: both("Check a supplied image fixture for a known training marker.", "Έλεγξε image fixture για γνωστό training marker."),
     mechanics: both("Steganography tools inspect format-specific channels such as PNG least-significant bits. A suspicious extraction should be preserved and validated independently.", "Εργαλεία steganography ελέγχουν format-specific κανάλια όπως PNG LSB. Ύποπτη εξαγωγή διατηρείται και επικυρώνεται."),
@@ -938,6 +946,7 @@ export function commandLessonForLabel(label: string): CommandLesson | undefined 
   if (/^\s*\d+\s+\d+\s+\*/.test(text)) return commandLessonForName("crontab");
   if (/\b(get|bye|anonymous)\b/.test(text)) return commandLessonForName("ftp");
   if (/&/.test(text) && /cmd|background|nano/.test(text)) return commandLessonForName("jobs");
+  if (/^[a-z_][a-z0-9_]*\s*=/.test(text.trim())) return commandLessonForName("env");
   if (/^\s*histsize\s*=/.test(text)) return commandLessonForName("env");
   if (/rot13|decode/.test(text)) return commandLessonForName("rot13");
   if (/tab/.test(text)) return commandLessonForName("tab");

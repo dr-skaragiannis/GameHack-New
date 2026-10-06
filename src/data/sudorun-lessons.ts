@@ -373,7 +373,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         id: "cat",
         instruction: { en: "cat hackforge.txt", el: "cat hackforge.txt" },
-        hint: { en: "cd /root first if needed", el: "cd /root αν χρειαστεί" },
+        hint: { en: "cat /root/hackforge.txt", el: "cat /root/hackforge.txt" },
         explain: { en: "cat concatenates to stdout.", el: "cat στην έξοδο." },
         check: (t) => t.flags.has("cat-hf") || usedCmd(t, /cat\s+.*hackforge\.txt/),
       },
@@ -523,7 +523,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         id: "sed",
         instruction: { en: "sed s/WWW/www/g hackforge.in", el: "sed s/WWW/www/g hackforge.in" },
-        hint: { en: "cd /root ; sed s/WWW/www/g hackforge.in", el: "sed s/WWW/www/g hackforge.in" },
+        hint: { en: "sed s/WWW/www/g /root/hackforge.in", el: "sed s/WWW/www/g /root/hackforge.in" },
         explain: { en: "/g = replace every occurrence.", el: "/g = όλες τις εμφανίσεις." },
         check: (t) => t.flags.has("sed-www") || usedCmd(t, /sed\s+s\/WWW\/www/),
       },

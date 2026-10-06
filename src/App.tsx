@@ -167,7 +167,7 @@ export default function App() {
     }
   };
 
-  const markTaskDone = (moduleId: string, taskId: string) => {
+  const markTaskDone = (moduleId: string, taskId: string, hintUsed = false) => {
     const u = db.userById(user.id)!;
     const mp = u.progress[moduleId] || { completed: false, done: [] };
     if (mp.done.includes(taskId)) return;
@@ -175,8 +175,14 @@ export default function App() {
     db.updateUser(user.id, {
       progress: { ...u.progress, [moduleId]: { ...mp, done: [...mp.done, taskId] } },
     });
-    const { gained, leveledUp } = db.awardXp(user.id, 5);
-    db.pushFeed(db.userById(user.id)!, "task", `${u.displayName} solved an objective (+${gained} XP)`);
+    const objective = moduleById(moduleId)?.tasks.find((task) => task.id === taskId);
+    const baseReward = objective?.reward ?? 5;
+    const hintPenalty = hintUsed && objective ? Math.min(db.HINT_XP_PENALTY, baseReward) : 0;
+    const { gained, leveledUp } = db.awardXp(user.id, Math.max(0, baseReward - hintPenalty));
+    const rewardNote = hintPenalty > 0
+      ? `(+${gained} XP after -${hintPenalty} XP hint penalty)`
+      : `(+${gained} XP)`;
+    db.pushFeed(db.userById(user.id)!, "task", `${u.displayName} solved an objective ${rewardNote}`);
     if (leveledUp) {
       db.pushFeed(db.userById(user.id)!, "levelup", `${u.displayName} reached a new level!`);
       setTimeout(() => sound.levelUp(), 700);
@@ -415,7 +421,7 @@ export default function App() {
                 db.updateUser(user.id, { contentWidth: w });
                 refresh();
               }}
-              onTask={(taskId) => markTaskDone(active.id, taskId)}
+              onTask={(taskId, hintUsed) => markTaskDone(active.id, taskId, hintUsed)}
               onCommandMetric={(pasted, typo) => {
                 db.recordCommand(user.id, { pasted, typo });
               }}

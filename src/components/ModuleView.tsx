@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { Module } from "../data/lessons";
+import type { Module, Task } from "../data/lessons";
 import { bi, t, type Lang } from "../i18n";
 import {
   createTerminal,
@@ -14,17 +14,122 @@ import { dfirFS } from "../lib/dfir";
 import TerminalView from "./TerminalView";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
-import { contentWidthClass, type ContentWidth } from "../lib/db";
+import { contentWidthClass, HINT_XP_PENALTY, type ContentWidth } from "../lib/db";
 import WidthControl from "./WidthControl";
 import { sound } from "../lib/sound";
 import {
+  commandLessonForLabel,
   explainCommandResult,
   relevantCommandFamiliesForModule,
+  studyItemsForModule,
   type CommandExplanation,
 } from "../data/commandGuide";
+import { findLinuxCommand } from "../lib/linuxCommandCatalog";
 import CommandStudyGuide from "./CommandStudyGuide";
 import CommandResultPopup from "./CommandResultPopup";
 import DfirVisual from "./DfirVisual";
+
+type StudyItem = ReturnType<typeof studyItemsForModule>[number];
+
+function firstCommandName(command: string): string {
+  const token = command.trim().split(/\s+/, 1)[0] || "";
+  if (token.startsWith("./")) return "bash";
+  if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(token)) return "env";
+  return token.split("/").pop()?.toLowerCase() || token.toLowerCase();
+}
+
+function theoryItemsForModule(module: Module): StudyItem[] {
+  const items = studyItemsForModule(module);
+  const covered = new Set(items.map((item) => firstCommandName(item.cmd)));
+  const additions: StudyItem[] = [];
+
+  for (const task of module.tasks) {
+    for (const rawCommand of task.hint.en.split(/\r?\n/)) {
+      const command = rawCommand.trim();
+      if (!command) continue;
+      const name = firstCommandName(command);
+      if (covered.has(name)) continue;
+      const guide = commandLessonForLabel(command);
+      const catalog = findLinuxCommand(name);
+      if (!guide && !catalog) continue;
+      const desc = guide?.purpose || {
+        en: catalog?.summary || `Practice ${name} in this objective.`,
+        el: catalog ? `${catalog.name}: ${task.instruction.el}` : `${name}: ${task.instruction.el}`,
+      };
+      additions.push({ cmd: command, desc, guide });
+      covered.add(name);
+    }
+  }
+
+  return [...items, ...additions];
+}
+
+function taskLearningSources(task: Task) {
+  const lines = task.hint.en.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const lesson = lines.map(commandLessonForLabel).find((item) => item !== undefined)
+    || commandLessonForLabel(task.instruction.en);
+  const catalog = lines.map((line) => findLinuxCommand(firstCommandName(line))).find((item) => item !== undefined);
+  return { lesson, catalog };
+}
+
+function taskObjectiveContext(task: Task, lang: Lang): string {
+  const { lesson, catalog } = taskLearningSources(task);
+  if (lesson) {
+    return `${lesson.purpose[lang]} ${lesson.mechanics[lang].split(/(?<=[.!?])\s+/, 1)[0]}`;
+  }
+  if (catalog) {
+    return lang === "en"
+      ? `${catalog.summary} Syntax: ${catalog.synopsis}.`
+      : `${catalog.name}: ${bi(task.instruction, lang)} Η σύνταξη ${catalog.synopsis} δείχνει τη σειρά των ορισμάτων.`;
+  }
+  return lang === "en"
+    ? "Practice the command shown above, then inspect its output as evidence before continuing."
+    : "Εξασκήσου στην εντολή που εμφανίζεται και έλεγξε την έξοδό της ως τεκμήριο πριν συνεχίσεις.";
+}
+
+function taskWhyHow(task: Task, lang: Lang): string[] {
+  const { lesson, catalog } = taskLearningSources(task);
+  const details = [bi(task.explain, lang)];
+  if (lesson) {
+    details.push(lesson.mechanics[lang], lesson.output[lang]);
+  } else if (catalog) {
+    details.push(lang === "en" ? catalog.summary : `${catalog.name}: ${bi(task.instruction, lang)}`);
+    details.push(lang === "en"
+      ? `Use ${catalog.synopsis} to structure the arguments; compare the output with the objective.`
+      : `Η σύνταξη ${catalog.synopsis} οργανώνει τα ορίσματα· σύγκρινε την έξοδο με τον στόχο.`);
+  } else {
+    details.push(taskObjectiveContext(task, lang));
+    details.push(lang === "en"
+      ? "The lab uses virtual evidence, so results stay inside this safe simulation."
+      : "Το εργαστήριο χρησιμοποιεί εικονικά τεκμήρια, οπότε τα αποτελέσματα μένουν στην ασφαλή προσομοίωση.");
+  }
+  return details.filter(Boolean).slice(0, 4);
+}
+
+function commandTheoryParagraphs(item: StudyItem, lang: Lang): string[] {
+  if (item.guide) {
+    return [item.guide.purpose[lang], item.guide.mechanics[lang], item.guide.output[lang]];
+  }
+  const catalog = findLinuxCommand(firstCommandName(item.cmd));
+  if (catalog) {
+    return lang === "en"
+      ? [catalog.summary, `Syntax: ${catalog.synopsis}.`, `Example: ${catalog.example}.`]
+      : [
+          bi(item.desc, lang),
+          `Η εντολή ${catalog.name} λειτουργεί με τη σύνταξη ${catalog.synopsis}.`,
+          `Παράδειγμα: ${catalog.example}. Έλεγξε αν η έξοδος ταιριάζει με τον στόχο του εργαστηρίου.`,
+        ];
+  }
+  return [
+    bi(item.desc, lang),
+    lang === "en"
+      ? "Use this shell shortcut to complete or inspect the current input; it does not run a command by itself."
+      : "Χρησιμοποίησε αυτή τη συντόμευση του shell για συμπλήρωση ή έλεγχο της εισόδου· δεν εκτελεί μόνη της εντολή.",
+    lang === "en"
+      ? "Confirm the resulting command or candidate path before pressing Enter."
+      : "Έλεγξε την εντολή ή τη διαδρομή που προέκυψε πριν πατήσεις Enter.",
+  ];
+}
 
 export default function ModuleView({
   module,
@@ -47,13 +152,14 @@ export default function ModuleView({
   done: string[];
   contentWidth?: ContentWidth;
   onWidth: (w: ContentWidth) => void;
-  onTask: (taskId: string) => void;
+  onTask: (taskId: string, hintUsed: boolean) => void;
   onCommandMetric: (pasted: boolean, typo: boolean) => void;
   onHint: () => void;
   onComplete: () => void;
   onBack: () => void;
 }) {
   const [tab, setTab] = useState<"theory" | "guide" | "lab">(initialTab || (done.length ? "lab" : "theory"));
+  const theoryCommands = useMemo(() => theoryItemsForModule(module), [module]);
   const [term, setTerm] = useState<Terminal>(() =>
     createTerminal({
       fs: module.labFS
@@ -72,7 +178,15 @@ export default function ModuleView({
       scenario: module.scenario || "lab",
     })
   );
-  const [hints, setHints] = useState<Record<string, boolean>>({});
+  const hintStorageKey = `hackforge.hints.v1:${userId}:${module.id}`;
+  const [hints, setHints] = useState<Record<string, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem(hintStorageKey);
+      return stored ? JSON.parse(stored) as Record<string, boolean> : {};
+    } catch {
+      return {};
+    }
+  });
   const [explain, setExplain] = useState<string | null>(null);
   const [finished, setFinished] = useState(false);
   const [commandResult, setCommandResult] = useState<CommandExplanation | null>(null);
@@ -102,20 +216,32 @@ export default function ModuleView({
   const defaultContentWidth: ContentWidth = tab === "theory" ? "wide" : "full";
   const activeContentWidth = contentWidth ?? defaultContentWidth;
 
+  const revealHint = (taskId: string) => {
+    if (hints[taskId]) return;
+    const nextHints = { ...hints, [taskId]: true };
+    setHints(nextHints);
+    try {
+      localStorage.setItem(hintStorageKey, JSON.stringify(nextHints));
+    } catch {
+      // The hint remains available for this mounted lab if storage is unavailable.
+    }
+    onHint();
+  };
+
   const applyChecks = (t0: Terminal) => {
     for (const task of module.tasks) {
       if (!done.includes(task.id) && task.check(t0)) {
-        onTask(task.id);
+        onTask(task.id, Boolean(hints[task.id]));
         sound.taskDone();
       }
     }
     if (allTasks || module.tasks.every((x) => done.includes(x.id) || x.check(t0))) {
       if (!done.includes("ch-0") && module.challenges[0].check(t0)) {
-        onTask("ch-0");
+        onTask("ch-0", false);
         sound.challengeDone();
       }
       if (!done.includes("ch-1") && module.challenges[1].check(t0)) {
-        onTask("ch-1");
+        onTask("ch-1", false);
         sound.challengeDone();
       }
     }
@@ -207,6 +333,43 @@ export default function ModuleView({
                 {s.visual && <DfirVisual visual={s.visual} lang={lang} />}
               </section>
             ))}
+            {theoryCommands.length > 0 && (
+              <section className="glass rounded-2xl border border-forge-border p-5">
+                <header className="mb-4">
+                  <h2 className="text-xl font-semibold text-zinc-100">{t("commandDeepDives", lang)}</h2>
+                  <p className="mt-2 text-sm text-zinc-400 leading-relaxed">{t("commandDeepDivesDescription", lang)}</p>
+                </header>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {theoryCommands.map((item, index) => (
+                    <article key={`${item.cmd}-${index}`} className="rounded-xl border border-forge-border bg-black/20 p-4">
+                      <div className="flex items-start gap-3">
+                        <span className="font-mono text-sm text-ember-400">{String(index + 1).padStart(2, "0")}</span>
+                        <div className="min-w-0">
+                          <h3 className="text-base font-semibold text-zinc-100">
+                            {item.guide?.title[lang] || bi(item.desc, lang)}
+                          </h3>
+                          <code className="mt-1 block whitespace-pre-wrap break-words text-sm text-amber-200">{item.cmd}</code>
+                        </div>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {commandTheoryParagraphs(item, lang).map((paragraph, paragraphIndex) => (
+                          <p key={paragraphIndex} className="text-sm text-zinc-300 leading-relaxed">{paragraph}</p>
+                        ))}
+                      </div>
+                      {item.guide?.syntax && (
+                        <div className="mt-3 rounded-lg border border-forge-border bg-black/40 p-3">
+                          <div className="text-sm text-iron-400">{t("commandSyntax", lang)}</div>
+                          <code className="mt-1 block whitespace-pre-wrap break-words text-sm text-zinc-200">{item.guide.syntax}</code>
+                        </div>
+                      )}
+                      {item.guide?.caution && (
+                        <p className="mt-3 text-sm text-amber-200/90 leading-relaxed">{item.guide.caution[lang]}</p>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -289,28 +452,48 @@ export default function ModuleView({
                             <div className={ok ? "text-zinc-500 line-through" : "text-zinc-200"}>
                               {idx + 1}. {bi(task.instruction, lang)}
                             </div>
-                            <div className="flex gap-2 mt-1">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setHints((h) => ({ ...h, [task.id]: true }));
-                                  onHint();
-                                }}
-                                className="text-sm text-ember-400 hover:underline"
-                              >
-                                {t("showHint", lang)}
-                              </button>
+                            <p className="mt-1 text-sm text-zinc-400 leading-5 line-clamp-3">
+                              {taskObjectiveContext(task, lang)}
+                            </p>
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                              {!ok && (
+                                <button
+                                  type="button"
+                                  onClick={() => revealHint(task.id)}
+                                  disabled={hints[task.id]}
+                                  className="text-sm text-ember-400 hover:underline disabled:cursor-default disabled:text-amber-300"
+                                >
+                                  {hints[task.id]
+                                    ? t("hintRevealed", lang)
+                                    : t("showExactHint", lang).replace("{xp}", String(HINT_XP_PENALTY))}
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => setExplain(explain === task.id ? null : task.id)}
+                                aria-expanded={explain === task.id}
+                                aria-controls={`why-${module.id}-${task.id}`}
                                 className="text-sm text-neon-cyan hover:underline"
                               >
                                 {t("whyHow", lang)}
                               </button>
                             </div>
-                            {hints[task.id] && <div className="mt-1 font-mono text-sm text-amber-300">{bi(task.hint, lang)}</div>}
+                            {hints[task.id] && (
+                              <div className="mt-2 rounded-lg border border-amber-400/25 bg-amber-400/5 p-3" role="status">
+                                <p className="text-sm text-amber-200 leading-relaxed">
+                                  {t("hintPenaltyApplied", lang).replace("{xp}", String(HINT_XP_PENALTY))}
+                                </p>
+                                <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-amber-100">
+                                  {task.hint.en.trim()}
+                                </pre>
+                              </div>
+                            )}
                             {explain === task.id && (
-                              <div className="mt-1 text-sm text-zinc-400 leading-relaxed">{bi(task.explain, lang)}</div>
+                              <div id={`why-${module.id}-${task.id}`} className="mt-2 space-y-2 border-l-2 border-neon-cyan/30 pl-3 text-sm text-zinc-300 leading-relaxed">
+                                {taskWhyHow(task, lang).map((paragraph, paragraphIndex) => (
+                                  <p key={paragraphIndex}>{paragraph}</p>
+                                ))}
+                              </div>
                             )}
                           </div>
                         </div>
@@ -345,19 +528,6 @@ export default function ModuleView({
                 )}
               </div>
 
-              <details className="glass rounded-2xl border border-forge-border p-4">
-                <summary className="text-sm uppercase tracking-widest text-iron-400 cursor-pointer">
-                  {t("cheatsheet", lang)}
-                </summary>
-                <ul className="mt-3 space-y-1 font-mono text-sm">
-                  {module.cheats.map((c) => (
-                    <li key={c.cmd} className="flex justify-between gap-2">
-                      <span className="text-ember-300">{c.cmd}</span>
-                      <span className="text-zinc-500 text-right">{bi(c.desc, lang)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </details>
             </aside>
           </div>
         )}
