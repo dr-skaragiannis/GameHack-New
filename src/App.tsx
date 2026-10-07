@@ -8,6 +8,7 @@ import { sound } from "./lib/sound";
 import { passesQuickQuiz } from "./lib/quizProgress";
 import { cn } from "./utils/cn";
 import AuthScreen from "./components/AuthScreen";
+import HomePage from "./components/HomePage";
 import PlayerDashboard from "./components/PlayerDashboard";
 import EducatorDashboard from "./components/EducatorDashboard";
 import InteractiveMap from "./components/InteractiveMap";
@@ -141,11 +142,14 @@ export default function App() {
   const [quizFor, setQuizFor] = useState<string | null>(null);
   const [scoreboardOpen, setScoreboardOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [loggedOutView, setLoggedOutView] = useState<{ name: "home" } | { name: "auth"; mode: "in" | "up" }>({ name: "home" });
+  const [landingLang, setLandingLang] = useState<Lang>("en");
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const nextUserId = user?.id ?? null;
     if (nextUserId && nextUserId !== previousUserId.current) setView("dashboard");
+    if (!nextUserId) setLoggedOutView({ name: "home" });
     previousUserId.current = nextUserId;
   }, [user?.id]);
 
@@ -183,7 +187,25 @@ export default function App() {
   if (!authReady) {
     return <div className="gamehack-grid min-h-screen grid place-items-center text-sm text-iron-300">Checking session…</div>;
   }
-  if (!user) return <AuthScreen />;
+  if (!user) {
+    if (loggedOutView.name === "auth") {
+      return (
+        <AuthScreen
+          initialMode={loggedOutView.mode}
+          initialLang={landingLang}
+          onBack={() => setLoggedOutView({ name: "home" })}
+        />
+      );
+    }
+    return (
+      <HomePage
+        lang={landingLang}
+        onLangChange={setLandingLang}
+        onLogin={() => setLoggedOutView({ name: "auth", mode: "in" })}
+        onRegister={() => setLoggedOutView({ name: "auth", mode: "up" })}
+      />
+    );
+  }
 
   const lang: Lang = user.lang || "en";
   const setLang = (l: Lang) => {

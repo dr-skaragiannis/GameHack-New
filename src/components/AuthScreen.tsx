@@ -15,10 +15,18 @@ function clearAuthQuery() {
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-export default function AuthScreen() {
+export default function AuthScreen({
+  initialMode = "in",
+  initialLang = "en",
+  onBack,
+}: {
+  initialMode?: "in" | "up";
+  initialLang?: Lang;
+  onBack?: () => void;
+}) {
   const { login, loginWithRecoveryKey, register, activate, requestPasswordReset, resetPassword } = useAuth();
-  const [mode, setMode] = useState<AuthMode>("in");
-  const [lang, setLang] = useState<Lang>("en");
+  const [mode, setMode] = useState<AuthMode>(initialMode);
+  const [lang, setLang] = useState<Lang>(initialLang);
   const [identity, setIdentity] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -169,6 +177,16 @@ export default function AuthScreen() {
 
   return (
     <div className="gamehack-grid min-h-full flex items-center justify-center p-4 relative">
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 text-sm font-semibold text-iron-400 hover:text-cyan-400 border border-gamehack-border rounded-lg px-3 py-1.5"
+        >
+          <Icon name="chevron" className="h-4 w-4 rotate-180" />
+          {t("backToHome", lang)}
+        </button>
+      )}
       <button
         type="button"
         onClick={() => setLang(lang === "en" ? "el" : "en")}
