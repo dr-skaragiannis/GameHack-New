@@ -29,7 +29,7 @@ export const DFIR_MODULES: Module[] = [
           "Η ψηφιακή εγκληματολογία εφαρμόζει επαναλήψιμες τεχνικές μεθόδους σε τεκμήρια. Ξεκίνα από ερώτημα και εξουσιοδότηση· διατήρησε την πηγή, επικύρωσε εργαλεία και κατέγραψε κάθε ενέργεια."
         ),
         visual: visual("chain", "Evidence handling sequence", [
-          { label: B("Authority & scope", "Άδεια & scope"), value: B("Case HF-2404", "Υπόθεση HF-2404"), tone: "cool" },
+          { label: B("Authority & scope", "Άδεια & scope"), value: B("Case GH-2404", "Υπόθεση GH-2404"), tone: "cool" },
           { label: B("Acquire", "Απόκτηση"), value: B("Read-only source", "Πηγή read-only"), tone: "muted" },
           { label: B("Hash", "Hash"), value: B("Record digest", "Καταγραφή digest"), tone: "good" },
           { label: B("Working copy", "Αντίγραφο εργασίας"), value: B("Verify match", "Επαλήθευση"), tone: "good" },
@@ -244,7 +244,7 @@ export const DFIR_MODULES: Module[] = [
     subtitle: B("Correlate access, error, and WAF audit logs", "Συσχέτισε access, error και WAF audit logs"),
     badge: B("Log Correlator", "Συσχετιστής Logs"),
     theory: [
-      { heading: B("Access logs record the request", "Τα Access logs καταγράφουν request"), body: B("Apache access logs commonly hold client address, timestamp, request line, response status/size, referrer, and user-agent. Web logs show sequence and endpoint, but POST bodies may be absent. Error logs explain server-side failures. Interpret the timezone and preserve the raw line before parsing.", "Τα Apache access logs συνήθως περιέχουν client address, timestamp, request/status, μέγεθος, referrer και user-agent. Τα POST bodies μπορεί να λείπουν. Τα error logs εξηγούν failures· έλεγξε timezone."), visual: visual("timeline", "HF-2404 web request sequence", [
+      { heading: B("Access logs record the request", "Τα Access logs καταγράφουν request"), body: B("Apache access logs commonly hold client address, timestamp, request line, response status/size, referrer, and user-agent. Web logs show sequence and endpoint, but POST bodies may be absent. Error logs explain server-side failures. Interpret the timezone and preserve the raw line before parsing.", "Τα Apache access logs συνήθως περιέχουν client address, timestamp, request/status, μέγεθος, referrer και user-agent. Τα POST bodies μπορεί να λείπουν. Τα error logs εξηγούν failures· έλεγξε timezone."), visual: visual("timeline", "GH-2404 web request sequence", [
         { label: B("09:14:02", "09:14:02"), value: B("GET /  · 200", "GET / · 200"), tone: "muted" },
         { label: B("09:14:16", "09:14:16"), value: B("Normal image view", "Κανονική προβολή εικόνας"), tone: "good" },
         { label: B("09:15:08", "09:15:08"), value: B("Traversal-shaped URI", "URI τύπου traversal"), tone: "hot" },
@@ -302,7 +302,7 @@ export const DFIR_MODULES: Module[] = [
         { label: B("FTP / SSH", "FTP / SSH"), value: B("21 / 22", "21 / 22"), tone: "hot" },
         { label: B("SMB / RDP", "SMB / RDP"), value: B("445 / 3389", "445 / 3389"), tone: "muted" },
       ]) },
-      { heading: B("A repeatable packet workflow", "Επαναλήψιμη ροή packet analysis"), body: B("Acquire an authorized capture, hash it, record the time range, inspect protocol hierarchy, filter for a protocol or endpoint, review packet details/bytes, follow a TCP stream, and export relevant objects to a separate evidence directory. Never capture third-party traffic without authorization.", "Απόκτησε εξουσιοδοτημένο capture, κάνε hash, κατέγραψε χρονικό εύρος, δες protocol hierarchy, φίλτραρε, έλεγξε packet details/bytes, ακολούθησε TCP stream και εξήγαγε objects σε ξεχωριστό φάκελο. Μην καταγράφεις ξένη κίνηση χωρίς άδεια."), visual: visual("network", "HF-2404 packet evidence pivots", [
+      { heading: B("A repeatable packet workflow", "Επαναλήψιμη ροή packet analysis"), body: B("Acquire an authorized capture, hash it, record the time range, inspect protocol hierarchy, filter for a protocol or endpoint, review packet details/bytes, follow a TCP stream, and export relevant objects to a separate evidence directory. Never capture third-party traffic without authorization.", "Απόκτησε εξουσιοδοτημένο capture, κάνε hash, κατέγραψε χρονικό εύρος, δες protocol hierarchy, φίλτραρε, έλεγξε packet details/bytes, ακολούθησε TCP stream και εξήγαγε objects σε ξεχωριστό φάκελο. Μην καταγράφεις ξένη κίνηση χωρίς άδεια."), visual: visual("network", "GH-2404 packet evidence pivots", [
         { label: B("Client", "Client"), value: B("192.0.2.44", "192.0.2.44"), tone: "cool" },
         { label: B("Web", "Web"), value: B("198.51.100.20:80", "198.51.100.20:80"), tone: "hot" },
         { label: B("FTP", "FTP"), value: B("21/tcp", "21/tcp"), tone: "muted" },
@@ -559,21 +559,21 @@ export const DFIR_MODULES: Module[] = [
       ]) },
     ],
     cheats: [
-      { cmd: "docker diff HF-2404", desc: B("list changed paths", "λίστα αλλαγμένων paths") },
-      { cmd: "docker inspect HF-2404", desc: B("inspect config/state", "config/state") },
-      { cmd: "docker logs HF-2404", desc: B("review container output", "έλεγχος container logs") },
+      { cmd: "docker diff GH-2404", desc: B("list changed paths", "λίστα αλλαγμένων paths") },
+      { cmd: "docker inspect GH-2404", desc: B("inspect config/state", "config/state") },
+      { cmd: "docker logs GH-2404", desc: B("review container output", "έλεγχος container logs") },
       { cmd: "docker history gamehack/web:1.4", desc: B("review image layers", "έλεγχος image layers") },
-      { cmd: "docker export HF-2404", desc: B("simulate filesystem acquisition", "προσομοίωση filesystem acquisition") },
+      { cmd: "docker export GH-2404", desc: B("simulate filesystem acquisition", "προσομοίωση filesystem acquisition") },
       { cmd: "gcore 2112", desc: B("simulate a process-memory acquisition", "προσομοίωση process-memory acquisition") },
       { cmd: "strings /cases/IR-2404/derived/core.2112", desc: B("inspect a derived core fixture", "έλεγχος derived core fixture") },
       { cmd: "strings 09-container/memory-strings.txt", desc: B("inspect container memory strings", "strings μνήμης container") },
     ],
     tasks: [
-      { id: "inspect", instruction: B("Inspect container configuration and runtime state." ,"Έλεγξε container config και runtime state."), hint: B("docker inspect HF-2404", "docker inspect HF-2404"), explain: B("Capture container/image ID, state, user, environment, and network settings before interpreting behavior.", "Κατέγραψε ID, state, user, environment και network settings πριν ερμηνεύσεις."), check: (t) => t.flags.has("dfir-docker-inspect") },
-      { id: "diff", instruction: B("Compare the container's writable filesystem changes." ,"Σύγκρινε αλλαγές writable filesystem."), hint: B("docker diff HF-2404", "docker diff HF-2404"), explain: B("A adds, D deletes, C changes. A diff is relative to image baseline and needs interpretation.", "A προσθέτει, D διαγράφει, C αλλάζει. Το diff συγκρίνει με baseline."), check: (t) => t.flags.has("dfir-docker-diff") },
-      { id: "logs", instruction: B("Read the recorded container logs." ,"Διάβασε καταγεγραμμένα container logs."), hint: B("docker logs HF-2404", "docker logs HF-2404"), explain: B("Logs can reveal commands or service activity but may be incomplete or rotated.", "Logs δείχνουν εντολές/υπηρεσίες αλλά μπορεί να είναι ελλιπή ή rotated."), check: (t) => t.flags.has("dfir-docker-logs") },
+      { id: "inspect", instruction: B("Inspect container configuration and runtime state." ,"Έλεγξε container config και runtime state."), hint: B("docker inspect GH-2404", "docker inspect GH-2404"), explain: B("Capture container/image ID, state, user, environment, and network settings before interpreting behavior.", "Κατέγραψε ID, state, user, environment και network settings πριν ερμηνεύσεις."), check: (t) => t.flags.has("dfir-docker-inspect") },
+      { id: "diff", instruction: B("Compare the container's writable filesystem changes." ,"Σύγκρινε αλλαγές writable filesystem."), hint: B("docker diff GH-2404", "docker diff GH-2404"), explain: B("A adds, D deletes, C changes. A diff is relative to image baseline and needs interpretation.", "A προσθέτει, D διαγράφει, C αλλάζει. Το diff συγκρίνει με baseline."), check: (t) => t.flags.has("dfir-docker-diff") },
+      { id: "logs", instruction: B("Read the recorded container logs." ,"Διάβασε καταγεγραμμένα container logs."), hint: B("docker logs GH-2404", "docker logs GH-2404"), explain: B("Logs can reveal commands or service activity but may be incomplete or rotated.", "Logs δείχνουν εντολές/υπηρεσίες αλλά μπορεί να είναι ελλιπή ή rotated."), check: (t) => t.flags.has("dfir-docker-logs") },
       { id: "history", instruction: B("Review image history for a secret added and later removed." ,"Έλεγξε image history για secret που προστέθηκε και μετά αφαιρέθηκε."), hint: B("docker history gamehack/web:1.4", "docker history gamehack/web:1.4"), explain: B("Layered images can retain sensitive data even after a later delete instruction.", "Layered images κρατούν ευαίσθητα δεδομένα παρά μεταγενέστερο delete."), check: (t) => t.flags.has("dfir-docker-history") },
-      { id: "export", instruction: B("Create a simulated filesystem-export derivative; note it omits image history.", "Δημιούργησε simulated filesystem export και σημείωσε ότι λείπει image history."), hint: B("docker export HF-2404", "docker export HF-2404"), explain: B("A container filesystem export and an image-layer archive preserve different evidence.", "Filesystem export και image-layer archive διατηρούν διαφορετικά τεκμήρια."), check: (t) => t.flags.has("dfir-docker-export") },
+      { id: "export", instruction: B("Create a simulated filesystem-export derivative; note it omits image history.", "Δημιούργησε simulated filesystem export και σημείωσε ότι λείπει image history."), hint: B("docker export GH-2404", "docker export GH-2404"), explain: B("A container filesystem export and an image-layer archive preserve different evidence.", "Filesystem export και image-layer archive διατηρούν διαφορετικά τεκμήρια."), check: (t) => t.flags.has("dfir-docker-export") },
       { id: "gcore", instruction: B("Simulate acquiring a process core, then inspect the derived core strings.", "Προσομοίωσε core acquisition και μετά έλεγξε τα strings."), hint: B("gcore 2112\nstrings /cases/IR-2404/derived/core.2112", "gcore 2112\nstrings /cases/IR-2404/derived/core.2112"), explain: B("A process core is a derivative volatile capture; this simulator creates a text fixture, not a real dump.", "Process core είναι παράγωγο volatile capture· εδώ δημιουργείται text fixture, όχι πραγματικό dump."), check: (t) => t.flags.has("dfir-gcore") && t.filesRead.some((path) => path.endsWith("core.2112")) },
       { id: "memory-strings", instruction: B("Inspect the memory-strings fixture and distinguish it from image history.", "Έλεγξε memory-strings fixture και ξεχώρισέ το από image history."), hint: B("strings /cases/IR-2404/evidence/09-container/memory-strings.txt", "strings .../memory-strings.txt"), explain: B("Memory strings are volatile runtime evidence; image history is build-time evidence.", "Memory strings είναι runtime evidence· image history είναι build-time evidence."), check: (t) => t.filesRead.some((path) => path.endsWith("memory-strings.txt")) },
     ],

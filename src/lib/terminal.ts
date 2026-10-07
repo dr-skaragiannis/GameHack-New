@@ -897,7 +897,7 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
         if (p.includes("/etc/hosts")) t.flags.add("read-hosts");
         if (p.includes("sshd_config")) t.flags.add("read-sshd");
         if (p.includes("crontab")) t.flags.add("read-cron");
-        if (/gamehack\.txt/.test(p)) t.flags.add("cat-hf");
+        if (/gamehack\.txt/.test(p)) t.flags.add("cat-gamehack");
         if (/etter\.dns/.test(p)) t.flags.add("etter");
         if (/simple_bash/.test(p)) t.flags.add("cat-bash");
         if (/sources\.list/.test(p)) t.flags.add("read-sources");
@@ -962,7 +962,7 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
         print(hits.join("\n") || "");
         t.flags.add("find");
         if (hits.some((h) => h.includes(".secret") || h.includes("flag") || h.includes("id_rsa"))) t.flags.add("find-secret");
-        if (hits.some((h) => /gamehack$/i.test(h) || h.endsWith("/gamehack"))) t.flags.add("find-hf");
+        if (hits.some((h) => /gamehack$/i.test(h) || h.endsWith("/gamehack"))) t.flags.add("find-gamehack");
         break;
       }
       case "ping": {
@@ -1348,7 +1348,7 @@ Table: users
             parentNode.children[name] = file(name, "");
           }
           t.flags.add("touch");
-          if (/gamehack-2/.test(operand)) t.flags.add("touch-hf2");
+          if (/gamehack-2/.test(operand)) t.flags.add("touch-gamehack2");
           print(`${existing ? "Updated" : "Created"} virtual file: ${operand}`);
         }
         if (failed) t.lastExit = 1;

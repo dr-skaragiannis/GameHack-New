@@ -416,7 +416,7 @@ export default function PlayerConstellation({ user, lang, compact = false }: { u
           )}
 
           <div className="player-constellation__stage-coordinates" aria-hidden="true">
-            <span>HF-NET / 01</span><span>{new Date(now).toLocaleTimeString(lang === "el" ? "el-GR" : "en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
+            <span>GH-NET / 01</span><span>{new Date(now).toLocaleTimeString(lang === "el" ? "el-GR" : "en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
           </div>
         </div>
         <div className="player-constellation__scroll-hint"><Icon name="chevron" className="h-3.5 w-3.5" />{t("constellationScrollHint", lang)}<Icon name="chevron" className="h-3.5 w-3.5" /></div>

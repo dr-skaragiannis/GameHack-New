@@ -18,6 +18,11 @@ const STORAGE_PREFIX = "gamehack.player-terminal.v2:";
 const LEGACY_STORAGE_PREFIX = "gamehack.player-terminal.v1:";
 const PREVIOUS_BRAND_STORAGE_PREFIX = "hackforge.player-terminal.v2:";
 const PREVIOUS_BRAND_LEGACY_PREFIX = "hackforge.player-terminal.v1:";
+const LEGACY_TERMINAL_FLAGS: Record<string, string> = {
+  "cat-hf": "cat-gamehack",
+  "find-hf": "find-gamehack",
+  "touch-hf2": "touch-gamehack2",
+};
 const MAX_SAVED_LINES = 1200;
 const MAX_SAVED_HISTORY = 600;
 const MAX_SAVED_COMMANDS = 1200;
@@ -368,6 +373,9 @@ function replaceLegacyBrand(value: string): string {
     .replace(/HACKFORGE/g, "GameHack")
     .replace(/HackForge/g, "GameHack")
     .replace(/hackforge/g, "gamehack")
+    .replace(/\bHF(?=-\d)/g, "GH")
+    .replace(/\bHF-NET\b/g, "GH-NET")
+    .replace(/\bHF\b/g, "GH")
     .replace(/\bFORGE\b/g, "GAMEHACK")
     .replace(/\bForge\b/g, "GameHack")
     .replace(/\bforge\b/g, "gamehack")
@@ -465,7 +473,13 @@ export function loadPlayerTerminal(userId: string): Terminal {
       shellVars,
       atQueue: atQueue.map((job) => ({ ...job, command: replaceLegacyBrand(job.command) })),
       atPendingTime,
-      flags: new Set(Array.isArray(parsed.flags) ? parsed.flags.filter((value): value is string => typeof value === "string") : []),
+      flags: new Set(
+        Array.isArray(parsed.flags)
+          ? parsed.flags
+              .filter((value): value is string => typeof value === "string")
+              .map((value) => LEGACY_TERMINAL_FLAGS[value] || value)
+          : [],
+      ),
       packages: new Set(Array.isArray(parsed.packages) ? parsed.packages.filter((value): value is string => typeof value === "string") : []),
       history: Array.isArray(parsed.history)
         ? parsed.history.filter((value): value is string => typeof value === "string").map(replaceLegacyBrand).slice(-MAX_SAVED_HISTORY)

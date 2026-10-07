@@ -359,7 +359,7 @@ export default function EducatorDashboard({
           <h1>{t("educator", lang)} <span>{lang === "en" ? "Research" : "Έρευνα"}</span></h1>
           <p>{t("researchSubtitle", lang)}</p>
         </div>
-        <div className="educator-dashboard__hero-mark"><Icon name="chart" className="h-6 w-6" /><span>HF / LAB</span></div>
+        <div className="educator-dashboard__hero-mark"><Icon name="chart" className="h-6 w-6" /><span>GH / LAB</span></div>
       </header>
 
       <div className="educator-dashboard__toolbar">

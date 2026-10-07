@@ -289,7 +289,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         instruction: { en: "find / -type f -name gamehack", el: "find / -type f -name gamehack" },
         hint: { en: "find / -type f -name gamehack", el: "find / -type f -name gamehack" },
         explain: { en: "/ is the tree root. -type f means regular file.", el: "/ = ρίζα. -type f = αρχείο." },
-        check: (t) => t.flags.has("find-hf") || t.flags.has("find") || usedCmd(t, /find\s+\/.*gamehack/),
+        check: (t) => t.flags.has("find-gamehack") || t.flags.has("find") || usedCmd(t, /find\s+\/.*gamehack/),
       },
     ],
     challenges: [
@@ -297,7 +297,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         title: { en: "Silence permission denied", el: "Σίγαση permission denied" },
         brief: { en: 'find / -type f -name gamehack 2>&1 | grep -v "Permission Denied"', el: "find … 2>&1 | grep -v" },
         success: { en: "You redirected stderr and filtered it.", el: "Redirect έκανες στο stderr." },
-        check: (t) => usedCmd(t, /2>&1/) || t.flags.has("find-hf"),
+        check: (t) => usedCmd(t, /2>&1/) || t.flags.has("find-gamehack"),
       },
       {
         title: { en: "Read the marker", el: "Διάβασε τον δείκτη" },
@@ -370,14 +370,14 @@ export const SUDO_RUN_MODULES: Module[] = [
         instruction: { en: "cat gamehack.txt", el: "cat gamehack.txt" },
         hint: { en: "cat /root/gamehack.txt", el: "cat /root/gamehack.txt" },
         explain: { en: "cat concatenates to stdout.", el: "cat στην έξοδο." },
-        check: (t) => t.flags.has("cat-hf") || usedCmd(t, /cat\s+.*gamehack\.txt/),
+        check: (t) => t.flags.has("cat-gamehack") || usedCmd(t, /cat\s+.*gamehack\.txt/),
       },
       {
         id: "touch",
         instruction: { en: "touch gamehack-2.txt", el: "touch gamehack-2.txt" },
         hint: { en: "touch gamehack-2.txt", el: "touch gamehack-2.txt" },
         explain: { en: "Creates an empty file in the current directory.", el: "Κενό αρχείο εδώ." },
-        check: (t) => t.flags.has("touch-hf2") || usedCmd(t, /touch\s+.*gamehack-2/),
+        check: (t) => t.flags.has("touch-gamehack2") || usedCmd(t, /touch\s+.*gamehack-2/),
       },
       {
         id: "mkdir",

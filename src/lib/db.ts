@@ -630,6 +630,7 @@ function migrateLegacyCampaignIds(db: DB): void {
   }
   for (const event of db.feed) {
     if (event.campaignId === "forge") event.campaignId = "gamehack";
+    if (typeof event.text === "string") event.text = event.text.replace(/\bjoined HACKFORGE\b/g, "joined GameHack");
   }
   for (const execution of db.commandLog) {
     if (execution.campaignId === "forge") execution.campaignId = "gamehack";

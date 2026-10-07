@@ -89,7 +89,7 @@ try {
   const packetTeam = reloaded.teams.find((team) => team.name === "Packet Ops");
   assert.ok(packetTeam);
   packetTeam.name = "Packet Forge";
-  reloaded.feed.push({ id: "legacy-path", ts: Date.now(), userId: reloaded.users[0].id, username: "legacy", kind: "module", text: "Legacy path", campaignId: "forge" });
+  reloaded.feed.push({ id: "legacy-path", ts: Date.now(), userId: reloaded.users[0].id, username: "legacy", kind: "module", text: "Ada joined HACKFORGE", campaignId: "forge" });
   db.resetAll();
   values.set("hackforge.platform.v1", JSON.stringify(reloaded));
   const migrated = db.getDB();
@@ -97,6 +97,7 @@ try {
   assert.equal(migrated.users[0].avatar, "ic:terminal:#06b6d4", "the old brand accent should migrate to the cyan palette");
   assert.equal(migrated.commandLog[0].campaignId, "gamehack");
   assert.equal(migrated.feed.at(-1).campaignId, "gamehack");
+  assert.equal(migrated.feed.at(-1).text, "Ada joined GameHack", "legacy platform names should be removed from app-generated feed events");
   assert.ok(migrated.teams.some((team) => team.name === "Packet Ops"), "the legacy demo-team name should be rebranded");
   assert.ok(values.has("gamehack.platform.v1"), "the migrated database should be saved under the GameHack key");
   assert.ok(!values.has("hackforge.platform.v1"), "the legacy storage key should be retired after migration");

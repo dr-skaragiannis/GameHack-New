@@ -653,7 +653,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   },
   {
     key: "tshark", aliases: ["tshark", "tcpdump", "wireshark"], title: both("Analyze an authorized packet capture", "Ανάλυση εξουσιοδοτημένου packet capture"),
-    purpose: both("Summarize, filter, and inspect the fictional HF-2404 network capture.", "Σύνοψε και έλεγξε το φανταστικό capture HF-2404."),
+    purpose: both("Summarize, filter, and inspect the fictional GH-2404 network capture.", "Σύνοψε και έλεγξε το φανταστικό capture GH-2404."),
     mechanics: both("Wireshark/tshark inspect saved PCAP data. Display filters such as http narrow the view but do not alter the capture. Follow-stream reconstructs a conversation; object export creates a derivative file.", "Wireshark/tshark εξετάζουν αποθηκευμένο PCAP. Display filter περιορίζει προβολή, όχι capture. Follow-stream ανασυνθέτει συνομιλία· export δημιουργεί παράγωγο."),
     output: both("Protocol counts, packet fields, stream content, and exported objects each answer different questions. Record frame numbers and source capture.", "Protocol counts, packet fields, stream και exported objects απαντούν διαφορετικά ερωτήματα. Κατέγραψε frame numbers και capture."),
     syntax: "tshark -r CAPTURE -Y FILTER", example: "tshark -r /cases/IR-2404/evidence/05-network/capture.pcapng -Y http",
@@ -693,7 +693,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     purpose: both("Review configuration, runtime changes, logs, and image-layer history.", "Έλεγξε config, runtime changes, logs και image layers."),
     mechanics: both("inspect returns configuration/state; diff shows added/deleted/changed paths; logs show recorded output; history shows image layers; export simulates a filesystem snapshot. No Docker daemon is connected in this lab.", "inspect δείχνει config/state, diff αλλαγές paths, logs output, history layers και export snapshot. Δεν υπάρχει σύνδεση με Docker daemon."),
     output: both("Compare the writable-container diff with the image history. Removed files can remain in earlier immutable layers.", "Σύγκρινε writable diff με image history. Διαγραμμένα αρχεία μπορεί να παραμένουν σε παλιότερα immutable layers."),
-    syntax: "docker inspect|diff|logs|history CONTAINER", example: "docker diff HF-2404",
+    syntax: "docker inspect|diff|logs|history CONTAINER", example: "docker diff GH-2404",
   },
   {
     key: "hash-identifier", aliases: ["hash-identifier"], title: both("Classify a hash candidate", "Ταξινόμηση hash candidate"),
@@ -762,7 +762,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   },
   {
     key: "tshark", aliases: ["tshark", "tcpdump", "wireshark"], title: both("Analyze an authorized packet capture", "Ανάλυση εξουσιοδοτημένου packet capture"),
-    purpose: both("Summarize, filter, and inspect the fictional HF-2404 network capture.", "Σύνοψε και έλεγξε το φανταστικό capture HF-2404."),
+    purpose: both("Summarize, filter, and inspect the fictional GH-2404 network capture.", "Σύνοψε και έλεγξε το φανταστικό capture GH-2404."),
     mechanics: both("Protocol hierarchy gives the overview; display filters narrow a view; packet/frame detail shows one packet; Follow TCP Stream reconstructs one conversation; object export creates derived evidence.", "Protocol hierarchy δίνει επισκόπηση· filters περιορίζουν θέαση· packet detail δείχνει frame· Follow TCP Stream ανασυνθέτει συνομιλία· export δημιουργεί derived evidence."),
     output: both("The simulated capture reports TCP/HTTP/DNS/FTP. Cite frame/stream and retain the original capture hash.", "Το capture αναφέρει TCP/HTTP/DNS/FTP. Ανέφερε frame/stream και διατήρησε hash του original."),
     syntax: "tshark -r CAPTURE -Y FILTER", example: "tshark -r /cases/IR-2404/evidence/05-network/capture.pcapng -Y http",
@@ -923,7 +923,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     purpose: both("Review configuration, runtime changes, logs, image layers, exports, and memory context.", "Έλεγξε config, runtime changes, logs, image layers, exports και memory."),
     mechanics: both("inspect shows config/state; diff reports A/D/C paths; logs show output; history lists image layers; export is a filesystem snapshot without layer history. No Docker daemon is connected.", "inspect δείχνει config/state· diff A/D/C paths· logs output· history layers· export snapshot χωρίς layer history. Δεν υπάρχει Docker daemon."),
     output: both("Compare the writable-container diff with image history. A later deletion does not erase a secret in an earlier immutable layer.", "Σύγκρινε writable diff με image history. Μεταγενέστερη διαγραφή δεν αφαιρεί secret από παλιότερο immutable layer."),
-    syntax: "docker inspect|diff|logs|history|export CONTAINER", example: "docker diff HF-2404",
+    syntax: "docker inspect|diff|logs|history|export CONTAINER", example: "docker diff GH-2404",
   },
   {
     key: "rainbow-demo", aliases: ["rainbow-demo"], title: both("Rainbow-table concept (simulated)", "Έννοια rainbow-table (προσομοίωση)"),
@@ -937,7 +937,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     purpose: both("Review configuration, runtime changes, logs, image layers, export, and memory context.", "Έλεγξε config, runtime changes, logs, image layers, export και memory."),
     mechanics: both("inspect shows config/state; diff reports A/D/C paths; logs show recorded output; history lists build layers; export is a filesystem snapshot and omits image-layer history. No Docker daemon is connected.", "inspect δείχνει config/state· diff A/D/C paths· logs output· history layers· export snapshot χωρίς image history. Δεν υπάρχει Docker daemon."),
     output: both("Compare a container's writable layer with its image history. A later deletion does not erase a secret stored in an earlier immutable layer.", "Σύγκρινε writable layer με image history. Μεταγενέστερη διαγραφή δεν αφαιρεί secret από παλιό immutable layer."),
-    syntax: "docker inspect|diff|logs|history|export CONTAINER", example: "docker diff HF-2404",
+    syntax: "docker inspect|diff|logs|history|export CONTAINER", example: "docker diff GH-2404",
   },
   {
     key: "rainbow-demo", aliases: ["rainbow-demo"], title: both("Rainbow-table concept (simulated)", "Έννοια rainbow-table (προσομοίωση)"),

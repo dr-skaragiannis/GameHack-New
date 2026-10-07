@@ -83,7 +83,7 @@ export default function BadgeModal({
             <strong>{lang === "en" ? "GameHack Learning Lab" : "Εργαστήριο μάθησης GameHack"}</strong>
             <small>{lang === "en" ? "Verified achievement" : "Επιβεβαιωμένο επίτευγμα"}</small>
           </span>
-          <span className="badge-certificate__seal-mark">HF</span>
+          <span className="badge-certificate__seal-mark">GH</span>
         </div>
         <button type="button" onClick={closeWithAnimation} className="badge-certificate__action dashboard-action">
           {t("close", lang)}

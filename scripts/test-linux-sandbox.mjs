@@ -313,6 +313,12 @@ try {
   preCourseRoot.children["learner-note.txt"] = terminal.file("learner-note.txt", "keep this saved player file\n");
   preCourseTerm.activeModuleId = "sr-bash";
   preCourseTerm.flags.add("saved-progress-marker");
+  const legacyCaseNotes = terminal.getNode(preCourseTerm.fs, "/cases/IR-2404/case_notes.md");
+  assert.ok(legacyCaseNotes?.type === "file");
+  legacyCaseNotes.content = legacyCaseNotes.content.replace(/GH-2404/g, "HF-2404");
+  preCourseTerm.flags.add("cat-hf");
+  preCourseTerm.flags.add("find-hf");
+  preCourseTerm.flags.add("touch-hf2");
   const preCourseKey = `hackforge.player-terminal.v2:${encodeURIComponent("upgrade@example.ionio.gr")}`;
   storageValues.set(preCourseKey, JSON.stringify({
     version: 2,
@@ -324,7 +330,11 @@ try {
   assert.ok(terminal.getNode(upgradedPlayer.fs, "/root/linux-beginners-3/scanner"),
     "an existing VFS should receive new missing course fixtures after load");
   assert.equal(terminal.getNode(upgradedPlayer.fs, "/root/learner-note.txt")?.content, "keep this saved player file\n");
+  assert.match(terminal.getNode(upgradedPlayer.fs, "/cases/IR-2404/case_notes.md")?.content || "", /CASE GH-2404/,
+    "legacy fictional case identifiers should migrate in saved player evidence");
   assert.ok(upgradedPlayer.flags.has("saved-progress-marker"));
+  assert.ok(upgradedPlayer.flags.has("cat-gamehack") && upgradedPlayer.flags.has("find-gamehack") && upgradedPlayer.flags.has("touch-gamehack2"),
+    "legacy lesson completion markers should migrate to their current identifiers");
   assert.equal(upgradedPlayer.activeModuleId, "sr-bash");
   assert.ok(storageValues.has(`gamehack.player-terminal.v2:${encodeURIComponent("upgrade@example.ionio.gr")}`),
     "legacy-branded snapshots should migrate to the GameHack storage key");
