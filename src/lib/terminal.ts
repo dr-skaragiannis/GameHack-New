@@ -734,8 +734,16 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
         break;
       }
       case "env":
-      case "printenv":
         print(Object.entries(t.env).map(([k, v]) => `${k}=${v}`).join("\n"));
+        break;
+      case "printenv":
+        if (pos[0]) {
+          const value = t.env[pos[0]] ?? t.shellVars[pos[0]];
+          if (value === undefined) {
+            print(`printenv: ${pos[0]}: No such variable`, "err");
+            t.lastExit = 1;
+          } else print(value);
+        } else print(Object.entries(t.env).map(([k, v]) => `${k}=${v}`).join("\n"));
         break;
       case "history":
         print(t.history.map((c, i) => `  ${i + 1}  ${c}`).join("\n"));
@@ -997,12 +1005,18 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
           t.net.ip = pos[1];
           t.flags.add("ip-set");
         }
-        print(`eth0: flags=${t.net.up ? "4163<UP,BROADCAST,RUNNING>" : "4098<BROADCAST,MULTICAST>"} mtu 1500
+        print(`eth0: flags=${t.net.up ? "4163<UP,BROADCAST,RUNNING,MULTICAST>" : "4098<BROADCAST,MULTICAST>"} mtu 1500
         inet ${t.net.ip}  netmask ${t.net.mask}  broadcast ${t.net.bcast}
         inet6 fe80::a00:27ff:fe12:3456  prefixlen 64
         ether ${t.net.mac}
+        RX packets 4821  bytes 612340 (597.9 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 3910  bytes 488120 (476.6 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 lo: flags=73<UP,LOOPBACK,RUNNING> mtu 65536
-        inet 127.0.0.1  netmask 255.0.0.0`);
+        inet 127.0.0.1  netmask 255.0.0.0
+        RX packets 214  bytes 18760 (18.3 KiB)
+        TX packets 214  bytes 18760 (18.3 KiB)`);
         t.flags.add("ip");
         break;
       }

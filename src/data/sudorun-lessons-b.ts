@@ -194,7 +194,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
           en: "ifconfig shows active interfaces. You should see eth0 (your NIC) and lo (loopback, always 127.0.0.1) with IP, netmask, broadcast, MAC.",
           el: "Η εντολή ifconfig εμφανίζει τις διεπαφές eth0 και lo (127.0.0.1).",
         },
-        shots: [shot("ifconfig", ["eth0: flags=4163<UP,BROADCAST,RUNNING> mtu 1500", "        inet 10.10.10.2  netmask 255.255.255.0  broadcast 10.10.10.255", "        ether 08:00:27:12:34:56", "lo: flags=73<UP,LOOPBACK,RUNNING>", "        inet 127.0.0.1  netmask 255.0.0.0"])],
+        shots: [shot("ifconfig", ["eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST> mtu 1500", "        inet 10.10.10.2  netmask 255.255.255.0  broadcast 10.10.10.255", "        ether 08:00:27:12:34:56", "lo: flags=73<UP,LOOPBACK,RUNNING>", "        inet 127.0.0.1  netmask 255.0.0.0"])],
       },
       {
         heading: { en: "iwconfig", el: "iwconfig" },
@@ -239,9 +239,9 @@ export const SUDO_RUN_MODULES_B: Module[] = [
           el: "Οι εντολές dig gamehack.lab, dig gamehack.lab mx και dig gamehack.lab ns ζητούν εγγραφές A, MX και NS.",
         },
         shots: [
-          shot("dig gamehack.lab", ["gamehack.lab.    300 IN A 10.10.10.8"]),
-          shot("dig gamehack.lab mx", ["gamehack.lab.    300 IN MX 10 mail.gamehack.lab."]),
-          shot("dig gamehack.lab ns", ["gamehack.lab.    300 IN NS ns1.gamehack.lab."]),
+          shot("dig gamehack.lab", [";; ANSWER SECTION:", "gamehack.lab.    300 IN A 10.10.10.8"]),
+          shot("dig gamehack.lab mx", [";; ANSWER SECTION:", "gamehack.lab.    300 IN MX 10 mail.gamehack.lab."]),
+          shot("dig gamehack.lab ns", [";; ANSWER SECTION:", "gamehack.lab.    300 IN NS ns1.gamehack.lab."]),
         ],
       },
       {
@@ -310,8 +310,8 @@ export const SUDO_RUN_MODULES_B: Module[] = [
           el: "Το ps εμφανίζει τις δικές σου διεργασίες. Το ps aux όλες. Το grep φιλτράρει τα αποτελέσματα.",
         },
         shots: [
-          shot("ps", ["  PID TTY          TIME CMD", "    1 pts/0    00:00:00 init"]),
-          shot("ps aux | grep msfconsole", ["root       880 1.2  2.1  msfconsole"]),
+          shot("ps", ["  PID TTY          TIME CMD", " 1 ?        00:00:00 /sbin/init"]),
+          shot("ps aux | grep msfconsole", ["root       880  1.2  2.1   77419 12902 pts/0    S    09:00  0:01 msfconsole"]),
         ],
       },
       {
@@ -352,7 +352,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         },
         shots: [
           shot("nano gamehack.txt &", ["[1] 7100"]),
-          shot("jobs", ["[1]  Running  nano gamehack.txt"]),
+          shot("jobs", ["[1]+ Running nano gamehack.txt &"]),
           shot("at 9:00pm", ["at> (type a command then Ctrl-D in a real shell)", "job 1 at 9:00pm"]),
         ],
       },

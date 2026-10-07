@@ -706,21 +706,41 @@ bound to ${t.net.ip} -- renewal in 1800 seconds.`);
     }
     case "dig": {
       t.flags.add("dig");
-      const target = (pos[0] || "gamehack.lab").replace(/\/$/, "");
-      const rec = (pos[1] || "A").toLowerCase();
+      const reverse = rest.includes("-x");
+      const queryTarget = reverse ? pos[0] || "10.10.10.8" : (pos[0] || "gamehack.lab").replace(/\/$/, "");
+      const rec = reverse ? "ptr" : (pos[1] || "A").toLowerCase();
+      const qname = reverse ? `${queryTarget.split(".").reverse().join(".")}.in-addr.arpa.` : `${queryTarget}.`;
+      const qtype = rec.toUpperCase();
+      let answer: string;
       if (rec === "mx") {
         t.flags.add("dig-mx");
-        print(`;; ANSWER SECTION:
-${target}.    300 IN MX 10 mail.gamehack.lab.`);
+        answer = `${queryTarget}.    300 IN MX 10 mail.gamehack.lab.`;
       } else if (rec === "ns") {
         t.flags.add("dig-ns");
-        print(`;; ANSWER SECTION:
-${target}.    300 IN NS ns1.gamehack.lab.`);
+        answer = `${queryTarget}.    300 IN NS ns1.gamehack.lab.`;
+      } else if (rec === "ptr") {
+        t.flags.add("dig-ptr");
+        const ptrHosts: Record<string, string> = {
+          "10.10.10.1": "gateway.gamehack.lab.",
+          "10.10.10.8": "www.gamehack.lab.",
+          "10.10.10.53": "ns1.gamehack.lab.",
+        };
+        answer = `${qname}    300 IN PTR ${ptrHosts[queryTarget] || "unknown.gamehack.lab."}`;
       } else {
         t.flags.add("dig-a");
-        print(`;; ANSWER SECTION:
-${target}.    300 IN A 10.10.10.8`);
+        answer = `${queryTarget}.    300 IN A 10.10.10.8`;
       }
+      print(
+        `; <<>> DiG (simulated) <<>> ${reverse ? `-x ${queryTarget}` : `${queryTarget} ${qtype}`}\n` +
+          `;; QUESTION SECTION:\n` +
+          `;${qname}\t\t\tIN\t${qtype}\n` +
+          `;; ANSWER SECTION:\n` +
+          `${answer}\n` +
+          `;; Query time: 4 msec\n` +
+          `;; SERVER: 10.10.10.53#53\n` +
+          `;; WHEN: Wed Oct 07 09:00:00 UTC 2026\n` +
+          `;; MSG SIZE  rcvd: 78`,
+      );
       return true;
     }
     case "ps": {
@@ -729,12 +749,25 @@ ${target}.    300 IN A 10.10.10.8`);
       if (all) t.flags.add("ps-aux");
       const rows = t.procs.filter((p) => p.alive);
       if (!all) {
-        print("  PID TTY          TIME CMD\n" + rows.slice(0, 4).map((p) => ` ${p.pid} pts/0    00:00:00 ${p.cmd.split(" ").pop()}`).join("\n"));
+        print("  PID TTY          TIME CMD\n" + rows.slice(0, 4).map((p) => {
+          const bareTty = /init|sshd|cron|mysqld|agent|training|zombie/i.test(p.cmd) ? "?" : "pts/0";
+          return ` ${p.pid} ${bareTty.padEnd(5)}    00:00:00 ${p.cmd.split(" ").pop()}`;
+        }).join("\n"));
       } else {
-        print(
-          "USER       PID %CPU %MEM COMMAND\n" +
-            rows.map((p) => `${p.user.padEnd(8)} ${String(p.pid).padStart(5)} ${p.cpu}  ${p.mem}  ${p.cmd}`).join("\n")
-        );
+        const auxRow = (p: (typeof rows)[number]) => {
+          const zombie = /\[zombie/i.test(p.cmd);
+          const stat = zombie ? "Z" : `S${p.pid === 1 ? "s" : ""}${p.nice > 0 ? "N" : ""}${p.nice < 0 ? "<" : ""}`;
+          const rss = Math.max(512, Math.round(Number.parseFloat(p.mem) * 6144));
+          const vsz = rss * 6 + (p.pid % 97);
+          const tty = /init|sshd|cron|mysqld|agent|training|zombie/i.test(p.cmd) ? "?" : "pts/0";
+          const elapsed = `0:${String(Math.round(Number.parseFloat(p.cpu))).padStart(2, "0")}`;
+          return (
+            `${p.user.padEnd(8)} ${String(p.pid).padStart(5)} ${p.cpu.padStart(4)} ${p.mem.padStart(4)} ` +
+            `${String(vsz).padStart(7)} ${String(rss).padStart(5)} ${tty.padEnd(8)} ${stat.padEnd(4)} ` +
+            `09:00  ${elapsed} ${p.cmd}`
+          );
+        };
+        print("USER       PID %CPU %MEM    VSZ   RSS TTY      STAT  START   TIME COMMAND\n" + rows.map(auxRow).join("\n"));
       }
       return true;
     }
@@ -751,7 +784,13 @@ ${target}.    300 IN A 10.10.10.8`);
           const isZombie = /\[zombie/i.test(process.cmd);
           const state = isZombie ? "Z" : markedRunning ? "S" : "R";
           if (!isZombie && !markedRunning) markedRunning = true;
-          return `${String(process.pid).padStart(5)} ${process.user.padEnd(8)} 20 ${String(process.nice).padStart(2)}  64M   8M   4M ${state} ${String(process.cpu).padStart(4)} ${String(process.mem).padStart(4)} 0:00.08 ${process.cmd}`;
+          const rssKb = Math.max(512, Math.round(Number.parseFloat(process.mem) * 6144));
+          const virtKb = rssKb * 6 + (process.pid % 97);
+          const shrKb = Math.round(rssKb / 3);
+          const memSize = (kb: number) => (kb >= 1024 ? `${Math.round(kb / 1024)}M` : `${kb}K`);
+          const centis = Math.round(Number.parseFloat(process.cpu) * 100) + (process.pid % 50);
+          const elapsedTop = `0:${String(Math.floor(centis / 100) % 60).padStart(2, "0")}.${String(centis % 100).padStart(2, "0")}`;
+          return `${String(process.pid).padStart(5)} ${process.user.padEnd(8)} 20 ${String(process.nice).padStart(2)} ${memSize(virtKb).padStart(5)} ${memSize(rssKb).padStart(4)} ${memSize(shrKb).padStart(3)} ${state} ${String(process.cpu).padStart(4)} ${String(process.mem).padStart(4)} ${elapsedTop} ${process.cmd}`;
         });
       print(
         `top - 09:00:00 up 2 days, 1 user, load average: 0.04, 0.08, 0.09 — GameHack virtual snapshot
@@ -831,18 +870,27 @@ ${target}.    300 IN A 10.10.10.8`);
     }
     case "jobs": {
       t.flags.add("jobs");
-      print(t.jobs.map((j, i) => `[${i + 1}]  Running  ${j.cmd} &`).join("\n") || "No active simulated background jobs.");
+      print(
+        t.jobs
+          .map((j, i) => {
+            const marker = i === t.jobs.length - 1 ? "+" : i === t.jobs.length - 2 ? "-" : " ";
+            return `[${i + 1}]${marker} Running ${j.cmd} &`;
+          })
+          .join("\n") || "No active simulated background jobs.",
+      );
       return true;
     }
     case "fg": {
       t.flags.add("fg");
-      const requestedJob = pos[0] || "%1";
-      const requestedIndex = Number.parseInt(requestedJob.replace(/^%/, ""), 10);
-      const index = Number.isFinite(requestedIndex) && requestedIndex > 0 ? requestedIndex - 1 : t.jobs.length - 1;
+      const spec = pos[0] || "";
+      let index = t.jobs.length - 1;
+      if (/^%\d+$/.test(spec)) index = Number.parseInt(spec.slice(1), 10) - 1;
+      else if (spec === "%-") index = t.jobs.length - 2;
+      else if (spec !== "" && spec !== "%+" && spec !== "%%") index = -1;
       const [job] = index >= 0 ? t.jobs.splice(index, 1) : [];
       print(job
         ? `${job.cmd}\n[foreground job resumed in the simulator; no host process was started]`
-        : `fg: ${requestedJob === "%1" ? "current" : requestedJob}: no such job`);
+        : `fg: ${spec === "" ? "current" : spec}: no such job`);
       return true;
     }
     case "at": {

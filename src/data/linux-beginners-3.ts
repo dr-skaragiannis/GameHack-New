@@ -324,7 +324,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
             "GameHack reboot simulated; only virtual boot-enabled services were updated.",
             "Started: mysql. No host reboot occurred.",
           ]),
-          shot("ps aux | grep mysql", ["mysql  3410  0.1  1.2  mysqld --defaults-file=/etc/mysql/my.cnf (simulated)"]),
+          shot("ps aux | grep mysql", ["mysql     3410  0.1  1.2   44253  7373 ?        S    09:00  0:00 mysqld --defaults-file=/etc/mysql/my.cnf (simulated)"]),
         ],
       ),
     ],
