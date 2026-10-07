@@ -230,7 +230,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
           en: "DHCP assigns addresses automatically. dhclient eth0 asks the (simulated) server for a lease — it will overwrite the IP you set by hand.",
           el: "Η εντολή dhclient eth0 ζητά διεύθυνση IP από τον διακομιστή DHCP.",
         },
-        shots: [shot("dhclient eth0", ["DHCPREQUEST of 10.10.10.42 on eth0", "bound to 10.10.10.42 -- renewal in 1800 seconds."])],
+        shots: [shot("dhclient eth0", ["DHCPREQUEST of 10.10.10.42 on eth0", "DHCPACK of 10.10.10.42 from 10.10.10.1", "bound to 10.10.10.42 -- renewal in 1800 seconds."])],
       },
       {
         heading: { en: "dig — DNS", el: "dig — DNS" },
@@ -330,7 +330,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         },
         shots: [
           shot("nice -n 10 /usr/bin/ssh-agent", ["would start /usr/bin/ssh-agent with nice 10 (simulated; positive values lower scheduling priority)"]),
-          shot("renice 19 6242", ["6242: old priority 0, new priority 19"]),
+          shot("renice 19 6242", ["6242 (process ID) old priority 0, new priority 19"]),
         ],
       },
       {

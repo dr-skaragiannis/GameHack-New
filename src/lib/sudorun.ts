@@ -701,6 +701,7 @@ wlan0     IEEE 802.11  ESSID:off/any
       t.flags.add("dhclient");
       print(`Listening on LPF/eth0
 DHCPREQUEST of ${t.net.ip} on eth0
+DHCPACK of ${t.net.ip} from 10.10.10.1
 bound to ${t.net.ip} -- renewal in 1800 seconds.`);
       return true;
     }
@@ -833,7 +834,7 @@ bound to ${t.net.ip} -- renewal in 1800 seconds.`);
       }
       const previous = pr.nice;
       pr.nice = requested;
-      print(`${pid}: old priority ${previous}, new priority ${requested}`);
+      print(`${pid} (process ID) old priority ${previous}, new priority ${requested}`);
       return true;
     }
     case "kill": {
