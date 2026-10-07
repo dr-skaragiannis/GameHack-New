@@ -37,62 +37,6 @@ function campaignIcon(campaign: (typeof LEARNING_PATHS)[number]) {
   return "terminal";
 }
 
-function DashboardEye({ lang }: { lang: Lang }) {
-  return (
-    <figure className="player-dashboard__hero-eye" aria-label={t("dashboardEyeLabel", lang)}>
-      <svg className="player-dashboard__eye-blueprint" viewBox="0 0 420 270" aria-hidden="true">
-        <defs>
-          <radialGradient id="dashboard-eye-iris">
-            <stop offset="0%" stopColor="var(--color-gamehack-panel)" />
-            <stop offset="36%" stopColor="var(--color-cyan-400)" stopOpacity="0.85" />
-            <stop offset="100%" stopColor="var(--color-cyan-700)" stopOpacity="0.12" />
-          </radialGradient>
-          <linearGradient id="dashboard-eye-stroke" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-cyan-50)" stopOpacity="0.9" />
-            <stop offset="52%" stopColor="var(--color-cyan-300)" stopOpacity="0.64" />
-            <stop offset="100%" stopColor="var(--color-cyan-400)" stopOpacity="0.16" />
-          </linearGradient>
-          <filter id="dashboard-eye-soft-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
-        <g className="player-dashboard__eye-grid">
-          <path d="M17 135H403M210 12V258M45 50 375 220M45 220 375 50" />
-          <circle cx="210" cy="135" r="111" />
-          <circle cx="210" cy="135" r="87" />
-          <path d="M210 24v24M210 222v24M99 135h24M297 135h24M131 56l17 17M272 197l17 17M289 56l-17 17M148 197l-17 17" />
-        </g>
-        <g className="player-dashboard__eye-circuits">
-          <path d="M94 135H50l-15-15H8M326 135h42l17-17h24M120 77 91 48H61l-13-13M301 77l31-31h26l13-13M119 193 91 222H58l-14 14M301 193l30 30h31l13 13" />
-          <path d="M50 120V92l-15-15M370 118V90l16-16M50 150v28l-15 15M370 152v29l16 16" />
-          <circle cx="8" cy="120" r="3" /><circle cx="395" cy="118" r="3" /><circle cx="44" cy="236" r="3" /><circle cx="375" cy="236" r="3" />
-          <circle cx="61" cy="35" r="2.5" /><circle cx="377" cy="33" r="2.5" />
-        </g>
-        <g className="player-dashboard__eye-lens" filter="url(#dashboard-eye-soft-glow)">
-          <path d="M67 135c36-56 94-78 143-78s107 22 143 78c-36 56-94 78-143 78S103 191 67 135Z" />
-          <path d="M111 135c22-35 57-50 99-50s77 15 99 50c-22 35-57 50-99 50s-77-15-99-50Z" />
-          <circle className="player-dashboard__eye-orbit" cx="210" cy="135" r="51" />
-          <circle className="player-dashboard__eye-iris" cx="210" cy="135" r="38" />
-          <circle className="player-dashboard__eye-pupil" cx="210" cy="135" r="18" />
-          <circle cx="210" cy="135" r="6" className="player-dashboard__eye-core" />
-          <path d="M210 80v17M210 173v17M155 135h17M248 135h17M171 96l12 12M237 162l12 12M249 96l-12 12M183 162l-12 12" />
-        </g>
-        <g className="player-dashboard__eye-reticle">
-          <path d="M210 113v44M188 135h44" />
-          <circle cx="210" cy="135" r="68" />
-          <circle cx="210" cy="135" r="99" />
-          <path d="M333 66h19l11-11h23M86 200H63l-10 10H32M336 203h20l10 10h22" />
-        </g>
-      </svg>
-      <figcaption className="player-dashboard__eye-caption">
-        <span>{uppercaseLabel(t("dashboardEyeLabel", lang), lang)}</span>
-        <strong><i />{uppercaseLabel(t("dashboardEyeLock", lang), lang)}</strong>
-      </figcaption>
-    </figure>
-  );
-}
-
 function DashboardMapPreview({
   user,
   lang,
@@ -304,13 +248,18 @@ export default function PlayerDashboard({
             <span>{user.displayName.split(" ")[0]}</span>
           </h1>
           <p>{t("trainingReady", lang)}</p>
-          <div className="player-dashboard__hero-route">
+          <button
+            type="button"
+            onClick={() => onCampaign(currentCampaign.id)}
+            className="player-dashboard__hero-route"
+            title={`${String(currentCampaign.pathNumber).padStart(2, "0")}, ${bi(currentCampaign.title, lang)}`}
+          >
             <span className="player-dashboard__hero-route-icon"><Icon name={campaignIcon(currentCampaign)} className="h-4 w-4" /></span>
             <span>
               <small>{uppercaseLabel(t("currentLearningPath", lang), lang)}</small>
               <strong>{String(currentCampaign.pathNumber).padStart(2, "0")}, {bi(currentCampaign.title, lang)}</strong>
             </span>
-          </div>
+          </button>
         </div>
 
         <section className="player-dashboard__transmission" aria-label={t("dashboardUplink", lang)}>
@@ -322,17 +271,33 @@ export default function PlayerDashboard({
             <p>{t("dashboardMissionLine1", lang)}</p>
             <p>{t("dashboardMissionLine2", lang)}</p>
           </div>
-          <div className="player-dashboard__transmission-focus">
+          <button
+            type="button"
+            onClick={() => {
+              if (currentModule) onOpen(currentCampaign.id, currentModule.id);
+              else onCampaign(currentCampaign.id);
+            }}
+            className="player-dashboard__transmission-focus"
+            title={currentModule ? bi(currentModule.title, lang) : t("pathCompleted", lang)}
+          >
             <Icon name={currentModule?.icon || campaignIcon(currentCampaign)} className="h-4 w-4" />
             <span>
               <small>{uppercaseLabel(t("continueLearning", lang), lang)}</small>
               <strong>{currentModule ? bi(currentModule.title, lang) : t("pathCompleted", lang)}</strong>
             </span>
             <span className="player-dashboard__transmission-arrow"><Icon name="chevron" className="h-4 w-4" /></span>
-          </div>
+          </button>
         </section>
 
-        <DashboardEye lang={lang} />
+        <figure className="player-dashboard__hero-eye player-dashboard__hero-player" aria-label={user.displayName}>
+          <span className="player-dashboard__hero-avatar-ring">
+            <Avatar src={user.avatar} name={user.displayName} size={120} />
+          </span>
+          <figcaption className="player-dashboard__eye-caption">
+            <span>{uppercaseLabel(user.displayName, lang)}</span>
+            <strong><i />{uppercaseLabel(`${t("level", lang)} ${lv.level}`, lang)}</strong>
+          </figcaption>
+        </figure>
 
         <div className="player-dashboard__hero-level">
           <Avatar src={user.avatar} name={user.displayName} size={36} />

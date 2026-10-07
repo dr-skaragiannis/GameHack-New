@@ -5895,6 +5895,16 @@ button.player-quick-stats__item:hover {
 }
 .player-dashboard__eye-caption strong { display: inline-flex; align-items: center; gap: 5px; color: #8ce3e9; font-size: 0.46rem; }
 .player-dashboard__eye-caption strong i { width: 5px; height: 5px; border-radius: 50%; background: #62e5a2; box-shadow: 0 0 7px rgba(98, 229, 162, 0.7); }
+.player-dashboard__hero-player { display: grid; place-items: center; align-content: center; }
+.player-dashboard__hero-avatar-ring { display: grid; place-items: center; padding: 9px; border: 1px solid rgba(104, 249, 255, 0.28); border-radius: 50%; background: radial-gradient(circle, rgba(68, 255, 252, 0.1), rgba(10, 14, 18, 0.35)); box-shadow: 0 0 24px rgba(42, 172, 206, 0.2), inset 0 0 18px rgba(42, 172, 206, 0.1); }
+.player-dashboard__hero-player .player-dashboard__eye-caption span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+button.player-dashboard__hero-route { font: inherit; text-align: left; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+button.player-dashboard__hero-route:hover { border-color: rgba(104, 249, 255, 0.45); background: rgba(20, 24, 28, 0.72); }
+button.player-dashboard__transmission-focus { width: 100%; font: inherit; text-align: left; background: transparent; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+button.player-dashboard__transmission-focus:hover { background: rgba(64, 188, 205, 0.08); }
+button.player-dashboard__transmission-focus:hover .player-dashboard__transmission-arrow { border-color: rgba(101, 212, 226, 0.5); color: #bff3fa; }
+button.player-dashboard__hero-route:focus-visible,
+button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid rgba(104, 249, 255, 0.6); outline-offset: 2px; }
 .player-dashboard__hero-level {
   position: absolute;
   z-index: 4;
