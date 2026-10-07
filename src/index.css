@@ -5905,6 +5905,33 @@ button.player-dashboard__transmission-focus:hover { background: rgba(64, 188, 20
 button.player-dashboard__transmission-focus:hover .player-dashboard__transmission-arrow { border-color: rgba(101, 212, 226, 0.5); color: #bff3fa; }
 button.player-dashboard__hero-route:focus-visible,
 button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid rgba(104, 249, 255, 0.6); outline-offset: 2px; }
+.player-dashboard__hero { flex-wrap: wrap; row-gap: 14px; }
+.player-dashboard__hero-copy { flex: 1 1 260px; min-width: 0; }
+.player-dashboard__hero-player { position: relative; right: auto; bottom: auto; width: auto; height: auto; opacity: 1; }
+.player-dashboard__hero-strip { flex: 1 1 100%; min-width: 0; display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; }
+.player-dashboard__hero-chips { flex: 1 1 340px; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.player-dashboard__hero-chip { flex: 1 1 96px; min-width: 96px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid rgba(76, 238, 255, 0.14); border-radius: 12px; background: rgba(255, 255, 255, 0.02); color: #99f4ff; }
+.player-dashboard__hero-chip > span { min-width: 0; display: grid; gap: 1px; }
+.player-dashboard__hero-chip strong { font-size: 0.8rem; font-weight: 800; color: #f4f4f5; white-space: nowrap; }
+.player-dashboard__hero-chip small { overflow: hidden; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #8b8b95; text-overflow: ellipsis; white-space: nowrap; }
+.player-dashboard__hero-rank { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid rgba(43, 245, 255, 0.3); border-radius: 12px; background: rgba(43, 245, 255, 0.07); color: #e6e6ea; font: inherit; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.player-dashboard__hero-rank:hover { border-color: rgba(43, 245, 255, 0.55); background: rgba(43, 245, 255, 0.12); }
+.player-dashboard__hero-rank:focus-visible { outline: 2px solid rgba(104, 249, 255, 0.6); outline-offset: 2px; }
+.player-dashboard__hero-rank > span { display: grid; gap: 1px; text-align: left; }
+.player-dashboard__hero-rank strong { font-size: 0.85rem; font-weight: 800; color: #ffd479; white-space: nowrap; }
+.player-dashboard__hero-rank small { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #8b8b95; }
+.player-dashboard__hero-badges { flex: 1 1 220px; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid rgba(76, 238, 255, 0.14); border-radius: 12px; background: rgba(255, 255, 255, 0.02); }
+.player-dashboard__hero-badges-label { flex: 0 0 auto; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #8b8b95; white-space: nowrap; }
+.player-dashboard__hero-medallions { display: flex; align-items: center; gap: 6px; }
+.player-dashboard__hero-medallions button { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(43, 245, 255, 0.3); border-radius: 50%; background: rgba(43, 245, 255, 0.08); color: #99f4ff; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.2s; }
+.player-dashboard__hero-medallions button:hover { border-color: rgba(43, 245, 255, 0.6); background: rgba(43, 245, 255, 0.16); transform: translateY(-1px); }
+.player-dashboard__hero-medallions button:focus-visible { outline: 2px solid rgba(104, 249, 255, 0.6); outline-offset: 2px; }
+.player-dashboard__hero-medallions-more { font-size: 0.75rem; font-weight: 800; color: #99f4ff; }
+.player-dashboard__hero-badges-empty { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #71717a; }
+@media (max-width: 760px) {
+  .player-dashboard__hero-rank,
+  .player-dashboard__hero-badges { flex: 1 1 100%; }
+}
 .player-dashboard__hero-level {
   position: absolute;
   z-index: 4;

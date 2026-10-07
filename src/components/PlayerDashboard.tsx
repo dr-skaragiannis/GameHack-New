@@ -262,33 +262,6 @@ export default function PlayerDashboard({
           </button>
         </div>
 
-        <section className="player-dashboard__transmission" aria-label={t("dashboardUplink", lang)}>
-          <div className="player-dashboard__transmission-heading">
-            <span><i />{uppercaseLabel(t("dashboardUplink", lang), lang)}</span>
-            <b>{uppercaseLabel(t("dashboardLive", lang), lang)}</b>
-          </div>
-          <div className="player-dashboard__transmission-copy">
-            <p>{t("dashboardMissionLine1", lang)}</p>
-            <p>{t("dashboardMissionLine2", lang)}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              if (currentModule) onOpen(currentCampaign.id, currentModule.id);
-              else onCampaign(currentCampaign.id);
-            }}
-            className="player-dashboard__transmission-focus"
-            title={currentModule ? bi(currentModule.title, lang) : t("pathCompleted", lang)}
-          >
-            <Icon name={currentModule?.icon || campaignIcon(currentCampaign)} className="h-4 w-4" />
-            <span>
-              <small>{uppercaseLabel(t("continueLearning", lang), lang)}</small>
-              <strong>{currentModule ? bi(currentModule.title, lang) : t("pathCompleted", lang)}</strong>
-            </span>
-            <span className="player-dashboard__transmission-arrow"><Icon name="chevron" className="h-4 w-4" /></span>
-          </button>
-        </section>
-
         <figure className="player-dashboard__hero-eye player-dashboard__hero-player" aria-label={user.displayName}>
           <span className="player-dashboard__hero-avatar-ring">
             <Avatar src={user.avatar} name={user.displayName} size={120} />
@@ -307,6 +280,64 @@ export default function PlayerDashboard({
             <div className="player-dashboard__hero-progress" aria-label={`${lv.pct}% to next level`}>
               <span style={{ width: `${lv.pct}%` }} />
             </div>
+          </div>
+        </div>
+
+        <div className="player-dashboard__hero-strip">
+          <div className="player-dashboard__hero-chips" role="list" aria-label={t("playerStatistics", lang)}>
+            {stats.map((stat) => (
+              <div key={stat.label} className="player-dashboard__hero-chip" role="listitem" title={`${stat.label}, ${stat.value}`}>
+                <Icon name={stat.icon} className="h-4 w-4" />
+                <span>
+                  <strong>{stat.value}</strong>
+                  <small>{stat.label}</small>
+                </span>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={onOpenScoreboard}
+            className="player-dashboard__hero-rank"
+            title={t("overallScoreboard", lang)}
+          >
+            <Icon name="crown" className="h-4 w-4" />
+            <span>
+              <strong>#{myStanding?.rank ?? "—"}/{scoreboard.length}</strong>
+              <small>{t("leaderboard", lang)}</small>
+            </span>
+            <Icon name="chevron" className="h-4 w-4" />
+          </button>
+          <div className="player-dashboard__hero-badges">
+            <span className="player-dashboard__hero-badges-label">{t("badges", lang)} ({user.badges.length})</span>
+            {user.badges.length ? (
+              <span className="player-dashboard__hero-medallions">
+                {user.badges.slice(0, 6).map((id) => {
+                  const badge = BADGES[id];
+                  if (!badge) return null;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      data-tier={badge.tier}
+                      title={`${badge.name} — ${badge.desc}`}
+                      aria-label={`${badge.name}. ${badge.desc}`}
+                      onClick={() => onBadge(id)}
+                    >
+                      <Icon name={badge.icon} className="h-4 w-4" />
+                    </button>
+                  );
+                })}
+                {user.badges.length > 6 && (
+                  <span className="player-dashboard__hero-medallions-more">+{user.badges.length - 6}</span>
+                )}
+              </span>
+            ) : (
+              <span className="player-dashboard__hero-badges-empty">
+                <Icon name="medal" className="h-4 w-4" />
+                {t("noBadgesYet", lang)}
+              </span>
+            )}
           </div>
         </div>
       </header>
@@ -364,28 +395,6 @@ export default function PlayerDashboard({
                   <span>{t("reviewPath", lang)}</span><Icon name="chevron" className="h-4 w-4" />
                 </button>
               )}
-            </div>
-          </section>
-
-          <section className="player-dashboard__card player-dashboard__stats-card" aria-labelledby="player-statistics-title">
-            <div className="player-dashboard__section-heading">
-              <div>
-                <div className="player-dashboard__eyebrow">{uppercaseLabel(t("playerStatistics", lang), lang)}</div>
-                <h2 id="player-statistics-title">{t("playerStatistics", lang)}</h2>
-              </div>
-              <span className="player-dashboard__live-status"><i />{lang === "en" ? "YOUR PROGRESS" : "Η ΠΡΟΟΔΟΣ ΣΟΥ"}</span>
-            </div>
-            <div className="player-dashboard__stats-grid">
-              {stats.map((stat, index) => (
-                <article key={stat.label} className="player-dashboard__stat dashboard-stagger" style={{ animationDelay: `${index * 45}ms` }}>
-                  <span className="player-dashboard__stat-icon"><Icon name={stat.icon} className="h-4 w-4" /></span>
-                  <span className="player-dashboard__stat-copy">
-                    <span>{uppercaseLabel(stat.label, lang)}</span>
-                    <strong>{stat.value}</strong>
-                    <small>{stat.detail}</small>
-                  </span>
-                </article>
-              ))}
             </div>
           </section>
 
