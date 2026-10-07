@@ -202,7 +202,7 @@ export default function AuthScreen({
           <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-cyan-700 gamehack-glow mb-4 float ring-1 ring-cyan-300/50">
             <Icon name="terminal" className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-extrabold tracking-[0.12em] text-shine auth-title">{t("appName", lang)}</h1>
+          <h1 className="text-4xl font-extrabold tracking-[0.12em] text-zinc-100 auth-title">{t("appName", lang)}</h1>
           <p className="mt-2 text-iron-400 text-sm">{t("tagline", lang)}</p>
           <p className="mt-3 text-zinc-400 text-sm leading-relaxed">{t("heroLine", lang)}</p>
         </div>

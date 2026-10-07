@@ -6692,7 +6692,9 @@ html[data-theme="warm"] .text-glow {
 }
 
 html[data-theme="warm"] .text-shine {
-  background: linear-gradient(90deg, #ff8a4c 0%, #ffd9bf 25%, #ff8a4c 50%, #ff6a2b 75%, #ff8a4c 100%);
+  background: none;
+  color: #ffc79e;
+  animation: none;
 }
 
 html[data-theme="warm"] .card-hover:hover {
