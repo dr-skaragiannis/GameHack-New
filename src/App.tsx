@@ -420,6 +420,47 @@ export default function App() {
                 <Icon name="crown" className="h-4 w-4 text-amber-400" />
                 {t("overallScoreboard", lang)}
               </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setAccountMenuOpen(false);
+                  go("messages");
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-iron-300 transition hover:bg-white/5 hover:text-zinc-100"
+              >
+                <Icon name="mail" className="h-4 w-4 text-cyan-400" />
+                {t("messagesNav", lang)}
+                {unread > 0 && (
+                  <span className="ml-auto rounded-full bg-cyan-600 px-1.5 text-xs text-white">{unread}</span>
+                )}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setAccountMenuOpen(false);
+                  go("map");
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-iron-300 transition hover:bg-white/5 hover:text-zinc-100"
+              >
+                <Icon name="chart" className="h-4 w-4 text-emerald-400" />
+                {t("progress", lang)}
+              </button>
+              {user.role === "educator" && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setAccountMenuOpen(false);
+                    go("educator");
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-iron-300 transition hover:bg-white/5 hover:text-zinc-100"
+                >
+                  <Icon name="users" className="h-4 w-4 text-violet-400" />
+                  {t("educator", lang)}
+                </button>
+              )}
             </div>
             <div className="border-t border-gamehack-border p-1.5">
               <button
