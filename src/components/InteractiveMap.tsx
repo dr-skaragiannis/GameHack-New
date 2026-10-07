@@ -319,7 +319,7 @@ function CampaignUniverse({
     campaign.scenario === "raven" ? "raven"
       : campaign.scenario === "ssh" ? "wirewalk"
         : campaign.scenario === "sudorun" ? "sudorun"
-          : campaign.scenario === "dfir" ? "dfir" : "forge";
+          : campaign.scenario === "dfir" ? "dfir" : "gamehack";
   const campaignIcon = (campaign: Campaign) =>
     campaign.scenario === "raven" ? "crown"
       : campaign.scenario === "ssh" ? "key"

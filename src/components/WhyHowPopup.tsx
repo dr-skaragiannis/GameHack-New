@@ -148,8 +148,8 @@ export default function WhyHowPopup({
             <Icon name="shield" className="h-4 w-4" />
             <span>
               {lang === "en"
-                ? "Everything shown here stays inside your fictional HackForge virtual filesystem."
-                : "Ό,τι εμφανίζεται εδώ μένει στο εικονικό σύστημα αρχείων του HackForge."}
+                ? "Everything shown here stays inside your fictional GameHack virtual filesystem."
+                : "Ό,τι εμφανίζεται εδώ μένει στο εικονικό σύστημα αρχείων του GameHack."}
             </span>
           </div>
         </div>

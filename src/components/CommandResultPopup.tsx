@@ -122,7 +122,7 @@ export default function CommandResultPopup({
         </div>
 
         <footer className="command-explanation__footer">
-          <span>{lang === "en" ? "Output is from the isolated HackForge virtual lab." : "Η έξοδος προέρχεται από το απομονωμένο εικονικό lab του HackForge."}</span>
+          <span>{lang === "en" ? "Output is from the isolated GameHack virtual lab." : "Η έξοδος προέρχεται από το απομονωμένο εικονικό lab του GameHack."}</span>
           <button type="button" onClick={onClose} autoFocus>
             {lang === "en" ? "Back to terminal" : "Πίσω στο terminal"}
             <Icon name="chevron" className="h-4 w-4" />

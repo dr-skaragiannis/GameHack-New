@@ -136,7 +136,8 @@ export type DB = {
   commandLog: CommandExecution[];
 };
 
-const KEY = "hackforge.platform.v1";
+const KEY = "gamehack.platform.v1";
+const LEGACY_KEY = "hackforge.platform.v1";
 
 export const INTERESTS_POOL = [
   "Web Security",
@@ -205,7 +206,7 @@ export const BADGES: Record<string, Badge> = {
     blurb: "Demonstrates practical exploitation of SQL injection — from detection to data extraction.",
   },
   root: {
-    name: "Root Forged",
+    name: "Root Master",
     desc: "Escalated to root",
     icon: "crown",
     tier: "gold",
@@ -251,7 +252,7 @@ export const BADGES: Record<string, Badge> = {
     desc: "Finished Linux for Beginners",
     icon: "terminal",
     tier: "gold",
-    blurb: "Certifies the full Sudo_Run path: files, permissions, networks, processes, bash, cron and core Linux services in the HackForge sandbox.",
+    blurb: "Certifies the full Sudo_Run path: files, permissions, networks, processes, bash, cron and core Linux services in the GameHack sandbox.",
   },
   evidence_custodian: {
     name: "Evidence Custodian",
@@ -354,7 +355,7 @@ const DEFAULT_ICON_KEYS = [
   "cybereye",
   "wyvern",
 ];
-const DEFAULT_ICON_HEXES = ["#ff6a2b", "#22d3ee", "#3ddc84", "#a78bfa", "#fcd34d", "#f472b6", "#38bdf8"];
+const DEFAULT_ICON_HEXES = ["#06b6d4", "#22d3ee", "#3ddc84", "#a78bfa", "#fcd34d", "#f472b6", "#38bdf8"];
 
 export function randomIconAvatar(seed = Math.random()): string {
   const k = DEFAULT_ICON_KEYS[Math.floor(seed * 997) % DEFAULT_ICON_KEYS.length];
@@ -482,7 +483,7 @@ function seed(): DB {
     role: "educator",
     displayName: "Dr. Mara Vance",
     avatar: "ic:owl:#a78bfa",
-    bio: "Lead cybersecurity instructor. Here to help you forge real skills.",
+    bio: "Lead cybersecurity instructor. Here to help you build practical skills.",
     interests: ["Red Team", "Networking", "Forensics"],
     createdAt: Date.now() - 86400000 * 30,
     lang: "en",
@@ -546,7 +547,7 @@ function seed(): DB {
   };
   const packetTeam: Team = {
     id: uid(),
-    name: "Packet Forge",
+    name: "Packet Ops",
     description: "Network reconnaissance and offensive-security practice.",
     educatorId: edu.id,
     createdAt: Date.now() - 86400000 * 3,
@@ -589,7 +590,7 @@ function enrichDemoPresence(db: DB) {
       for (const mid of plan.done) u.progress[mid] = { completed: true, done: [] };
     }
     if (!u.activeCampaignId) {
-      u.activeCampaignId = "forge";
+      u.activeCampaignId = "gamehack";
       u.activeModuleId = uname === "cipher" ? "bruteforce" : uname === "nova" ? "permissions" : "files";
     }
     if (u.lastSeen === undefined || uname === "nova" || uname === "cipher") u.lastSeen = now - plan.seenAgoMs;
@@ -614,15 +615,44 @@ function normalizeStoredDB(value: unknown): DB | null {
   };
 }
 
+function migrateLegacyCampaignIds(db: DB): void {
+  for (const user of db.users) {
+    if (user.activeCampaignId === "forge") user.activeCampaignId = "gamehack";
+    if (typeof user.avatar === "string") user.avatar = user.avatar.replace(/#ff6a2b/gi, "#06b6d4");
+    if (user.bio === "Lead cybersecurity instructor. Here to help you forge real skills.") {
+      user.bio = "Lead cybersecurity instructor. Here to help you build practical skills.";
+    }
+  }
+  for (const team of db.teams) {
+    if (team.name === "Packet Forge" && team.description === "Network reconnaissance and offensive-security practice.") {
+      team.name = "Packet Ops";
+    }
+  }
+  for (const event of db.feed) {
+    if (event.campaignId === "forge") event.campaignId = "gamehack";
+  }
+  for (const execution of db.commandLog) {
+    if (execution.campaignId === "forge") execution.campaignId = "gamehack";
+  }
+}
+
 export function getDB(): DB {
   if (cache) return cache;
   try {
-    const raw = localStorage.getItem(KEY);
+    const current = localStorage.getItem(KEY);
+    const raw = current || localStorage.getItem(LEGACY_KEY);
     if (raw) {
       cache = normalizeStoredDB(JSON.parse(raw));
       if (cache) {
+        migrateLegacyCampaignIds(cache);
         enrichDemoPresence(cache);
-        saveDB();
+        if (saveDB()) {
+          try {
+            localStorage.removeItem(LEGACY_KEY);
+          } catch {
+            /* Keep the legacy copy if storage cleanup is blocked. */
+          }
+        }
         return cache;
       }
     }
@@ -635,14 +665,17 @@ export function getDB(): DB {
   return cache;
 }
 
-export function saveDB() {
-  if (!cache) return;
+export function saveDB(): boolean {
+  if (!cache) return false;
+  let saved = false;
   try {
     localStorage.setItem(KEY, JSON.stringify(cache));
+    saved = true;
   } catch {
-    /* ignore */
+    /* Keep the legacy copy if storage is unavailable or full. */
   }
   notifyDBChange();
+  return saved;
 }
 
 export function establishAuthenticatedUser(email: string, nickname: string): User {
@@ -672,7 +705,7 @@ export function establishAuthenticatedUser(email: string, nickname: string): Use
       badges: [],
     };
     db.users.push(user);
-    pushFeed(user, "join", `${user.displayName} joined HACKFORGE`);
+    pushFeed(user, "join", `${user.displayName} joined GameHack`);
   } else {
     user.username = normalizedEmail;
     user.role = "player";
@@ -1081,6 +1114,7 @@ export function resetAll() {
   cache = null;
   try {
     localStorage.removeItem(KEY);
+    localStorage.removeItem(LEGACY_KEY);
   } catch {
     /* ignore */
   }

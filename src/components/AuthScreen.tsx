@@ -120,28 +120,28 @@ export default function AuthScreen() {
   };
 
   return (
-    <div className="forge-grid min-h-full flex items-center justify-center p-4 relative">
+    <div className="gamehack-grid min-h-full flex items-center justify-center p-4 relative">
       <button
         type="button"
         onClick={() => setLang(lang === "en" ? "el" : "en")}
-        className="absolute top-4 right-4 z-10 text-sm font-bold tracking-widest text-iron-400 hover:text-ember-400 border border-forge-border rounded-lg px-3 py-1.5"
+        className="absolute top-4 right-4 z-10 text-sm font-bold tracking-widest text-iron-400 hover:text-cyan-400 border border-gamehack-border rounded-lg px-3 py-1.5"
       >
         {t("langLabel", lang)}
       </button>
 
       <div className="relative z-10 w-full max-w-md enter">
         <div className="text-center mb-8">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-ember-500 to-ember-700 forge-glow mb-4 float">
-            <Icon name="hammer" className="w-8 h-8 text-white" />
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-cyan-700 gamehack-glow mb-4 float">
+            <Icon name="terminal" className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-4xl font-extrabold tracking-[0.2em] text-shine">{t("appName", lang)}</h1>
           <p className="mt-2 text-iron-400 text-sm">{t("tagline", lang)}</p>
           <p className="mt-3 text-zinc-400 text-sm leading-relaxed">{t("heroLine", lang)}</p>
         </div>
 
-        <div className="glass rounded-2xl border border-forge-border p-6">
+        <div className="glass rounded-2xl border border-gamehack-border p-6">
           {mode === "in" || mode === "up" ? (
-            <div className="flex rounded-xl bg-forge-bg p-1 mb-5">
+            <div className="flex rounded-xl bg-gamehack-bg p-1 mb-5">
               {(["in", "up"] as const).map((option) => (
                 <button
                   key={option}
@@ -149,7 +149,7 @@ export default function AuthScreen() {
                   onClick={() => switchMode(option)}
                   className={cn(
                     "flex-1 py-2 rounded-lg text-sm font-semibold transition",
-                    mode === option ? "bg-ember-600 text-white" : "text-iron-400 hover:text-zinc-200"
+                    mode === option ? "bg-cyan-600 text-white" : "text-iron-400 hover:text-zinc-200"
                   )}
                 >
                   {option === "in" ? t("signIn", lang) : t("register", lang)}
@@ -159,14 +159,14 @@ export default function AuthScreen() {
           ) : (
             <div className="mb-5 flex items-center justify-between gap-3">
               <h2 className="text-lg font-bold text-zinc-100">{t(mode === "forgot" ? "forgotPasswordTitle" : "chooseNewPassword", lang)}</h2>
-              <button type="button" onClick={() => switchMode("in")} className="text-sm text-ember-400 hover:text-ember-300">
+              <button type="button" onClick={() => switchMode("in")} className="text-sm text-cyan-400 hover:text-cyan-300">
                 {t("backToSignIn", lang)}
               </button>
             </div>
           )}
 
           {mode === "up" && (
-            <div className="mb-4 rounded-xl border border-ember-500/25 bg-ember-500/5 p-3 text-sm leading-relaxed text-zinc-300">
+            <div className="mb-4 rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-3 text-sm leading-relaxed text-zinc-300">
               <p>{t("registrationNotice", lang)}</p>
               <p className="mt-1 text-iron-400">{t("registrationCompleteProfile", lang)}</p>
             </div>
@@ -181,7 +181,7 @@ export default function AuthScreen() {
                 autoComplete="nickname"
                 maxLength={32}
                 required
-                className="w-full rounded-xl bg-forge-bg border border-forge-border px-3 py-2.5 text-sm outline-none focus:border-ember-500"
+                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
               />
             )}
 
@@ -199,7 +199,7 @@ export default function AuthScreen() {
                 }
                 autoComplete={mode === "in" ? "username" : "email"}
                 required
-                className="w-full rounded-xl bg-forge-bg border border-forge-border px-3 py-2.5 text-sm outline-none focus:border-ember-500"
+                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
               />
             )}
 
@@ -212,7 +212,7 @@ export default function AuthScreen() {
                 autoComplete={mode === "in" ? "current-password" : "new-password"}
                 minLength={mode === "in" ? undefined : 8}
                 required
-                className="w-full rounded-xl bg-forge-bg border border-forge-border px-3 py-2.5 text-sm outline-none focus:border-ember-500"
+                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
               />
             )}
 
@@ -227,7 +227,7 @@ export default function AuthScreen() {
                 autoComplete="new-password"
                 minLength={8}
                 required
-                className="w-full rounded-xl bg-forge-bg border border-forge-border px-3 py-2.5 text-sm outline-none focus:border-ember-500"
+                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
               />
             )}
 
@@ -237,7 +237,7 @@ export default function AuthScreen() {
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded-xl bg-gradient-to-r from-ember-600 to-ember-500 py-2.5 font-bold text-white shimmer-hover disabled:cursor-wait disabled:opacity-60"
+              className="w-full rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-500 py-2.5 font-bold text-white shimmer-hover disabled:cursor-wait disabled:opacity-60"
             >
               {busy
                 ? t("working", lang)
@@ -255,14 +255,14 @@ export default function AuthScreen() {
             <button
               type="button"
               onClick={() => switchMode("forgot")}
-              className="mt-3 w-full text-right text-sm text-ember-400 hover:text-ember-300"
+              className="mt-3 w-full text-right text-sm text-cyan-400 hover:text-cyan-300"
             >
               {t("forgotPassword", lang)}
             </button>
           )}
 
           {mode === "in" && (
-            <div className="mt-5 pt-4 border-t border-forge-line text-sm text-iron-500 space-y-1">
+            <div className="mt-5 pt-4 border-t border-gamehack-line text-sm text-iron-500 space-y-1">
               <div className="uppercase tracking-widest text-iron-400 mb-1">{uppercaseLabel(t("demoHint", lang), lang)}</div>
               <div>
                 player — <span className="text-zinc-400 font-mono">nova / demo</span>

@@ -188,7 +188,7 @@ export function runSharedLinuxCommand(t: Terminal, context: SharedCommandContext
         return true;
       }
       if (inputPath.startsWith("/dev/") || outputPath.startsWith("/dev/")) {
-        print("dd: host devices are unavailable in the HackForge sandbox", "err");
+        print("dd: host devices are unavailable in the GameHack sandbox", "err");
         return true;
       }
       const source = readVirtualFile(t, inputPath, cmd, print);
@@ -226,12 +226,12 @@ tmpfs           512M     0  512M   0% /tmp`);
       return true;
     }
     case "dmesg": {
-      print("[    0.000000] Linux version 5.15.0-hackforge (virtual kernel)\n[    1.204812] eth0: simulated lab interface ready\n[    2.014882] HackForge training sandbox initialized; no host devices exposed.");
+      print("[    0.000000] Linux version 5.15.0-gamehack (virtual kernel)\n[    1.204812] eth0: simulated lab interface ready\n[    2.014882] GameHack training sandbox initialized; no host devices exposed.");
       return true;
     }
     case "journalctl": {
       const log = getNode(t.fs, resolvePath(t, "/var/log/syslog"));
-      const lines = (log?.type === "file" ? log.content || "" : "Apr 12 08:00:01 kali systemd[1]: Started HACKFORGE lab services.").trim().split(/\r?\n/);
+      const lines = (log?.type === "file" ? log.content || "" : "Apr 12 08:00:01 kali systemd[1]: Started GameHack lab services.").trim().split(/\r?\n/);
       const limit = optionValue(rest, "n", 50);
       print(lines.slice(-Math.max(1, Math.min(100, limit))).join("\n"));
       return true;
@@ -268,7 +268,7 @@ tmpfs           512M     0  512M   0% /tmp`);
       if (decompress) {
         const archive = readVirtualFile(t, path, cmd, print);
         if (!archive) return true;
-        const match = archive.text.match(/^HACKFORGE-GZIP\n([\s\S]*)$/);
+        const match = archive.text.match(/^GameHack-GZIP\n([\s\S]*)$/);
         if (!match) {
           print(`gzip: ${path}: not in simulated gzip format`, "err");
           return true;
@@ -280,7 +280,7 @@ tmpfs           512M     0  512M   0% /tmp`);
       const source = readVirtualFile(t, path, cmd, print);
       if (!source) return true;
       const destination = path.endsWith(".gz") ? path : `${path}.gz`;
-      if (writeVirtualFile(t, destination, `HACKFORGE-GZIP\n${source.text}`, false, cmd, print)) print(`created ${destination} (text-only virtual archive)`);
+      if (writeVirtualFile(t, destination, `GameHack-GZIP\n${source.text}`, false, cmd, print)) print(`created ${destination} (text-only virtual archive)`);
       return true;
     }
     case "killall":
@@ -346,7 +346,7 @@ tmpfs           512M     0  512M   0% /tmp`);
       if (rest.length === 0) {
         print("/dev/virtual-root on / type ext4 (ro,relatime)\ntmpfs on /tmp type tmpfs (rw,nosuid,nodev)\n# Host mounts and block devices are not exposed.");
       } else {
-        print("mount: host devices cannot be mounted in the HackForge sandbox", "err");
+        print("mount: host devices cannot be mounted in the GameHack sandbox", "err");
       }
       return true;
     }
@@ -560,7 +560,7 @@ tmpfs           512M     0  512M   0% /tmp`);
       return true;
     }
     case "who": {
-      print(`${t.user}     pts/0        ${new Date().toLocaleString()} (hackforge)`);
+      print(`${t.user}     pts/0        ${new Date().toLocaleString()} (gamehack)`);
       return true;
     }
     case "tee": {
@@ -584,8 +584,8 @@ tmpfs           512M     0  512M   0% /tmp`);
       if (listArchive) {
         const archive = readVirtualFile(t, archivePath, cmd, print);
         if (!archive) return true;
-        const match = archive.text.match(/^HACKFORGE-TAR\n([\s\S]*)$/);
-        if (!match) print(`tar: ${archivePath}: not a virtual HackForge archive`, "err");
+        const match = archive.text.match(/^GameHack-TAR\n([\s\S]*)$/);
+        if (!match) print(`tar: ${archivePath}: not a virtual GameHack archive`, "err");
         else print(match[1].split(/\r?\n/).filter((line) => line.startsWith("--- ")).map((line) => line.slice(4, -4)).join("\n"));
         return true;
       }
@@ -604,7 +604,7 @@ tmpfs           512M     0  512M   0% /tmp`);
         }
         sources.push(serializeVirtualTree(node, resolved));
       }
-      if (writeVirtualFile(t, archivePath, `HACKFORGE-TAR\n${sources.join("\n")}`, false, cmd, print)) {
+      if (writeVirtualFile(t, archivePath, `GameHack-TAR\n${sources.join("\n")}`, false, cmd, print)) {
         print(`${archivePath}: virtual text archive created`);
       }
       return true;
@@ -678,7 +678,7 @@ tmpfs           512M     0  512M   0% /tmp`);
         return true;
       }
       const state = t.services[unit] || "inactive";
-      print(action === "is-active" ? state : `● ${unit}.service - HackForge simulated service\n   Loaded: loaded (/lib/systemd/system/${unit}.service; static)\n   Active: ${state === "running" ? "active (running)" : state}`);
+      print(action === "is-active" ? state : `● ${unit}.service - GameHack simulated service\n   Loaded: loaded (/lib/systemd/system/${unit}.service; static)\n   Active: ${state === "running" ? "active (running)" : state}`);
       return true;
     }
     case "exit": {
@@ -790,14 +790,14 @@ tmpfs           512M     0  512M   0% /tmp`);
     case "get-winevent":
     case "LECmd": {
       if (cmd === "docker") {
-        print("CONTAINER ID   IMAGE             STATUS         NAME\nforge-web      hackforge/web     Up (simulated) web-lab\nNo host containers are visible.");
+        print("CONTAINER ID   IMAGE             STATUS         NAME\ngamehack-web   gamehack/web     Up (simulated) web-lab\nNo host containers are visible.");
       } else if (cmd === "timeline") {
         print("TIME                 SOURCE                  EVENT\n2026-04-12 09:01:11  /var/log/auth.log       simulated SSH login\n2026-04-12 09:14:02  /var/log/auth.log       simulated sudo command");
       } else if (cmd === "hexedit") {
         print("hexedit: evidence files are read-only in this lab. Use a designated virtual working copy for edits.", "err");
       } else {
         const target = first && !first.startsWith("-") ? first : "(no file specified)";
-        print(`${cmd}: HackForge ${cmd} training fixture\nTarget: ${target}\nThis command inspects virtual lab data only; it does not invoke a host utility.`);
+        print(`${cmd}: GameHack ${cmd} training fixture\nTarget: ${target}\nThis command inspects virtual lab data only; it does not invoke a host utility.`);
       }
       return true;
     }

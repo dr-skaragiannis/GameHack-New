@@ -43,7 +43,7 @@ export const COMMON_LINUX_COMMANDS: LinuxCommandInfo[] = [
   { name: "fg", category: "Processes & services", summary: "Bring a simulated shell job back to the foreground.", synopsis: "fg [JOB]", example: "fg" },
   { name: "find", category: "Files", summary: "Search the virtual filesystem by path and name.", synopsis: "find PATH [OPTIONS]", example: "find /home -name '*.txt'" },
   { name: "free", category: "System", summary: "Show simulated memory usage.", synopsis: "free [-h]", example: "free -h" },
-  { name: "ftp", category: "Network", summary: "Use the fixture-only FTP session; public hosts and live network access are blocked.", synopsis: "ftp ftp.forge.lab", example: "ftp ftp.forge.lab" },
+  { name: "ftp", category: "Network", summary: "Use the fixture-only FTP session; public hosts and live network access are blocked.", synopsis: "ftp ftp.gamehack.lab", example: "ftp ftp.gamehack.lab" },
   { name: "grep", category: "Text", summary: "Search text using a regular expression.", synopsis: "grep [OPTIONS] PATTERN [FILE...]", example: "grep -n root /etc/passwd" },
   { name: "groups", category: "Users", summary: "Print the current simulated user's groups.", synopsis: "groups [USER]", example: "groups" },
   { name: "gzip", category: "Archives", summary: "Create or inspect a simulated gzip archive.", synopsis: "gzip [-dk] FILE...", example: "gzip notes.txt" },
@@ -161,7 +161,7 @@ export const LAB_COMMANDS: LinuxCommandInfo[] = [
   { name: "sqlmap", category: "Security labs", summary: "Test the intentionally vulnerable fictional web fixture.", synopsis: "sqlmap [OPTIONS] URL", example: "sqlmap -u 'http://web.lab/login.php?id=1'" },
   { name: "static-report", category: "Forensics labs", summary: "Read a fictional static-analysis report.", synopsis: "static-report FILE", example: "static-report /cases/IR-2404/evidence/07-malware/sample.bin" },
   { name: "steghide", category: "Forensics labs", summary: "Inspect the fictional steganography fixture.", synopsis: "steghide info|extract FILE", example: "steghide info /cases/IR-2404/evidence/03-documents/starry_night.png" },
-  { name: "submit", category: "HackForge lab", summary: "Submit a captured training flag for the current challenge.", synopsis: "submit FLAG{...}", example: "submit FLAG{training_example}" },
+  { name: "submit", category: "GameHack lab", summary: "Submit a captured training flag for the current challenge.", synopsis: "submit FLAG{...}", example: "submit FLAG{training_example}" },
   { name: "su", category: "Shell & permissions", summary: "Request a simulated user switch; use sudo for permitted lab escalation.", synopsis: "su [USER]", example: "sudo su" },
   { name: "python", category: "Programming", summary: "Alias for the safe Python training interpreter information.", synopsis: "python [SCRIPT]", example: "python --version" },
   { name: "netcat", category: "Network", summary: "Alias for the safe simulated nc command.", synopsis: "netcat [OPTIONS] HOST PORT", example: "netcat -vz web.lab 80" },
@@ -198,7 +198,7 @@ export function linuxHelpText(): string {
 
   const labTools = LAB_COMMANDS.map(({ name, summary }) => `  ${name.padEnd(13)} ${summary}`).join("\n");
   return [
-    `HACKFORGE LINUX COMMAND REFERENCE — ${COMMON_LINUX_COMMANDS.length} COMMON COMMANDS`,
+    `GameHack LINUX COMMAND REFERENCE — ${COMMON_LINUX_COMMANDS.length} COMMON COMMANDS`,
     "Type `man COMMAND` for a manual, `help COMMAND` for quick help, or press Tab to complete.",
     ...sections,
     "SPECIALIST LAB TOOLS",
@@ -211,5 +211,5 @@ export function linuxManPage(name: string): string | null {
   const command = findLinuxCommand(name);
   if (!command) return null;
   const heading = command.name.toUpperCase();
-  return `${heading}(1)                         HACKFORGE USER COMMANDS                         ${heading}(1)\n\nNAME\n       ${command.name} - ${command.summary}\n\nSYNOPSIS\n       ${command.synopsis}\n\nDESCRIPTION\n       ${command.summary} This implementation operates on the current lab's virtual filesystem and simulated services. It does not execute on the web server or access the host operating system.\n\nEXAMPLE\n       ${command.example}\n\nSAFETY\n       HackForge training fixture only. Do not use simulated output as evidence about a real system.`;
+  return `${heading}(1)                         GameHack USER COMMANDS                         ${heading}(1)\n\nNAME\n       ${command.name} - ${command.summary}\n\nSYNOPSIS\n       ${command.synopsis}\n\nDESCRIPTION\n       ${command.summary} This implementation operates on the current lab's virtual filesystem and simulated services. It does not execute on the web server or access the host operating system.\n\nEXAMPLE\n       ${command.example}\n\nSAFETY\n       GameHack training fixture only. Do not use simulated output as evidence about a real system.`;
 }

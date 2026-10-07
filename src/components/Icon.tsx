@@ -67,7 +67,7 @@ export const MODULE_ICON: Record<string, string> = {
   networking: "wifi",
   recon: "radar",
   scanning: "scan",
-  bruteforce: "hammer",
+  bruteforce: "key",
   sqli: "database",
   privesc: "crown",
   "raven-recon": "radar",

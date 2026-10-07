@@ -162,7 +162,7 @@ try {
   assert.equal(courseTerm.shellVars.HISTSIZE, "0");
   assert.equal(courseTerm.env.HISTSIZE, "0", "export should pass HISTSIZE into the simulated environment");
   assert.equal(terminal.getNode(courseTerm.fs, "/root/linux-beginners-2/environment/histsize-before-change.txt")?.content?.trim(), "1000");
-  assert.match(terminal.getNode(courseTerm.fs, "/etc/hosts")?.content || "", /docs\.hackforge\.lab/);
+  assert.match(terminal.getNode(courseTerm.fs, "/etc/hosts")?.content || "", /docs\.gamehack\.lab/);
   assert.match(terminal.getNode(courseTerm.fs, "/etc/resolv.conf")?.content || "", /10\.10\.10\.53/);
 
   for (const module of linuxPart3.modules) {
@@ -202,8 +202,8 @@ try {
   assert.ok(courseTerm.flags.has("ftp-login") && courseTerm.flags.has("ftp-get") && courseTerm.flags.has("ftp-bye"));
   assert.equal(courseTerm.ftp, null, "bye should close the fictional FTP session");
   const downloadedFavicon = terminal.getNode(courseTerm.fs, "/root/linux-beginners-3/favicon.ico");
-  assert.match(downloadedFavicon?.content || "", /HACKFORGE-FAKE-FAVICON/);
-  assert.match(terminal.getNode(courseTerm.fs, "/var/www/html/index.html")?.content || "", /HackForge/);
+  assert.match(downloadedFavicon?.content || "", /GameHack-FAKE-FAVICON/);
+  assert.match(terminal.getNode(courseTerm.fs, "/var/www/html/index.html")?.content || "", /GameHack/);
   const stoppedApacheTerm = playerTerminal.createPlayerTerminal();
   playerTerminal.activateTerminalForModule(stoppedApacheTerm, "sr-svc", "sudorun");
   const refusedLocalCurl = terminal.runCommand(stoppedApacheTerm, "curl http://localhost").map((line) => line.text).join("\n");
@@ -220,7 +220,7 @@ try {
   assert.equal(unstartedSshTerm.sshReturn, null, "a refused connection must not create a remote-session context");
   const traversalFtpTerm = playerTerminal.createPlayerTerminal();
   playerTerminal.activateTerminalForModule(traversalFtpTerm, "sr-svc", "sudorun");
-  terminal.runCommand(traversalFtpTerm, "ftp ftp.forge.lab");
+  terminal.runCommand(traversalFtpTerm, "ftp ftp.gamehack.lab");
   terminal.runCommand(traversalFtpTerm, "anonymous");
   terminal.runCommand(traversalFtpTerm, "anonymous");
   const traversalOutput = terminal.runCommand(traversalFtpTerm, "get ../../../../etc/passwd").map((line) => line.text).join("\n");
@@ -267,7 +267,7 @@ try {
 
   const requiredFixtures = [
     ["ssh", "/home/operator/.ssh/config"],
-    ["sudorun", "/root/hackforge.txt"],
+    ["sudorun", "/root/gamehack.txt"],
     ["dfir", "/cases/IR-2404/evidence/01-intake/manifest.csv"],
   ];
   for (const [scenario, path] of requiredFixtures) {
@@ -326,12 +326,20 @@ try {
   assert.equal(terminal.getNode(upgradedPlayer.fs, "/root/learner-note.txt")?.content, "keep this saved player file\n");
   assert.ok(upgradedPlayer.flags.has("saved-progress-marker"));
   assert.equal(upgradedPlayer.activeModuleId, "sr-bash");
+  assert.ok(storageValues.has(`gamehack.player-terminal.v2:${encodeURIComponent("upgrade@example.ionio.gr")}`),
+    "legacy-branded snapshots should migrate to the GameHack storage key");
+  assert.ok(!storageValues.has(preCourseKey), "the old storage key is retired after migration");
 
   const legacyFs = terminal.defaultFS();
   const mounted = (name, source) => terminal.dir(name, Object.values(source.children || {}), source.mode, source.owner, source.group);
   const sudoMount = mounted("sudorun", (await server.ssrLoadModule("/src/lib/sudorun.ts")).sudoRunFS());
   sudoMount.children.root.children["persistent-note.txt"] = terminal.file("persistent-note.txt", "saved from the old module root\n");
-  sudoMount.children.root.children["hackforge.txt"].content += "player edit from the legacy workspace\n";
+  const oldNotes = sudoMount.children.root.children["gamehack.txt"];
+  assert.ok(oldNotes);
+  sudoMount.children.root.children["hackforge.txt"] = terminal.file(
+    "hackforge.txt",
+    oldNotes.content.replace(/gamehack/gi, "hackforge") + "player edit from the legacy workspace\n",
+  );
   const ravenMount = mounted("raven", terminal.ravenFS());
   legacyFs.children.labs = terminal.dir("labs", [terminal.dir("scenarios", [ravenMount, sudoMount])]);
   legacyFs.children.home.children.operator.children["legacy-root-note.txt"] = terminal.file("legacy-root-note.txt", "saved from the shared root\n");
@@ -352,11 +360,14 @@ try {
   assert.deepEqual(migrated.crontab, ["# m h dom mon dow command"],
     "the legacy system table should not remain in the per-user crontab state");
   assert.ok(terminal.getNode(migrated.fs, "/root/persistent-note.txt"), "legacy challenge files should migrate into the unified root");
-  assert.match(terminal.getNode(migrated.fs, "/root/hackforge.txt")?.content || "", /player edit from the legacy workspace/);
+  assert.match(terminal.getNode(migrated.fs, "/root/gamehack.txt")?.content || "", /player edit from the legacy workspace/);
+  assert.match(terminal.getNode(migrated.fs, "/root/gamehack.txt.rebrand-backup")?.content || "", /Welcome to GameHack/,
+    "an existing current-brand fixture should remain available when a saved legacy file takes its name");
+  assert.equal(terminal.getNode(migrated.fs, "/root/hackforge.txt"), null, "the old fixture filename should migrate without losing edits");
   assert.ok(terminal.getNode(migrated.fs, "/home/operator/legacy-root-note.txt"));
   assert.equal(terminal.getNode(migrated.fs, "/labs/scenarios"), null, "module-specific root mounts should be removed after migration");
   playerTerminal.savePlayerTerminal("legacy@example.ionio.gr", migrated);
-  assert.ok(storageValues.has(`hackforge.player-terminal.v2:${encodeURIComponent("legacy@example.ionio.gr")}`));
+  assert.ok(storageValues.has(`gamehack.player-terminal.v2:${encodeURIComponent("legacy@example.ionio.gr")}`));
   assert.ok(!storageValues.has(legacyKey), "saving the migrated terminal should retire the legacy snapshot");
 
   console.log(`Linux sandbox checks passed: ${ALL_LINUX_COMMANDS.length} advertised command examples, one unified VFS, per-player isolation, persistence, and legacy migration.`);

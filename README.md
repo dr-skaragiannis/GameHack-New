@@ -1,4 +1,4 @@
-# HACKFORGE
+# GameHack
 
 ## Local development
 

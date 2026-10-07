@@ -84,9 +84,9 @@ function continueLearningTarget(user: User): LearningTarget {
 
 function EthicsGate({ lang, onAccept }: { lang: Lang; onAccept: () => void }) {
   return (
-    <div className="forge-grid min-h-full grid place-items-center p-4">
-      <div className="relative z-10 max-w-lg glass rounded-2xl border border-ember-600/40 p-8 forge-glow scale-in">
-        <div className="text-sm uppercase tracking-[0.3em] text-ember-400 mb-2">{t("appName", lang)}</div>
+    <div className="gamehack-grid min-h-full grid place-items-center p-4">
+      <div className="relative z-10 max-w-lg glass rounded-2xl border border-cyan-600/40 p-8 gamehack-glow scale-in">
+        <div className="text-sm uppercase tracking-[0.3em] text-cyan-400 mb-2">{t("appName", lang)}</div>
         <h1 className="text-2xl font-bold text-shine mb-4">{t("ethicsTitle", lang)}</h1>
         <p className="text-zinc-300 leading-relaxed text-sm">{t("ethicsBody", lang)}</p>
         <button
@@ -96,7 +96,7 @@ function EthicsGate({ lang, onAccept }: { lang: Lang; onAccept: () => void }) {
             sound.enter();
             onAccept();
           }}
-          className="mt-6 w-full rounded-xl bg-gradient-to-r from-ember-600 to-ember-500 py-3 font-bold text-white"
+          className="mt-6 w-full rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-500 py-3 font-bold text-white"
         >
           {t("agree", lang)}
         </button>
@@ -128,7 +128,7 @@ export default function App() {
   useEffect(() => db.subscribeDB(refresh), [refresh]);
 
   if (!authReady) {
-    return <div className="forge-grid min-h-screen grid place-items-center text-sm text-iron-300">Checking session…</div>;
+    return <div className="gamehack-grid min-h-screen grid place-items-center text-sm text-iron-300">Checking session…</div>;
   }
   if (!user) return <AuthScreen />;
 
@@ -299,7 +299,7 @@ export default function App() {
       <button
         type="button"
         onClick={() => setLang(lang === "en" ? "el" : "en")}
-        className="h-9 px-3 rounded-lg border border-forge-border text-sm font-bold tracking-widest text-iron-400 hover:text-ember-400"
+        className="h-9 px-3 rounded-lg border border-gamehack-border text-sm font-bold tracking-widest text-iron-400 hover:text-cyan-400"
       >
         {t("langLabel", lang)}
       </button>
@@ -329,17 +329,17 @@ export default function App() {
   );
 
   return (
-    <div className="forge-grid min-h-full flex">
+    <div className="gamehack-grid min-h-full flex">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 flex flex-col border-r border-forge-border bg-forge-panel/95 backdrop-blur-md transition-all lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:self-start",
+          "fixed inset-y-0 left-0 z-30 flex flex-col border-r border-gamehack-border bg-gamehack-panel/95 backdrop-blur-md transition-all lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:self-start",
           collapsed ? "w-[72px]" : "w-60",
           mobile ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        <div className={cn("relative flex h-16 items-center border-b border-forge-border", collapsed ? "justify-center px-2 pt-5" : "gap-2 px-3")}>
-          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-ember-500 to-ember-700 grid place-items-center shrink-0">
-            <Icon name="hammer" className="w-4 h-4 text-white" />
+        <div className={cn("relative flex h-16 items-center border-b border-gamehack-border", collapsed ? "justify-center px-2 pt-5" : "gap-2 px-3")}>
+          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-cyan-500 to-cyan-700 grid place-items-center shrink-0">
+            <Icon name="terminal" className="w-4 h-4 text-white" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
@@ -376,28 +376,28 @@ export default function App() {
                 }}
                 className={cn(
                   "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition",
-                  view === n.id ? "bg-ember-600/20 text-ember-300" : "text-iron-400 hover:bg-white/5 hover:text-zinc-200",
+                  view === n.id ? "bg-cyan-600/20 text-cyan-300" : "text-iron-400 hover:bg-white/5 hover:text-zinc-200",
                   collapsed && "justify-center px-0"
                 )}
               >
                 <span className="relative">
                   <Icon name={n.icon} className="w-5 h-5" />
                   {!!n.badge && n.badge > 0 && (
-                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-ember-500" />
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-cyan-500" />
                   )}
                 </span>
                 {!collapsed && (
                   <>
                     <span className="flex-1 text-left">{n.label}</span>
                     {!!n.badge && n.badge > 0 && (
-                      <span className="text-sm bg-ember-600 text-white rounded-full px-1.5">{n.badge}</span>
+                      <span className="text-sm bg-cyan-600 text-white rounded-full px-1.5">{n.badge}</span>
                     )}
                   </>
                 )}
               </button>
             ))}
         </nav>
-        <div className="mt-auto p-2 border-t border-forge-border">
+        <div className="mt-auto p-2 border-t border-gamehack-border">
           <button
             type="button"
             onClick={logout}
@@ -413,7 +413,7 @@ export default function App() {
 
       <div className="flex-1 min-w-0 flex flex-col relative z-10">
         {view !== "module" && (
-          <header className="app-topbar sticky top-0 z-20 flex min-h-16 items-center gap-2 px-3 py-2 sm:gap-3 sm:px-4 border-b border-forge-border bg-forge-bg/80 backdrop-blur">
+          <header className="app-topbar sticky top-0 z-20 flex min-h-16 items-center gap-2 px-3 py-2 sm:gap-3 sm:px-4 border-b border-gamehack-border bg-gamehack-bg/80 backdrop-blur">
             {mobileMenuButton}
             {quickStats}
             {accountTools}
@@ -457,7 +457,7 @@ export default function App() {
           {view === "campaigns" && (
             <div className="space-y-6">
               <div>
-                <div className="text-sm uppercase tracking-[0.25em] text-ember-400">{uppercaseLabel(t("campaigns", lang), lang)}</div>
+                <div className="text-sm uppercase tracking-[0.25em] text-cyan-400">{uppercaseLabel(t("campaigns", lang), lang)}</div>
                 <h1 className="text-3xl font-bold mt-1">{t("chooseCampaign", lang)}</h1>
               </div>
               <div className="grid md:grid-cols-3 gap-4">
@@ -469,26 +469,26 @@ export default function App() {
                       key={c.id}
                       type="button"
                       onClick={() => openCampaign(c.id)}
-                      className={cn("text-left glass rounded-2xl border border-forge-border p-5 card-hover enter", `enter-${i + 1}`)}
+                      className={cn("text-left glass rounded-2xl border border-gamehack-border p-5 card-hover enter", `enter-${i + 1}`)}
                     >
-                      <div className="h-1.5 rounded-full bg-gradient-to-r from-ember-500 via-amber-300 to-ember-700 strip-anim mb-4" />
-                      <div className="text-sm uppercase tracking-widest text-ember-400">
+                      <div className="h-1.5 rounded-full bg-gradient-to-r from-cyan-500 via-cyan-300 to-cyan-700 strip-anim mb-4" />
+                      <div className="text-sm uppercase tracking-widest text-cyan-400">
                         {uppercaseLabel(c.scenario === "lab" || c.scenario === "sudorun" ? t("courseLabel", lang) : t("ctfLabel", lang), lang)}
                       </div>
                       <h2 className="flex items-baseline gap-2 text-xl font-bold mt-1">
-                        <span className="font-mono text-sm tracking-widest text-ember-400">{String(c.pathNumber).padStart(2, "0")}.</span>
+                        <span className="font-mono text-sm tracking-widest text-cyan-400">{String(c.pathNumber).padStart(2, "0")}.</span>
                         <span>{c.title[lang]}</span>
                       </h2>
                       <p className="text-sm text-iron-400 mt-1">{c.subtitle[lang]}</p>
                       <p className="text-sm text-zinc-400 mt-3 leading-relaxed">{c.blurb[lang]}</p>
                       <div className="mt-4 flex items-center justify-between gap-3 text-sm text-iron-400">
                         <span>{n}/{c.modules.length} {t("modules", lang)}</span>
-                        <span className="font-mono font-semibold text-ember-300" aria-label={`${t("overallProgress", lang)} ${pct}%`}>
+                        <span className="font-mono font-semibold text-cyan-300" aria-label={`${t("overallProgress", lang)} ${pct}%`}>
                           {pct}%
                         </span>
                       </div>
-                      <div className="mt-2 h-1.5 rounded-full bg-forge-bg overflow-hidden" aria-hidden="true">
-                        <div className="h-full bg-ember-500" style={{ width: `${pct}%` }} />
+                      <div className="mt-2 h-1.5 rounded-full bg-gamehack-bg overflow-hidden" aria-hidden="true">
+                        <div className="h-full bg-cyan-500" style={{ width: `${pct}%` }} />
                       </div>
                     </button>
                   );

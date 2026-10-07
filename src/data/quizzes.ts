@@ -145,7 +145,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
         { en: "Only illegal on port 22", el: "Παράνομη μόνο στη θύρα 22" },
       ],
       answer: 1,
-      why: { en: "Get written permission. HACKFORGE is a sandbox.", el: "Πάρε γραπτή άδεια. Το HACKFORGE είναι sandbox." },
+      why: { en: "Get written permission. GameHack is a sandbox.", el: "Πάρε γραπτή άδεια. Το GameHack είναι sandbox." },
     },
   ],
   recon: [
@@ -580,7 +580,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
   ],
   "sr-search": [
     { q: { en: "ifconfig | grep inet keeps…", el: "ifconfig | grep inet κρατά…" }, choices: [{ en: "All lines", el: "Όλα" }, { en: "Lines containing inet", el: "Γραμμές με inet" }, { en: "Only errors", el: "Μόνο σφάλματα" }, { en: "PIDs", el: "PID" }], answer: 1, why: { en: "grep filters stdin.", el: "Το grep φιλτράρει stdin." } },
-    { q: { en: "find / -type f -name hackforge starts at…", el: "Το find / ξεκινά από…" }, choices: [{ en: "Your home only", el: "Μόνο home" }, { en: "The filesystem root", el: "Τη ρίζα" }, { en: "RAM", el: "RAM" }, { en: "DNS", el: "DNS" }], answer: 1, why: { en: "/ is the tree root.", el: "/ = ρίζα." } },
+    { q: { en: "find / -type f -name gamehack starts at…", el: "Το find / ξεκινά από…" }, choices: [{ en: "Your home only", el: "Μόνο home" }, { en: "The filesystem root", el: "Τη ρίζα" }, { en: "RAM", el: "RAM" }, { en: "DNS", el: "DNS" }], answer: 1, why: { en: "/ is the tree root.", el: "/ = ρίζα." } },
     { q: { en: "2>&1 sends…", el: "Το 2>&1 στέλνει…" }, choices: [{ en: "stdout to a printer", el: "stdout σε εκτυπωτή" }, { en: "stderr to stdout", el: "stderr στο stdout" }, { en: "root mail", el: "mail root" }, { en: "Nothing", el: "Τίποτα" }], answer: 1, why: { en: "Merge streams so grep can filter errors.", el: "Ένωση ροών." } },
   ],
   "sr-files": [
@@ -631,7 +631,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
   "sr-svc": [
     { q: { en: "Apache's default page lives at…", el: "Η default σελίδα Apache είναι στο…" }, choices: [{ en: "/etc/passwd", el: "/etc/passwd" }, { en: "/var/www/html/index.html", el: "/var/www/html/index.html" }, { en: "/root/Desktop", el: "/root/Desktop" }, { en: "/proc", el: "/proc" }], answer: 1, why: { en: "Document root.", el: "Document root." } },
     { q: { en: "SSH vs telnet…", el: "SSH vs telnet…" }, choices: [{ en: "Same encryption", el: "Ίδια κρυπτογράφηση" }, { en: "SSH encrypts the channel", el: "Το SSH κρυπτογραφεί το κανάλι" }, { en: "Telnet is newer", el: "Το telnet είναι νεότερο" }, { en: "Neither uses TCP", el: "Κανένα TCP" }], answer: 1, why: { en: "Never telnet credentials.", el: "Ποτέ κωδικοί σε telnet." } },
-    { q: { en: "Anonymous FTP login in this lab is…", el: "Anonymous FTP εδώ είναι…" }, choices: [{ en: "A live CESCA server", el: "Ζωντανός CESCA" }, { en: "A simulated HackForge server", el: "Προσομοίωση HackForge" }, { en: "Required on the internet", el: "Υποχρεωτικό στο internet" }, { en: "A kernel module", el: "Κερνελ module" }], answer: 1, why: { en: "ftp.forge.lab is fake. Stay in scope.", el: "Το ftp.forge.lab είναι ψεύτικο." } },
+    { q: { en: "Anonymous FTP login in this lab is…", el: "Anonymous FTP εδώ είναι…" }, choices: [{ en: "A live CESCA server", el: "Ζωντανός CESCA" }, { en: "A simulated GameHack server", el: "Προσομοίωση GameHack" }, { en: "Required on the internet", el: "Υποχρεωτικό στο internet" }, { en: "A kernel module", el: "Κερνελ module" }], answer: 1, why: { en: "ftp.gamehack.lab is fake. Stay in scope.", el: "Το ftp.gamehack.lab είναι ψεύτικο." } },
   ],
   "dfir-intake": [
     { q: { en: "A matching SHA-256 digest supports…", el: "Ίδιο SHA-256 υποστηρίζει…" }, choices: [{ en: "The file is harmless", el: "Το αρχείο είναι ακίνδυνο" }, { en: "The compared byte sequences match", el: "Τα bytes που συγκρίθηκαν είναι ίδια" }, { en: "The author is known", el: "Είναι γνωστός ο δημιουργός" }, { en: "The file is original", el: "Είναι πρωτότυπο" }], answer: 1, why: { en: "A digest supports byte identity, not safety or authorship.", el: "Το digest υποστηρίζει ταυτότητα bytes, όχι ασφάλεια ή δημιουργό." } },

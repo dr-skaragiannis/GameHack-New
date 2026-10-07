@@ -53,18 +53,18 @@ export default function ProfileView({
 
   return (
     <div className="w-full space-y-6">
-      <div className="glass rounded-2xl border border-forge-border p-6 flex flex-wrap gap-5 items-start">
+      <div className="glass rounded-2xl border border-gamehack-border p-6 flex flex-wrap gap-5 items-start">
         <button
           type="button"
           disabled={!mine}
           onClick={() => mine && setPicker(true)}
           title={mine ? t("chooseAvatar", lang) : undefined}
           aria-label={mine ? t("chooseAvatar", lang) : user.displayName}
-          className="relative rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-ember-400 disabled:cursor-default"
+          className="relative rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400 disabled:cursor-default"
         >
           <Avatar src={user.avatar} name={user.displayName} size={88} />
           {mine && (
-            <span className="absolute bottom-0 right-0 grid h-7 w-7 place-items-center rounded-full border border-forge-border bg-forge-panel text-ember-400">
+            <span className="absolute bottom-0 right-0 grid h-7 w-7 place-items-center rounded-full border border-gamehack-border bg-gamehack-panel text-cyan-400">
               <Icon name="settings" className="h-4 w-4" />
             </span>
           )}
@@ -76,7 +76,7 @@ export default function ProfileView({
             {t(user.role, lang)} · {t("level", lang)} {lv.level}
           </div>
           <div className="flex gap-4 mt-3 text-sm">
-            <span className="text-ember-400 font-semibold">{user.metrics.xp} XP</span>
+            <span className="text-cyan-400 font-semibold">{user.metrics.xp} XP</span>
             <span>
               {t("fidelity", lang)} {fidelityScore(user.metrics)}%
             </span>
@@ -91,7 +91,7 @@ export default function ProfileView({
             <button
               type="button"
               onClick={() => onChat(user.id)}
-              className="mt-3 rounded-lg bg-ember-600 px-3 py-1.5 text-sm font-semibold"
+              className="mt-3 rounded-lg bg-cyan-600 px-3 py-1.5 text-sm font-semibold"
             >
               {t("chat", lang)}
             </button>
@@ -99,7 +99,7 @@ export default function ProfileView({
         </div>
       </div>
 
-      <div className="glass rounded-2xl border border-forge-border p-5">
+      <div className="glass rounded-2xl border border-gamehack-border p-5">
         {mine ? (
           <div className="space-y-4">
             <label className="block space-y-2">
@@ -109,7 +109,7 @@ export default function ProfileView({
                 onChange={(e) => setNickname(e.target.value)}
                 maxLength={32}
                 required
-                className="w-full rounded-xl bg-forge-bg border border-forge-border px-3 py-2.5 text-sm outline-none focus:border-ember-500"
+                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
               />
             </label>
             <label className="block space-y-2">
@@ -119,14 +119,14 @@ export default function ProfileView({
                 onChange={(e) => setBio(e.target.value)}
                 rows={4}
                 maxLength={500}
-                className="w-full rounded-xl bg-forge-bg border border-forge-border p-3 text-sm outline-none focus:border-ember-500"
+                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border p-3 text-sm outline-none focus:border-cyan-500"
               />
             </label>
             <button
               type="button"
               onClick={saveProfile}
               disabled={!nickname.trim() || nickname.trim().length > 32}
-              className="rounded-lg bg-forge-panel2 border border-forge-border px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-gamehack-panel2 border border-gamehack-border px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t("saveProfile", lang)}
             </button>
@@ -139,7 +139,7 @@ export default function ProfileView({
         )}
       </div>
 
-      <div className="glass rounded-2xl border border-forge-border p-5">
+      <div className="glass rounded-2xl border border-gamehack-border p-5">
         <div className="text-sm uppercase tracking-widest text-iron-400 mb-3">{uppercaseLabel(t("interests", lang), lang)}</div>
         <div className="flex flex-wrap gap-2">
           {(mine ? INTERESTS_POOL : user.interests).map((i) => {
@@ -152,7 +152,7 @@ export default function ProfileView({
                 onClick={() => mine && toggleInterest(i)}
                 className={cn(
                   "rounded-full border px-3 py-1 text-sm",
-                  on ? "border-ember-500 bg-ember-500/15 text-ember-300" : "border-forge-border text-iron-400"
+                  on ? "border-cyan-500 bg-cyan-500/15 text-cyan-300" : "border-gamehack-border text-iron-400"
                 )}
               >
                 {i}
@@ -162,15 +162,15 @@ export default function ProfileView({
         </div>
       </div>
 
-      <div className="glass rounded-2xl border border-forge-border p-5">
+      <div className="glass rounded-2xl border border-gamehack-border p-5">
         <div className="text-sm uppercase tracking-widest text-iron-400 mb-3">{uppercaseLabel(t("badges", lang), lang)}</div>
         <div className="grid sm:grid-cols-2 gap-3">
           {user.badges.map((id) => {
             const b = BADGES[id];
             if (!b) return null;
             return (
-              <div key={id} className="flex gap-3 rounded-xl border border-forge-border p-3">
-                <div className="h-10 w-10 rounded-lg bg-ember-500/15 grid place-items-center text-ember-400">
+              <div key={id} className="flex gap-3 rounded-xl border border-gamehack-border p-3">
+                <div className="h-10 w-10 rounded-lg bg-cyan-500/15 grid place-items-center text-cyan-400">
                   <Icon name={b.icon} className="w-5 h-5" />
                 </div>
                 <div>

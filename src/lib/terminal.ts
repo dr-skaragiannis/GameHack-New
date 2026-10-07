@@ -85,7 +85,7 @@ export function defaultFS(): FileNode {
   return dir("/", [
     dir("home", [
       dir("operator", [
-        file("welcome.txt", "Welcome to HACKFORGE, operator.\nYour home is /home/operator.\nTry `help` if you get lost.\n"),
+        file("welcome.txt", "Welcome to GameHack, operator.\nYour home is /home/operator.\nTry `help` if you get lost.\n"),
         file("notes.txt", "TODO:\n- enumerate the lab network 10.10.10.0/24\n- check hidden files with ls -a\n- never test systems you don't own\n"),
         file(".secret", "FLAG{hidden_in_plain_sight}\nRemember: files starting with a dot are hidden from a plain `ls`.\n", "-rw-------"),
         file(".bash_history", "whoami\npwd\nls -la\ncat notes.txt\n"),
@@ -108,7 +108,7 @@ export function defaultFS(): FileNode {
       ),
       file("hosts", "127.0.0.1 localhost\n10.10.10.5 raven.lab\n10.10.10.8 web.lab\n10.10.10.12 ssh.lab\n10.10.10.21 db.lab\n"),
       file("shadow", "root:*:19000:0:99999:7:::\noperator:*:19000:0:99999:7:::\n", "-rw-------"),
-      file("issue", "HACKFORGE Training OS 1.0 — simulated Kali\nUnauthorized access is a crime. This is a sandbox.\n"),
+      file("issue", "GameHack Training OS 1.0 — simulated Kali\nUnauthorized access is a crime. This is a sandbox.\n"),
       dir("ssh", [file("sshd_config", "Port 22\nPermitRootLogin no\nPasswordAuthentication yes\nPubkeyAuthentication yes\n")]),
     ]),
     dir("var", [
@@ -117,11 +117,11 @@ export function defaultFS(): FileNode {
           "auth.log",
           "Apr 12 09:01:11 kali sshd[1021]: Accepted password for operator from 10.10.10.1 port 51222\nApr 12 09:14:02 kali sudo: operator : TTY=pts/0 ; PWD=/home/operator ; USER=root ; COMMAND=/usr/bin/id\n"
         ),
-        file("syslog", "Apr 12 08:00:01 kali systemd[1]: Started HACKFORGE lab services.\n"),
+        file("syslog", "Apr 12 08:00:01 kali systemd[1]: Started GameHack lab services.\n"),
       ]),
       dir("www", [
         dir("html", [
-          file("index.html", "<html><body><h1>Forge CMS</h1><p>Login at /login.php</p></body></html>\n"),
+          file("index.html", "<html><body><h1>GameHack practice CMS</h1><p>Login at /login.php</p></body></html>\n"),
           file(
             "login.php",
             "<?php /* simulated */ $user=$_POST['user']; $pass=$_POST['pass']; /* vulnerable to SQLi in this lab only */ ?>\n"
@@ -130,7 +130,7 @@ export function defaultFS(): FileNode {
       ]),
     ]),
     dir("tmp", [file(".keep", ""), dir("empty", [])]),
-    dir("root", [file("flag.txt", "FLAG{root_of_the_forge}\n", "-rw-------")], "drwx------"),
+    dir("root", [file("flag.txt", "FLAG{root_of_the_lab}\n", "-rw-------")], "drwx------"),
     dir("opt", [
       dir("raven", [
         file("user.txt", "FLAG{raven_foothold}\n"),
@@ -299,7 +299,7 @@ export function createTerminal(opts?: { fs?: FileNode; user?: string; host?: str
     ran: [],
     history: [],
     lines: [
-      { kind: "sys", text: "HACKFORGE simulated Linux terminal — educational sandbox only." },
+      { kind: "sys", text: "GameHack simulated Linux terminal — educational sandbox only." },
       { kind: "sys", text: "Run `help` or use the Top 100 button for the shared command reference. Type `man COMMAND` for a manual." },
       { kind: "sys", text: "All filesystem, package, network, and process activity stays inside this fictional lab." },
     ],
@@ -720,7 +720,7 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
         print(t.host);
         break;
       case "uname":
-        print("Linux " + t.host + " 5.15.0-forge #1 SMP x86_64 GNU/Linux");
+        print("Linux " + t.host + " 5.15.0-gamehack #1 SMP x86_64 GNU/Linux");
         t.flags.add("uname");
         break;
       case "date":
@@ -897,7 +897,7 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
         if (p.includes("/etc/hosts")) t.flags.add("read-hosts");
         if (p.includes("sshd_config")) t.flags.add("read-sshd");
         if (p.includes("crontab")) t.flags.add("read-cron");
-        if (/hackforge\.txt/.test(p)) t.flags.add("cat-hf");
+        if (/gamehack\.txt/.test(p)) t.flags.add("cat-hf");
         if (/etter\.dns/.test(p)) t.flags.add("etter");
         if (/simple_bash/.test(p)) t.flags.add("cat-bash");
         if (/sources\.list/.test(p)) t.flags.add("read-sources");
@@ -962,7 +962,7 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
         print(hits.join("\n") || "");
         t.flags.add("find");
         if (hits.some((h) => h.includes(".secret") || h.includes("flag") || h.includes("id_rsa"))) t.flags.add("find-secret");
-        if (hits.some((h) => /hackforge$/i.test(h) || h.endsWith("/hackforge"))) t.flags.add("find-hf");
+        if (hits.some((h) => /gamehack$/i.test(h) || h.endsWith("/gamehack"))) t.flags.add("find-hf");
         break;
       }
       case "ping": {
@@ -1093,7 +1093,7 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
           break;
         }
         if (/10\.10\.10\.8|web\.lab/.test(url)) {
-          print("<html><h1>Forge CMS</h1><a href='/login.php'>login</a></html>");
+          print("<html><h1>GameHack practice CMS</h1><a href='/login.php'>login</a></html>");
           t.flags.add("curl-web");
           break;
         }
@@ -1160,7 +1160,7 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
               scenario: t.scenario,
             };
           }
-          print("Welcome to ubuntu (HackForge lab host)\nLast login: simulated\nignite@ubuntu:~$");
+          print("Welcome to ubuntu (GameHack lab host)\nLast login: simulated\nignite@ubuntu:~$");
           setTerminalScenario(t, "sudorun", { user: "ignite", host: "ubuntu", cwd: "/home/ignite", home: "/home/ignite", isRoot: false });
           t.flags.add("ssh-ignite");
           break;
@@ -1227,7 +1227,7 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
           break;
         }
         if (rest[0] === "su" || rest.join(" ") === "-i" || rest[0] === "bash" || rest[0] === "su-") {
-          print("root@forge — simulated. Remember the oath.");
+          print("root@lab — simulated. Remember the oath.");
           t.isRoot = true;
           t.user = "root";
           t.flags.add("got-root");
@@ -1348,7 +1348,7 @@ Table: users
             parentNode.children[name] = file(name, "");
           }
           t.flags.add("touch");
-          if (/hackforge-2/.test(operand)) t.flags.add("touch-hf2");
+          if (/gamehack-2/.test(operand)) t.flags.add("touch-hf2");
           print(`${existing ? "Updated" : "Created"} virtual file: ${operand}`);
         }
         if (failed) t.lastExit = 1;

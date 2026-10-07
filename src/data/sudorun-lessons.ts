@@ -24,15 +24,15 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "Why use Linux for pentesting?", el: "Γιατί Linux στο pentest;" },
         body: {
-          en: "Certain operating systems get tied to certain tasks. For penetration testing, Linux is the default map. Linux offers far higher control of the OS, and it is open source — which makes it transparent and easier to understand. Before you try to “hack” anything, you must know how it works; transparency is a huge plus. Because Linux is popular in the community, most pentesting tools and frameworks are built for it. Maintenance is easy (packages come from a repository) and it is very stable compared to traditional desktop OS like Windows. This campaign is Sudo_Run: Linux for Beginners, inside HackForge — a sandbox, never a live network you do not own.",
-          el: "Για pentest το Linux είναι ο κανόνας: ανοιχτό, διαφανές, σταθερό, με τα εργαλεία έτοιμα. Το Sudo_Run είναι το μάθημα αρχαρίων του HackForge — μόνο sandbox.",
+          en: "Certain operating systems get tied to certain tasks. For penetration testing, Linux is the default map. Linux offers far higher control of the OS, and it is open source — which makes it transparent and easier to understand. Before you try to “hack” anything, you must know how it works; transparency is a huge plus. Because Linux is popular in the community, most pentesting tools and frameworks are built for it. Maintenance is easy (packages come from a repository) and it is very stable compared to traditional desktop OS like Windows. This campaign is Sudo_Run: Linux for Beginners, inside GameHack — a sandbox, never a live network you do not own.",
+          el: "Για pentest το Linux είναι ο κανόνας: ανοιχτό, διαφανές, σταθερό, με τα εργαλεία έτοιμα. Το Sudo_Run είναι το μάθημα αρχαρίων του GameHack — μόνο sandbox.",
         },
       },
       {
         heading: { en: "The terminal", el: "Το τερματικό" },
         body: {
-          en: "Just like everyday Windows work (folders, copy, move), we do those operations on Linux — mostly in the terminal, the command-line interface. You type a command, press Enter, the shell runs it. You are root in this lab (administrator). That is a lot of power: stay inside HackForge.",
-          el: "Οι καθημερινές εργασίες γίνονται στο τερματικό. Εδώ είσαι root — μείνε μέσα στο HackForge.",
+          en: "Just like everyday Windows work (folders, copy, move), we do those operations on Linux — mostly in the terminal, the command-line interface. You type a command, press Enter, the shell runs it. You are root in this lab (administrator). That is a lot of power: stay inside GameHack.",
+          el: "Οι καθημερινές εργασίες γίνονται στο τερματικό. Εδώ είσαι root — μείνε μέσα στο GameHack.",
         },
       },
       {
@@ -133,7 +133,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "help / --help", el: "help / --help" },
         body: {
-          en: "Nearly every command, application or utility on Linux has a dedicated help file. If you are stuck, -h / --help is your friend. Example: volatility --help (Volatility is a memory-forensics framework). In HackForge the same pattern applies to every tool.",
+          en: "Nearly every command, application or utility on Linux has a dedicated help file. If you are stuck, -h / --help is your friend. Example: volatility --help (Volatility is a memory-forensics framework). In GameHack the same pattern applies to every tool.",
           el: "Σχεδόν κάθε εντολή έχει --help. Π.χ. volatility --help.",
         },
         shots: [shot("volatility --help", ["Volatility Foundation Volatility Framework", "-h, --help   show help message and exit", "Plugins: pslist, netscan, filescan (lab stub)"])],
@@ -242,7 +242,7 @@ export const SUDO_RUN_MODULES: Module[] = [
           en: "grep searches for a keyword. Search for echo inside simple_bash.sh: grep -I \"echo\" simple_bash.sh  (from /root).",
           el: "grep -I \"echo\" simple_bash.sh στο /root.",
         },
-        shots: [shot('grep -I "echo" simple_bash.sh', ['echo "HackForge scanner starting"', 'echo "Sudo_Run lab — simulated only"', "# echo is here so grep can find it"])],
+        shots: [shot('grep -I "echo" simple_bash.sh', ['echo "GameHack scanner starting"', 'echo "Sudo_Run lab — simulated only"', "# echo is here so grep can find it"])],
       },
       {
         heading: { en: "Piping into grep", el: "Pipe στο grep" },
@@ -255,19 +255,19 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "find — the flexible hunter", el: "find — κυνηγός" },
         body: {
-          en: "find is the most powerful search: name, type, owner, size, mtime… find / -type f -name hackforge starts at / (root of the tree), looking for a regular file named hackforge. (In this lab the marker file is named hackforge.) Permission denied noise: append 2>&1 | grep -v \"Permission Denied\" to hide errors you cannot read.",
-          el: "find / -type f -name hackforge και προαιρετικά 2>&1 | grep -v \"Permission Denied\".",
+          en: "find is the most powerful search: name, type, owner, size, mtime… find / -type f -name gamehack starts at / (root of the tree), looking for a regular file named gamehack. (In this lab the marker file is named gamehack.) Permission denied noise: append 2>&1 | grep -v \"Permission Denied\" to hide errors you cannot read.",
+          el: "find / -type f -name gamehack και προαιρετικά 2>&1 | grep -v \"Permission Denied\".",
         },
         shots: [
-          shot("find / -type f -name hackforge", ["/opt/labs/hackforge"]),
-          shot('find / -type f -name hackforge 2>&1 | grep -v "Permission Denied"', ["/opt/labs/hackforge"]),
+          shot("find / -type f -name gamehack", ["/opt/labs/gamehack"]),
+          shot('find / -type f -name gamehack 2>&1 | grep -v "Permission Denied"', ["/opt/labs/gamehack"]),
         ],
       },
     ],
     cheats: [
       { cmd: 'grep -I "echo" simple_bash.sh', desc: { en: "search a file", el: "αναζήτηση αρχείου" } },
       { cmd: "ifconfig | grep inet", desc: { en: "filter command output", el: "φίλτρο εξόδου" } },
-      { cmd: "find / -type f -name hackforge", desc: { en: "hunt by name", el: "κυνήγι ονόματος" } },
+      { cmd: "find / -type f -name gamehack", desc: { en: "hunt by name", el: "κυνήγι ονόματος" } },
     ],
     tasks: [
       {
@@ -286,24 +286,24 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "find",
-        instruction: { en: "find / -type f -name hackforge", el: "find / -type f -name hackforge" },
-        hint: { en: "find / -type f -name hackforge", el: "find / -type f -name hackforge" },
+        instruction: { en: "find / -type f -name gamehack", el: "find / -type f -name gamehack" },
+        hint: { en: "find / -type f -name gamehack", el: "find / -type f -name gamehack" },
         explain: { en: "/ is the tree root. -type f means regular file.", el: "/ = ρίζα. -type f = αρχείο." },
-        check: (t) => t.flags.has("find-hf") || t.flags.has("find") || usedCmd(t, /find\s+\/.*hackforge/),
+        check: (t) => t.flags.has("find-hf") || t.flags.has("find") || usedCmd(t, /find\s+\/.*gamehack/),
       },
     ],
     challenges: [
       {
         title: { en: "Silence permission denied", el: "Σίγαση permission denied" },
-        brief: { en: 'find / -type f -name hackforge 2>&1 | grep -v "Permission Denied"', el: "find … 2>&1 | grep -v" },
+        brief: { en: 'find / -type f -name gamehack 2>&1 | grep -v "Permission Denied"', el: "find … 2>&1 | grep -v" },
         success: { en: "You redirected stderr and filtered it.", el: "Redirect έκανες στο stderr." },
         check: (t) => usedCmd(t, /2>&1/) || t.flags.has("find-hf"),
       },
       {
         title: { en: "Read the marker", el: "Διάβασε τον δείκτη" },
-        brief: { en: "cat /opt/labs/hackforge", el: "cat /opt/labs/hackforge" },
-        success: { en: "find led you to a HackForge flag.", el: "Το find σε πήγε στο flag." },
-        check: (t) => t.filesRead.some((p) => p.includes("/opt/labs/hackforge")),
+        brief: { en: "cat /opt/labs/gamehack", el: "cat /opt/labs/gamehack" },
+        success: { en: "find led you to a GameHack flag.", el: "Το find σε πήγε στο flag." },
+        check: (t) => t.filesRead.some((p) => p.includes("/opt/labs/gamehack")),
       },
     ],
   },
@@ -311,7 +311,7 @@ export const SUDO_RUN_MODULES: Module[] = [
     id: "sr-files",
     order: 4,
     icon: "folder",
-    color: "from-amber-400 to-orange-800",
+    color: "from-cyan-400 to-sky-800",
     difficulty: 2,
     scenario: lab,
     title: { en: "Files & directories", el: "Αρχεία & φάκελοι" },
@@ -321,18 +321,18 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "cat", el: "cat" },
         body: {
-          en: "cat prints a file on the terminal. From /root: cat hackforge.txt  (the lab notes are stored in hackforge.txt).",
-          el: "cat hackforge.txt από /root.",
+          en: "cat prints a file on the terminal. From /root: cat gamehack.txt  (the lab notes are stored in gamehack.txt).",
+          el: "cat gamehack.txt από /root.",
         },
-        shots: [shot("cat hackforge.txt", ["Welcome to HackForge — Linux for Beginners (Sudo_Run).", "Keep notes here. Practice every command in the lab, not on the internet."])],
+        shots: [shot("cat gamehack.txt", ["Welcome to GameHack — Linux for Beginners (Sudo_Run).", "Keep notes here. Practice every command in the lab, not on the internet."])],
       },
       {
         heading: { en: "touch — create a file", el: "touch — νέο αρχείο" },
         body: {
-          en: "touch NAME creates an empty file. Create hackforge-2.txt",
-          el: "touch hackforge-2.txt",
+          en: "touch NAME creates an empty file. Create gamehack-2.txt",
+          el: "touch gamehack-2.txt",
         },
-        shots: [shot("touch hackforge-2.txt", ["root@kali:~# ls", "hackforge.txt  hackforge-2.txt  simple_bash.sh  ..."])],
+        shots: [shot("touch gamehack-2.txt", ["root@kali:~# ls", "gamehack.txt  gamehack-2.txt  simple_bash.sh  ..."])],
       },
       {
         heading: { en: "mkdir", el: "mkdir" },
@@ -345,19 +345,19 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "cp, mv, rm, rmdir", el: "cp, mv, rm, rmdir" },
         body: {
-          en: "cp SRC DEST copies. mv SRC DEST moves OR renames. rm FILE deletes a file. rmdir DIR removes an empty directory (use rm -r if it has contents). Walkthrough: cp hackforge-2.txt Documents/ignite   then   mv Documents/ignite/hackforge-2.txt /root/Documents/   then   rm /root/Documents/hackforge-2.txt   then   rmdir ignite_screenshots/",
+          en: "cp SRC DEST copies. mv SRC DEST moves OR renames. rm FILE deletes a file. rmdir DIR removes an empty directory (use rm -r if it has contents). Walkthrough: cp gamehack-2.txt Documents/ignite   then   mv Documents/ignite/gamehack-2.txt /root/Documents/   then   rm /root/Documents/gamehack-2.txt   then   rmdir ignite_screenshots/",
           el: "cp αντιγράφει, mv μετακινεί/μετονομάζει, rm σβήνει αρχείο, rmdir άδειο φάκελο.",
         },
         shots: [
-          shot("cp hackforge-2.txt Documents/ignite", [""]),
+          shot("cp gamehack-2.txt Documents/ignite", [""]),
           shot("rmdir ignite_screenshots/", [""]),
         ],
         tip: { en: "rm -r deletes a directory AND its contents. Be careful even in a lab.", el: "Το rm -r σβήνει φάκελο με περιεχόμενο." },
       },
     ],
     cheats: [
-      { cmd: "cat hackforge.txt", desc: { en: "print file", el: "εκτύπωση" } },
-      { cmd: "touch hackforge-2.txt", desc: { en: "create empty file", el: "κενό αρχείο" } },
+      { cmd: "cat gamehack.txt", desc: { en: "print file", el: "εκτύπωση" } },
+      { cmd: "touch gamehack-2.txt", desc: { en: "create empty file", el: "κενό αρχείο" } },
       { cmd: "mkdir Documents/ignite", desc: { en: "make directory", el: "φάκελος" } },
       { cmd: "cp FILE DIR", desc: { en: "copy", el: "αντιγραφή" } },
       { cmd: "mv SRC DEST", desc: { en: "move/rename", el: "μετακίνηση" } },
@@ -367,17 +367,17 @@ export const SUDO_RUN_MODULES: Module[] = [
     tasks: [
       {
         id: "cat",
-        instruction: { en: "cat hackforge.txt", el: "cat hackforge.txt" },
-        hint: { en: "cat /root/hackforge.txt", el: "cat /root/hackforge.txt" },
+        instruction: { en: "cat gamehack.txt", el: "cat gamehack.txt" },
+        hint: { en: "cat /root/gamehack.txt", el: "cat /root/gamehack.txt" },
         explain: { en: "cat concatenates to stdout.", el: "cat στην έξοδο." },
-        check: (t) => t.flags.has("cat-hf") || usedCmd(t, /cat\s+.*hackforge\.txt/),
+        check: (t) => t.flags.has("cat-hf") || usedCmd(t, /cat\s+.*gamehack\.txt/),
       },
       {
         id: "touch",
-        instruction: { en: "touch hackforge-2.txt", el: "touch hackforge-2.txt" },
-        hint: { en: "touch hackforge-2.txt", el: "touch hackforge-2.txt" },
+        instruction: { en: "touch gamehack-2.txt", el: "touch gamehack-2.txt" },
+        hint: { en: "touch gamehack-2.txt", el: "touch gamehack-2.txt" },
         explain: { en: "Creates an empty file in the current directory.", el: "Κενό αρχείο εδώ." },
-        check: (t) => t.flags.has("touch-hf2") || usedCmd(t, /touch\s+.*hackforge-2/),
+        check: (t) => t.flags.has("touch-hf2") || usedCmd(t, /touch\s+.*gamehack-2/),
       },
       {
         id: "mkdir",
@@ -388,22 +388,22 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "cp",
-        instruction: { en: "cp hackforge-2.txt Documents/ignite", el: "cp hackforge-2.txt Documents/ignite" },
-        hint: { en: "cp hackforge-2.txt Documents/ignite", el: "cp …" },
+        instruction: { en: "cp gamehack-2.txt Documents/ignite", el: "cp gamehack-2.txt Documents/ignite" },
+        hint: { en: "cp gamehack-2.txt Documents/ignite", el: "cp …" },
         explain: { en: "cp <file> <destination>", el: "cp αρχείο προορισμός" },
         check: (t) => t.flags.has("cp") || usedCmd(t, /^\s*cp\b/),
       },
       {
         id: "mv",
         instruction: { en: "Move the copy with mv into /root/Documents/ (from the ignite folder or by path).", el: "mv στο /root/Documents/" },
-        hint: { en: "mv Documents/ignite/hackforge-2.txt /root/Documents/", el: "mv … /root/Documents/" },
+        hint: { en: "mv Documents/ignite/gamehack-2.txt /root/Documents/", el: "mv … /root/Documents/" },
         explain: { en: "mv moves or renames.", el: "Το mv μετακινεί ή μετονομάζει." },
         check: (t) => t.flags.has("mv") || usedCmd(t, /^\s*mv\b/),
       },
       {
         id: "rm",
-        instruction: { en: "rm the leftover hackforge-2.txt (in Documents or home).", el: "rm το hackforge-2.txt" },
-        hint: { en: "rm Documents/hackforge-2.txt", el: "rm …" },
+        instruction: { en: "rm the leftover gamehack-2.txt (in Documents or home).", el: "rm το gamehack-2.txt" },
+        hint: { en: "rm Documents/gamehack-2.txt", el: "rm …" },
         explain: { en: "rm deletes files.", el: "Το rm σβήνει αρχεία." },
         check: (t) => t.flags.has("rm") || usedCmd(t, /^\s*rm\b/),
       },
@@ -439,7 +439,7 @@ export const SUDO_RUN_MODULES: Module[] = [
     scenario: lab,
     title: { en: "Text manipulation", el: "Χειρισμός κειμένου" },
     subtitle: { en: "head, tail, nl, sed, more, less", el: "head, tail, nl, sed, more, less" },
-    badge: { en: "Text Smith", el: "Σιδεράς κειμένου" },
+    badge: { en: "Text Analyst", el: "Αναλυτής κειμένου" },
     theory: [
       {
         heading: { en: "Almost everything is a file", el: "Σχεδόν όλα είναι αρχεία" },
@@ -455,8 +455,8 @@ export const SUDO_RUN_MODULES: Module[] = [
           el: "head = πρώτες 10 γραμμές, tail = τελευταίες.",
         },
         shots: [
-          shot("head /etc/ettercap/etter.dns", ["# etter.dns — HackForge lab copy of a DNS spoof config (educational)", "# This file is a TEXT example. Never use spoofing outside a lab you own.", "microsoft.com A 10.10.10.8"]),
-          shot("tail /etc/ettercap/etter.dns", ["# operator workstation", "192.168.1.13 ptr kali.hackforge.lab"]),
+          shot("head /etc/ettercap/etter.dns", ["# etter.dns — GameHack lab copy of a DNS spoof config (educational)", "# This file is a TEXT example. Never use spoofing outside a lab you own.", "microsoft.com A 10.10.10.8"]),
+          shot("tail /etc/ettercap/etter.dns", ["# operator workstation", "192.168.1.13 ptr kali.gamehack.lab"]),
         ],
       },
       {
@@ -465,15 +465,15 @@ export const SUDO_RUN_MODULES: Module[] = [
           en: "nl FILE prints the file with line numbers. nl /etc/ettercap/etter.dns",
           el: "nl /etc/ettercap/etter.dns",
         },
-        shots: [shot("nl /etc/ettercap/etter.dns", ["     1  # etter.dns — HackForge lab copy of a DNS spoof config (educational)"])],
+        shots: [shot("nl /etc/ettercap/etter.dns", ["     1  # etter.dns — GameHack lab copy of a DNS spoof config (educational)"])],
       },
       {
         heading: { en: "sed — find & replace", el: "sed — εύρεση & αντικατάσταση" },
         body: {
-          en: "sed can search a pattern and act on it. s/WWW/www/g means substitute WWW with www, globally. Run: sed s/WWW/www/g hackforge.in",
-          el: "sed s/WWW/www/g hackforge.in",
+          en: "sed can search a pattern and act on it. s/WWW/www/g means substitute WWW with www, globally. Run: sed s/WWW/www/g gamehack.in",
+          el: "sed s/WWW/www/g gamehack.in",
         },
-        shots: [shot("sed s/WWW/www/g hackforge.in", ["Visit www.HACKFORGE.LAB for the lab portal.", "www banners should be rewritten to www with sed.", "Linux training portal (simulated)."])],
+        shots: [shot("sed s/WWW/www/g gamehack.in", ["Visit www.gamehack.lab for the lab portal.", "www banners should be rewritten to www with sed.", "Linux training portal (simulated)."])],
       },
       {
         heading: { en: "more and less", el: "more και less" },
@@ -481,7 +481,7 @@ export const SUDO_RUN_MODULES: Module[] = [
           en: "more FILE shows one page at a time (Enter to scroll). less FILE is similar and lets you search with /keyword (in a real terminal). Here they print the file so you can practise the commands. more /etc/ettercap/etter.dns   and   less /etc/ettercap/etter.dns",
           el: "more και less σελιδοποιούν. Στο lab τυπώνουν το αρχείο.",
         },
-        shots: [shot("more /etc/ettercap/etter.dns", ["# etter.dns — HackForge lab copy …", "(page 1 — Enter would continue on a TTY)"])],
+        shots: [shot("more /etc/ettercap/etter.dns", ["# etter.dns — GameHack lab copy …", "(page 1 — Enter would continue on a TTY)"])],
       },
     ],
     cheats: [
@@ -516,8 +516,8 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "sed",
-        instruction: { en: "sed s/WWW/www/g hackforge.in", el: "sed s/WWW/www/g hackforge.in" },
-        hint: { en: "sed s/WWW/www/g /root/hackforge.in", el: "sed s/WWW/www/g /root/hackforge.in" },
+        instruction: { en: "sed s/WWW/www/g gamehack.in", el: "sed s/WWW/www/g gamehack.in" },
+        hint: { en: "sed s/WWW/www/g /root/gamehack.in", el: "sed s/WWW/www/g /root/gamehack.in" },
         explain: { en: "/g = replace every occurrence.", el: "/g = όλες τις εμφανίσεις." },
         check: (t) => t.flags.has("sed-www") || usedCmd(t, /sed\s+s\/WWW\/www/),
       },
@@ -545,7 +545,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         title: { en: "Prove sed", el: "Απόδειξε sed" },
-        brief: { en: "Re-run sed so WWW becomes www on hackforge.in", el: "Ξανά sed στο hackforge.in" },
+        brief: { en: "Re-run sed so WWW becomes www on gamehack.in", el: "Ξανά sed στο gamehack.in" },
         success: { en: "Substitution is non-destructive unless you redirect.", el: "Χωρίς redirect δεν αλλάζει το αρχείο." },
         check: (t) => t.flags.has("sed"),
       },

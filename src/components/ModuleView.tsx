@@ -161,10 +161,13 @@ export default function ModuleView({
   const [term, setTerm] = useState<Terminal>(() =>
     activateTerminalForModule(loadPlayerTerminal(userId), module.id, module.scenario || "lab")
   );
-  const hintStorageKey = `hackforge.hints.v1:${userId}:${module.id}`;
+  const hintStorageKey = `gamehack.hints.v1:${userId}:${module.id}`;
+  const legacyHintStorageKey = `hackforge.hints.v1:${userId}:${module.id}`;
   const [hints, setHints] = useState<Record<string, boolean>>(() => {
     try {
-      const stored = localStorage.getItem(hintStorageKey);
+      const stored = localStorage.getItem(hintStorageKey) ?? localStorage.getItem(legacyHintStorageKey);
+      if (stored !== null && localStorage.getItem(hintStorageKey) === null) localStorage.setItem(hintStorageKey, stored);
+      localStorage.removeItem(legacyHintStorageKey);
       return stored ? JSON.parse(stored) as Record<string, boolean> : {};
     } catch {
       return {};
@@ -174,10 +177,13 @@ export default function ModuleView({
   const [finished, setFinished] = useState(false);
   const [commandResult, setCommandResult] = useState<CommandExplanation | null>(null);
   const [commandSuggestion, setCommandSuggestion] = useState<string | null>(null);
-  const commandPopupStorageKey = `hackforge.command-tutor.v1:${userId}:${module.id}`;
+  const commandPopupStorageKey = `gamehack.command-tutor.v1:${userId}:${module.id}`;
+  const legacyCommandPopupStorageKey = `hackforge.command-tutor.v1:${userId}:${module.id}`;
   const [seenPopupFamilies, setSeenPopupFamilies] = useState<Set<string>>(() => {
     try {
-      const stored = localStorage.getItem(commandPopupStorageKey);
+      const stored = localStorage.getItem(commandPopupStorageKey) ?? localStorage.getItem(legacyCommandPopupStorageKey);
+      if (stored !== null && localStorage.getItem(commandPopupStorageKey) === null) localStorage.setItem(commandPopupStorageKey, stored);
+      localStorage.removeItem(legacyCommandPopupStorageKey);
       const parsed: unknown = stored ? JSON.parse(stored) : [];
       return new Set(Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : []);
     } catch {
@@ -323,7 +329,7 @@ export default function ModuleView({
         </div>
 
         <div className="module-topbar__track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-          <div className="h-full bg-gradient-to-r from-ember-600 to-ember-400 bar-grow" style={{ width: `${progress}%` }} />
+          <div className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 bar-grow" style={{ width: `${progress}%` }} />
         </div>
       </div>
 
@@ -331,21 +337,21 @@ export default function ModuleView({
         {tab === "theory" && (
           <div className="space-y-6 enter">
             {theoryCommands.length > 0 && (
-              <section className="glass rounded-2xl border border-forge-border p-5">
+              <section className="glass rounded-2xl border border-gamehack-border p-5">
                 <header className="mb-4">
                   <h2 className="text-xl font-semibold text-zinc-100">{t("commandDeepDives", lang)}</h2>
                   <p className="mt-2 text-sm text-zinc-400 leading-relaxed">{t("commandDeepDivesDescription", lang)}</p>
                 </header>
                 <div className="grid gap-4 md:grid-cols-2">
                   {theoryCommands.map((item, index) => (
-                    <article key={`${item.cmd}-${index}`} className="rounded-xl border border-forge-border bg-black/20 p-4">
+                    <article key={`${item.cmd}-${index}`} className="rounded-xl border border-gamehack-border bg-black/20 p-4">
                       <div className="flex items-start gap-3">
-                        <span className="font-mono text-sm text-ember-400">{String(index + 1).padStart(2, "0")}</span>
+                        <span className="font-mono text-sm text-cyan-400">{String(index + 1).padStart(2, "0")}</span>
                         <div className="min-w-0">
                           <h3 className="text-base font-semibold text-zinc-100">
                             {item.guide?.title[lang] || bi(item.desc, lang)}
                           </h3>
-                          <code className="mt-1 block whitespace-pre-wrap break-words text-sm text-amber-200">{item.cmd}</code>
+                          <code className="mt-1 block whitespace-pre-wrap break-words text-sm text-cyan-200">{item.cmd}</code>
                         </div>
                       </div>
                       <div className="mt-3 space-y-2">
@@ -354,13 +360,13 @@ export default function ModuleView({
                         ))}
                       </div>
                       {item.guide?.syntax && (
-                        <div className="mt-3 rounded-lg border border-forge-border bg-black/40 p-3">
+                        <div className="mt-3 rounded-lg border border-gamehack-border bg-black/40 p-3">
                           <div className="text-sm text-iron-400">{t("commandSyntax", lang)}</div>
                           <code className="mt-1 block whitespace-pre-wrap break-words text-sm text-zinc-200">{item.guide.syntax}</code>
                         </div>
                       )}
                       {item.guide?.caution && (
-                        <p className="mt-3 text-sm text-amber-200/90 leading-relaxed">{item.guide.caution[lang]}</p>
+                        <p className="mt-3 text-sm text-cyan-200/90 leading-relaxed">{item.guide.caution[lang]}</p>
                       )}
                     </article>
                   ))}
@@ -368,7 +374,7 @@ export default function ModuleView({
               </section>
             )}
             {module.theory.map((s, i) => (
-              <section key={i} className="glass rounded-2xl border border-forge-border p-5">
+              <section key={i} className="glass rounded-2xl border border-gamehack-border p-5">
                 <h2 className="text-lg font-semibold text-zinc-100 mb-2">{bi(s.heading, lang)}</h2>
                 <div className="space-y-3">
                   {bi(s.body, lang).split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean).map((paragraph, paragraphIndex) => (
@@ -379,15 +385,15 @@ export default function ModuleView({
                   <p className="mt-3 text-sm text-neon-cyan/90 border-l-2 border-neon-cyan/40 pl-3">{bi(s.tip, lang)}</p>
                 )}
                 {s.shots?.map((sh, si) => (
-                  <div key={si} className="mt-4 rounded-xl border border-forge-border bg-black/70 overflow-hidden font-mono text-sm">
+                  <div key={si} className="mt-4 rounded-xl border border-gamehack-border bg-black/70 overflow-hidden font-mono text-sm">
                     <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 text-sm text-iron-500">
                       <span className="h-2 w-2 rounded-full bg-rose-500/80" />
-                      <span className="h-2 w-2 rounded-full bg-amber-400/80" />
+                      <span className="h-2 w-2 rounded-full bg-cyan-400/80" />
                       <span className="h-2 w-2 rounded-full bg-neon-green/80" />
-                      <span className="ml-2 tracking-wider text-iron-400">screenshot · HackForge lab</span>
+                      <span className="ml-2 tracking-wider text-iron-400">screenshot · GameHack lab</span>
                     </div>
                     <pre className="px-3 py-3 text-zinc-200 whitespace-pre-wrap leading-relaxed">
-                      {sh.cmd && <span className="text-ember-400">root@kali:~# {sh.cmd}{"\n"}</span>}
+                      {sh.cmd && <span className="text-cyan-400">root@kali:~# {sh.cmd}{"\n"}</span>}
                       {sh.lines.join("\n")}
                     </pre>
                   </div>
@@ -401,7 +407,7 @@ export default function ModuleView({
                 setTab("lab");
                 sound.popup();
               }}
-              className="rounded-xl bg-gradient-to-r from-ember-600 to-ember-500 px-5 py-3 font-bold text-white shimmer-hover"
+              className="rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-500 px-5 py-3 font-bold text-white shimmer-hover"
             >
               {t("beginLab", lang)}
             </button>
@@ -471,8 +477,8 @@ export default function ModuleView({
               }}
             />
             <aside className="module-objectives space-y-4">
-              <div className="glass rounded-2xl border border-forge-border p-4">
-                <div className="text-sm uppercase tracking-widest text-ember-400 mb-3">{uppercaseLabel(t("objectives", lang), lang)}</div>
+              <div className="glass rounded-2xl border border-gamehack-border p-4">
+                <div className="text-sm uppercase tracking-widest text-cyan-400 mb-3">{uppercaseLabel(t("objectives", lang), lang)}</div>
                 <p className="mb-3 flex items-start gap-2 rounded-lg border border-neon-cyan/15 bg-neon-cyan/5 p-2.5 text-sm leading-5 text-iron-300">
                   <Icon name="shield" className="mt-0.5 h-4 w-4 shrink-0 text-neon-cyan" />
                   <span>{t("commandAuditNotice", lang)}</span>
@@ -499,7 +505,7 @@ export default function ModuleView({
                                   type="button"
                                   onClick={() => revealHint(task.id)}
                                   disabled={hints[task.id]}
-                                  className="text-sm text-ember-400 hover:underline disabled:cursor-default disabled:text-amber-300"
+                                  className="text-sm text-cyan-400 hover:underline disabled:cursor-default disabled:text-cyan-300"
                                 >
                                   {hints[task.id]
                                     ? t("hintRevealed", lang)
@@ -517,11 +523,11 @@ export default function ModuleView({
                               </button>
                             </div>
                             {hints[task.id] && (
-                              <div className="mt-2 rounded-lg border border-amber-400/25 bg-amber-400/5 p-3" role="status">
-                                <p className="text-sm text-amber-200 leading-relaxed">
+                              <div className="mt-2 rounded-lg border border-cyan-400/25 bg-cyan-400/5 p-3" role="status">
+                                <p className="text-sm text-cyan-200 leading-relaxed">
                                   {t("hintPenaltyApplied", lang).replace("{xp}", String(HINT_XP_PENALTY))}
                                 </p>
-                                <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-amber-100">
+                                <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-cyan-100">
                                   {task.hint.en.trim()}
                                 </pre>
                               </div>
@@ -534,8 +540,8 @@ export default function ModuleView({
                 </ol>
               </div>
 
-              <div className="glass rounded-2xl border border-forge-border p-4">
-                <div className="text-sm uppercase tracking-widest text-ember-400 mb-2">{uppercaseLabel(t("finalChallenges", lang), lang)}</div>
+              <div className="glass rounded-2xl border border-gamehack-border p-4">
+                <div className="text-sm uppercase tracking-widest text-cyan-400 mb-2">{uppercaseLabel(t("finalChallenges", lang), lang)}</div>
                 {!allTasks ? (
                   <p className="text-sm text-iron-500">{t("challengeLocked", lang)}</p>
                 ) : (
@@ -546,7 +552,7 @@ export default function ModuleView({
                       return (
                         <div key={i} className="text-sm">
                           <div className="flex items-center gap-2">
-                            <span className={ok ? "text-neon-green" : "text-ember-400"}>{ok ? "✔" : "◆"}</span>
+                            <span className={ok ? "text-neon-green" : "text-cyan-400"}>{ok ? "✔" : "◆"}</span>
                             <span className="font-semibold text-zinc-100">{bi(ch.title, lang)}</span>
                           </div>
                           <p className="text-sm text-zinc-400 mt-1 ml-5">{bi(ch.brief, lang)}</p>

@@ -14,7 +14,8 @@ try {
 const distDir = path.join(rootDir, "dist");
 const dataFile = path.resolve(process.env.AUTH_DATA_FILE || path.join(rootDir, ".data", "accounts.json"));
 const port = Number(process.env.PORT || process.env.API_PORT || 3000);
-const sessionCookieName = "hackforge_session";
+const sessionCookieName = "gamehack_session";
+const legacySessionCookieName = "hackforge_session";
 const sessionSecret = process.env.AUTH_SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 const activationLifetimeMs = 24 * 60 * 60 * 1000;
 const resetLifetimeMs = 60 * 60 * 1000;
@@ -185,9 +186,9 @@ async function sendActivationEmail(req, account, token) {
   await mailer.sendMail({
     from: mailFrom,
     to: account.email,
-    subject: "Activate your HACKFORGE account",
-    text: `Hi ${account.nickname},\n\nActivate your HACKFORGE account using this link (expires in 24 hours):\n${link.href}\n\nIf you did not request this account, you can ignore this email.`,
-    html: `<p>Hi ${nickname},</p><p>Activate your HACKFORGE account using the link below. It expires in 24 hours.</p><p><a href="${link.href}">Activate account</a></p><p>If you did not request this account, you can ignore this email.</p>`,
+    subject: "Activate your GameHack account",
+    text: `Hi ${account.nickname},\n\nActivate your GameHack account using this link (expires in 24 hours):\n${link.href}\n\nIf you did not request this account, you can ignore this email.`,
+    html: `<p>Hi ${nickname},</p><p>Activate your GameHack account using the link below. It expires in 24 hours.</p><p><a href="${link.href}">Activate account</a></p><p>If you did not request this account, you can ignore this email.</p>`,
   });
 }
 
@@ -198,9 +199,9 @@ async function sendResetEmail(req, account, token) {
   await mailer.sendMail({
     from: mailFrom,
     to: account.email,
-    subject: "Reset your HACKFORGE password",
-    text: `Hi ${account.nickname},\n\nUse this link to reset your HACKFORGE password (expires in 1 hour):\n${link.href}\n\nIf you did not request a password reset, you can ignore this email.`,
-    html: `<p>Hi ${nickname},</p><p>Use the link below to reset your HACKFORGE password. It expires in one hour.</p><p><a href="${link.href}">Reset password</a></p><p>If you did not request a password reset, you can ignore this email.</p>`,
+    subject: "Reset your GameHack password",
+    text: `Hi ${account.nickname},\n\nUse this link to reset your GameHack password (expires in 1 hour):\n${link.href}\n\nIf you did not request a password reset, you can ignore this email.`,
+    html: `<p>Hi ${nickname},</p><p>Use the link below to reset your GameHack password. It expires in one hour.</p><p><a href="${link.href}">Reset password</a></p><p>If you did not request a password reset, you can ignore this email.</p>`,
   });
 }
 
@@ -220,7 +221,7 @@ function readCookie(req, name) {
 }
 
 function authenticatedAccount(req) {
-  const token = readCookie(req, sessionCookieName);
+  const token = readCookie(req, sessionCookieName) || readCookie(req, legacySessionCookieName);
   const [payload, signature] = token.split(".");
   if (!payload || !signature) return null;
   const expected = crypto.createHmac("sha256", sessionSecret).update(payload).digest();
@@ -243,10 +244,10 @@ function authenticatedAccount(req) {
   }
 }
 
-function sessionCookie(req, token, maxAge) {
+function sessionCookie(req, token, maxAge, name = sessionCookieName) {
   const forwardedProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim();
   const secure = process.env.NODE_ENV === "production" || forwardedProto === "https";
-  return `${sessionCookieName}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
+  return `${name}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
 }
 
 async function handleAuth(req, res, pathname) {
@@ -257,7 +258,12 @@ async function handleAuth(req, res, pathname) {
   }
 
   if (req.method === "POST" && pathname === "/api/auth/logout") {
-    return sendJson(res, 200, { ok: true }, { "Set-Cookie": sessionCookie(req, "", 0) });
+    return sendJson(res, 200, { ok: true }, {
+      "Set-Cookie": [
+        sessionCookie(req, "", 0),
+        sessionCookie(req, "", 0, legacySessionCookieName),
+      ],
+    });
   }
 
   if (req.method !== "POST") return sendJson(res, 405, { error: "methodNotAllowed" }, { Allow: "GET, POST" });
@@ -454,6 +460,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, process.env.HOST || "0.0.0.0", () => {
-  console.log(`HACKFORGE server listening on ${port}`);
+  console.log(`GameHack server listening on ${port}`);
   if (!mailReady()) console.warn("Email is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER/SMTP_PASS, and MAIL_FROM to enable account emails.");
 });

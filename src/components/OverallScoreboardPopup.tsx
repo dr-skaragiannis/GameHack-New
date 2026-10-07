@@ -49,11 +49,11 @@ export default function OverallScoreboardPopup({
         role="dialog"
         aria-modal="true"
         aria-labelledby="overall-scoreboard-title"
-        className="dashboard-modal-surface glass flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-forge-border shadow-2xl"
+        className="dashboard-modal-surface glass flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gamehack-border shadow-2xl"
       >
-        <header className="flex items-start justify-between gap-4 border-b border-forge-border px-4 py-4 sm:px-6">
+        <header className="flex items-start justify-between gap-4 border-b border-gamehack-border px-4 py-4 sm:px-6">
           <div>
-            <div className="flex items-center gap-2 text-ember-400">
+            <div className="flex items-center gap-2 text-cyan-400">
               <Icon name="crown" className="h-5 w-5" />
               <h2 id="overall-scoreboard-title" className="text-lg font-bold text-zinc-100">
                 {t("overallScoreboard", lang)}
@@ -67,7 +67,7 @@ export default function OverallScoreboardPopup({
             type="button"
             aria-label={t("close", lang)}
             onClick={closeWithAnimation}
-            className="dashboard-action grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-forge-border text-iron-300 hover:bg-white/5"
+            className="dashboard-action grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-gamehack-border text-iron-300 hover:bg-white/5"
           >
             <Icon name="close" className="h-4 w-4" />
           </button>
@@ -76,7 +76,7 @@ export default function OverallScoreboardPopup({
         <div className="overflow-auto">
           {entries.length ? (
             <table className="w-full min-w-[520px] text-left text-sm">
-              <thead className="sticky top-0 bg-forge-panel text-iron-400">
+              <thead className="sticky top-0 bg-gamehack-panel text-iron-400">
                 <tr>
                   <th className="px-4 py-3 font-semibold">{t("position", lang)}</th>
                   <th className="px-4 py-3 font-semibold">{t("player", lang)}</th>
@@ -94,19 +94,19 @@ export default function OverallScoreboardPopup({
                   return (
                     <tr
                       key={user.id}
-                      className={ownRow ? "border-t border-ember-500/30 bg-ember-500/10" : "border-t border-forge-line"}
+                      className={ownRow ? "border-t border-cyan-500/30 bg-cyan-500/10" : "border-t border-gamehack-line"}
                       aria-current={ownRow ? "true" : undefined}
                     >
-                      <td className="px-4 py-2.5 font-mono font-bold text-ember-400">#{rank}</td>
+                      <td className="px-4 py-2.5 font-mono font-bold text-cyan-400">#{rank}</td>
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-2.5">
                           <Avatar src={user.avatar} name={user.displayName} size={28} />
                           <span className="font-medium text-zinc-100">{user.displayName}</span>
-                          {ownRow && <span className="text-xs text-ember-300">{lang === "en" ? "You" : "Εσύ"}</span>}
+                          {ownRow && <span className="text-xs text-cyan-300">{lang === "en" ? "You" : "Εσύ"}</span>}
                         </div>
                       </td>
                       <td className="px-4 py-2.5 text-zinc-300">{levelFromXp(user.metrics.xp).level}</td>
-                      <td className="px-4 py-2.5 text-right font-semibold text-amber-300">{user.metrics.xp}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-cyan-300">{user.metrics.xp}</td>
                       <td className="px-4 py-2.5 text-right text-zinc-300">{completedModules}/{totalModules}</td>
                     </tr>
                   );

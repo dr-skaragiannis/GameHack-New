@@ -42,7 +42,7 @@ export const DFIR_MODULES: Module[] = [
           "Use pwd and ls to orient yourself, file to identify a format from its signature, strings to find readable fragments, grep to narrow text, and find to locate artifacts. Extension names are clues, not proof: a file named .jpg may actually be an executable or a damaged image.",
           "Χρησιμοποίησε pwd και ls για προσανατολισμό, file για αναγνώριση τύπου από signature, strings για αναγνώσιμα τμήματα, grep για φιλτράρισμα και find για εντοπισμό. Η κατάληξη είναι ένδειξη, όχι απόδειξη."
         ),
-        shots: [shot("file challenge-corrupt.png", ["challenge-corrupt.png: PNG image data, corrupted signature (training fixture)"]), shot("strings sample.bin", ["invoice.exe", "hxxps://telemetry.hackforge.invalid/collect [DEFANGED IOC]", "[REDACTED-SHELL-ARGUMENT]"])],
+        shots: [shot("file challenge-corrupt.png", ["challenge-corrupt.png: PNG image data, corrupted signature (training fixture)"]), shot("strings sample.bin", ["invoice.exe", "hxxps://telemetry.gamehack.invalid/collect [DEFANGED IOC]", "[REDACTED-SHELL-ARGUMENT]"])],
         visual: visual("table", "First-pass triage questions", [
           { label: B("What is it?", "Τι είναι;"), value: B("file / magic bytes", "file / magic bytes"), detail: B("Identify format from content", "Τύπος από περιεχόμενο"), tone: "cool" },
           { label: B("What is readable?", "Τι διαβάζεται;"), value: B("strings", "strings"), detail: B("Collect clues, not verdicts", "Συλλογή ενδείξεων, όχι συμπέρασμα"), tone: "muted" },
@@ -237,7 +237,7 @@ export const DFIR_MODULES: Module[] = [
     id: "dfir-web",
     order: 4,
     icon: "globe",
-    color: "from-orange-400 to-red-900",
+    color: "from-cyan-400 to-red-900",
     difficulty: 3,
     scenario: "dfir",
     title: B("Web Attack Forensics", "Forensics επιθέσεων Web"),
@@ -348,7 +348,7 @@ export const DFIR_MODULES: Module[] = [
     id: "dfir-disk",
     order: 6,
     icon: "hard-drive",
-    color: "from-amber-400 to-orange-900",
+    color: "from-cyan-400 to-sky-900",
     difficulty: 3,
     scenario: "dfir",
     title: B("Disk Image Forensics", "Forensics Εικόνας Δίσκου"),
@@ -429,7 +429,7 @@ export const DFIR_MODULES: Module[] = [
       { heading: B("Read indicators without executing code", "Διάβασε indicators χωρίς εκτέλεση"), body: B("The fixture represents a compiled sample as text metadata only. `file` identifies a claimed format; `strings` retrieves readable fragments; a hash supports identification; a defanged .invalid domain is safe to report. Indicator matches are hypotheses and need corroboration from logs, memory, and network evidence.", "Το fixture αναπαριστά sample ως text metadata, όχι executable. Το file αναγνωρίζει δηλωμένο τύπο· strings βρίσκει fragments· hash υποστηρίζει ταυτοποίηση· .invalid domain είναι defanged. Indicators θέλουν συσχέτιση."), visual: visual("table", "Static indicator assessment", [
         { label: B("Claimed type", "Δηλωμένος τύπος"), value: B("ELF 64-bit (fixture)", "ELF 64-bit (fixture)"), tone: "cool" },
         { label: B("Readable marker", "Αναγνώσιμο marker"), value: B("WScript.Shell API name", "Όνομα API WScript.Shell"), tone: "muted" },
-        { label: B("Network IOC", "Network IOC"), value: B("telemetry.hackforge.invalid", "telemetry.hackforge.invalid"), tone: "hot" },
+        { label: B("Network IOC", "Network IOC"), value: B("telemetry.gamehack.invalid", "telemetry.gamehack.invalid"), tone: "hot" },
         { label: B("Execution", "Εκτέλεση"), value: B("Not run; isolated report only", "Δεν εκτελέστηκε"), tone: "good" },
       ]) },
       { heading: B("Behavior reports and confidence", "Behavior reports και confidence"), body: B("A dynamic report may list child processes, attempted connections, and files touched. It is an observation under one environment, not complete proof of every possible behavior. Record VM snapshot, clock, tool versions, network controls, and unsuccessful actions so another analyst can reproduce the finding.", "Dynamic report μπορεί να δείξει child processes, συνδέσεις και αρχεία. Είναι παρατήρηση ενός environment, όχι πλήρης απόδειξη κάθε συμπεριφοράς. Κατέγραψε snapshot, ώρα, εργαλεία, network controls και αποτυχημένες ενέργειες."), visual: visual("network", "Isolated behavior report (fictional)", [
@@ -562,7 +562,7 @@ export const DFIR_MODULES: Module[] = [
       { cmd: "docker diff HF-2404", desc: B("list changed paths", "λίστα αλλαγμένων paths") },
       { cmd: "docker inspect HF-2404", desc: B("inspect config/state", "config/state") },
       { cmd: "docker logs HF-2404", desc: B("review container output", "έλεγχος container logs") },
-      { cmd: "docker history forge/web:1.4", desc: B("review image layers", "έλεγχος image layers") },
+      { cmd: "docker history gamehack/web:1.4", desc: B("review image layers", "έλεγχος image layers") },
       { cmd: "docker export HF-2404", desc: B("simulate filesystem acquisition", "προσομοίωση filesystem acquisition") },
       { cmd: "gcore 2112", desc: B("simulate a process-memory acquisition", "προσομοίωση process-memory acquisition") },
       { cmd: "strings /cases/IR-2404/derived/core.2112", desc: B("inspect a derived core fixture", "έλεγχος derived core fixture") },
@@ -572,7 +572,7 @@ export const DFIR_MODULES: Module[] = [
       { id: "inspect", instruction: B("Inspect container configuration and runtime state." ,"Έλεγξε container config και runtime state."), hint: B("docker inspect HF-2404", "docker inspect HF-2404"), explain: B("Capture container/image ID, state, user, environment, and network settings before interpreting behavior.", "Κατέγραψε ID, state, user, environment και network settings πριν ερμηνεύσεις."), check: (t) => t.flags.has("dfir-docker-inspect") },
       { id: "diff", instruction: B("Compare the container's writable filesystem changes." ,"Σύγκρινε αλλαγές writable filesystem."), hint: B("docker diff HF-2404", "docker diff HF-2404"), explain: B("A adds, D deletes, C changes. A diff is relative to image baseline and needs interpretation.", "A προσθέτει, D διαγράφει, C αλλάζει. Το diff συγκρίνει με baseline."), check: (t) => t.flags.has("dfir-docker-diff") },
       { id: "logs", instruction: B("Read the recorded container logs." ,"Διάβασε καταγεγραμμένα container logs."), hint: B("docker logs HF-2404", "docker logs HF-2404"), explain: B("Logs can reveal commands or service activity but may be incomplete or rotated.", "Logs δείχνουν εντολές/υπηρεσίες αλλά μπορεί να είναι ελλιπή ή rotated."), check: (t) => t.flags.has("dfir-docker-logs") },
-      { id: "history", instruction: B("Review image history for a secret added and later removed." ,"Έλεγξε image history για secret που προστέθηκε και μετά αφαιρέθηκε."), hint: B("docker history forge/web:1.4", "docker history forge/web:1.4"), explain: B("Layered images can retain sensitive data even after a later delete instruction.", "Layered images κρατούν ευαίσθητα δεδομένα παρά μεταγενέστερο delete."), check: (t) => t.flags.has("dfir-docker-history") },
+      { id: "history", instruction: B("Review image history for a secret added and later removed." ,"Έλεγξε image history για secret που προστέθηκε και μετά αφαιρέθηκε."), hint: B("docker history gamehack/web:1.4", "docker history gamehack/web:1.4"), explain: B("Layered images can retain sensitive data even after a later delete instruction.", "Layered images κρατούν ευαίσθητα δεδομένα παρά μεταγενέστερο delete."), check: (t) => t.flags.has("dfir-docker-history") },
       { id: "export", instruction: B("Create a simulated filesystem-export derivative; note it omits image history.", "Δημιούργησε simulated filesystem export και σημείωσε ότι λείπει image history."), hint: B("docker export HF-2404", "docker export HF-2404"), explain: B("A container filesystem export and an image-layer archive preserve different evidence.", "Filesystem export και image-layer archive διατηρούν διαφορετικά τεκμήρια."), check: (t) => t.flags.has("dfir-docker-export") },
       { id: "gcore", instruction: B("Simulate acquiring a process core, then inspect the derived core strings.", "Προσομοίωσε core acquisition και μετά έλεγξε τα strings."), hint: B("gcore 2112\nstrings /cases/IR-2404/derived/core.2112", "gcore 2112\nstrings /cases/IR-2404/derived/core.2112"), explain: B("A process core is a derivative volatile capture; this simulator creates a text fixture, not a real dump.", "Process core είναι παράγωγο volatile capture· εδώ δημιουργείται text fixture, όχι πραγματικό dump."), check: (t) => t.flags.has("dfir-gcore") && t.filesRead.some((path) => path.endsWith("core.2112")) },
       { id: "memory-strings", instruction: B("Inspect the memory-strings fixture and distinguish it from image history.", "Έλεγξε memory-strings fixture και ξεχώρισέ το από image history."), hint: B("strings /cases/IR-2404/evidence/09-container/memory-strings.txt", "strings .../memory-strings.txt"), explain: B("Memory strings are volatile runtime evidence; image history is build-time evidence.", "Memory strings είναι runtime evidence· image history είναι build-time evidence."), check: (t) => t.filesRead.some((path) => path.endsWith("memory-strings.txt")) },

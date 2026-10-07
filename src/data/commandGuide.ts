@@ -105,7 +105,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "head", aliases: ["head"], title: both("Read the start of a file", "Ανάγνωση αρχής αρχείου"),
     purpose: both("Preview the first lines of a text file.", "Προεπισκόπηση πρώτων γραμμών αρχείου."),
-    mechanics: both("head shows the first ten lines by default. -n COUNT chooses a positive number; GNU head also accepts a negative count such as -n -1 to print every line except the last. HackForge implements both forms for files and pipelines.", "Το head δείχνει τις πρώτες δέκα γραμμές από προεπιλογή. Το -n COUNT ορίζει θετικό πλήθος· το GNU head δέχεται και αρνητικό πλήθος, όπως -n -1, για να εμφανίσει όλες τις γραμμές εκτός από την τελευταία. Το HackForge προσομοιώνει και τις δύο μορφές σε αρχεία και pipelines."),
+    mechanics: both("head shows the first ten lines by default. -n COUNT chooses a positive number; GNU head also accepts a negative count such as -n -1 to print every line except the last. GameHack implements both forms for files and pipelines.", "Το head δείχνει τις πρώτες δέκα γραμμές από προεπιλογή. Το -n COUNT ορίζει θετικό πλήθος· το GNU head δέχεται και αρνητικό πλήθος, όπως -n -1, για να εμφανίσει όλες τις γραμμές εκτός από την τελευταία. Το GameHack προσομοιώνει και τις δύο μορφές σε αρχεία και pipelines."),
     output: both("A positive count returns a prefix; a negative count trims that many lines from the end. Use the latter only when dropping the trailing row is intentional.", "Θετικό πλήθος επιστρέφει αρχικές γραμμές· αρνητικό αφαιρεί τόσες γραμμές από το τέλος. Χρησιμοποίησε αρνητικό πλήθος μόνο όταν θέλεις σκόπιμα να παραλείψεις τις τελευταίες γραμμές."),
     syntax: "head [-n COUNT] [FILE...]", example: "head -n -1 /root/linux-beginners-3/head-fixture.txt",
   },
@@ -161,7 +161,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "read", aliases: ["read"], title: both("Read simulated input into a variable", "Αποθήκευση εικονικής εισόδου σε μεταβλητή"),
     purpose: both("Capture a value for a later command in a shell script.", "Κατάγραψε μια τιμή για επόμενη εντολή σε shell script."),
-    mechanics: both("In Bash, read name waits for a line of input and assigns it to the shell variable name. A later double-quoted string such as echo \"Welcome, $name\" expands the stored value; single quotes would keep $name literal. HackForge supplies a safe fixture value instead of opening a real interactive shell.", "Στο Bash, το read name περιμένει μια γραμμή εισόδου και την αποθηκεύει στη μεταβλητή name. Μια επόμενη φράση σε διπλά εισαγωγικά, όπως echo \"Welcome, $name\", αντικαθιστά το $name με την τιμή· οι μονές αποστρόφοι θα το κρατούσαν κυριολεκτικό. Το HackForge χρησιμοποιεί ασφαλή εικονική τιμή αντί να ανοίξει διαδραστικό shell."),
+    mechanics: both("In Bash, read name waits for a line of input and assigns it to the shell variable name. A later double-quoted string such as echo \"Welcome, $name\" expands the stored value; single quotes would keep $name literal. GameHack supplies a safe fixture value instead of opening a real interactive shell.", "Στο Bash, το read name περιμένει μια γραμμή εισόδου και την αποθηκεύει στη μεταβλητή name. Μια επόμενη φράση σε διπλά εισαγωγικά, όπως echo \"Welcome, $name\", αντικαθιστά το $name με την τιμή· οι μονές αποστρόφοι θα το κρατούσαν κυριολεκτικό. Το GameHack χρησιμοποιεί ασφαλή εικονική τιμή αντί να ανοίξει διαδραστικό shell."),
     output: both("Real read is normally quiet and the assigned value is used by later script lines. The simulator prints the fixed value it supplied so learners can see what was stored.", "Η πραγματική read συνήθως δεν εμφανίζει έξοδο και η τιμή χρησιμοποιείται από επόμενες γραμμές του script. Ο προσομοιωτής εμφανίζει τη σταθερή τιμή που έδωσε, ώστε να φαίνεται τι αποθηκεύτηκε."),
     syntax: "read VARIABLE", example: "read name",
   },
@@ -219,7 +219,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     purpose: both("Search and transform text streams.", "Αναζήτησε και μετασχημάτισε ροές κειμένου."),
     mechanics: both("The s/OLD/NEW/g expression substitutes OLD with NEW; g means every occurrence on a line. Unless redirected, sed prints transformed output and leaves the source file unchanged.", "Η έκφραση s/OLD/NEW/g αντικαθιστά OLD με NEW· το g σημαίνει όλες τις εμφανίσεις στη γραμμή. Χωρίς redirect το αρχικό αρχείο δεν αλλάζει."),
     output: both("The displayed text is the transformed stream. Redirect to a new file if you need to save a copy.", "Το κείμενο που εμφανίζεται είναι η μετασχηματισμένη ροή. Κάνε redirect σε νέο αρχείο για αποθήκευση."),
-    syntax: "sed 's/OLD/NEW/g' FILE", example: "sed 's/WWW/www/g' hackforge.in",
+    syntax: "sed 's/OLD/NEW/g' FILE", example: "sed 's/WWW/www/g' gamehack.in",
   },
   {
     key: "more", aliases: ["more"], title: both("Page through a file", "Σελιδοποίηση αρχείου"),
@@ -247,14 +247,14 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     purpose: both("Transfer ownership to a user account.", "Μετέφερε την ιδιοκτησία σε λογαριασμό χρήστη."),
     mechanics: both("chown updates the owner metadata on the named file. On real systems it usually requires root or equivalent authorization.", "Το chown αλλάζει τα μεταδεδομένα ιδιοκτήτη. Σε πραγματικά συστήματα συνήθως απαιτεί root ή αντίστοιχη εξουσιοδότηση."),
     output: both("Success is usually silent. Run ls -l to inspect the owner column.", "Η επιτυχία συνήθως είναι σιωπηλή. Τρέξε ls -l για τη στήλη owner."),
-    syntax: "chown USER FILE", example: "chown Raj hackforge.txt",
+    syntax: "chown USER FILE", example: "chown Raj gamehack.txt",
   },
   {
     key: "chgrp", aliases: ["chgrp"], title: both("Change file group", "Αλλαγή ομάδας αρχείου"),
     purpose: both("Assign a file to a group for shared access control.", "Ανάθεσε αρχείο σε ομάδα για κοινό έλεγχο πρόσβασης."),
     mechanics: both("chgrp changes the group metadata; it does not change the file's content.", "Το chgrp αλλάζει τα μεταδεδομένα ομάδας, όχι το περιεχόμενο."),
     output: both("Success is normally silent. Use ls -l to confirm the group column.", "Η επιτυχία είναι συνήθως σιωπηλή. Επιβεβαίωσε τη στήλη group με ls -l."),
-    syntax: "chgrp GROUP FILE", example: "chgrp ignite hackforge.txt",
+    syntax: "chgrp GROUP FILE", example: "chgrp ignite gamehack.txt",
   },
   {
     key: "apt-cache", aliases: ["apt-cache"], title: both("Search package metadata", "Αναζήτηση μεταδεδομένων πακέτων"),
@@ -294,9 +294,9 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "dig", aliases: ["dig"], title: both("Query DNS records", "Ερώτημα εγγραφών DNS"),
     purpose: both("Ask DNS for a name's address or mail/name-server records.", "Ρώτησε DNS για διεύθυνση ή εγγραφές mail/name-server."),
-    mechanics: both("A is the address record; MX identifies mail exchangers; NS identifies authoritative name servers. HackForge resolves only lab names.", "Το A είναι διεύθυνση, το MX mail exchangers και το NS name servers. Το HackForge επιλύει μόνο ονόματα lab."),
+    mechanics: both("A is the address record; MX identifies mail exchangers; NS identifies authoritative name servers. GameHack resolves only lab names.", "Το A είναι διεύθυνση, το MX mail exchangers και το NS name servers. Το GameHack επιλύει μόνο ονόματα lab."),
     output: both("The ANSWER SECTION shows the returned record and value. A record maps a name to an IP address.", "Το ANSWER SECTION δείχνει εγγραφή και τιμή. Η A αντιστοιχίζει όνομα σε IP."),
-    syntax: "dig NAME [A|MX|NS]", example: "dig hackforge.lab mx",
+    syntax: "dig NAME [A|MX|NS]", example: "dig gamehack.lab mx",
   },
   {
     key: "ip", aliases: ["ip"], title: both("Inspect network configuration", "Έλεγχος ρυθμίσεων δικτύου"),
@@ -315,7 +315,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "nmap", aliases: ["nmap"], title: both("Inventory authorized lab hosts", "Απογραφή εξουσιοδοτημένων hosts"),
     purpose: both("Learn how host and service discovery results are read.", "Μάθε να διαβάζεις αποτελέσματα ανακάλυψης hosts και υπηρεσιών."),
-    mechanics: both("The HackForge nmap command returns canned results for lab-only targets. -sn/-sP is host discovery; -sV asks for service versions in a real scan.", "Το nmap του HackForge δίνει προκαθορισμένα αποτελέσματα μόνο για lab. Τα -sn/-sP είναι host discovery και το -sV ζητά εκδόσεις υπηρεσιών σε πραγματική σάρωση."),
+    mechanics: both("The GameHack nmap command returns canned results for lab-only targets. -sn/-sP is host discovery; -sV asks for service versions in a real scan.", "Το nmap του GameHack δίνει προκαθορισμένα αποτελέσματα μόνο για lab. Τα -sn/-sP είναι host discovery και το -sV ζητά εκδόσεις υπηρεσιών σε πραγματική σάρωση."),
     output: both("Host is up marks a simulated response. PORT/STATE/SERVICE rows describe simulated services; they are not live internet findings.", "Το Host is up δείχνει εικονική απάντηση. Οι γραμμές PORT/STATE/SERVICE περιγράφουν εικονικές υπηρεσίες, όχι ευρήματα live internet."),
     syntax: "nmap [OPTIONS] TARGET", example: "nmap -sV 10.10.10.5", caution: both("Scanning without permission can be illegal and disruptive. This command never sends packets outside the sandbox.", "Η σάρωση χωρίς άδεια μπορεί να είναι παράνομη και να προκαλέσει προβλήματα. Η εντολή δεν στέλνει πακέτα εκτός sandbox."),
   },
@@ -406,9 +406,9 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "service", aliases: ["service"], title: both("Manage a service", "Διαχείριση υπηρεσίας"),
     purpose: both("Inspect or change the state of a background service.", "Έλεγξε ή άλλαξε κατάσταση υπηρεσίας παρασκηνίου."),
-    mechanics: both("Common actions are status, start, stop, and restart. HackForge updates only an in-memory service state.", "Συνήθεις ενέργειες: status, start, stop, restart. Το HackForge αλλάζει μόνο εικονική κατάσταση υπηρεσίας."),
+    mechanics: both("Common actions are status, start, stop, and restart. GameHack updates only an in-memory service state.", "Συνήθεις ενέργειες: status, start, stop, restart. Το GameHack αλλάζει μόνο εικονική κατάσταση υπηρεσίας."),
     output: both("status reports active/running or stopped/inactive. start/stop messages confirm a simulated transition.", "Το status αναφέρει running ή stopped. Τα μηνύματα start/stop επιβεβαιώνουν εικονική μετάβαση."),
-    syntax: "service NAME status|start|stop|restart", example: "service apache2 status", caution: both("The service commands in HackForge do not start daemons on your computer.", "Οι service εντολές του HackForge δεν ξεκινούν daemon στον υπολογιστή σου."),
+    syntax: "service NAME status|start|stop|restart", example: "service apache2 status", caution: both("The service commands in GameHack do not start daemons on your computer.", "Οι service εντολές του GameHack δεν ξεκινούν daemon στον υπολογιστή σου."),
   },
   {
     key: "crontab", aliases: ["crontab"], title: both("Edit or list scheduled jobs", "Επεξεργασία προγραμματισμένων εργασιών"),
@@ -420,14 +420,14 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "update-rc.d", aliases: ["update-rc.d"], title: both("Configure boot services", "Ρύθμιση υπηρεσιών εκκίνησης"),
     purpose: both("Learn how a service can be enabled to start at boot.", "Μάθε πώς μια υπηρεσία ενεργοποιείται στην εκκίνηση."),
-    mechanics: both("update-rc.d configures legacy SysV init links. defaults and enable create start links for the default multi-user runlevels; disable records that the service must not autostart; remove deletes the links without uninstalling the service. HackForge stores those links in the player's virtual /etc/rcN.d folders and changes no host boot configuration.", "Η update-rc.d ρυθμίζει παλιούς συνδέσμους SysV init. Τα defaults και enable δημιουργούν start links για τα προεπιλεγμένα multi-user runlevels· το disable δηλώνει ότι η υπηρεσία δεν πρέπει να ξεκινά αυτόματα και το remove διαγράφει τους links χωρίς απεγκατάσταση. Το HackForge αποθηκεύει τους συνδέσμους στους εικονικούς φακέλους /etc/rcN.d του παίκτη και δεν αλλάζει την εκκίνηση του host."),
+    mechanics: both("update-rc.d configures legacy SysV init links. defaults and enable create start links for the default multi-user runlevels; disable records that the service must not autostart; remove deletes the links without uninstalling the service. GameHack stores those links in the player's virtual /etc/rcN.d folders and changes no host boot configuration.", "Η update-rc.d ρυθμίζει παλιούς συνδέσμους SysV init. Τα defaults και enable δημιουργούν start links για τα προεπιλεγμένα multi-user runlevels· το disable δηλώνει ότι η υπηρεσία δεν πρέπει να ξεκινά αυτόματα και το remove διαγράφει τους links χωρίς απεγκατάσταση. Το GameHack αποθηκεύει τους συνδέσμους στους εικονικούς φακέλους /etc/rcN.d του παίκτη και δεν αλλάζει την εκκίνηση του host."),
     output: both("The confirmation names the virtual service action. A simulated reboot applies enabled/disabled settings only to the player's service state; no real service or machine is restarted.", "Η επιβεβαίωση αναφέρει την ενέργεια στην εικονική υπηρεσία. Το προσομοιωμένο reboot εφαρμόζει τη ρύθμιση μόνο στην κατάσταση του παίκτη· δεν επανεκκινείται πραγματική υπηρεσία ή μηχάνημα."),
     syntax: "update-rc.d SERVICE defaults|enable|disable|remove", example: "update-rc.d mysql defaults",
   },
   {
     key: "reboot", aliases: ["reboot"], title: both("Simulate a boot cycle", "Προσομοίωση κύκλου εκκίνησης"),
     purpose: both("See which virtual services were marked to start at boot.", "Δες ποιες εικονικές υπηρεσίες έχουν δηλωθεί για εκκίνηση."),
-    mechanics: both("On a real system reboot restarts the operating system and can interrupt work. In HackForge it only applies the player's saved update-rc.d settings and refreshes virtual service/process state.", "Σε πραγματικό σύστημα το reboot επανεκκινεί το λειτουργικό και μπορεί να διακόψει εργασίες. Στο HackForge εφαρμόζει μόνο τις αποθηκευμένες ρυθμίσεις update-rc.d και ενημερώνει εικονική κατάσταση υπηρεσιών/διεργασιών."),
+    mechanics: both("On a real system reboot restarts the operating system and can interrupt work. In GameHack it only applies the player's saved update-rc.d settings and refreshes virtual service/process state.", "Σε πραγματικό σύστημα το reboot επανεκκινεί το λειτουργικό και μπορεί να διακόψει εργασίες. Στο GameHack εφαρμόζει μόνο τις αποθηκευμένες ρυθμίσεις update-rc.d και ενημερώνει εικονική κατάσταση υπηρεσιών/διεργασιών."),
     output: both("A summary lists the virtual services brought up. The VFS syslog gets a simulated note; the host OS, host processes, and real files are untouched.", "Η σύνοψη εμφανίζει τις εικονικές υπηρεσίες που ξεκίνησαν. Το VFS syslog λαμβάνει εικονική εγγραφή· λειτουργικό, διεργασίες και αρχεία του host μένουν ανέπαφα."),
     syntax: "reboot", example: "reboot", caution: both("Do not test reboot commands on a system you do not administer. This one is a sandbox-only state transition.", "Μην δοκιμάζεις reboot σε σύστημα που δεν διαχειρίζεσαι. Αυτή η εντολή είναι μόνο εικονική μετάβαση στο sandbox."),
   },
@@ -450,28 +450,28 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     purpose: both("Connect to a remote shell using the SSH protocol.", "Συνδέσου σε απομακρυσμένο shell με SSH."),
     mechanics: both("SSH encrypts the connection. The lab recognizes its named fake hosts and changes the simulated session only; for the ubuntu fixture, start the virtual ssh service first. The exit builtin restores the saved local prompt.", "Το SSH κρυπτογραφεί τη σύνδεση. Το lab αναγνωρίζει φανταστικούς hosts και αλλάζει μόνο την εικονική συνεδρία· για το ubuntu fixture ξεκίνα πρώτα την εικονική υπηρεσία ssh. Το exit επαναφέρει το αποθηκευμένο τοπικό prompt."),
     output: both("A welcome banner means the simulator accepted the lab route. Connection errors mean the host or route is not configured in the VFS; no network session is opened.", "Το welcome banner σημαίνει ότι ο προσομοιωτής δέχτηκε τη lab διαδρομή. Σφάλμα σύνδεσης σημαίνει ότι ο host ή η διαδρομή δεν υπάρχει στο VFS· δεν ανοίγει δικτυακή συνεδρία."),
-    syntax: "ssh USER@HOST", example: "ssh ignite@192.168.0.11", caution: both("Use SSH only for systems where you have authorization. All HackForge hosts are fictional.", "Χρησιμοποίησε SSH μόνο σε συστήματα με άδεια. Όλοι οι hosts του HackForge είναι φανταστικοί."),
+    syntax: "ssh USER@HOST", example: "ssh ignite@192.168.0.11", caution: both("Use SSH only for systems where you have authorization. All GameHack hosts are fictional.", "Χρησιμοποίησε SSH μόνο σε συστήματα με άδεια. Όλοι οι hosts του GameHack είναι φανταστικοί."),
   },
   {
     key: "exit", aliases: ["exit"], title: both("Return from the simulated remote shell", "Επιστροφή από το εικονικό απομακρυσμένο shell"),
     purpose: both("Close the SSH training session and return to the saved local prompt.", "Κλείσε την εκπαιδευτική συνεδρία SSH και επέστρεψε στο αποθηκευμένο τοπικό prompt."),
-    mechanics: both("In this lab, exit restores the user's local name, host, working directory, and scenario after the fictional ubuntu connection. It does not close the HackForge terminal or an operating-system shell on the server.", "Στο lab, το exit επαναφέρει το τοπικό όνομα χρήστη, host, φάκελο εργασίας και σενάριο μετά τη σύνδεση με το φανταστικό ubuntu. Δεν κλείνει το HackForge terminal ούτε shell του server."),
+    mechanics: both("In this lab, exit restores the user's local name, host, working directory, and scenario after the fictional ubuntu connection. It does not close the GameHack terminal or an operating-system shell on the server.", "Στο lab, το exit επαναφέρει το τοπικό όνομα χρήστη, host, φάκελο εργασίας και σενάριο μετά τη σύνδεση με το φανταστικό ubuntu. Δεν κλείνει το GameHack terminal ούτε shell του server."),
     output: both("The terminal confirms that the local prompt is active again. If no simulated remote session is open, the command returns a short notice instead.", "Το τερματικό επιβεβαιώνει ότι το τοπικό prompt είναι ξανά ενεργό. Αν δεν υπάρχει εικονική απομακρυσμένη συνεδρία, εμφανίζεται σύντομη ενημέρωση."),
     syntax: "exit", example: "exit",
   },
   {
     key: "telnet", aliases: ["telnet"], title: both("Recognize an insecure plaintext protocol", "Αναγνώριση μη ασφαλούς πρωτοκόλλου απλού κειμένου"),
     purpose: both("Understand why SSH replaced telnet for remote terminal sessions.", "Κατανόησε γιατί το SSH αντικατέστησε το telnet για απομακρυσμένα τερματικά."),
-    mechanics: both("Telnet sends session data without encryption, so credentials and commands can be exposed to observers. HackForge blocks the command before connecting and prints only a safety explanation.", "Το telnet στέλνει δεδομένα χωρίς κρυπτογράφηση, οπότε credentials και εντολές μπορεί να εκτεθούν σε τρίτους. Το HackForge μπλοκάρει την εντολή πριν από σύνδεση και εμφανίζει μόνο προειδοποίηση ασφαλείας."),
+    mechanics: both("Telnet sends session data without encryption, so credentials and commands can be exposed to observers. GameHack blocks the command before connecting and prints only a safety explanation.", "Το telnet στέλνει δεδομένα χωρίς κρυπτογράφηση, οπότε credentials και εντολές μπορεί να εκτεθούν σε τρίτους. Το GameHack μπλοκάρει την εντολή πριν από σύνδεση και εμφανίζει μόνο προειδοποίηση ασφαλείας."),
     output: both("The warning is not a connection result: no socket, remote process, or network request is created.", "Η προειδοποίηση δεν είναι αποτέλεσμα σύνδεσης: δεν δημιουργείται socket, απομακρυσμένη διεργασία ή δικτυακό αίτημα."),
     syntax: "telnet HOST PORT", example: "telnet ignite@192.168.0.11 23", caution: both("Do not send credentials over plaintext telnet. Use SSH on systems you are authorized to access.", "Μην στέλνεις credentials με plaintext telnet. Χρησιμοποίησε SSH σε συστήματα όπου έχεις άδεια."),
   },
   {
     key: "ftp", aliases: ["ftp"], title: both("Transfer files with FTP", "Μεταφορά αρχείων με FTP"),
     purpose: both("Practice listing and downloading files from a simulated FTP server.", "Εξασκήσου σε λίστα και λήψη αρχείων από προσομοιωμένο FTP server."),
-    mechanics: both("The only accepted host is the fictional ftp.forge.lab fixture; public names are blocked. Enter anonymous at both prompts, use ls and cd to navigate its /ubuntu/release tree, get FILE to copy a VFS fixture locally, and bye to close the session.", "Ο μόνος αποδεκτός host είναι το φανταστικό ftp.forge.lab· δημόσια ονόματα μπλοκάρονται. Γράψε anonymous και στα δύο prompts, χρησιμοποίησε ls και cd για πλοήγηση στο /ubuntu/release, get FILE για αντιγραφή fixture στο VFS και bye για κλείσιμο."),
+    mechanics: both("The only accepted host is the fictional ftp.gamehack.lab fixture; public names are blocked. Enter anonymous at both prompts, use ls and cd to navigate its /ubuntu/release tree, get FILE to copy a VFS fixture locally, and bye to close the session.", "Ο μόνος αποδεκτός host είναι το φανταστικό ftp.gamehack.lab· δημόσια ονόματα μπλοκάρονται. Γράψε anonymous και στα δύο prompts, χρησιμοποίησε ls και cd για πλοήγηση στο /ubuntu/release, get FILE για αντιγραφή fixture στο VFS και bye για κλείσιμο."),
     output: both("220/230 are greeting/login status codes, 226 indicates a completed transfer, and 221 means the session ended. The local ls after bye reads your own VFS directory.", "Τα 220/230 είναι κωδικοί υποδοχής/login, το 226 δηλώνει ολοκληρωμένη μεταφορά και το 221 κλείσιμο συνεδρίας. Η τοπική ls μετά το bye διαβάζει τον δικό σου φάκελο VFS."),
-    syntax: "ftp HOST → anonymous → ls/cd → get FILE → bye", example: "ftp ftp.forge.lab", caution: both("FTP does not encrypt credentials. The exercise is a fake local service, not a public server.", "Το FTP δεν κρυπτογραφεί credentials. Η άσκηση είναι τοπική προσομοίωση, όχι δημόσιος server."),
+    syntax: "ftp HOST → anonymous → ls/cd → get FILE → bye", example: "ftp ftp.gamehack.lab", caution: both("FTP does not encrypt credentials. The exercise is a fake local service, not a public server.", "Το FTP δεν κρυπτογραφεί credentials. Η άσκηση είναι τοπική προσομοίωση, όχι δημόσιος server."),
   },
   {
     key: "sudo", aliases: ["sudo"], title: both("Run a command with elevated privileges", "Εκτέλεση εντολής με αυξημένα δικαιώματα"),
@@ -553,7 +553,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "scp", aliases: ["scp"], title: both("Secure copy (simulated)", "Ασφαλής αντιγραφή (προσομοίωση)"),
     purpose: both("Learn the shape of a secure remote file-copy command.", "Μάθε τη μορφή εντολής ασφαλούς απομακρυσμένης αντιγραφής αρχείου."),
-    mechanics: both("scp copies a source to a destination over SSH on real systems. HackForge reports a canned transfer and never contacts a remote host.", "Το scp αντιγράφει πηγή σε προορισμό μέσω SSH σε πραγματικά συστήματα. Το HackForge εμφανίζει εικονική μεταφορά."),
+    mechanics: both("scp copies a source to a destination over SSH on real systems. GameHack reports a canned transfer and never contacts a remote host.", "Το scp αντιγράφει πηγή σε προορισμό μέσω SSH σε πραγματικά συστήματα. Το GameHack εμφανίζει εικονική μεταφορά."),
     output: both("Transfer complete means only that the sandbox stub accepted the training command.", "Το Transfer complete σημαίνει μόνο ότι το sandbox stub δέχτηκε την εντολή."),
     syntax: "scp SOURCE USER@HOST:PATH", example: "scp report.txt operator@lab:/tmp/",
   },
@@ -589,7 +589,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     key: "sha256sum", aliases: ["sha256sum"], title: both("Calculate a SHA-256 digest", "Υπολογισμός SHA-256 digest"),
     purpose: both("Record a modern cryptographic digest for the evidence bytes.", "Κατέγραψε σύγχρονο cryptographic digest των bytes τεκμηρίου."),
     mechanics: both("SHA-256 returns a 256-bit digest. A digest match is a strong byte-integrity check when acquisition values are recorded independently.", "Το SHA-256 δίνει digest 256-bit. Ίδιο digest είναι ισχυρός έλεγχος ακεραιότητας bytes όταν έχει καταγραφεί ανεξάρτητα."),
-    output: both("The long hexadecimal field is the digest and the trailing field identifies the file. HackForge computes the exact known test vector; other fixture digests are explicitly labeled.", "Το μεγάλο hexadecimal πεδίο είναι digest και το τελευταίο filename. Το HackForge υπολογίζει ακριβώς το γνωστό test vector· άλλα fixture digests επισημαίνονται."),
+    output: both("The long hexadecimal field is the digest and the trailing field identifies the file. GameHack computes the exact known test vector; other fixture digests are explicitly labeled.", "Το μεγάλο hexadecimal πεδίο είναι digest και το τελευταίο filename. Το GameHack υπολογίζει ακριβώς το γνωστό test vector· άλλα fixture digests επισημαίνονται."),
     syntax: "sha256sum FILE", example: "sha256sum /cases/IR-2404/evidence/01-intake/hash_sample.txt",
   },
   {
@@ -602,7 +602,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "hexedit", aliases: ["hexedit"], title: both("Inspect a virtual hex editor", "Έλεγχος virtual hex editor"),
     purpose: both("Demonstrate a byte-level repair on a disposable derived image copy.", "Δείξε byte-level επισκευή σε αναλώσιμο παράγωγο αντίγραφο."),
-    mechanics: both("Real hexedit changes the opened file. HackForge accepts this command only for its virtual damaged-image fixture and writes a simulated derived copy state.", "Πραγματικό hexedit αλλάζει αρχείο. Το HackForge το δέχεται μόνο για virtual damaged-image fixture."),
+    mechanics: both("Real hexedit changes the opened file. GameHack accepts this command only for its virtual damaged-image fixture and writes a simulated derived copy state.", "Πραγματικό hexedit αλλάζει αρχείο. Το GameHack το δέχεται μόνο για virtual damaged-image fixture."),
     output: both("The repaired signature is evidence about the derived lab copy only. Preserve and report the original acquisition separately.", "Η επισκευασμένη signature αφορά μόνο παράγωγο lab αντίγραφο. Διατήρησε και ανέφερε ξεχωριστά την αρχική απόκτηση."),
     syntax: "hexedit DERIVED_COPY", example: "hexedit /cases/IR-2404/evidence/01-intake/challenge-corrupt.png",
     caution: both("Do not edit original evidence. The lab restricts this operation to a fictional virtual copy.", "Μην επεξεργάζεσαι πρωτότυπο evidence. Το lab περιορίζει την ενέργεια σε φανταστικό virtual αντίγραφο."),
@@ -624,7 +624,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "olevba", aliases: ["olevba"], title: both("Extract VBA for static review", "Εξαγωγή VBA για static review"),
     purpose: both("Inspect macro text without opening or running an Office document.", "Έλεγξε macro text χωρίς άνοιγμα ή εκτέλεση Office εγγράφου."),
-    mechanics: both("olevba extracts VBA streams and searches for suspicious patterns. HackForge returns harmless, fictional, defanged indicator text only.", "Το olevba εξάγει VBA streams και ψάχνει patterns. Το HackForge επιστρέφει ακίνδυνο, φανταστικό defanged κείμενο."),
+    mechanics: both("olevba extracts VBA streams and searches for suspicious patterns. GameHack returns harmless, fictional, defanged indicator text only.", "Το olevba εξάγει VBA streams και ψάχνει patterns. Το GameHack επιστρέφει ακίνδυνο, φανταστικό defanged κείμενο."),
     output: both("Procedure names, API references, and defanged URLs are leads for correlation; static strings do not prove execution.", "Procedure names, API references και defanged URLs είναι leads· static strings δεν αποδεικνύουν εκτέλεση."),
     syntax: "olevba DOCUMENT", example: "olevba /cases/IR-2404/evidence/03-documents/QuarterlyForecast.docm",
     caution: both("Never enable macros in untrusted documents on a production workstation.", "Μην ενεργοποιείς macros σε μη έμπιστα έγγραφα production workstation."),
@@ -647,7 +647,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "audio-analyze", aliases: ["audio-analyze", "sonic-visualiser", "sonic-visualizer"], title: both("Inspect a spectrogram summary", "Έλεγχος σύνοψης spectrogram"),
     purpose: both("Learn how a narrow-band spectral feature can become an investigative clue.", "Μάθε πώς ένα στενό spectral feature γίνεται investigative clue."),
-    mechanics: both("Spectrograms visualize signal energy over time and frequency. The HackForge exercise displays a deterministic synthetic plot and text note instead of playing an audio payload.", "Τα spectrograms δείχνουν ενέργεια σήματος σε χρόνο/συχνότητα. Η άσκηση δείχνει συνθετικό διάγραμμα αντί να παίξει payload."),
+    mechanics: both("Spectrograms visualize signal energy over time and frequency. The GameHack exercise displays a deterministic synthetic plot and text note instead of playing an audio payload.", "Τα spectrograms δείχνουν ενέργεια σήματος σε χρόνο/συχνότητα. Η άσκηση δείχνει συνθετικό διάγραμμα αντί να παίξει payload."),
     output: both("A frequency marker is only a lead; preserve the source audio, analysis settings, and extracted interpretation.", "Frequency marker είναι lead· διατήρησε audio, ρυθμίσεις και ερμηνεία."),
     syntax: "audio-analyze AUDIO", example: "audio-analyze /cases/IR-2404/evidence/03-documents/super_secret_audio.wav",
   },
@@ -683,7 +683,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "volatility", aliases: ["volatility", "vol.py", "vol"], title: both("Query a memory image", "Ερώτημα σε memory image"),
     purpose: both("Inspect process, socket, environment, and volatile user artifacts in a saved dump.", "Έλεγξε processes, sockets, environment και volatile artifacts σε saved dump."),
-    mechanics: both("Volatility plugins parse a memory image using an OS/profile model. imageinfo suggests a profile; pslist/pstree inspect process structures; netscan inspects sockets; envars/clipboard/cmdline inspect volatile context. HackForge returns fixture output only.", "Plugins Volatility κάνουν parse memory image με OS/profile. imageinfo προτείνει profile· pslist/pstree processes· netscan sockets· envars/clipboard/cmdline volatile context. Το HackForge δίνει fixture output."),
+    mechanics: both("Volatility plugins parse a memory image using an OS/profile model. imageinfo suggests a profile; pslist/pstree inspect process structures; netscan inspects sockets; envars/clipboard/cmdline inspect volatile context. GameHack returns fixture output only.", "Plugins Volatility κάνουν parse memory image με OS/profile. imageinfo προτείνει profile· pslist/pstree processes· netscan sockets· envars/clipboard/cmdline volatile context. Το GameHack δίνει fixture output."),
     output: both("Treat plugins as different views into one capture. Correlate process IDs, timestamps, owners, and connections with endpoint and network records.", "Τα plugins είναι διαφορετικές όψεις ενός capture. Συσχέτισε IDs, χρόνους, owners και connections με endpoint/network records."),
     syntax: "volatility -f DUMP PLUGIN", example: "volatility -f /cases/IR-2404/evidence/08-memory/workstation.raw pstree",
     caution: both("A memory image can contain sensitive data. Handle only with authority and restrict report disclosure.", "Memory image μπορεί να περιέχει ευαίσθητα δεδομένα· τήρησε άδεια και περιορισμένη κοινοποίηση."),
@@ -705,7 +705,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "john", aliases: ["john"], title: both("Authorized wordlist audit (simulated)", "Εξουσιοδοτημένος έλεγχος wordlist (προσομοίωση)"),
     purpose: both("Demonstrate candidate/hash comparison on fictional classroom hashes.", "Επίδειξη σύγκρισης candidates/hashes σε φανταστικά classroom hashes."),
-    mechanics: both("John the Ripper hashes candidate words and compares digests. The HackForge output is canned; it does not read arbitrary hashes or test external accounts.", "Το John κάνει hash candidates και συγκρίνει digests. Η έξοδος HackForge είναι προκαθορισμένη· δεν διαβάζει αυθαίρετα hashes ούτε ελέγχει λογαριασμούς."),
+    mechanics: both("John the Ripper hashes candidate words and compares digests. The GameHack output is canned; it does not read arbitrary hashes or test external accounts.", "Το John κάνει hash candidates και συγκρίνει digests. Η έξοδος GameHack είναι προκαθορισμένη· δεν διαβάζει αυθαίρετα hashes ούτε ελέγχει λογαριασμούς."),
     output: both("A candidate match means that candidate produces the displayed training digest. It does not establish who set or used the password.", "Το candidate match σημαίνει ότι candidate παράγει training digest· δεν αποδεικνύει ποιος έθεσε/χρησιμοποίησε κωδικό."),
     syntax: "john --wordlist=LIST HASHFILE", example: "john --wordlist=wordlist.txt hashes.txt",
     caution: both("Only audit hashes you are explicitly authorized to handle. Use password cracking for defensive assessment, not account access.", "Έλεγχε μόνο hashes με ρητή άδεια. Password cracking για αμυντικό assessment, όχι πρόσβαση."),
@@ -713,7 +713,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "hashcat", aliases: ["hashcat"], title: both("Bounded hash candidate test (simulated)", "Bounded hash test (προσομοίωση)"),
     purpose: both("Explain how hash mode and a constrained candidate mask work in a classroom example.", "Εξήγησε hash mode και περιορισμένο mask σε classroom παράδειγμα."),
-    mechanics: both("Hashcat uses -m for hash mode and -a for attack mode. The HackForge fixture reports only a predefined toy result; it does not calculate candidates or access hardware.", "Το Hashcat χρησιμοποιεί -m για hash mode και -a για attack mode. Το HackForge εμφανίζει μόνο προκαθορισμένο toy result."),
+    mechanics: both("Hashcat uses -m for hash mode and -a for attack mode. The GameHack fixture reports only a predefined toy result; it does not calculate candidates or access hardware.", "Το Hashcat χρησιμοποιεί -m για hash mode και -a για attack mode. Το GameHack εμφανίζει μόνο προκαθορισμένο toy result."),
     output: both("A cracked status applies only to the toy vector in this lesson. Modern password storage should use salted, adaptive KDFs such as Argon2id.", "Το cracked status αφορά μόνο toy vector. Σύγχρονη αποθήκευση: salted adaptive KDF όπως Argon2id."),
     syntax: "hashcat -m MODE -a MODE HASH MASK", example: "hashcat -m 0 -a 3 098f6bcd4621d373cade4e832627b4f6 ?l?l?l?l",
     caution: both("Do not test third-party credentials. This UI returns fictional training output only.", "Μην ελέγχεις credentials τρίτων. Το UI επιστρέφει μόνο φανταστική εκπαιδευτική έξοδο."),
@@ -756,7 +756,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "oleobj", aliases: ["oleobj"], title: both("Inventory embedded Office objects", "Απογραφή embedded Office objects"),
     purpose: both("Inspect simulated external and embedded relationships in an Office container.", "Έλεγξε προσομοιωμένες external/embedded relationships σε Office container."),
-    mechanics: both("OOXML relationships can point to embedded media or external templates. The HackForge summary does not fetch referenced content.", "OOXML relationships δείχνουν embedded media ή external templates. Η σύνοψη δεν κατεβάζει referenced content."),
+    mechanics: both("OOXML relationships can point to embedded media or external templates. The GameHack summary does not fetch referenced content.", "OOXML relationships δείχνουν embedded media ή external templates. Η σύνοψη δεν κατεβάζει referenced content."),
     output: both("A relationship is a pivot to review and defang; it is not proof the remote item was retrieved.", "Relationship είναι pivot προς έλεγχο/defang· δεν αποδεικνύει retrieval."),
     syntax: "oleobj DOCUMENT", example: "oleobj /cases/IR-2404/evidence/03-documents/Presentation.pptx",
   },
@@ -799,7 +799,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "volatility", aliases: ["volatility", "vol.py", "vol"], title: both("Query a memory image", "Ερώτημα σε memory image"),
     purpose: both("Inspect process, socket, environment, browser, and volatile user artifacts.", "Έλεγξε processes, sockets, environment, browser και volatile artifacts."),
-    mechanics: both("imageinfo suggests OS/profile; pslist and pstree inspect processes; netscan examines sockets; envars/cmdline/cmdscan/consoles recover process context; clipboard, chromehistory, and MSPaint plugins can expose volatile artifacts. HackForge returns fixture output only.", "imageinfo προτείνει OS/profile· pslist/pstree processes· netscan sockets· envars/cmdline/cmdscan/consoles process context· clipboard/browser/MSPaint volatile artifacts. Το HackForge δίνει μόνο fixtures."),
+    mechanics: both("imageinfo suggests OS/profile; pslist and pstree inspect processes; netscan examines sockets; envars/cmdline/cmdscan/consoles recover process context; clipboard, chromehistory, and MSPaint plugins can expose volatile artifacts. GameHack returns fixture output only.", "imageinfo προτείνει OS/profile· pslist/pstree processes· netscan sockets· envars/cmdline/cmdscan/consoles process context· clipboard/browser/MSPaint volatile artifacts. Το GameHack δίνει μόνο fixtures."),
     output: both("Treat plugins as views into one capture. Correlate PIDs, timestamps, owner, and network endpoints with disk and event evidence.", "Τα plugins είναι όψεις ενός capture. Συσχέτισε PIDs, χρόνους, owner και endpoints με disk/events."),
     syntax: "volatility -f DUMP PLUGIN", example: "volatility -f /cases/IR-2404/evidence/08-memory/workstation.raw pstree",
     caution: both("Memory images can contain sensitive data. Only acquire and disclose them under proper authority.", "Memory images περιέχουν ευαίσθητα δεδομένα· απόκτησε/κοινοποίησε μόνο με άδεια."),
@@ -807,14 +807,14 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "gcore", aliases: ["gcore"], title: both("Acquire a process core (simulated)", "Απόκτηση process core (προσομοίωση)"),
     purpose: both("Explain how a process memory snapshot can support volatile analysis.", "Εξήγησε πώς process memory snapshot βοηθά volatile analysis."),
-    mechanics: both("gcore creates a core dump for a selected PID on a real system. HackForge writes a harmless text fixture and never reads host process memory.", "Το gcore δημιουργεί core dump PID σε πραγματικό σύστημα. Το HackForge γράφει ακίνδυνο text fixture και δεν διαβάζει host memory."),
+    mechanics: both("gcore creates a core dump for a selected PID on a real system. GameHack writes a harmless text fixture and never reads host process memory.", "Το gcore δημιουργεί core dump PID σε πραγματικό σύστημα. Το GameHack γράφει ακίνδυνο text fixture και δεν διαβάζει host memory."),
     output: both("The reported path is a derived sandbox artifact; document target PID, acquisition time, and authority.", "Η διαδρομή είναι derived sandbox artifact· κατέγραψε PID, χρόνο και εξουσιοδότηση."),
     syntax: "gcore PID", example: "gcore 2112",
   },
   {
     key: "memory-acquire", aliases: ["memory-acquire"], title: both("Acquire volatile memory (simulated)", "Απόκτηση volatile μνήμης (προσομοίωση)"),
     purpose: both("Understand why a live memory capture must be authorized, time-stamped, and verified.", "Κατανόησε γιατί live memory capture θέλει άδεια, timestamp και verification."),
-    mechanics: both("DumpIt, FTK Imager, and Redline are examples of acquisition tools. HackForge prints a receipt and creates no host memory image.", "DumpIt, FTK Imager και Redline είναι εργαλεία acquisition. Το HackForge εμφανίζει receipt χωρίς host memory image."),
+    mechanics: both("DumpIt, FTK Imager, and Redline are examples of acquisition tools. GameHack prints a receipt and creates no host memory image.", "DumpIt, FTK Imager και Redline είναι εργαλεία acquisition. Το GameHack εμφανίζει receipt χωρίς host memory image."),
     output: both("The receipt describes a virtual copy and verification note; it does not capture the browser's or computer's real RAM.", "Το receipt περιγράφει virtual copy· δεν συλλαμβάνει πραγματική RAM."),
     syntax: "memory-acquire SOURCE", example: "memory-acquire /cases/IR-2404/evidence/08-memory/workstation.raw",
   },
@@ -829,7 +829,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "trace-report", aliases: ["strace-report", "ltrace-report"], title: both("Review simulated call traces", "Έλεγχος simulated call traces"),
     purpose: both("Learn how system-call and library-call traces help describe program behavior.", "Μάθε πώς system-call και library-call traces περιγράφουν συμπεριφορά."),
-    mechanics: both("strace observes system calls; ltrace observes library calls. These HackForge commands show a synthetic report and never attach to a process.", "Το strace παρατηρεί system calls· το ltrace library calls. Αυτές οι εντολές δείχνουν synthetic report και δεν συνδέονται σε process."),
+    mechanics: both("strace observes system calls; ltrace observes library calls. These GameHack commands show a synthetic report and never attach to a process.", "Το strace παρατηρεί system calls· το ltrace library calls. Αυτές οι εντολές δείχνουν synthetic report και δεν συνδέονται σε process."),
     output: both("Use a call as an investigation lead and corroborate it with endpoint, file, or network evidence.", "Χρησιμοποίησε call ως lead και επιβεβαίωσέ το με endpoint, file ή network evidence."),
     syntax: "strace PROGRAM | ltrace PROGRAM", example: "strace-report",
   },
@@ -878,7 +878,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "mmls", aliases: ["mmls", "fls", "mftecmd"], title: both("Enumerate disk structures", "Απαρίθμηση δομών δίσκου"),
     purpose: both("Inspect partition boundaries, directory entries, and NTFS metadata records.", "Έλεγξε partition boundaries, directory entries και NTFS metadata records."),
-    mechanics: both("mmls summarizes partitions; fls lists filesystem entries and can show deleted records; MFTECmd parses MFT metadata into timelines. HackForge uses text fixtures.", "Το mmls συνοψίζει partitions· το fls εμφανίζει entries/deleted records· το MFTECmd αναλύει MFT σε timelines. Το HackForge χρησιμοποιεί text fixtures."),
+    mechanics: both("mmls summarizes partitions; fls lists filesystem entries and can show deleted records; MFTECmd parses MFT metadata into timelines. GameHack uses text fixtures.", "Το mmls συνοψίζει partitions· το fls εμφανίζει entries/deleted records· το MFTECmd αναλύει MFT σε timelines. Το GameHack χρησιμοποιεί text fixtures."),
     output: both("Record partition offsets and file record/parent IDs. Metadata does not guarantee file-content recovery.", "Κατέγραψε offsets και record/parent IDs. Metadata δεν εγγυάται ανάκτηση περιεχομένου."),
     syntax: "mmls IMAGE | fls -r IMAGE | mftecmd MFT.csv", example: "mftecmd /cases/IR-2404/evidence/06-disk/$MFT.csv",
   },
@@ -899,7 +899,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "volatility", aliases: ["volatility", "vol.py", "vol"], title: both("Query a memory image", "Ερώτημα σε memory image"),
     purpose: both("Inspect process, socket, environment, browser, command-line, and volatile-user artifacts.", "Έλεγξε process, socket, environment, browser, command-line και volatile-user artifacts."),
-    mechanics: both("imageinfo suggests OS/profile; pslist/pstree inspect processes; netscan inspects sockets; envars/cmdline/cmdscan/consoles inspect context; clipboard, browser-history, and MSPaint plugins may recover volatile clues. HackForge returns fixtures only.", "imageinfo προτείνει OS/profile· pslist/pstree processes· netscan sockets· envars/cmdline/cmdscan/consoles context· clipboard/browser/MSPaint volatile clues. Το HackForge δίνει fixtures."),
+    mechanics: both("imageinfo suggests OS/profile; pslist/pstree inspect processes; netscan inspects sockets; envars/cmdline/cmdscan/consoles inspect context; clipboard, browser-history, and MSPaint plugins may recover volatile clues. GameHack returns fixtures only.", "imageinfo προτείνει OS/profile· pslist/pstree processes· netscan sockets· envars/cmdline/cmdscan/consoles context· clipboard/browser/MSPaint volatile clues. Το GameHack δίνει fixtures."),
     output: both("Treat plugins as views into one capture. Correlate PID, owner, time, and endpoint with disk, event, and packet evidence.", "Τα plugins είναι όψεις ενός capture. Συσχέτισε PID, owner, χρόνο και endpoint με disk/event/packet evidence."),
     syntax: "volatility -f DUMP PLUGIN", example: "volatility -f /cases/IR-2404/evidence/08-memory/workstation.raw pstree",
     caution: both("Memory can contain sensitive data. Acquire, analyze, and report it only under proper authority.", "Η μνήμη μπορεί να περιέχει ευαίσθητα δεδομένα· απαιτείται εξουσιοδότηση."),
@@ -907,14 +907,14 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "memory-acquire", aliases: ["memory-acquire"], title: both("Acquire volatile memory (simulated)", "Απόκτηση volatile μνήμης (προσομοίωση)"),
     purpose: both("Understand why live-memory acquisition must be authorized, timestamped, and verified.", "Κατανόησε γιατί live-memory acquisition θέλει άδεια, timestamp και verification."),
-    mechanics: both("DumpIt, FTK Imager, and Redline are acquisition-tool examples. HackForge prints a receipt and creates no host-memory image.", "DumpIt, FTK Imager και Redline είναι εργαλεία acquisition. Το HackForge εμφανίζει receipt και δεν συλλέγει host memory."),
+    mechanics: both("DumpIt, FTK Imager, and Redline are acquisition-tool examples. GameHack prints a receipt and creates no host-memory image.", "DumpIt, FTK Imager και Redline είναι εργαλεία acquisition. Το GameHack εμφανίζει receipt και δεν συλλέγει host memory."),
     output: both("The receipt describes a virtual training copy; it does not capture the browser or computer's real RAM.", "Το receipt περιγράφει virtual training copy· δεν συλλαμβάνει πραγματική RAM."),
     syntax: "memory-acquire SOURCE", example: "memory-acquire /cases/IR-2404/evidence/08-memory/workstation.raw",
   },
   {
     key: "gcore", aliases: ["gcore"], title: both("Acquire a process core (simulated)", "Απόκτηση process core (προσομοίωση)"),
     purpose: both("Understand how a process-memory snapshot can support volatile analysis.", "Κατανόησε πώς process-memory snapshot βοηθά volatile analysis."),
-    mechanics: both("gcore creates a core dump for a selected PID on real systems. HackForge writes a harmless text fixture and never reads host process memory.", "Το gcore δημιουργεί core dump PID σε πραγματικά συστήματα. Το HackForge γράφει ακίνδυνο text fixture."),
+    mechanics: both("gcore creates a core dump for a selected PID on real systems. GameHack writes a harmless text fixture and never reads host process memory.", "Το gcore δημιουργεί core dump PID σε πραγματικά συστήματα. Το GameHack γράφει ακίνδυνο text fixture."),
     output: both("The reported path is a derived sandbox artifact; document target PID, acquisition time, and authority.", "Η διαδρομή είναι derived sandbox artifact· κατέγραψε PID, χρόνο και εξουσιοδότηση."),
     syntax: "gcore PID", example: "gcore 2112",
   },
@@ -1187,8 +1187,8 @@ function resultReading(
   }
   if (first === "dig") {
     return lang === "en"
-      ? "Read the ANSWER SECTION: A maps a name to an address, MX lists mail exchangers, and NS lists name servers. These are fictional HackForge records."
-      : "Διάβασε το ANSWER SECTION: A αντιστοιχίζει όνομα σε διεύθυνση, MX εμφανίζει mail exchangers και NS name servers. Είναι φανταστικές εγγραφές HackForge.";
+      ? "Read the ANSWER SECTION: A maps a name to an address, MX lists mail exchangers, and NS lists name servers. These are fictional GameHack records."
+      : "Διάβασε το ANSWER SECTION: A αντιστοιχίζει όνομα σε διεύθυνση, MX εμφανίζει mail exchangers και NS name servers. Είναι φανταστικές εγγραφές GameHack.";
   }
   if (first === "ifconfig" || first === "ip" || first === "iwconfig") {
     return lang === "en"
@@ -1202,8 +1202,8 @@ function resultReading(
   }
   if (first === "ssh" || first === "ftp") {
     return lang === "en"
-      ? "This response comes from a fictional HackForge host inside the local virtual filesystem. A welcome/status banner means the simulator accepted the training step; no external server was contacted."
-      : "Η απόκριση προέρχεται από φανταστικό host HackForge μέσα στο εικονικό σύστημα αρχείων. Banner υποδοχής/status σημαίνει αποδοχή του βήματος· δεν επικοινωνήθηκε εξωτερικός server.";
+      ? "This response comes from a fictional GameHack host inside the local virtual filesystem. A welcome/status banner means the simulator accepted the training step; no external server was contacted."
+      : "Η απόκριση προέρχεται από φανταστικό host GameHack μέσα στο εικονικό σύστημα αρχείων. Banner υποδοχής/status σημαίνει αποδοχή του βήματος· δεν επικοινωνήθηκε εξωτερικός server.";
   }
   if (first === "echo") {
     return lang === "en"
@@ -1217,8 +1217,8 @@ function resultReading(
   }
   if (first === "nmap" || first === "hydra" || first === "sqlmap" || first === "sudo") {
     return lang === "en"
-      ? "This is a canned educational result for the isolated HackForge sandbox. It does not scan, authenticate to, or exploit a real system. Read each row as simulated lab data."
-      : "Αυτό είναι προκαθορισμένο εκπαιδευτικό αποτέλεσμα του απομονωμένου HackForge sandbox. Δεν σαρώθηκε, δεν έγινε login ούτε exploit σε πραγματικό σύστημα. Διάβασε κάθε γραμμή ως εικονικά δεδομένα.";
+      ? "This is a canned educational result for the isolated GameHack sandbox. It does not scan, authenticate to, or exploit a real system. Read each row as simulated lab data."
+      : "Αυτό είναι προκαθορισμένο εκπαιδευτικό αποτέλεσμα του απομονωμένου GameHack sandbox. Δεν σαρώθηκε, δεν έγινε login ούτε exploit σε πραγματικό σύστημα. Διάβασε κάθε γραμμή ως εικονικά δεδομένα.";
   }
   return lang === "en"
     ? `The terminal returned ${output.length} output line${output.length === 1 ? "" : "s"}. Read the output panel above as the command's direct response; compare it with the command's purpose and the current lab state.`

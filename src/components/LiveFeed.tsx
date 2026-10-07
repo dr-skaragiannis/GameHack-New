@@ -90,7 +90,7 @@ export default function LiveFeed({
     <ul className="live-feed__list space-y-2">
       {items.map((event) => (
         <li key={event.id} className="live-feed__event flex items-start gap-3 text-sm">
-          <span className="live-feed__event-icon mt-0.5 text-ember-400"><Icon name={KIND_ICON[event.kind]} className="w-4 h-4" /></span>
+          <span className="live-feed__event-icon mt-0.5 text-cyan-400"><Icon name={KIND_ICON[event.kind]} className="w-4 h-4" /></span>
           <div className="live-feed__event-copy flex-1 min-w-0">
             <div className="text-zinc-300 truncate" title={event.text}>{event.text}</div>
             <time className="text-sm text-zinc-600">{ago(event.ts)}</time>

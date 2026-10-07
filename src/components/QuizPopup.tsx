@@ -30,8 +30,8 @@ export default function QuizPopup({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-forge-border bg-forge-panel p-6 scale-in">
-        <div className="text-sm uppercase tracking-[0.2em] text-ember-400 mb-1">{uppercaseLabel(t("quickQuiz", lang), lang)}</div>
+      <div className="w-full max-w-lg rounded-2xl border border-gamehack-border bg-gamehack-panel p-6 scale-in">
+        <div className="text-sm uppercase tracking-[0.2em] text-cyan-400 mb-1">{uppercaseLabel(t("quickQuiz", lang), lang)}</div>
         <div className="text-sm text-iron-400 mb-4">
           {i + 1} {t("of", lang)} {qs.length}
         </div>
@@ -54,10 +54,10 @@ export default function QuizPopup({
                 }}
                 className={cn(
                   "w-full text-left rounded-xl border px-3 py-2.5 text-sm transition",
-                  !revealed && "border-forge-border hover:border-ember-500/50",
+                  !revealed && "border-gamehack-border hover:border-cyan-500/50",
                   revealed && good && "border-neon-green bg-neon-green/10 text-neon-green",
                   revealed && mine && !good && "border-rose-500 bg-rose-500/10 text-rose-300",
-                  revealed && !good && !mine && "border-forge-border opacity-50"
+                  revealed && !good && !mine && "border-gamehack-border opacity-50"
                 )}
               >
                 {bi(c, lang)}
@@ -83,7 +83,7 @@ export default function QuizPopup({
                 setPicked(null);
               }
             }}
-            className="mt-5 w-full rounded-xl bg-ember-600 hover:bg-ember-500 py-2.5 font-semibold text-white inline-flex items-center justify-center gap-2"
+            className="mt-5 w-full rounded-xl bg-cyan-600 hover:bg-cyan-500 py-2.5 font-semibold text-white inline-flex items-center justify-center gap-2"
           >
             {last ? t("finish", lang) : t("next", lang)}
             <Icon name="chevron" className="w-4 h-4" />

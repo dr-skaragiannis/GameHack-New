@@ -4,9 +4,9 @@ import Icon from "./Icon";
 import { t, uppercaseLabel, type Lang } from "../i18n";
 
 const TIER: Record<string, string> = {
-  bronze: "from-amber-700 to-amber-500",
+  bronze: "from-cyan-700 to-cyan-500",
   silver: "from-zinc-400 to-slate-200",
-  gold: "from-yellow-500 to-amber-300",
+  gold: "from-yellow-500 to-cyan-300",
 };
 
 export default function BadgeModal({
@@ -72,7 +72,7 @@ export default function BadgeModal({
           <span className={`badge-certificate__tier is-${badge.tier}`}>{uppercaseLabel(badge.tier, lang)}</span>
         </div>
 
-        <div className="badge-certificate__issuer">HACKFORGE · {uppercaseLabel(certificateTitle, lang)}</div>
+        <div className="badge-certificate__issuer">GameHack · {uppercaseLabel(certificateTitle, lang)}</div>
         <h2 id="badge-certificate-title">{badge.name}</h2>
         <p className="badge-certificate__description">{badge.desc}</p>
         <div className="badge-certificate__divider"><span /><Icon name="spark" className="h-4 w-4" /><span /></div>
@@ -80,7 +80,7 @@ export default function BadgeModal({
         <div className="badge-certificate__signature">
           <span className="badge-certificate__signature-mark"><Icon name="shield" className="h-4 w-4" /></span>
           <span>
-            <strong>{lang === "en" ? "HackForge Learning Lab" : "Εργαστήριο μάθησης HackForge"}</strong>
+            <strong>{lang === "en" ? "GameHack Learning Lab" : "Εργαστήριο μάθησης GameHack"}</strong>
             <small>{lang === "en" ? "Verified achievement" : "Επιβεβαιωμένο επίτευγμα"}</small>
           </span>
           <span className="badge-certificate__seal-mark">HF</span>

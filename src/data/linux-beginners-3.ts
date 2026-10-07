@@ -67,8 +67,8 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
       section(
         bi("read and a shell variable", "read και μεταβλητή shell"),
         bi(
-          "The welcome script demonstrates a small conversation: echo \"What is your name?\" prints a prompt, read name stores the next input in a variable called name, and echo \"Welcome, $name\" expands that variable inside double quotes. A variable is a named value held for the running shell; the dollar sign asks Bash to substitute the value rather than print the characters $name literally.\n\nIn an ordinary Bash session, read waits for a line that the user types. HackForge uses a fixed sample value, operator, so the exercise can show the prompt and expansion without starting a real shell or accepting arbitrary input. Double quotes allow the variable to expand while keeping the whole greeting together; single quotes would leave $name unchanged.",
-          "Το script υποδοχής δείχνει μια μικρή συνομιλία: η echo \"What is your name?\" εμφανίζει ερώτηση, η εντολή read name αποθηκεύει την επόμενη είσοδο στη μεταβλητή name και η echo \"Welcome, $name\" αντικαθιστά τη μεταβλητή με την τιμή της μέσα στα διπλά εισαγωγικά. Μια μεταβλητή είναι ονομασμένη τιμή του shell· το σύμβολο $ ζητά από το Bash να εμφανίσει την τιμή της αντί για τους χαρακτήρες $name.\n\nΣτο πραγματικό Bash, η read περιμένει να πληκτρολογήσεις απάντηση. Το HackForge δεν ανοίγει πραγματικό shell ούτε περιμένει αυθαίρετη εκτέλεση: το fixture προσφέρει την εικονική απάντηση operator, ώστε να μπορείς να παρατηρήσεις τη ροή. Οι διπλές αποστρόφοι επιτρέπουν επέκταση μεταβλητών, ενώ οι μονές αποστρόφοι θα κρατούσαν το $name κυριολεκτικό.",
+          "The welcome script demonstrates a small conversation: echo \"What is your name?\" prints a prompt, read name stores the next input in a variable called name, and echo \"Welcome, $name\" expands that variable inside double quotes. A variable is a named value held for the running shell; the dollar sign asks Bash to substitute the value rather than print the characters $name literally.\n\nIn an ordinary Bash session, read waits for a line that the user types. GameHack uses a fixed sample value, operator, so the exercise can show the prompt and expansion without starting a real shell or accepting arbitrary input. Double quotes allow the variable to expand while keeping the whole greeting together; single quotes would leave $name unchanged.",
+          "Το script υποδοχής δείχνει μια μικρή συνομιλία: η echo \"What is your name?\" εμφανίζει ερώτηση, η εντολή read name αποθηκεύει την επόμενη είσοδο στη μεταβλητή name και η echo \"Welcome, $name\" αντικαθιστά τη μεταβλητή με την τιμή της μέσα στα διπλά εισαγωγικά. Μια μεταβλητή είναι ονομασμένη τιμή του shell· το σύμβολο $ ζητά από το Bash να εμφανίσει την τιμή της αντί για τους χαρακτήρες $name.\n\nΣτο πραγματικό Bash, η read περιμένει να πληκτρολογήσεις απάντηση. Το GameHack δεν ανοίγει πραγματικό shell ούτε περιμένει αυθαίρετη εκτέλεση: το fixture προσφέρει την εικονική απάντηση operator, ώστε να μπορείς να παρατηρήσεις τη ροή. Οι διπλές αποστρόφοι επιτρέπουν επέκταση μεταβλητών, ενώ οι μονές αποστρόφοι θα κρατούσαν το $name κυριολεκτικό.",
         ),
         [
           shot("cat welcome.sh", [
@@ -83,8 +83,8 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
       section(
         bi("Nmap host discovery: use only the fixture subnet", "Ανακάλυψη hosts με Nmap: μόνο στο υποδίκτυο του fixture"),
         bi(
-          "Nmap can perform several kinds of authorized network inventory. The article’s scanner intends to ask for an IP address, add /24 to describe its subnet, and use a ping sweep to identify responding hosts. The modern option is -sn; older Nmap versions used -sP (capital P). The printed nma -sp is a spelling/capitalization error. The intended Bash form is nmap -sn \"$ip\"/24: after read ip, Bash expands $ip and appends /24. HackForge shows that pattern as a comment in the fixture but uses a fixed fictional target, 10.10.10.0/24, when it runs.\n\nThe -sn option asks for host discovery without a port scan. The /24 suffix is CIDR notation for a 256-address subnet, but it is not permission to test a network. HackForge maps this reserved training target to canned VFS results; even if a different address is typed, no packets are sent to a live network.",
-          "Το Nmap υποστηρίζει διάφορες μορφές απογραφής δικτύου όταν υπάρχει άδεια. Ο scanner του άρθρου ζητά μια διεύθυνση IP, προσθέτει /24 για να περιγράψει το υποδίκτυο και επιχειρεί ping sweep για να εντοπίσει hosts που απαντούν. Η σύγχρονη επιλογή είναι -sn· παλαιότερες εκδόσεις χρησιμοποιούσαν -sP με κεφαλαίο P. Το nma -sp είναι τυπογραφικό λάθος. Η σωστή μορφή Bash είναι nmap -sn \"$ip\"/24: μετά την εντολή read ip, το Bash αντικαθιστά το $ip με την τιμή και προσθέτει το /24. Το fixture δείχνει αυτή τη μορφή ως σχόλιο, αλλά εκτελεί μόνο τον σταθερό, φανταστικό στόχο 10.10.10.0/24.\n\nΗ επιλογή -sn ζητά ανακάλυψη hosts χωρίς σάρωση θυρών. Το /24 είναι CIDR notation για ένα υποδίκτυο 256 διευθύνσεων, αλλά δεν αποτελεί άδεια για να ελεγχθεί οποιοδήποτε δίκτυο. Στο HackForge κάθε στόχος αντιστοιχίζεται σε προκαθορισμένα στοιχεία του sandbox· δεν στέλνονται πακέτα σε πραγματικό δίκτυο, ακόμη κι αν ο παίκτης πληκτρολογήσει διαφορετική διεύθυνση.",
+          "Nmap can perform several kinds of authorized network inventory. The article’s scanner intends to ask for an IP address, add /24 to describe its subnet, and use a ping sweep to identify responding hosts. The modern option is -sn; older Nmap versions used -sP (capital P). The printed nma -sp is a spelling/capitalization error. The intended Bash form is nmap -sn \"$ip\"/24: after read ip, Bash expands $ip and appends /24. GameHack shows that pattern as a comment in the fixture but uses a fixed fictional target, 10.10.10.0/24, when it runs.\n\nThe -sn option asks for host discovery without a port scan. The /24 suffix is CIDR notation for a 256-address subnet, but it is not permission to test a network. GameHack maps this reserved training target to canned VFS results; even if a different address is typed, no packets are sent to a live network.",
+          "Το Nmap υποστηρίζει διάφορες μορφές απογραφής δικτύου όταν υπάρχει άδεια. Ο scanner του άρθρου ζητά μια διεύθυνση IP, προσθέτει /24 για να περιγράψει το υποδίκτυο και επιχειρεί ping sweep για να εντοπίσει hosts που απαντούν. Η σύγχρονη επιλογή είναι -sn· παλαιότερες εκδόσεις χρησιμοποιούσαν -sP με κεφαλαίο P. Το nma -sp είναι τυπογραφικό λάθος. Η σωστή μορφή Bash είναι nmap -sn \"$ip\"/24: μετά την εντολή read ip, το Bash αντικαθιστά το $ip με την τιμή και προσθέτει το /24. Το fixture δείχνει αυτή τη μορφή ως σχόλιο, αλλά εκτελεί μόνο τον σταθερό, φανταστικό στόχο 10.10.10.0/24.\n\nΗ επιλογή -sn ζητά ανακάλυψη hosts χωρίς σάρωση θυρών. Το /24 είναι CIDR notation για ένα υποδίκτυο 256 διευθύνσεων, αλλά δεν αποτελεί άδεια για να ελεγχθεί οποιοδήποτε δίκτυο. Στο GameHack κάθε στόχος αντιστοιχίζεται σε προκαθορισμένα στοιχεία του sandbox· δεν στέλνονται πακέτα σε πραγματικό δίκτυο, ακόμη κι αν ο παίκτης πληκτρολογήσει διαφορετική διεύθυνση.",
         ),
         [
           shot("nmap -sn 10.10.10.0/24", [
@@ -97,15 +97,15 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
           ]),
         ],
         bi(
-          "The article’s scanner prompt is retained, but the runnable HackForge fixture is deliberately fixed to its private simulated subnet.",
-          "Η ερώτηση του άρθρου διατηρείται, αλλά το εκτελέσιμο fixture του HackForge περιορίζεται σκόπιμα στο εικονικό υποδίκτυό του.",
+          "The article’s scanner prompt is retained, but the runnable GameHack fixture is deliberately fixed to its private simulated subnet.",
+          "Η ερώτηση του άρθρου διατηρείται, αλλά το εκτελέσιμο fixture του GameHack περιορίζεται σκόπιμα στο εικονικό υποδίκτυό του.",
         ),
       ),
       section(
         bi("grep, cut, head, and the complete pipeline", "grep, cut, head και το πλήρες pipeline"),
         bi(
-          "A pipe character | passes one command’s standard output to the next command as input. In the corrected article-shaped pipeline, grep scan keeps the Nmap report rows, cut -d \" \" -f 5 selects the fifth space-delimited field (the IP address), and head -n -1 prints every remaining line except the last one. That negative head form is supported by GNU head and by this simulator. The final Nmap summary row also contains “scanned,” so grep scan matches it; cut turns that row into “addresses,” and head -n -1 removes the summary while preserving all four host addresses. If an upstream command changes, inspect its rows before deciding what the negative count will omit.\n\nThe article’s original cut -d \"\" has no useful delimiter, so the runnable example corrects it to a space inside the quotes. Try the complete command: nmap -sn 10.10.10.0/24 | grep scan | cut -d \" \" -f 5 | head -n -1. Its results come only from HackForge’s fictional fixture and do not describe a real network.",
-          "Ο τελεστής pipe | περνά το standard output μιας εντολής ως είσοδο στην επόμενη. Στο διορθωμένο pipeline του άρθρου, η grep scan κρατά τις γραμμές αναφοράς του Nmap, η cut -d \" \" -f 5 επιλέγει το πέμπτο πεδίο που χωρίζεται με κενά (τη διεύθυνση IP) και η head -n -1 εμφανίζει όλες τις γραμμές εκτός από την τελευταία. Αυτή η αρνητική μορφή της head υποστηρίζεται από το GNU head και από τον προσομοιωτή. Η τελική σύνοψη του Nmap περιέχει επίσης το “scanned”, άρα ταιριάζει στο grep scan· η cut μετατρέπει εκείνη τη γραμμή σε “addresses” και η head -n -1 αφαιρεί τη σύνοψη, διατηρώντας και τις τέσσερις διευθύνσεις hosts. Αν αλλάξει η έξοδος προηγούμενης εντολής, έλεγξε τις γραμμές πριν αποφασίσεις τι θα παραλείψει ο αρνητικός αριθμός.\n\nΤο αρχικό cut -d \"\" δεν ορίζει χρήσιμο διαχωριστικό, οπότε το παράδειγμα διορθώνεται σε έναν κενό χαρακτήρα μέσα στα εισαγωγικά. Δοκίμασε ολόκληρη την εντολή στο τερματικό: nmap -sn 10.10.10.0/24 | grep scan | cut -d \" \" -f 5 | head -n -1. Η τελική λίστα προέρχεται αποκλειστικά από τα εικονικά αποτελέσματα του HackForge και δεν αποτελεί αναφορά πραγματικού δικτύου.",
+          "A pipe character | passes one command’s standard output to the next command as input. In the corrected article-shaped pipeline, grep scan keeps the Nmap report rows, cut -d \" \" -f 5 selects the fifth space-delimited field (the IP address), and head -n -1 prints every remaining line except the last one. That negative head form is supported by GNU head and by this simulator. The final Nmap summary row also contains “scanned,” so grep scan matches it; cut turns that row into “addresses,” and head -n -1 removes the summary while preserving all four host addresses. If an upstream command changes, inspect its rows before deciding what the negative count will omit.\n\nThe article’s original cut -d \"\" has no useful delimiter, so the runnable example corrects it to a space inside the quotes. Try the complete command: nmap -sn 10.10.10.0/24 | grep scan | cut -d \" \" -f 5 | head -n -1. Its results come only from GameHack’s fictional fixture and do not describe a real network.",
+          "Ο τελεστής pipe | περνά το standard output μιας εντολής ως είσοδο στην επόμενη. Στο διορθωμένο pipeline του άρθρου, η grep scan κρατά τις γραμμές αναφοράς του Nmap, η cut -d \" \" -f 5 επιλέγει το πέμπτο πεδίο που χωρίζεται με κενά (τη διεύθυνση IP) και η head -n -1 εμφανίζει όλες τις γραμμές εκτός από την τελευταία. Αυτή η αρνητική μορφή της head υποστηρίζεται από το GNU head και από τον προσομοιωτή. Η τελική σύνοψη του Nmap περιέχει επίσης το “scanned”, άρα ταιριάζει στο grep scan· η cut μετατρέπει εκείνη τη γραμμή σε “addresses” και η head -n -1 αφαιρεί τη σύνοψη, διατηρώντας και τις τέσσερις διευθύνσεις hosts. Αν αλλάξει η έξοδος προηγούμενης εντολής, έλεγξε τις γραμμές πριν αποφασίσεις τι θα παραλείψει ο αρνητικός αριθμός.\n\nΤο αρχικό cut -d \"\" δεν ορίζει χρήσιμο διαχωριστικό, οπότε το παράδειγμα διορθώνεται σε έναν κενό χαρακτήρα μέσα στα εισαγωγικά. Δοκίμασε ολόκληρη την εντολή στο τερματικό: nmap -sn 10.10.10.0/24 | grep scan | cut -d \" \" -f 5 | head -n -1. Η τελική λίστα προέρχεται αποκλειστικά από τα εικονικά αποτελέσματα του GameHack και δεν αποτελεί αναφορά πραγματικού δικτύου.",
         ),
         [
           shot('nmap -sn 10.10.10.0/24 | grep scan | cut -d " " -f 5 | head -n -1', [
@@ -173,8 +173,8 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
       task(
         "read-variable",
         bi(
-          "Inspect and run welcome.sh to see echo, read, and the $name variable expansion in context. HackForge supplies a fixed sample name so the exercise never waits for real shell input.",
-          "Έλεγξε και εκτέλεσε το welcome.sh για να δεις μαζί τις echo, read και την αντικατάσταση της μεταβλητής $name. Το HackForge δίνει σταθερό όνομα δείγματος, ώστε η άσκηση να μη ζητά είσοδο από πραγματικό shell.",
+          "Inspect and run welcome.sh to see echo, read, and the $name variable expansion in context. GameHack supplies a fixed sample name so the exercise never waits for real shell input.",
+          "Έλεγξε και εκτέλεσε το welcome.sh για να δεις μαζί τις echo, read και την αντικατάσταση της μεταβλητής $name. Το GameHack δίνει σταθερό όνομα δείγματος, ώστε η άσκηση να μη ζητά είσοδο από πραγματικό shell.",
         ),
         bi("cat welcome.sh\nchmod +x welcome.sh\n./welcome.sh", "cat welcome.sh\nchmod +x welcome.sh\n./welcome.sh"),
         bi(
@@ -244,7 +244,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
     id: "sr-cron",
     order: 2,
     icon: "clock",
-    color: "from-amber-400 to-orange-900",
+    color: "from-cyan-400 to-sky-900",
     difficulty: 3,
     scenario: lab,
     title: bi("Cron schedules and boot services", "Προγραμματισμός cron και υπηρεσίες εκκίνησης"),
@@ -257,8 +257,8 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
       section(
         bi("cron and the service command", "cron και η εντολή service"),
         bi(
-          "cron is a background scheduler: it checks stored tables and launches a listed command when its time fields match. The article begins with service cron status to inspect whether the daemon is active, then uses service cron start if it is stopped. In HackForge these commands update only this player’s simulated service state; no daemon is launched by the website.\n\nstatus reports the present state, while start requests a transition to running. Check again with service cron status rather than assuming the service started from the first message. The change belongs only to this player's VFS-backed terminal session and does not schedule work on the web server.",
-          "Το cron είναι scheduler παρασκηνίου: ελέγχει αποθηκευμένους πίνακες και εκκινεί μια εντολή όταν ταιριάζουν τα πεδία ώρας. Το άρθρο ξεκινά με service cron status για να ελέγξει αν ο daemon είναι ενεργός και χρησιμοποιεί service cron start όταν είναι σταματημένος. Στο HackForge οι εντολές αλλάζουν μόνο την εικονική κατάσταση υπηρεσίας του παίκτη· ο ιστότοπος δεν ξεκινά πραγματικό daemon.\n\nΗ εντολή status εμφανίζει την τρέχουσα κατάσταση, ενώ η start ζητά μετάβαση σε running. Έλεγξε ξανά με service cron status αντί να συμπεράνεις ότι ξεκίνησε από το μήνυμα της εντολής. Η αλλαγή αφορά μόνο το προσωπικό VFS και δεν προγραμματίζει δουλειά στο λειτουργικό σύστημα του server.",
+          "cron is a background scheduler: it checks stored tables and launches a listed command when its time fields match. The article begins with service cron status to inspect whether the daemon is active, then uses service cron start if it is stopped. In GameHack these commands update only this player’s simulated service state; no daemon is launched by the website.\n\nstatus reports the present state, while start requests a transition to running. Check again with service cron status rather than assuming the service started from the first message. The change belongs only to this player's VFS-backed terminal session and does not schedule work on the web server.",
+          "Το cron είναι scheduler παρασκηνίου: ελέγχει αποθηκευμένους πίνακες και εκκινεί μια εντολή όταν ταιριάζουν τα πεδία ώρας. Το άρθρο ξεκινά με service cron status για να ελέγξει αν ο daemon είναι ενεργός και χρησιμοποιεί service cron start όταν είναι σταματημένος. Στο GameHack οι εντολές αλλάζουν μόνο την εικονική κατάσταση υπηρεσίας του παίκτη· ο ιστότοπος δεν ξεκινά πραγματικό daemon.\n\nΗ εντολή status εμφανίζει την τρέχουσα κατάσταση, ενώ η start ζητά μετάβαση σε running. Έλεγξε ξανά με service cron status αντί να συμπεράνεις ότι ξεκίνησε από το μήνυμα της εντολής. Η αλλαγή αφορά μόνο το προσωπικό VFS και δεν προγραμματίζει δουλειά στο λειτουργικό σύστημα του server.",
         ),
         [
           shot("service cron status", ["● cron.service — inactive", "   Active: inactive"]),
@@ -269,8 +269,8 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
       section(
         bi("crontab -e and the editor selection", "crontab -e και επιλογή editor"),
         bi(
-          "crontab -e edits the recurring schedule for the current user; the e means edit. The example uses the editor-choice prompt and selects option 1 for nano. HackForge reproduces that small interaction: after crontab -e, enter 1 to choose the virtual nano editor, then use a supported VFS command to record the line because the lab does not open a real interactive editor.\n\ncrontab -l prints the saved table, so use it to verify the result. The -e and -l options address the current account's per-user schedule; that is distinct from the central /etc/crontab file, which has a separate username column.",
-          "Το crontab -e επεξεργάζεται το επαναλαμβανόμενο πρόγραμμα του τρέχοντος χρήστη· το e σημαίνει edit. Στο παράδειγμα εμφανίζεται η επιλογή editor και επιλέγεται το 1 για το nano. Το HackForge προσομοιώνει αυτή τη μικρή αλληλεπίδραση: μετά το crontab -e γράψε 1 για να επιλέξεις το εικονικό nano και μετά χρησιμοποίησε υποστηριζόμενη εντολή VFS για την καταχώριση, επειδή το lab δεν ανοίγει πραγματικό διαδραστικό editor.\n\nΓια να ελέγξεις το περιεχόμενο, το crontab -l εμφανίζει τον προσωπικό πίνακα. Το crontab -e και το crontab -l αφορούν τον χρήστη που εκτελεί την εντολή· δεν είναι το ίδιο αρχείο με το /etc/crontab, το οποίο είναι ο κεντρικός πίνακας συστήματος.",
+          "crontab -e edits the recurring schedule for the current user; the e means edit. The example uses the editor-choice prompt and selects option 1 for nano. GameHack reproduces that small interaction: after crontab -e, enter 1 to choose the virtual nano editor, then use a supported VFS command to record the line because the lab does not open a real interactive editor.\n\ncrontab -l prints the saved table, so use it to verify the result. The -e and -l options address the current account's per-user schedule; that is distinct from the central /etc/crontab file, which has a separate username column.",
+          "Το crontab -e επεξεργάζεται το επαναλαμβανόμενο πρόγραμμα του τρέχοντος χρήστη· το e σημαίνει edit. Στο παράδειγμα εμφανίζεται η επιλογή editor και επιλέγεται το 1 για το nano. Το GameHack προσομοιώνει αυτή τη μικρή αλληλεπίδραση: μετά το crontab -e γράψε 1 για να επιλέξεις το εικονικό nano και μετά χρησιμοποίησε υποστηριζόμενη εντολή VFS για την καταχώριση, επειδή το lab δεν ανοίγει πραγματικό διαδραστικό editor.\n\nΓια να ελέγξεις το περιεχόμενο, το crontab -l εμφανίζει τον προσωπικό πίνακα. Το crontab -e και το crontab -l αφορούν τον χρήστη που εκτελεί την εντολή· δεν είναι το ίδιο αρχείο με το /etc/crontab, το οποίο είναι ο κεντρικός πίνακας συστήματος.",
         ),
         [
           shot("crontab -e", ["Select an editor:", "1. /bin/nano", "2. /usr/bin/vim.tiny", "Choose 1-2 [1]:"]),
@@ -280,7 +280,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
       section(
         bi("Five schedule fields and 23:55 every day", "Πέντε πεδία προγράμματος και κάθε μέρα στις 23:55"),
         bi(
-          "A per-user crontab line has five time fields followed by a command: minute, hour, day of month, month, and day of week. In 55 23 * * * /root/scanner, minute 55 and hour 23 select 11:55 PM; the four asterisks mean every day of the month, every month, and every day of the week. The command path is the script cron should call, not a promise that it ran at the moment you saved the line.\n\nIn this lab, record the same row with echo \"55 23 * * * /root/scanner\" | crontab - and verify it with crontab -l. A real cron daemon uses the machine's configured time zone and may apply timing rules such as the special day-of-month/day-of-week behavior documented by the system. HackForge stores the per-player row but deliberately never executes it.",
+          "A per-user crontab line has five time fields followed by a command: minute, hour, day of month, month, and day of week. In 55 23 * * * /root/scanner, minute 55 and hour 23 select 11:55 PM; the four asterisks mean every day of the month, every month, and every day of the week. The command path is the script cron should call, not a promise that it ran at the moment you saved the line.\n\nIn this lab, record the same row with echo \"55 23 * * * /root/scanner\" | crontab - and verify it with crontab -l. A real cron daemon uses the machine's configured time zone and may apply timing rules such as the special day-of-month/day-of-week behavior documented by the system. GameHack stores the per-player row but deliberately never executes it.",
           "Μια γραμμή προσωπικού crontab έχει πέντε πεδία χρόνου και μετά την εντολή: λεπτό, ώρα, ημέρα μήνα, μήνα και ημέρα εβδομάδας. Στο 55 23 * * * /root/scanner, το 55 και το 23 σημαίνουν 23:55, ενώ οι τέσσερις αστερίσκοι σημαίνουν κάθε ημέρα του μήνα, κάθε μήνα και κάθε ημέρα της εβδομάδας. Η διαδρομή είναι το script που θα καλούσε το cron· η αποθήκευση δεν σημαίνει ότι εκτελέστηκε εκείνη τη στιγμή.\n\nΣτο εργαστήριο καταχώρισε την ίδια γραμμή με echo \"55 23 * * * /root/scanner\" | crontab - και έπειτα επιβεβαίωσέ την με crontab -l. Η προσομοίωση αποθηκεύει τον πίνακα ανά παίκτη και δεν εκτελεί την εργασία αργότερα. Έτσι μπορείς να εξασκηθείς στη σύνταξη χωρίς να προκαλέσεις προγραμματισμένη ενέργεια σε πραγματικό σύστημα.",
         ),
         [
@@ -316,12 +316,12 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
         bi("update-rc.d, reboot, and ps aux | grep mysql", "update-rc.d, reboot και ps aux | grep mysql"),
         bi(
           "update-rc.d configures legacy boot links for a service. update-rc.d mysql defaults creates the conventional start/stop links for the default runlevels; the article also names remove, disable, and enable. In this simulator, defaults and enable mark the service for the next simulated boot, disable prevents that autostart, and remove deletes only the virtual rc links. None of those settings starts MySQL immediately.\n\nThe lesson's reboot applies the final saved boot choice only to your simulated services and records the event in the virtual syslog. Afterwards, ps aux prints a process snapshot and grep mysql keeps the matching row. The displayed mysqld is fictional; no host is rebooted and no host process is created.",
-          "Η update-rc.d ρυθμίζει παλιούς συνδέσμους εκκίνησης μιας υπηρεσίας. Η update-rc.d mysql defaults δημιουργεί τους συνηθισμένους συνδέσμους start/stop για τα προεπιλεγμένα runlevels· το άρθρο αναφέρει επίσης τα remove, disable και enable. Στον προσομοιωτή, τα defaults και enable δηλώνουν αυτόματη εκκίνηση στο επόμενο εικονικό boot, το disable την απενεργοποιεί και το remove διαγράφει μόνο τους εικονικούς rc links. Καμία από αυτές τις ρυθμίσεις δεν ξεκινά αμέσως το MySQL.\n\nΗ επανεκκίνηση του άρθρου αναπαρίσταται με reboot, το οποίο αλλάζει μόνο τις υπηρεσίες της προσωπικής προσομοίωσης και γράφει σχετική εγγραφή στο εικονικό syslog. Μετά, το ps aux εμφανίζει διεργασίες όλων των χρηστών και το grep mysql κρατά τις γραμμές που ταιριάζουν. Το HackForge δεν επανεκκινεί host ούτε ξεκινά πραγματικό mysqld· η γραμμή που βλέπεις είναι εικονική διεργασία μέσα στο VFS.",
+          "Η update-rc.d ρυθμίζει παλιούς συνδέσμους εκκίνησης μιας υπηρεσίας. Η update-rc.d mysql defaults δημιουργεί τους συνηθισμένους συνδέσμους start/stop για τα προεπιλεγμένα runlevels· το άρθρο αναφέρει επίσης τα remove, disable και enable. Στον προσομοιωτή, τα defaults και enable δηλώνουν αυτόματη εκκίνηση στο επόμενο εικονικό boot, το disable την απενεργοποιεί και το remove διαγράφει μόνο τους εικονικούς rc links. Καμία από αυτές τις ρυθμίσεις δεν ξεκινά αμέσως το MySQL.\n\nΗ επανεκκίνηση του άρθρου αναπαρίσταται με reboot, το οποίο αλλάζει μόνο τις υπηρεσίες της προσωπικής προσομοίωσης και γράφει σχετική εγγραφή στο εικονικό syslog. Μετά, το ps aux εμφανίζει διεργασίες όλων των χρηστών και το grep mysql κρατά τις γραμμές που ταιριάζουν. Το GameHack δεν επανεκκινεί host ούτε ξεκινά πραγματικό mysqld· η γραμμή που βλέπεις είναι εικονική διεργασία μέσα στο VFS.",
         ),
         [
           shot("update-rc.d mysql defaults", ["update-rc.d: mysql enabled for the simulated default runlevels 2, 3, 4 and 5."]),
           shot("reboot", [
-            "HackForge reboot simulated; only virtual boot-enabled services were updated.",
+            "GameHack reboot simulated; only virtual boot-enabled services were updated.",
             "Started: mysql. No host reboot occurred.",
           ]),
           shot("ps aux | grep mysql", ["mysql  3410  0.1  1.2  mysqld --defaults-file=/etc/mysql/my.cnf (simulated)"]),
@@ -364,8 +364,8 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
         ),
         bi("crontab -e\n1", "crontab -e\n1"),
         bi(
-          "The -e option requests editing; the numeric choice selects the editor configured for this exercise. HackForge records that choice and leaves the terminal available for the safe VFS-based schedule command in the next objective.",
-          "Η επιλογή -e ζητά επεξεργασία και ο αριθμός επιλέγει τον editor της άσκησης. Το HackForge αποθηκεύει την επιλογή και κρατά το τερματικό διαθέσιμο για την ασφαλή εντολή VFS στο επόμενο αντικείμενο.",
+          "The -e option requests editing; the numeric choice selects the editor configured for this exercise. GameHack records that choice and leaves the terminal available for the safe VFS-based schedule command in the next objective.",
+          "Η επιλογή -e ζητά επεξεργασία και ο αριθμός επιλέγει τον editor της άσκησης. Το GameHack αποθηκεύει την επιλογή και κρατά το τερματικό διαθέσιμο για την ασφαλή εντολή VFS στο επόμενο αντικείμενο.",
         ),
         (term) => term.flags.has("crontab-e") && term.flags.has("crontab-editor-nano") && !term.crontabEditorPending,
       ),
@@ -471,24 +471,24 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
       section(
         bi("Apache, nano, and the local web page", "Apache, nano και η τοπική σελίδα"),
         bi(
-          "Apache serves files from its document root; in this lesson the page is /var/www/html/index.html. nano opens a virtual preview of that file so you can inspect the starter HTML. HackForge does not launch an editor process, but you can save a small VFS-only example with echo \"<h1>HackForge</h1>\" > /var/www/html/index.html and then read the result with cat.\n\nOnce the virtual Apache service is running, curl http://localhost returns the content of that local index.html. On a normal computer localhost points to a service on that same computer; here the address is intercepted by the simulator and never reaches the server host or the Internet.",
-          "Ο Apache σερβίρει αρχεία από το document root· στο μάθημα η σελίδα είναι το /var/www/html/index.html. Η nano ανοίγει εικονική προεπισκόπηση του αρχείου για να ελέγξεις το αρχικό HTML. Το HackForge δεν ξεκινά editor process, αλλά μπορείς να αποθηκεύσεις μικρό παράδειγμα μόνο στο VFS με echo \"<h1>HackForge</h1>\" > /var/www/html/index.html και έπειτα να το διαβάσεις με cat.\n\nΌταν η εικονική υπηρεσία Apache είναι ενεργή, το curl http://localhost επιστρέφει το περιεχόμενο του τοπικού index.html. Σε κανονικό υπολογιστή το http://localhost θα άνοιγε την ίδια τοπική υπηρεσία σε browser· στο HackForge η διεύθυνση παραμένει εικονική και δεν κάνει αίτημα στον host ή στο Internet.",
+          "Apache serves files from its document root; in this lesson the page is /var/www/html/index.html. nano opens a virtual preview of that file so you can inspect the starter HTML. GameHack does not launch an editor process, but you can save a small VFS-only example with echo \"<h1>GameHack</h1>\" > /var/www/html/index.html and then read the result with cat.\n\nOnce the virtual Apache service is running, curl http://localhost returns the content of that local index.html. On a normal computer localhost points to a service on that same computer; here the address is intercepted by the simulator and never reaches the server host or the Internet.",
+          "Ο Apache σερβίρει αρχεία από το document root· στο μάθημα η σελίδα είναι το /var/www/html/index.html. Η nano ανοίγει εικονική προεπισκόπηση του αρχείου για να ελέγξεις το αρχικό HTML. Το GameHack δεν ξεκινά editor process, αλλά μπορείς να αποθηκεύσεις μικρό παράδειγμα μόνο στο VFS με echo \"<h1>GameHack</h1>\" > /var/www/html/index.html και έπειτα να το διαβάσεις με cat.\n\nΌταν η εικονική υπηρεσία Apache είναι ενεργή, το curl http://localhost επιστρέφει το περιεχόμενο του τοπικού index.html. Σε κανονικό υπολογιστή το http://localhost θα άνοιγε την ίδια τοπική υπηρεσία σε browser· στο GameHack η διεύθυνση παραμένει εικονική και δεν κάνει αίτημα στον host ή στο Internet.",
         ),
         [
-          shot("nano /var/www/html/index.html", ["<!DOCTYPE html>", "<h1>Apache2 Debian Default Page</h1>", "<p>It works! This is the HackForge virtual document root.</p>"]),
-          shot('echo "<h1>HackForge</h1>" > /var/www/html/index.html', ["(virtual page updated)"]),
-          shot("curl http://localhost", ["<h1>HackForge</h1>"]),
+          shot("nano /var/www/html/index.html", ["<!DOCTYPE html>", "<h1>Apache2 Debian Default Page</h1>", "<p>It works! This is the GameHack virtual document root.</p>"]),
+          shot('echo "<h1>GameHack</h1>" > /var/www/html/index.html', ["(virtual page updated)"]),
+          shot("curl http://localhost", ["<h1>GameHack</h1>"]),
         ],
       ),
       section(
         bi("OpenSSH, a fictional host, and telnet’s warning", "OpenSSH, φανταστικός host και η προειδοποίηση για το telnet"),
         bi(
-          "SSH provides an encrypted remote shell. Start the simulated local service with service ssh start, then try ssh ignite@192.168.0.11; HackForge maps that private address to its fictional ubuntu fixture and changes only the terminal’s simulated session. Use exit to return to the local prompt after inspecting the welcome banner.\n\nTelnet is a historical remote-terminal protocol that sends data without encryption, so it is not a safe substitute for SSH. HackForge accepts only a warning-only comparison and rejects the connection before opening a socket or displaying any real credentials.",
-          "Το SSH παρέχει κρυπτογραφημένο απομακρυσμένο shell. Ξεκίνα την εικονική υπηρεσία με service ssh start και δοκίμασε ssh ignite@192.168.0.11· το HackForge αντιστοιχίζει αυτή την ιδιωτική διεύθυνση στο φανταστικό fixture ubuntu και αλλάζει μόνο την εικονική συνεδρία του τερματικού. Με το exit επιστρέφεις στο τοπικό prompt αφού ελέγξεις το μήνυμα υποδοχής.\n\nΤο telnet είναι παλαιότερο πρωτόκολλο απομακρυσμένου τερματικού και στέλνει τα δεδομένα χωρίς κρυπτογράφηση, οπότε δεν είναι ασφαλής εναλλακτική του SSH. Το μάθημα επιτρέπει μόνο μια τοπική προειδοποιητική προσομοίωση για σύγκριση· δεν επιχειρεί σύνδεση και δεν εμφανίζει πραγματικό password ή session.",
+          "SSH provides an encrypted remote shell. Start the simulated local service with service ssh start, then try ssh ignite@192.168.0.11; GameHack maps that private address to its fictional ubuntu fixture and changes only the terminal’s simulated session. Use exit to return to the local prompt after inspecting the welcome banner.\n\nTelnet is a historical remote-terminal protocol that sends data without encryption, so it is not a safe substitute for SSH. GameHack accepts only a warning-only comparison and rejects the connection before opening a socket or displaying any real credentials.",
+          "Το SSH παρέχει κρυπτογραφημένο απομακρυσμένο shell. Ξεκίνα την εικονική υπηρεσία με service ssh start και δοκίμασε ssh ignite@192.168.0.11· το GameHack αντιστοιχίζει αυτή την ιδιωτική διεύθυνση στο φανταστικό fixture ubuntu και αλλάζει μόνο την εικονική συνεδρία του τερματικού. Με το exit επιστρέφεις στο τοπικό prompt αφού ελέγξεις το μήνυμα υποδοχής.\n\nΤο telnet είναι παλαιότερο πρωτόκολλο απομακρυσμένου τερματικού και στέλνει τα δεδομένα χωρίς κρυπτογράφηση, οπότε δεν είναι ασφαλής εναλλακτική του SSH. Το μάθημα επιτρέπει μόνο μια τοπική προειδοποιητική προσομοίωση για σύγκριση· δεν επιχειρεί σύνδεση και δεν εμφανίζει πραγματικό password ή session.",
         ),
         [
           shot("service ssh start", ["starting ssh (simulated)."]),
-          shot("ssh ignite@192.168.0.11", ["Welcome to ubuntu (HackForge lab host)", "Last login: simulated", "ignite@ubuntu:~$"]),
+          shot("ssh ignite@192.168.0.11", ["Welcome to ubuntu (GameHack lab host)", "Last login: simulated", "ignite@ubuntu:~$"]),
           shot("telnet ignite@192.168.0.11 23", ["telnet is plaintext and disabled for connections; use the simulated SSH lesson instead."]),
         ],
         bi(
@@ -499,11 +499,11 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
       section(
         bi("FTP: list, navigate, get, and bye", "FTP: λίστα, πλοήγηση, get και bye"),
         bi(
-          "FTP transfers files through a command-line session, but traditional FTP does not encrypt credentials or file contents. The public example in the article uses ftp ftp.cesca.es; HackForge intentionally blocks external FTP names and provides ftp ftp.forge.lab instead. After connecting, type anonymous for the username and again for the sample password.\n\nAt the fixture prompt, use ls to inspect the remote root, cd ubuntu and cd release to reach the training folder, then get favicon.ico to copy that fixture into your current local VFS directory. bye closes the remote session; a final local ls should show the downloaded file. Nothing is fetched from the public server.",
-          "Το FTP μεταφέρει αρχεία μέσα από συνεδρία γραμμής εντολών, αλλά το παραδοσιακό FTP δεν κρυπτογραφεί credentials ή περιεχόμενο. Το δημόσιο παράδειγμα του άρθρου είναι ftp ftp.cesca.es· το HackForge μπλοκάρει σκόπιμα εξωτερικά ονόματα και παρέχει το ftp ftp.forge.lab. Μετά τη σύνδεση γράψε anonymous ως όνομα χρήστη και ξανά ως δοκιμαστικό password.\n\nΣτο εικονικό server, το ls εμφανίζει τους φακέλους, το cd ubuntu και μετά cd release σε οδηγούν στο fixture και το get favicon.ico αντιγράφει το αρχείο στον τρέχοντα φάκελο του VFS σου. Η εντολή bye κλείνει τη συνεδρία FTP· μετά χρησιμοποίησε το τοπικό ls για να επιβεβαιώσεις ότι το αρχείο κατέβηκε. Κανένα αίτημα δεν φεύγει από το sandbox.",
+          "FTP transfers files through a command-line session, but traditional FTP does not encrypt credentials or file contents. The public example in the article uses ftp ftp.cesca.es; GameHack intentionally blocks external FTP names and provides ftp ftp.gamehack.lab instead. After connecting, type anonymous for the username and again for the sample password.\n\nAt the fixture prompt, use ls to inspect the remote root, cd ubuntu and cd release to reach the training folder, then get favicon.ico to copy that fixture into your current local VFS directory. bye closes the remote session; a final local ls should show the downloaded file. Nothing is fetched from the public server.",
+          "Το FTP μεταφέρει αρχεία μέσα από συνεδρία γραμμής εντολών, αλλά το παραδοσιακό FTP δεν κρυπτογραφεί credentials ή περιεχόμενο. Το δημόσιο παράδειγμα του άρθρου είναι ftp ftp.cesca.es· το GameHack μπλοκάρει σκόπιμα εξωτερικά ονόματα και παρέχει το ftp ftp.gamehack.lab. Μετά τη σύνδεση γράψε anonymous ως όνομα χρήστη και ξανά ως δοκιμαστικό password.\n\nΣτο εικονικό server, το ls εμφανίζει τους φακέλους, το cd ubuntu και μετά cd release σε οδηγούν στο fixture και το get favicon.ico αντιγράφει το αρχείο στον τρέχοντα φάκελο του VFS σου. Η εντολή bye κλείνει τη συνεδρία FTP· μετά χρησιμοποίησε το τοπικό ls για να επιβεβαιώσεις ότι το αρχείο κατέβηκε. Κανένα αίτημα δεν φεύγει από το sandbox.",
         ),
         [
-          shot("ftp ftp.forge.lab", ["Connected to ftp.forge.lab.", "220 HackForge FTP server (simulated)", "Name (ftp.forge.lab:root):"]),
+          shot("ftp ftp.gamehack.lab", ["Connected to ftp.gamehack.lab.", "220 GameHack FTP server (simulated)", "Name (ftp.gamehack.lab:root):"]),
           shot("anonymous", ["331 Please specify the password."]),
           shot("anonymous", ["230 Login successful. Use ls, cd, get, bye."]),
           shot("ls", ["drwxr-xr-x  ubuntu", "-rw-r--r--  welcome.txt"]),
@@ -524,13 +524,13 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
       { cmd: "service apache2 stop", desc: bi("stop the virtual web service", "διακοπή της εικονικής web υπηρεσίας") },
       { cmd: "service apache2 restart", desc: bi("restart after a page or configuration change", "επανεκκίνηση μετά από αλλαγή σελίδας ή ρύθμισης") },
       { cmd: "nano /var/www/html/index.html", desc: bi("preview the virtual document root", "προεπισκόπηση του εικονικού document root") },
-      { cmd: 'echo "<h1>HackForge</h1>" > /var/www/html/index.html', desc: bi("write HTML into the player’s virtual page", "εγγραφή HTML στην εικονική σελίδα του παίκτη") },
+      { cmd: 'echo "<h1>GameHack</h1>" > /var/www/html/index.html', desc: bi("write HTML into the player’s virtual page", "εγγραφή HTML στην εικονική σελίδα του παίκτη") },
       { cmd: "curl http://localhost", desc: bi("read the local simulated web response", "ανάγνωση της τοπικής εικονικής απόκρισης") },
       { cmd: "service ssh start", desc: bi("start the simulated SSH service", "εκκίνηση της εικονικής υπηρεσίας SSH") },
       { cmd: "ssh ignite@192.168.0.11", desc: bi("open the fictional ubuntu session", "άνοιγμα της φανταστικής συνεδρίας ubuntu") },
       { cmd: "exit", desc: bi("return from the simulated SSH session", "επιστροφή από την εικονική συνεδρία SSH") },
       { cmd: "telnet ignite@192.168.0.11 23", desc: bi("see why plaintext telnet is blocked", "έλεγχος γιατί μπλοκάρεται το plaintext telnet") },
-      { cmd: "ftp ftp.forge.lab", desc: bi("connect to the local FTP fixture", "σύνδεση στο τοπικό FTP fixture") },
+      { cmd: "ftp ftp.gamehack.lab", desc: bi("connect to the local FTP fixture", "σύνδεση στο τοπικό FTP fixture") },
       { cmd: "ls", desc: bi("list files at the current FTP prompt", "εμφάνιση αρχείων στο τρέχον FTP prompt") },
       { cmd: "cd ubuntu", desc: bi("navigate within the remote fixture", "πλοήγηση στο απομακρυσμένο fixture") },
       { cmd: "cd release", desc: bi("enter the release fixture directory", "είσοδος στον φάκελο release του fixture") },
@@ -561,8 +561,8 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
           "Κάνε προεπισκόπηση του index.html του Apache, γράψε μια μικρή επικεφαλίδα στο εικονικό αρχείο και ζήτησέ την από το προσομοιωμένο localhost. Έλεγξε ότι η απόκριση ταιριάζει με το περιεχόμενο του VFS.",
         ),
         bi(
-          'nano /var/www/html/index.html\necho "<h1>HackForge</h1>" > /var/www/html/index.html\ncurl http://localhost',
-          'nano /var/www/html/index.html\necho "<h1>HackForge</h1>" > /var/www/html/index.html\ncurl http://localhost',
+          'nano /var/www/html/index.html\necho "<h1>GameHack</h1>" > /var/www/html/index.html\ncurl http://localhost',
+          'nano /var/www/html/index.html\necho "<h1>GameHack</h1>" > /var/www/html/index.html\ncurl http://localhost',
         ),
         bi(
           "nano previews the file; the quoted echo redirect replaces only the virtual index.html; curl reads that file as the local service response. This HTTP example never calls a browser or an address outside the sandbox.",
@@ -570,7 +570,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
         ),
         (term) => {
           const page = getNode(term.fs, "/var/www/html/index.html");
-          return term.flags.has("nano-index") && term.flags.has("curl-local") && page?.type === "file" && /HackForge/.test(page.content || "");
+          return term.flags.has("nano-index") && term.flags.has("curl-local") && page?.type === "file" && /GameHack/.test(page.content || "");
         },
       ),
       task(
@@ -595,7 +595,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
           "Open the local FTP fixture and log in with the anonymous username and sample password. The public ftp.cesca.es example is deliberately replaced so no public server is contacted.",
           "Άνοιξε το τοπικό FTP fixture και συνδέσου με όνομα χρήστη anonymous και το δοκιμαστικό password. Το δημόσιο παράδειγμα ftp.cesca.es αντικαθίσταται σκόπιμα ώστε να μη γίνει σύνδεση σε δημόσιο server.",
         ),
-        bi("ftp ftp.forge.lab\nanonymous\nanonymous", "ftp ftp.forge.lab\nanonymous\nanonymous"),
+        bi("ftp ftp.gamehack.lab\nanonymous\nanonymous", "ftp ftp.gamehack.lab\nanonymous\nanonymous"),
         bi(
           "The server name resolves only to an in-memory fictional fixture. The first anonymous line supplies the username, the second supplies the sample password, and the login response is generated by the virtual FTP prompt.",
           "Το όνομα του server αντιστοιχεί μόνο σε εικονικό fixture που βρίσκεται στη μνήμη. Η πρώτη γραμμή anonymous δίνει όνομα χρήστη, η δεύτερη το δοκιμαστικό password και η απάντηση login παράγεται από το εικονικό FTP prompt.",

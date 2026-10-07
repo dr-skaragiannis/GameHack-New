@@ -21,7 +21,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">{t("tickets", lang)}</h1>
         {user.role === "player" && (
-          <button type="button" onClick={() => setOpen(true)} className="rounded-lg bg-ember-600 px-3 py-1.5 text-sm font-semibold">
+          <button type="button" onClick={() => setOpen(true)} className="rounded-lg bg-cyan-600 px-3 py-1.5 text-sm font-semibold">
             {t("newTicket", lang)}
           </button>
         )}
@@ -38,7 +38,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
                 onClick={() => setActive(x.id)}
                 className={cn(
                   "w-full text-left rounded-xl border p-3 text-sm",
-                  active === x.id ? "border-ember-500 bg-ember-500/10" : "border-forge-border"
+                  active === x.id ? "border-cyan-500 bg-cyan-500/10" : "border-gamehack-border"
                 )}
               >
                 <div className="font-semibold truncate">{x.subject}</div>
@@ -50,7 +50,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
           ))}
         </ul>
         {tk && (
-          <div className="glass rounded-2xl border border-forge-border p-4">
+          <div className="glass rounded-2xl border border-gamehack-border p-4">
             <div className="flex items-center justify-between gap-2 mb-3">
               <div>
                 <div className="font-bold">{tk.subject}</div>
@@ -65,7 +65,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
                     setTicketStatus(tk.id, e.target.value as Ticket["status"]);
                     onChange();
                   }}
-                  className="bg-forge-bg border border-forge-border rounded-lg text-sm px-2 py-1"
+                  className="bg-gamehack-bg border border-gamehack-border rounded-lg text-sm px-2 py-1"
                 >
                   <option value="open">{t("open", lang)}</option>
                   <option value="answered">{t("answered", lang)}</option>
@@ -75,7 +75,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
             </div>
             <div className="space-y-2 max-h-80 overflow-auto mb-3">
               {tk.messages.map((m, i) => (
-                <div key={i} className="rounded-xl bg-forge-bg border border-forge-line p-3 text-sm">
+                <div key={i} className="rounded-xl bg-gamehack-bg border border-gamehack-line p-3 text-sm">
                   <div className="text-sm text-iron-400">
                     {m.fromName} · {new Date(m.ts).toLocaleString()}
                   </div>
@@ -97,9 +97,9 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
                 placeholder={t("reply", lang)}
-                className="flex-1 rounded-lg bg-forge-bg border border-forge-border px-3 py-2 text-sm"
+                className="flex-1 rounded-lg bg-gamehack-bg border border-gamehack-border px-3 py-2 text-sm"
               />
-              <button type="submit" className="rounded-lg bg-ember-600 px-3 py-2 text-sm font-semibold">
+              <button type="submit" className="rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold">
                 {t("send", lang)}
               </button>
             </form>
@@ -110,7 +110,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
       {open && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={() => setOpen(false)}>
           <form
-            className="w-full max-w-md glass rounded-2xl border border-forge-border p-5 space-y-3"
+            className="w-full max-w-md glass rounded-2xl border border-gamehack-border p-5 space-y-3"
             onClick={(e) => e.stopPropagation()}
             onSubmit={(e) => {
               e.preventDefault();
@@ -126,12 +126,12 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder={t("subject", lang)}
-              className="w-full rounded-lg bg-forge-bg border border-forge-border px-3 py-2 text-sm"
+              className="w-full rounded-lg bg-gamehack-bg border border-gamehack-border px-3 py-2 text-sm"
             />
             <select
               value={moduleId}
               onChange={(e) => setModuleId(e.target.value)}
-              className="w-full rounded-lg bg-forge-bg border border-forge-border px-3 py-2 text-sm"
+              className="w-full rounded-lg bg-gamehack-bg border border-gamehack-border px-3 py-2 text-sm"
             >
               <option value="">{t("general", lang)}</option>
               {mods.map((m) => (
@@ -143,7 +143,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value as Ticket["priority"])}
-              className="w-full rounded-lg bg-forge-bg border border-forge-border px-3 py-2 text-sm"
+              className="w-full rounded-lg bg-gamehack-bg border border-gamehack-border px-3 py-2 text-sm"
             >
               <option value="low">{t("low", lang)}</option>
               <option value="normal">{t("normal", lang)}</option>
@@ -153,10 +153,10 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={4}
-              className="w-full rounded-lg bg-forge-bg border border-forge-border px-3 py-2 text-sm"
+              className="w-full rounded-lg bg-gamehack-bg border border-gamehack-border px-3 py-2 text-sm"
               required
             />
-            <button type="submit" className="w-full rounded-lg bg-ember-600 py-2 font-semibold">
+            <button type="submit" className="w-full rounded-lg bg-cyan-600 py-2 font-semibold">
               {t("submitTicket", lang)}
             </button>
           </form>

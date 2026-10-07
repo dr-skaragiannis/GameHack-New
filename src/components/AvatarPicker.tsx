@@ -14,14 +14,14 @@ export default function AvatarPicker({
   lang: Lang;
   onClose: () => void;
 }) {
-  const parts = (value || "ic:skull:#ff6a2b").split(":");
+  const parts = (value || "ic:skull:#06b6d4").split(":");
   const name = parts[1] || "skull";
-  const color = parts[2] || "#ff6a2b";
+  const color = parts[2] || "#06b6d4";
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-lg rounded-2xl border border-forge-border bg-forge-panel p-5 scale-in"
+        className="w-full max-w-lg rounded-2xl border border-gamehack-border bg-gamehack-panel p-5 scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -49,7 +49,7 @@ export default function AvatarPicker({
               onClick={() => onChange(`ic:${ic}:${color}`)}
               className={cn(
                 "aspect-square rounded-xl grid place-items-center border transition",
-                name === ic ? "border-ember-500 bg-ember-500/15" : "border-forge-border hover:border-ember-500/40"
+                name === ic ? "border-cyan-500 bg-cyan-500/15" : "border-gamehack-border hover:border-cyan-500/40"
               )}
               style={{ color }}
             >

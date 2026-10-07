@@ -303,7 +303,7 @@ export default function PlayerDashboard({
             {t("welcomeBack", lang)},<br />
             <span>{user.displayName.split(" ")[0]}</span>
           </h1>
-          <p>{t("forgeReady", lang)}</p>
+          <p>{t("trainingReady", lang)}</p>
           <div className="player-dashboard__hero-route">
             <span className="player-dashboard__hero-route-icon"><Icon name={campaignIcon(currentCampaign)} className="h-4 w-4" /></span>
             <span>

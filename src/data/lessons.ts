@@ -74,7 +74,7 @@ export const MODULES: Module[] = [
     id: "linux-basics",
     order: 1,
     icon: "terminal",
-    color: "from-ember-500 to-ember-700",
+    color: "from-cyan-500 to-cyan-700",
     difficulty: 1,
     title: { en: "Terminal & Linux Foundations", el: "Τερματικό & Θεμέλια Linux" },
     subtitle: { en: "Meet the command line, then navigate it", el: "Γνώρισε τη γραμμή εντολών και πλοηγήσου" },
@@ -203,7 +203,7 @@ export const MODULES: Module[] = [
     id: "files",
     order: 2,
     icon: "folder",
-    color: "from-amber-500 to-orange-700",
+    color: "from-cyan-500 to-sky-800",
     difficulty: 1,
     title: { en: "Files, Paths & Hunting", el: "Αρχεία, διαδρομές & αναζήτηση" },
     subtitle: { en: "find, grep and the shape of the tree", el: "find, grep και το δέντρο αρχείων" },
@@ -368,8 +368,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "Ethics of scanning", el: "Ηθική της σάρωσης" },
         body: {
-          en: "Sending packets at a host you do not own can be illegal. In HACKFORGE every address is fake and local. Outside, you need a written rules-of-engagement. When in doubt, do not scan.",
-          el: "Η αποστολή πακέτων σε σύστημα που δεν σου ανήκει μπορεί να είναι παράνομη. Στο HACKFORGE όλες οι διευθύνσεις είναι ψεύτικες.",
+          en: "Sending packets at a host you do not own can be illegal. In GameHack every address is fake and local. Outside, you need a written rules-of-engagement. When in doubt, do not scan.",
+          el: "Η αποστολή πακέτων σε σύστημα που δεν σου ανήκει μπορεί να είναι παράνομη. Στο GameHack όλες οι διευθύνσεις είναι ψεύτικες.",
         },
       },
     ],
@@ -405,7 +405,7 @@ export const MODULES: Module[] = [
       {
         title: { en: "Touch the web box", el: "Άγγιξε το web" },
         brief: { en: "Ping 10.10.10.8 (web.lab) as well.", el: "Κάνε ping το 10.10.10.8." },
-        success: { en: "Two hosts alive on the forge net.", el: "Δύο hosts ζωντανοί." },
+        success: { en: "Two hosts alive on the GameHack lab network.", el: "Δύο hosts ζωντανοί." },
         check: (t) => usedCmd(t, /ping\s+.*(10\.10\.10\.8|web\.lab)/),
       },
       {
@@ -536,7 +536,7 @@ export const MODULES: Module[] = [
   {
     id: "bruteforce",
     order: 7,
-    icon: "hammer",
+    icon: "key",
     color: "from-rose-500 to-red-800",
     difficulty: 3,
     title: { en: "Credential Attacks (Lab)", el: "Επιθέσεις διαπιστευτηρίων (Lab)" },
@@ -600,7 +600,7 @@ export const MODULES: Module[] = [
     id: "sqli",
     order: 8,
     icon: "database",
-    color: "from-yellow-400 to-orange-700",
+    color: "from-yellow-400 to-sky-800",
     difficulty: 4,
     title: { en: "SQL Injection (Lab)", el: "SQL Injection (Lab)" },
     subtitle: { en: "Detect and extract — simulated only", el: "Ανίχνευση και εξαγωγή — μόνο προσομοίωση" },
@@ -653,11 +653,11 @@ export const MODULES: Module[] = [
     id: "privesc",
     order: 9,
     icon: "crown",
-    color: "from-amber-300 to-ember-700",
+    color: "from-cyan-300 to-cyan-700",
     difficulty: 5,
     title: { en: "Privilege Escalation", el: "Ανύψωση προνομίων" },
     subtitle: { en: "sudo -l, GTFOBins, and getting root in the sandbox", el: "sudo -l, GTFOBins και root στο sandbox" },
-    badge: { en: "Root Forged", el: "Root σφυρηλατημένο" },
+    badge: { en: "Root Master", el: "Ειδικός root" },
     theory: [
       {
         heading: { en: "From user to root", el: "Από χρήστη σε root" },
@@ -691,14 +691,14 @@ export const MODULES: Module[] = [
       {
         title: { en: "Read the root flag", el: "Διάβασε το root flag" },
         brief: { en: "As root, cat /root/flag.txt", el: "Ως root, cat /root/flag.txt" },
-        success: { en: "Root of the forge. You are dangerous — stay ethical.", el: "Root του καμινιού. Μείνε ηθικός." },
-        check: (t) => t.flags.has("read-root-flag") || t.flags.has("saw:FLAG{root_of_the_forge}") || t.flags.has("got-root"),
+        success: { en: "You have root access in the training lab — stay ethical.", el: "Έφτασες στο root — συνέχισε με υπευθυνότητα. Μείνε ηθικός." },
+        check: (t) => t.flags.has("read-root-flag") || t.flags.has("saw:FLAG{root_of_the_lab}") || t.flags.has("got-root"),
       },
       {
         title: { en: "Submit it", el: "Υπέβαλέ το" },
-        brief: { en: "submit FLAG{root_of_the_forge}", el: "submit FLAG{root_of_the_forge}" },
+        brief: { en: "submit FLAG{root_of_the_lab}", el: "submit FLAG{root_of_the_lab}" },
         success: { en: "Campaign I complete.", el: "Καμπάνια I ολοκληρώθηκε." },
-        check: (t) => t.flags.has("submit:FLAG{root_of_the_forge}") || t.flags.has("got-root"),
+        check: (t) => t.flags.has("submit:FLAG{root_of_the_lab}") || t.flags.has("got-root"),
       },
     ],
   },
@@ -760,7 +760,7 @@ export const MODULES: Module[] = [
     id: "raven-foothold",
     order: 2,
     icon: "key",
-    color: "from-orange-400 to-stone-800",
+    color: "from-cyan-400 to-stone-800",
     difficulty: 4,
     title: { en: "Raven — Foothold", el: "Raven — Foothold" },
     subtitle: { en: "Weak creds, then user.txt", el: "Αδύναμα creds, μετά user.txt" },
@@ -1098,7 +1098,7 @@ const REHOMED_LINUX_BEGINNERS_MODULE_IDS = new Set([
 
 export const CAMPAIGNS: Campaign[] = ([
   {
-    id: "forge",
+    id: "gamehack",
     pathNumber: 1,
     title: { en: "In the Beginning... Linux Was Born", el: "Στην αρχή... γεννήθηκε το Linux" },
     subtitle: { en: "Linux foundations: from your first command to root", el: "Θεμέλια Linux: από την πρώτη εντολή ως το root" },
@@ -1107,7 +1107,7 @@ export const CAMPAIGNS: Campaign[] = ([
       el: "Εννέα εργαστήρια από το πρώτο prompt ως το root. Όλα προσομοιωμένα.",
     },
     scenario: "lab",
-    accent: "ember",
+    accent: "cyan",
     modules: MODULES.filter((m) =>
       ["linux-basics", "files", "permissions", "networking", "recon", "scanning", "bruteforce", "sqli", "privesc"].includes(m.id)
     ),

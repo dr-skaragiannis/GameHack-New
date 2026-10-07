@@ -14,8 +14,10 @@ import {
 import { dfirFS } from "./dfir";
 import { sudoRunFS } from "./sudorun";
 
-const STORAGE_PREFIX = "hackforge.player-terminal.v2:";
-const LEGACY_STORAGE_PREFIX = "hackforge.player-terminal.v1:";
+const STORAGE_PREFIX = "gamehack.player-terminal.v2:";
+const LEGACY_STORAGE_PREFIX = "gamehack.player-terminal.v1:";
+const PREVIOUS_BRAND_STORAGE_PREFIX = "hackforge.player-terminal.v2:";
+const PREVIOUS_BRAND_LEGACY_PREFIX = "hackforge.player-terminal.v1:";
 const MAX_SAVED_LINES = 1200;
 const MAX_SAVED_HISTORY = 600;
 const MAX_SAVED_COMMANDS = 1200;
@@ -262,13 +264,13 @@ function mergeScenario(root: FileNode, scenario: string, source: FileNode): void
   }
 }
 
-function preserveForgeWebPage(root: FileNode): void {
+function preserveLabWebPage(root: FileNode): void {
   const html = getNode(root, "/var/www/html");
   const originalIndex = html?.children?.["index.html"];
   if (!html || html.type !== "dir" || !html.children || !originalIndex || originalIndex.type !== "file") return;
-  const forge = dir("forge");
-  forge.children = { "index.html": cloneNode(originalIndex) };
-  html.children.forge = forge;
+  const gamehack = dir("gamehack");
+  gamehack.children = { "index.html": cloneNode(originalIndex) };
+  html.children.gamehack = gamehack;
 }
 
 /** Build one complete filesystem tree for the player; challenge data is merged, never swapped per module. */
@@ -278,7 +280,7 @@ export function createPlayerFileSystem(): FileNode {
   root.children.labs = dir("labs", [
     file(
       "README.txt",
-      "HACKFORGE SHARED PLAYER WORKSPACE\n" +
+      "GameHack SHARED PLAYER WORKSPACE\n" +
         "This is one persistent virtual Linux filesystem for every campaign, module, command, and challenge on your account.\n" +
         "Switching modules changes the lesson context, not the filesystem. Files you create in /tmp, /home, /root, /etc, and /cases remain in the same tree.\n" +
         "Challenge evidence lives at its normal training paths, including /root, /home/raven, /var/www/html, /opt, and /cases/IR-2404.\n" +
@@ -293,7 +295,7 @@ export function createPlayerFileSystem(): FileNode {
     ]),
   ]);
 
-  preserveForgeWebPage(root);
+  preserveLabWebPage(root);
   mergeScenario(root, "sudorun", sudoRunFS());
   mergeScenario(root, "raven", ravenFS());
   mergeScenario(root, "ssh", sshFS());
@@ -324,7 +326,7 @@ export function activateTerminalForModule(term: Terminal, moduleId: string, scen
     term.lines = [
       {
         kind: "sys",
-        text: `HACKFORGE shared player workspace — active challenge: ${moduleId}.`,
+        text: `GameHack shared player workspace — active challenge: ${moduleId}.`,
       },
       {
         kind: "sys",
@@ -349,6 +351,60 @@ function playerStorageKey(userId: string, legacy = false): string {
   return `${prefix}${encodeURIComponent(userId.trim().toLowerCase())}`;
 }
 
+function previousBrandStorageKey(userId: string, legacy = false): string {
+  const prefix = legacy ? PREVIOUS_BRAND_LEGACY_PREFIX : PREVIOUS_BRAND_STORAGE_PREFIX;
+  return `${prefix}${encodeURIComponent(userId.trim().toLowerCase())}`;
+}
+
+function replaceLegacyBrand(value: string): string {
+  return value
+    .replace(/root_of_the_forge/gi, "root_of_the_lab")
+    .replace(/root of the forge/gi, "root in the training lab")
+    .replace(/forge real skills/gi, "build practical skills")
+    .replace(/the forge grows hotter/gi, "your skills are growing with every objective")
+    .replace(/the forge is hot/gi, "your training is ready to continue")
+    .replace(/forge cms/gi, "GameHack practice CMS")
+    .replace(/root@forge/gi, "root@lab")
+    .replace(/HACKFORGE/g, "GameHack")
+    .replace(/HackForge/g, "GameHack")
+    .replace(/hackforge/g, "gamehack")
+    .replace(/\bFORGE\b/g, "GAMEHACK")
+    .replace(/\bForge\b/g, "GameHack")
+    .replace(/\bforge\b/g, "gamehack")
+    .replace(/([a-z0-9_*.-]*\.)?gamehack\.lab/gi, (host) => host.toLowerCase());
+}
+
+function migrateLegacyBranding(root: FileNode): void {
+  const visit = (node: FileNode) => {
+    if (node.type === "file") {
+      node.content = replaceLegacyBrand(node.content ?? "");
+      return;
+    }
+    if (!node.children) return;
+    for (const [oldName, child] of Object.entries(node.children)) {
+      visit(child);
+      if (node.children[oldName] !== child) continue;
+      const newName = replaceLegacyBrand(oldName);
+      if (newName === oldName) continue;
+      const current = node.children[newName];
+      if (current && current !== child) {
+        let backupName = `${newName}.rebrand-backup`;
+        let suffix = 2;
+        while (node.children[backupName]) {
+          backupName = `${newName}.rebrand-backup-${suffix}`;
+          suffix += 1;
+        }
+        current.name = backupName;
+        node.children[backupName] = current;
+      }
+      delete node.children[oldName];
+      child.name = newName;
+      node.children[newName] = child;
+    }
+  };
+  visit(root);
+}
+
 type PersistedTerminal = Omit<Terminal, "flags" | "packages"> & {
   flags: string[];
   packages: string[];
@@ -368,12 +424,18 @@ export function loadPlayerTerminal(userId: string): Terminal {
   if (!storage) return fresh;
 
   try {
-    const raw = storage.getItem(playerStorageKey(userId)) || storage.getItem(playerStorageKey(userId, true));
+    const raw = [
+      playerStorageKey(userId),
+      playerStorageKey(userId, true),
+      previousBrandStorageKey(userId),
+      previousBrandStorageKey(userId, true),
+    ].map((key) => storage.getItem(key)).find(Boolean);
     if (!raw) return fresh;
     const parsed = JSON.parse(raw) as Partial<PersistedTerminal> & { version?: number };
     if ((parsed.version !== 1 && parsed.version !== 2) || !parsed.fs || parsed.fs.type !== "dir") return fresh;
 
     const fs = parsed.version === 1 ? migrateLegacyFileSystem(parsed.fs) : parsed.fs;
+    migrateLegacyBranding(fs);
     mergeMissingNodes(fs, createPlayerFileSystem());
     const env = parsed.env && typeof parsed.env === "object" ? parsed.env : fresh.env;
     const shellVars = parsed.shellVars && typeof parsed.shellVars === "object"
@@ -392,23 +454,36 @@ export function loadPlayerTerminal(userId: string): Terminal {
       savedCrontab.length === 2 &&
       /^#\s*m\s+h\s+dom\s+mon\s+dow\s+command$/.test(savedCrontab[0].trim()) &&
       savedCrontab[1].trim().replace(/\s+/g, " ") === "17 * * * * root cd / && run-parts --report /etc/cron.hourly";
-    return {
+    const restored = {
       ...fresh,
       ...parsed,
       fs,
-      crontab: hadSystemTableInPerUserCrontab ? fresh.crontab : savedCrontab,
+      host: parsed.host === "forge" ? "gamehack" : parsed.host || fresh.host,
+      crontab: hadSystemTableInPerUserCrontab
+        ? fresh.crontab
+        : savedCrontab.map(replaceLegacyBrand),
       shellVars,
-      atQueue,
+      atQueue: atQueue.map((job) => ({ ...job, command: replaceLegacyBrand(job.command) })),
       atPendingTime,
       flags: new Set(Array.isArray(parsed.flags) ? parsed.flags.filter((value): value is string => typeof value === "string") : []),
       packages: new Set(Array.isArray(parsed.packages) ? parsed.packages.filter((value): value is string => typeof value === "string") : []),
-      history: Array.isArray(parsed.history) ? parsed.history.filter((value): value is string => typeof value === "string").slice(-MAX_SAVED_HISTORY) : fresh.history,
-      ran: Array.isArray(parsed.ran) ? parsed.ran.filter((value): value is string => typeof value === "string").slice(-MAX_SAVED_COMMANDS) : fresh.ran,
-      lines: Array.isArray(parsed.lines) ? parsed.lines.slice(-MAX_SAVED_LINES) : fresh.lines,
-      filesRead: Array.isArray(parsed.filesRead) ? parsed.filesRead.filter((value): value is string => typeof value === "string").slice(-MAX_SAVED_READS) : fresh.filesRead,
+      history: Array.isArray(parsed.history)
+        ? parsed.history.filter((value): value is string => typeof value === "string").map(replaceLegacyBrand).slice(-MAX_SAVED_HISTORY)
+        : fresh.history,
+      ran: Array.isArray(parsed.ran)
+        ? parsed.ran.filter((value): value is string => typeof value === "string").map(replaceLegacyBrand).slice(-MAX_SAVED_COMMANDS)
+        : fresh.ran,
+      lines: Array.isArray(parsed.lines)
+        ? parsed.lines.slice(-MAX_SAVED_LINES).map((line) => ({ ...line, text: replaceLegacyBrand(line.text) }))
+        : fresh.lines,
+      filesRead: Array.isArray(parsed.filesRead)
+        ? parsed.filesRead.filter((value): value is string => typeof value === "string").map(replaceLegacyBrand).slice(-MAX_SAVED_READS)
+        : fresh.filesRead,
       env,
       activeModuleId: typeof parsed.activeModuleId === "string" ? parsed.activeModuleId : undefined,
     } as Terminal;
+    savePlayerTerminal(userId, restored);
+    return restored;
   } catch {
     return fresh;
   }
@@ -432,6 +507,8 @@ export function savePlayerTerminal(userId: string, term: Terminal): void {
   try {
     storage.setItem(playerStorageKey(userId), JSON.stringify(snapshot));
     storage.removeItem(playerStorageKey(userId, true));
+    storage.removeItem(previousBrandStorageKey(userId));
+    storage.removeItem(previousBrandStorageKey(userId, true));
   } catch {
     // The active terminal remains usable for this visit if browser storage is unavailable or full.
   }

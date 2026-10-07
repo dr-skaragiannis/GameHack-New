@@ -82,7 +82,7 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
         bi("A MAC address is not an identity check", "Η διεύθυνση MAC δεν αποδεικνύει ταυτότητα"),
         bi(
           "A MAC address identifies a network interface on its local link. Administrators sometimes set a locally administered address while testing hardware or network configuration. The lab example uses 02:00:00:00:00:13, a clearly fictional test value; the sequence is to bring the interface down, assign the value, then bring it up again.",
-          "Η διεύθυνση MAC χαρακτηρίζει μια διεπαφή στο τοπικό τμήμα του δικτύου. Ένας διαχειριστής μπορεί να ορίσει τοπικά διαχειριζόμενη διεύθυνση κατά τη δοκιμή εξοπλισμού ή ρυθμίσεων. Το παράδειγμα του εργαστηρίου χρησιμοποιεί την καθαρά δοκιμαστική τιμή 02:00:00:00:00:13· η σειρά είναι να απενεργοποιήσεις τη διεπαφή, να ορίσεις τη νέα τιμή και έπειτα να την ενεργοποιήσεις ξανά.\n\nΗ αλλαγή διεύθυνσης MAC δεν σε κάνει ανώνυμο και δεν πρέπει να χρησιμοποιείται για παράκαμψη ελέγχων πρόσβασης. Σε πραγματικό δίκτυο ακολούθησε τις οδηγίες του διαχειριστή και κάνε τέτοιες δοκιμές μόνο σε εξοπλισμό που έχεις δικαίωμα να ρυθμίσεις. Στο HackForge οι εντολές μεταβάλλουν αποκλειστικά την εικονική eth0.",
+          "Η διεύθυνση MAC χαρακτηρίζει μια διεπαφή στο τοπικό τμήμα του δικτύου. Ένας διαχειριστής μπορεί να ορίσει τοπικά διαχειριζόμενη διεύθυνση κατά τη δοκιμή εξοπλισμού ή ρυθμίσεων. Το παράδειγμα του εργαστηρίου χρησιμοποιεί την καθαρά δοκιμαστική τιμή 02:00:00:00:00:13· η σειρά είναι να απενεργοποιήσεις τη διεπαφή, να ορίσεις τη νέα τιμή και έπειτα να την ενεργοποιήσεις ξανά.\n\nΗ αλλαγή διεύθυνσης MAC δεν σε κάνει ανώνυμο και δεν πρέπει να χρησιμοποιείται για παράκαμψη ελέγχων πρόσβασης. Σε πραγματικό δίκτυο ακολούθησε τις οδηγίες του διαχειριστή και κάνε τέτοιες δοκιμές μόνο σε εξοπλισμό που έχεις δικαίωμα να ρυθμίσεις. Στο GameHack οι εντολές μεταβάλλουν αποκλειστικά την εικονική eth0.",
         ),
       ),
       section(
@@ -101,11 +101,11 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       section(
         bi("dig: query A, MX, and NS records", "dig: ερωτήματα για εγγραφές A, MX και NS"),
         bi(
-          "DNS translates names into records. With no record type, dig normally requests an A record, which maps a host name to an IPv4 address. MX records identify mail exchangers for a domain, while NS records identify its name servers. Try dig hackforge.lab, dig hackforge.lab MX, and dig hackforge.lab NS.",
-          "Το DNS αντιστοιχίζει ονόματα σε εγγραφές. Αν δεν ορίσεις τύπο, η dig συνήθως ζητά εγγραφή A, η οποία συνδέει ένα όνομα με διεύθυνση IPv4. Οι εγγραφές MX δείχνουν τους mail exchangers ενός domain, ενώ οι NS δείχνουν τους name servers του. Δοκίμασε dig hackforge.lab, dig hackforge.lab MX και dig hackforge.lab NS.\n\nΣτην έξοδο, η ενότητα ANSWER SECTION περιέχει τις εγγραφές που επέστρεψε ο resolver. Οι απαντήσεις του HackForge είναι εικονικές και περιορίζονται στα ονόματα του εργαστηρίου· δεν γίνεται ερώτημα σε δημόσιο domain ούτε αποστέλλεται κίνηση στο Internet.",
+          "DNS translates names into records. With no record type, dig normally requests an A record, which maps a host name to an IPv4 address. MX records identify mail exchangers for a domain, while NS records identify its name servers. Try dig gamehack.lab, dig gamehack.lab MX, and dig gamehack.lab NS.",
+          "Το DNS αντιστοιχίζει ονόματα σε εγγραφές. Αν δεν ορίσεις τύπο, η dig συνήθως ζητά εγγραφή A, η οποία συνδέει ένα όνομα με διεύθυνση IPv4. Οι εγγραφές MX δείχνουν τους mail exchangers ενός domain, ενώ οι NS δείχνουν τους name servers του. Δοκίμασε dig gamehack.lab, dig gamehack.lab MX και dig gamehack.lab NS.\n\nΣτην έξοδο, η ενότητα ANSWER SECTION περιέχει τις εγγραφές που επέστρεψε ο resolver. Οι απαντήσεις του GameHack είναι εικονικές και περιορίζονται στα ονόματα του εργαστηρίου· δεν γίνεται ερώτημα σε δημόσιο domain ούτε αποστέλλεται κίνηση στο Internet.",
         ),
-        "dig hackforge.lab MX",
-        [";; ANSWER SECTION:", "hackforge.lab.  300 IN MX 10 mail.hackforge.lab."],
+        "dig gamehack.lab MX",
+        [";; ANSWER SECTION:", "gamehack.lab.  300 IN MX 10 mail.gamehack.lab."],
       ),
       section(
         bi("/etc/resolv.conf: choose a resolver", "/etc/resolv.conf: επιλογή DNS resolver"),
@@ -119,11 +119,11 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       section(
         bi("/etc/hosts: a local name table", "/etc/hosts: τοπικός πίνακας ονομάτων"),
         bi(
-          "The file /etc/hosts stores static name-to-address entries for one machine. A line contains an address followed by one or more names, for example 10.10.10.30 docs.hackforge.lab. This mapping affects name resolution on the local machine; it does not publish a record to DNS and it does not change another user's computer.",
-          "Το αρχείο /etc/hosts αποθηκεύει στατικές αντιστοιχίσεις ονομάτων και διευθύνσεων για έναν υπολογιστή. Μια γραμμή περιέχει πρώτα τη διεύθυνση και έπειτα ένα ή περισσότερα ονόματα, για παράδειγμα 10.10.10.30 docs.hackforge.lab. Η αντιστοίχιση επηρεάζει την επίλυση ονομάτων μόνο στον συγκεκριμένο υπολογιστή· δεν δημοσιεύει εγγραφή DNS ούτε αλλάζει τον υπολογιστή άλλου χρήστη.\n\nΗ nano /etc/hosts ανοίγει το αρχείο στον εικονικό προβολέα κειμένου του εργαστηρίου, ενώ η cat το εμφανίζει στο τερματικό. Για να προσθέσεις με ασφάλεια ένα δοκιμαστικό alias μέσα στο VFS, μπορείς να χρησιμοποιήσεις echo \"10.10.10.30 docs.hackforge.lab\" >> /etc/hosts και μετά να επιβεβαιώσεις τη γραμμή με grep. Το παράδειγμα δεν δρομολογεί επισκέπτες σε πραγματικό server.",
+          "The file /etc/hosts stores static name-to-address entries for one machine. A line contains an address followed by one or more names, for example 10.10.10.30 docs.gamehack.lab. This mapping affects name resolution on the local machine; it does not publish a record to DNS and it does not change another user's computer.",
+          "Το αρχείο /etc/hosts αποθηκεύει στατικές αντιστοιχίσεις ονομάτων και διευθύνσεων για έναν υπολογιστή. Μια γραμμή περιέχει πρώτα τη διεύθυνση και έπειτα ένα ή περισσότερα ονόματα, για παράδειγμα 10.10.10.30 docs.gamehack.lab. Η αντιστοίχιση επηρεάζει την επίλυση ονομάτων μόνο στον συγκεκριμένο υπολογιστή· δεν δημοσιεύει εγγραφή DNS ούτε αλλάζει τον υπολογιστή άλλου χρήστη.\n\nΗ nano /etc/hosts ανοίγει το αρχείο στον εικονικό προβολέα κειμένου του εργαστηρίου, ενώ η cat το εμφανίζει στο τερματικό. Για να προσθέσεις με ασφάλεια ένα δοκιμαστικό alias μέσα στο VFS, μπορείς να χρησιμοποιήσεις echo \"10.10.10.30 docs.gamehack.lab\" >> /etc/hosts και μετά να επιβεβαιώσεις τη γραμμή με grep. Το παράδειγμα δεν δρομολογεί επισκέπτες σε πραγματικό server.",
         ),
         "nano /etc/hosts",
-        ["127.0.0.1 localhost", "10.10.10.8 hackforge.lab www.hackforge.lab"],
+        ["127.0.0.1 localhost", "10.10.10.8 gamehack.lab www.gamehack.lab"],
       ),
     ],
     cheats: [
@@ -171,10 +171,10 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       task(
         "dns-records",
         bi(
-          "Query the lab DNS records for hackforge.lab: make one default/A query, then ask for MX and NS records. Compare the answer sections.",
-          "Ρώτησε το DNS του εργαστηρίου για το hackforge.lab: κάνε ένα βασικό ερώτημα A και έπειτα ζήτησε εγγραφές MX και NS. Σύγκρινε τις ενότητες απαντήσεων.",
+          "Query the lab DNS records for gamehack.lab: make one default/A query, then ask for MX and NS records. Compare the answer sections.",
+          "Ρώτησε το DNS του εργαστηρίου για το gamehack.lab: κάνε ένα βασικό ερώτημα A και έπειτα ζήτησε εγγραφές MX και NS. Σύγκρινε τις ενότητες απαντήσεων.",
         ),
-        bi("dig hackforge.lab\ndig hackforge.lab MX\ndig hackforge.lab NS", "dig hackforge.lab\ndig hackforge.lab MX\ndig hackforge.lab NS"),
+        bi("dig gamehack.lab\ndig gamehack.lab MX\ndig gamehack.lab NS", "dig gamehack.lab\ndig gamehack.lab MX\ndig gamehack.lab NS"),
         bi(
           "Why: Different DNS record types answer different questions about a domain. How: read the A address, the mail exchanger in MX, and the name server in NS; keep the query inside the lab domain. A returned record is data about name resolution, not permission to connect to or scan the host.",
           "Γιατί: Κάθε τύπος εγγραφής DNS απαντά σε διαφορετικό ερώτημα για ένα domain. Πώς: διάβασε τη διεύθυνση της A, τον mail exchanger της MX και τον name server της NS· κράτησε τα ερωτήματα στο domain του εργαστηρίου. Η εγγραφή είναι πληροφορία επίλυσης ονόματος, όχι άδεια σύνδεσης ή σάρωσης του host.",
@@ -184,26 +184,26 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       task(
         "resolver-and-hosts",
         bi(
-          "Set the lab resolver in /etc/resolv.conf, inspect it, then add a local docs.hackforge.lab alias to /etc/hosts and verify the line with grep.",
-          "Όρισε τον resolver του εργαστηρίου στο /etc/resolv.conf και έλεγξέ τον. Έπειτα πρόσθεσε το τοπικό alias docs.hackforge.lab στο /etc/hosts και επιβεβαίωσε τη γραμμή με grep.",
+          "Set the lab resolver in /etc/resolv.conf, inspect it, then add a local docs.gamehack.lab alias to /etc/hosts and verify the line with grep.",
+          "Όρισε τον resolver του εργαστηρίου στο /etc/resolv.conf και έλεγξέ τον. Έπειτα πρόσθεσε το τοπικό alias docs.gamehack.lab στο /etc/hosts και επιβεβαίωσε τη γραμμή με grep.",
         ),
         bi(
-          'echo "nameserver 10.10.10.53" > /etc/resolv.conf\ncat /etc/resolv.conf\necho "10.10.10.30 docs.hackforge.lab" >> /etc/hosts\ngrep docs.hackforge.lab /etc/hosts',
-          'echo "nameserver 10.10.10.53" > /etc/resolv.conf\ncat /etc/resolv.conf\necho "10.10.10.30 docs.hackforge.lab" >> /etc/hosts\ngrep docs.hackforge.lab /etc/hosts',
+          'echo "nameserver 10.10.10.53" > /etc/resolv.conf\ncat /etc/resolv.conf\necho "10.10.10.30 docs.gamehack.lab" >> /etc/hosts\ngrep docs.gamehack.lab /etc/hosts',
+          'echo "nameserver 10.10.10.53" > /etc/resolv.conf\ncat /etc/resolv.conf\necho "10.10.10.30 docs.gamehack.lab" >> /etc/hosts\ngrep docs.gamehack.lab /etc/hosts',
         ),
         bi(
           "Why: resolv.conf selects a resolver, whereas hosts is a local static mapping; they solve related but different name-resolution problems. How: use > only for the resolver file you intend to replace, use >> to preserve existing hosts entries, then read both files to verify. These writes stay in your persistent VFS and do not affect anybody else's machine.",
           "Γιατί: το resolv.conf επιλέγει resolver, ενώ το hosts κρατά τοπικές στατικές αντιστοιχίσεις· τα δύο αρχεία εξυπηρετούν διαφορετικές ανάγκες επίλυσης ονομάτων. Πώς: χρησιμοποίησε > μόνο στο αρχείο resolver που θέλεις να αντικαταστήσεις, >> για να διατηρήσεις τις υπάρχουσες εγγραφές hosts και διάβασε και τα δύο αρχεία για επαλήθευση. Οι αλλαγές μένουν στο προσωπικό VFS και δεν επηρεάζουν κανέναν άλλο υπολογιστή.",
         ),
-        (term) => term.flags.has("dns-set") && usedCmd(term, />>\s*\/etc\/hosts/) && usedCmd(term, /grep\s+docs\.hackforge\.lab/),
+        (term) => term.flags.has("dns-set") && usedCmd(term, />>\s*\/etc\/hosts/) && usedCmd(term, /grep\s+docs\.gamehack\.lab/),
       ),
     ],
     challenges: [
       {
         title: bi("Find the lab mail route", "Βρες τη διαδρομή αλληλογραφίας του εργαστηρίου"),
         brief: bi(
-          "Read the DNS fixture under /root/linux-beginners-2/network, then query the MX record for hackforge.lab. The answer must name the lab mail exchanger.",
-          "Διάβασε το DNS fixture στο /root/linux-beginners-2/network και έπειτα ζήτησε την εγγραφή MX του hackforge.lab. Η απάντηση πρέπει να δείχνει τον mail exchanger του εργαστηρίου.",
+          "Read the DNS fixture under /root/linux-beginners-2/network, then query the MX record for gamehack.lab. The answer must name the lab mail exchanger.",
+          "Διάβασε το DNS fixture στο /root/linux-beginners-2/network και έπειτα ζήτησε την εγγραφή MX του gamehack.lab. Η απάντηση πρέπει να δείχνει τον mail exchanger του εργαστηρίου.",
         ),
         success: bi("You can distinguish address, mail, and name-server records.", "Ξεχωρίζεις πλέον τις εγγραφές διεύθυνσης, αλληλογραφίας και name server."),
         check: (term) => term.filesRead.some((path) => path.includes("dns-records.txt")) && term.flags.has("dig-mx"),
@@ -211,11 +211,11 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       {
         title: bi("Add a local training alias", "Πρόσθεσε τοπικό alias εκπαίδευσης"),
         brief: bi(
-          "Add docs.hackforge.lab to /etc/hosts with the reserved lab address, then use grep to verify the entry. Do not use a public domain name.",
-          "Πρόσθεσε το docs.hackforge.lab στο /etc/hosts με τη δεσμευμένη διεύθυνση του εργαστηρίου και επιβεβαίωσε την εγγραφή με grep. Μην χρησιμοποιήσεις δημόσιο domain.",
+          "Add docs.gamehack.lab to /etc/hosts with the reserved lab address, then use grep to verify the entry. Do not use a public domain name.",
+          "Πρόσθεσε το docs.gamehack.lab στο /etc/hosts με τη δεσμευμένη διεύθυνση του εργαστηρίου και επιβεβαίωσε την εγγραφή με grep. Μην χρησιμοποιήσεις δημόσιο domain.",
         ),
         success: bi("The name resolves only in this player's virtual workspace.", "Το όνομα ισχύει μόνο στον εικονικό χώρο εργασίας του παίκτη."),
-        check: (term) => usedCmd(term, /docs\.hackforge\.lab.*>>\s*\/etc\/hosts/) && usedCmd(term, /grep\s+docs\.hackforge\.lab/),
+        check: (term) => usedCmd(term, /docs\.gamehack\.lab.*>>\s*\/etc\/hosts/) && usedCmd(term, /grep\s+docs\.gamehack\.lab/),
       },
     ],
   },
@@ -257,11 +257,11 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
         bi("top: compare resource use", "top: σύγκριση χρήσης πόρων"),
         bi(
           "top normally shows a live summary of uptime and load, task states, CPU and memory/swap use, followed by a process table. The rows are usually ordered by resource use, so compare the %CPU and %MEM columns to see which processes are busiest; those figures describe a moment, not a diagnosis.",
-          "Η εντολή top εμφανίζει συνήθως μια ζωντανή σύνοψη με τον χρόνο λειτουργίας και το load average, τις καταστάσεις των εργασιών, τη χρήση CPU και μνήμης/swap και, στη συνέχεια, έναν πίνακα διεργασιών. Οι γραμμές ταξινομούνται συνήθως με βάση τη χρήση πόρων, ώστε να συγκρίνεις τις στήλες %CPU και %MEM και να εντοπίσεις τις πιο απασχολημένες διεργασίες· τα ποσοστά περιγράφουν μια στιγμή, δεν εξηγούν από μόνα τους την αιτία.\n\nΣε πραγματικό τερματικό, πάτησε q για έξοδο από τη ζωντανή προβολή. Το HackForge δείχνει ένα σταθερό, εικονικό στιγμιότυπο και επιστρέφει αμέσως στο prompt· δεν παρακολουθεί ούτε επηρεάζει διεργασίες του υπολογιστή σου.",
+          "Η εντολή top εμφανίζει συνήθως μια ζωντανή σύνοψη με τον χρόνο λειτουργίας και το load average, τις καταστάσεις των εργασιών, τη χρήση CPU και μνήμης/swap και, στη συνέχεια, έναν πίνακα διεργασιών. Οι γραμμές ταξινομούνται συνήθως με βάση τη χρήση πόρων, ώστε να συγκρίνεις τις στήλες %CPU και %MEM και να εντοπίσεις τις πιο απασχολημένες διεργασίες· τα ποσοστά περιγράφουν μια στιγμή, δεν εξηγούν από μόνα τους την αιτία.\n\nΣε πραγματικό τερματικό, πάτησε q για έξοδο από τη ζωντανή προβολή. Το GameHack δείχνει ένα σταθερό, εικονικό στιγμιότυπο και επιστρέφει αμέσως στο prompt· δεν παρακολουθεί ούτε επηρεάζει διεργασίες του υπολογιστή σου.",
         ),
         "top",
         [
-          "top - 09:00:00 up 2 days, 1 user, load average: 0.04, 0.08, 0.09 — HackForge virtual snapshot",
+          "top - 09:00:00 up 2 days, 1 user, load average: 0.04, 0.08, 0.09 — GameHack virtual snapshot",
           "Tasks: 9 total, 1 running, 7 sleeping, 0 stopped, 1 zombie",
           "%Cpu(s): 2.1 us, 0.7 sy, 0.0 ni, 97.2 id",
           "MiB Mem : 1024.0 total, 384.0 used, 512.0 free, 128.0 buff/cache",
@@ -294,7 +294,7 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
         bi("Background jobs: &, jobs, and fg", "Εργασίες παρασκηνίου: &, jobs και fg"),
         bi(
           "Appending & to a command asks the shell to run it in the background, so the prompt is available for another command. jobs lists the background jobs known to the current shell; it is different from ps, which reports processes more broadly.",
-          "Όταν προσθέτεις & στο τέλος μιας εντολής, ζητάς από το shell να την εκτελέσει στο παρασκήνιο ώστε να μπορείς να συνεχίσεις στο prompt. Η jobs εμφανίζει τις εργασίες παρασκηνίου που γνωρίζει το τρέχον shell· διαφέρει από την ps, η οποία παρουσιάζει διεργασίες γενικότερα.\n\nΗ fg επαναφέρει μια εργασία στο προσκήνιο για να συνεχίσεις την αλληλεπίδραση. Στο HackForge μπορείς να δοκιμάσεις nano /root/linux-beginners-2/processes/notes.txt & και μετά jobs και fg. Ο εικονικός editor δεν ξεκινά πραγματικό πρόγραμμα στον υπολογιστή σου.",
+          "Όταν προσθέτεις & στο τέλος μιας εντολής, ζητάς από το shell να την εκτελέσει στο παρασκήνιο ώστε να μπορείς να συνεχίσεις στο prompt. Η jobs εμφανίζει τις εργασίες παρασκηνίου που γνωρίζει το τρέχον shell· διαφέρει από την ps, η οποία παρουσιάζει διεργασίες γενικότερα.\n\nΗ fg επαναφέρει μια εργασία στο προσκήνιο για να συνεχίσεις την αλληλεπίδραση. Στο GameHack μπορείς να δοκιμάσεις nano /root/linux-beginners-2/processes/notes.txt & και μετά jobs και fg. Ο εικονικός editor δεν ξεκινά πραγματικό πρόγραμμα στον υπολογιστή σου.",
         ),
         "nano /root/linux-beginners-2/processes/notes.txt &",
         ["[1] 7100"],
@@ -303,7 +303,7 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
         bi("at for one time; cron for repeated work", "at για μία φορά· cron για επανάληψη"),
         bi(
           "The at command queues one command for a single future run. In a real interactive shell, `at 21:30` opens an input prompt and Ctrl-D closes it. In this lab you can either use `at 21:30 /root/scanning_script.sh` or enter `at 21:30` followed by the script path on the next line; the simulator queues that one line and returns to the prompt. The queue is only a VFS-backed training record: nothing is launched later on the host.",
-          "Η εντολή at προγραμματίζει μία εντολή για μία μελλοντική εκτέλεση. Σε πραγματικό διαδραστικό shell, η `at 21:30` ανοίγει prompt και το Ctrl-D ολοκληρώνει την καταχώριση. Εδώ μπορείς είτε να γράψεις `at 21:30 /root/scanning_script.sh` είτε να δώσεις πρώτα `at 21:30` και τη διαδρομή του script στην επόμενη γραμμή· ο προσομοιωτής αποθηκεύει αυτή τη μία γραμμή και επιστρέφει στο prompt. Η ουρά είναι μόνο εγγραφή εκπαίδευσης στο VFS· καμία εντολή δεν θα εκτελεστεί αργότερα στον υπολογιστή σου.\n\nΤο cron προορίζεται για επαναλαμβανόμενες εργασίες. Η `crontab -l` εμφανίζει τον πίνακα του χρήστη, ενώ η `crontab -e` ανοίγει τον εικονικό editor. Στο HackForge μπορείς επίσης να προσθέσεις μία γραμμή με `echo \"30 21 * * * /root/scanning_script.sh\" | crontab -` και να την επαληθεύσεις με `crontab -l`· το σύστημα καταγράφει το χρονοπρόγραμμα, δεν εκτελεί το script.",
+          "Η εντολή at προγραμματίζει μία εντολή για μία μελλοντική εκτέλεση. Σε πραγματικό διαδραστικό shell, η `at 21:30` ανοίγει prompt και το Ctrl-D ολοκληρώνει την καταχώριση. Εδώ μπορείς είτε να γράψεις `at 21:30 /root/scanning_script.sh` είτε να δώσεις πρώτα `at 21:30` και τη διαδρομή του script στην επόμενη γραμμή· ο προσομοιωτής αποθηκεύει αυτή τη μία γραμμή και επιστρέφει στο prompt. Η ουρά είναι μόνο εγγραφή εκπαίδευσης στο VFS· καμία εντολή δεν θα εκτελεστεί αργότερα στον υπολογιστή σου.\n\nΤο cron προορίζεται για επαναλαμβανόμενες εργασίες. Η `crontab -l` εμφανίζει τον πίνακα του χρήστη, ενώ η `crontab -e` ανοίγει τον εικονικό editor. Στο GameHack μπορείς επίσης να προσθέσεις μία γραμμή με `echo \"30 21 * * * /root/scanning_script.sh\" | crontab -` και να την επαληθεύσεις με `crontab -l`· το σύστημα καταγράφει το χρονοπρόγραμμα, δεν εκτελεί το script.",
         ),
         "at 21:30 /root/scanning_script.sh\ncrontab -l",
         [
@@ -421,7 +421,7 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
     id: "sr-env",
     order: 3,
     icon: "settings",
-    color: "from-amber-300 to-orange-800",
+    color: "from-cyan-300 to-sky-800",
     difficulty: 2,
     scenario: lab,
     title: bi("Shell & environment variables", "Μεταβλητές shell και περιβάλλοντος"),
@@ -467,10 +467,10 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       section(
         bi("Create, read, and remove a custom variable", "Δημιουργία, ανάγνωση και αφαίρεση δικής σου μεταβλητής"),
         bi(
-          "A variable name should describe the value it holds. url_variable=\"hackforge.lab/\" creates a shell variable; echo \"$url_variable\" expands it so you can read the value. Quoting protects the text from accidental splitting when it contains spaces or shell characters.",
-          "Το όνομα μιας μεταβλητής καλό είναι να περιγράφει την τιμή που κρατά. Η ανάθεση url_variable=\"hackforge.lab/\" δημιουργεί shell variable και η echo \"$url_variable\" εμφανίζει την τιμή της. Τα εισαγωγικά προστατεύουν το κείμενο από ανεπιθύμητο διαχωρισμό όταν περιέχει κενά ή χαρακτήρες του shell.\n\nΗ unset url_variable αφαιρεί τη μεταβλητή από την τρέχουσα συνεδρία· δεν διαγράφει αρχείο με παρόμοιο όνομα. Μετά την αφαίρεση, το echo \"$url_variable\" εμφανίζει κενή τιμή. Οι εντολές εκτελούνται στον προσομοιωμένο λογαριασμό και δεν αλλάζουν μεταβλητές στο σύστημα του υπολογιστή σου.",
+          "A variable name should describe the value it holds. url_variable=\"gamehack.lab/\" creates a shell variable; echo \"$url_variable\" expands it so you can read the value. Quoting protects the text from accidental splitting when it contains spaces or shell characters.",
+          "Το όνομα μιας μεταβλητής καλό είναι να περιγράφει την τιμή που κρατά. Η ανάθεση url_variable=\"gamehack.lab/\" δημιουργεί shell variable και η echo \"$url_variable\" εμφανίζει την τιμή της. Τα εισαγωγικά προστατεύουν το κείμενο από ανεπιθύμητο διαχωρισμό όταν περιέχει κενά ή χαρακτήρες του shell.\n\nΗ unset url_variable αφαιρεί τη μεταβλητή από την τρέχουσα συνεδρία· δεν διαγράφει αρχείο με παρόμοιο όνομα. Μετά την αφαίρεση, το echo \"$url_variable\" εμφανίζει κενή τιμή. Οι εντολές εκτελούνται στον προσομοιωμένο λογαριασμό και δεν αλλάζουν μεταβλητές στο σύστημα του υπολογιστή σου.",
         ),
-        'url_variable="hackforge.lab/"',
+        'url_variable="gamehack.lab/"',
         [""],
       ),
     ],
@@ -481,7 +481,7 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       { cmd: "HISTSIZE=0", desc: bi("Assign in the current shell", "Ανάθεση στο τρέχον shell") },
       { cmd: 'echo "$HISTSIZE" > FILE', desc: bi("Save a value to the VFS", "Αποθήκευση τιμής στο VFS") },
       { cmd: "export HISTSIZE", desc: bi("Pass a value to child processes", "Μεταβίβαση σε child processes") },
-      { cmd: 'url_variable="hackforge.lab/"', desc: bi("Create a custom shell variable", "Δημιουργία δικής σου μεταβλητής") },
+      { cmd: 'url_variable="gamehack.lab/"', desc: bi("Create a custom shell variable", "Δημιουργία δικής σου μεταβλητής") },
       { cmd: "unset url_variable", desc: bi("Remove that variable", "Αφαίρεση της μεταβλητής") },
       { cmd: "cat /root/.bashrc", desc: bi("Read a virtual startup file", "Ανάγνωση εικονικού startup file") },
     ],
@@ -535,8 +535,8 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
           "Δημιούργησε τη url_variable, εμφάνισέ την με echo, αφαίρεσέ την με unset και επιβεβαίωσε ότι τώρα είναι κενή. Έπειτα έλεγξε το παράδειγμα startup file.",
         ),
         bi(
-          'url_variable="hackforge.lab/"\necho "$url_variable"\nunset url_variable\necho "$url_variable"\necho \'export LAB_MODE=training\' >> /root/.bashrc\ncat /root/.bashrc',
-          'url_variable="hackforge.lab/"\necho "$url_variable"\nunset url_variable\necho "$url_variable"\necho \'export LAB_MODE=training\' >> /root/.bashrc\ncat /root/.bashrc',
+          'url_variable="gamehack.lab/"\necho "$url_variable"\nunset url_variable\necho "$url_variable"\necho \'export LAB_MODE=training\' >> /root/.bashrc\ncat /root/.bashrc',
+          'url_variable="gamehack.lab/"\necho "$url_variable"\nunset url_variable\necho "$url_variable"\necho \'export LAB_MODE=training\' >> /root/.bashrc\ncat /root/.bashrc',
         ),
         bi(
           "Why: Naming, reading, exporting, and removing variables are separate shell operations. How: assign a value, expand it with echo, use unset, and compare the empty result; then inspect the virtual .bashrc example. Exporting alone is temporary, while a startup file is read by later interactive shells.",

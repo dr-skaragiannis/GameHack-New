@@ -11,21 +11,21 @@ import {
   type Terminal,
 } from "./terminal";
 
-const ETTER = `# etter.dns — HackForge lab copy of a DNS spoof config (educational)
+const ETTER = `# etter.dns — GameHack lab copy of a DNS spoof config (educational)
 # This file is a TEXT example. Never use spoofing outside a lab you own.
 
 microsoft.com A 10.10.10.8
 *.microsoft.com A 10.10.10.8
-WWW.HACKFORGE.LAB A 10.10.10.8
-hackforge.lab A 10.10.10.8
-*.hackforge.lab A 10.10.10.8
+WWW.gamehack.lab A 10.10.10.8
+gamehack.lab A 10.10.10.8
+*.gamehack.lab A 10.10.10.8
 
 # MX / NS playground
-hackforge.lab MX 10 mail.hackforge.lab
-mail.hackforge.lab A 10.10.10.9
+gamehack.lab MX 10 mail.gamehack.lab
+mail.gamehack.lab A 10.10.10.9
 
 # operator workstation
-192.168.1.13 ptr kali.hackforge.lab
+192.168.1.13 ptr kali.gamehack.lab
 `;
 
 const INDEX_HTML = `<!DOCTYPE html>
@@ -33,7 +33,7 @@ const INDEX_HTML = `<!DOCTYPE html>
 <head><title>Apache2 Debian Default Page</title></head>
 <body>
 <h1>Apache2 Debian Default Page</h1>
-<p>It works! This is the HackForge Sudo_Run web root at /var/www/html/index.html</p>
+<p>It works! This is the GameHack Sudo_Run web root at /var/www/html/index.html</p>
 </body>
 </html>
 `;
@@ -42,23 +42,23 @@ export function sudoRunFS(): FileNode {
   return dir("/", [
     dir("root", [
       file(
-        "hackforge.txt",
-        "Welcome to HackForge — Linux for Beginners (Sudo_Run).\nKeep notes here. Practice every command in the lab, not on the internet.\n"
+        "gamehack.txt",
+        "Welcome to GameHack — Linux for Beginners (Sudo_Run).\nKeep notes here. Practice every command in the lab, not on the internet.\n"
       ),
       file(
-        "hackforge.in",
-        "Visit WWW.HACKFORGE.LAB for the lab portal.\nWWW banners should be rewritten to www with sed.\nLinux training portal (simulated).\n"
+        "gamehack.in",
+        "Visit WWW.gamehack.lab for the lab portal.\nWWW banners should be rewritten to www with sed.\nLinux training portal (simulated).\n"
       ),
       file(
         "simple_bash.sh",
-        "#!/bin/bash\necho \"HackForge scanner starting\"\necho \"Sudo_Run lab — simulated only\"\n# echo is here so grep can find it\n"
+        "#!/bin/bash\necho \"GameHack scanner starting\"\necho \"Sudo_Run lab — simulated only\"\n# echo is here so grep can find it\n"
       ),
       file(
         "scanner",
-        "#!/bin/bash\necho \"Enter the lab IP address (10.10.10.2)\"\nread ip\necho \"HackForge uses only its fixed fictional subnet.\"\n# Authorized real-world pattern: nmap -sn \"$ip\"/24 after read ip.\n# HackForge runs only the fixed fixture subnet below.\nnmap -sn 10.10.10.0/24 | grep scan | cut -d \" \" -f 5 | head -n -1\n",
+        "#!/bin/bash\necho \"Enter the lab IP address (10.10.10.2)\"\nread ip\necho \"GameHack uses only its fixed fictional subnet.\"\n# Authorized real-world pattern: nmap -sn \"$ip\"/24 after read ip.\n# GameHack runs only the fixed fixture subnet below.\nnmap -sn 10.10.10.0/24 | grep scan | cut -d \" \" -f 5 | head -n -1\n",
         "-rwxr-xr-x",
       ),
-      file("scanning_script.sh", "#!/bin/bash\necho \"scheduled scan at HackForge\"\n"),
+      file("scanning_script.sh", "#!/bin/bash\necho \"scheduled scan at GameHack\"\n"),
       file("first_script", "#!/bin/bash\necho \"Hello World\"\n"),
       file(
         "welcome.sh",
@@ -75,7 +75,7 @@ export function sudoRunFS(): FileNode {
       dir("linux-beginners-2", [
         file(
           "README.txt",
-          "Linux for Beginners #2 — sandbox notes\nAll network devices, processes, schedules, and variables in these exercises are simulated.\nUse only the reserved hackforge.lab names and the files inside this virtual filesystem.\n"
+          "Linux for Beginners #2 — sandbox notes\nAll network devices, processes, schedules, and variables in these exercises are simulated.\nUse only the reserved gamehack.lab names and the files inside this virtual filesystem.\n"
         ),
         dir("network", [
           file(
@@ -84,11 +84,11 @@ export function sudoRunFS(): FileNode {
           ),
           file(
             "dns-records.txt",
-            "hackforge.lab A 10.10.10.8\nhackforge.lab MX 10 mail.hackforge.lab\nhackforge.lab NS ns1.hackforge.lab\nmail.hackforge.lab A 10.10.10.9\n"
+            "gamehack.lab A 10.10.10.8\ngamehack.lab MX 10 mail.gamehack.lab\ngamehack.lab NS ns1.gamehack.lab\nmail.gamehack.lab A 10.10.10.9\n"
           ),
           file(
             "hosts-plan.txt",
-            "# Local-only training mapping\n10.10.10.30 docs.hackforge.lab\n"
+            "# Local-only training mapping\n10.10.10.30 docs.gamehack.lab\n"
           ),
         ]),
         dir("processes", [
@@ -122,11 +122,11 @@ export function sudoRunFS(): FileNode {
         ),
         file(
           "scanner",
-          "#!/bin/bash\necho \"Enter the lab IP address (10.10.10.2)\"\nread ip\necho \"HackForge uses only its fixed fictional subnet.\"\n# Authorized real-world pattern: nmap -sn \"$ip\"/24 expands the value read above.\n# The simulator ignores user input and runs only the fixed fixture subnet below.\nnmap -sn 10.10.10.0/24 | grep scan | cut -d \" \" -f 5 | head -n -1\n"
+          "#!/bin/bash\necho \"Enter the lab IP address (10.10.10.2)\"\nread ip\necho \"GameHack uses only its fixed fictional subnet.\"\n# Authorized real-world pattern: nmap -sn \"$ip\"/24 expands the value read above.\n# The simulator ignores user input and runs only the fixed fixture subnet below.\nnmap -sn 10.10.10.0/24 | grep scan | cut -d \" \" -f 5 | head -n -1\n"
         ),
         file(
           "runlevels.txt",
-          "Traditional SysV runlevel reference (the exact meaning can vary by distribution):\n0  halt / stop the system\n1  single-user or rescue mode\n2  multi-user mode\n3  multi-user mode\n4  multi-user mode\n5  multi-user mode\n6  reboot\n\nThese are teaching notes only; HackForge never changes the host boot mode.\n"
+          "Traditional SysV runlevel reference (the exact meaning can vary by distribution):\n0  halt / stop the system\n1  single-user or rescue mode\n2  multi-user mode\n3  multi-user mode\n4  multi-user mode\n5  multi-user mode\n6  reboot\n\nThese are teaching notes only; GameHack never changes the host boot mode.\n"
         ),
         file(
           "cron-reference.txt",
@@ -134,7 +134,7 @@ export function sudoRunFS(): FileNode {
         ),
         file(
           "service-reference.txt",
-          "Apache page: /var/www/html/index.html\nSSH fixture: ignite@192.168.0.11 (fictional ubuntu.lab)\nFTP fixture: ftp.forge.lab -> /ubuntu/release/favicon.ico\nPublic FTP hosts and telnet connections are blocked by the simulator.\n"
+          "Apache page: /var/www/html/index.html\nSSH fixture: ignite@192.168.0.11 (fictional ubuntu.lab)\nFTP fixture: ftp.gamehack.lab -> /ubuntu/release/favicon.ico\nPublic FTP hosts and telnet connections are blocked by the simulator.\n"
         ),
         file("head-fixture.txt", "first\nsecond\nlast\n"),
       ]),
@@ -152,11 +152,11 @@ export function sudoRunFS(): FileNode {
     ]),
     dir("srv", [
       dir("ftp", [
-        file("welcome.txt", "HackForge FTP fixture. Files here are fictional text examples.\n"),
+        file("welcome.txt", "GameHack FTP fixture. Files here are fictional text examples.\n"),
         dir("ubuntu", [
           file("readme.txt", "Browse into release for the training download.\n"),
           dir("release", [
-            file("favicon.ico", "HACKFORGE-FAKE-FAVICON\nBinary image data is not stored or served.\n"),
+            file("favicon.ico", "GameHack-FAKE-FAVICON\nBinary image data is not stored or served.\n"),
             file("release-notes.txt", "Fictional FTP release fixture for Linux for Beginners #3.\n"),
           ]),
         ]),
@@ -169,18 +169,18 @@ export function sudoRunFS(): FileNode {
         "root:x:0:0:root:/root:/bin/bash\nRaj:x:1001:1001:Raj:/home/Raj:/bin/bash\nignite:x:1002:1002:Ignite:/home/ignite:/bin/bash\noperator:x:1000:1000:Operator:/home/operator:/bin/bash\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nmysql:x:27:27::/nonexistent:/bin/false\n"
       ),
       file("group", "root:x:0:\nignite:x:1002:Raj,ignite\nRaj:x:1001:\noperator:x:1000:\n"),
-      file("hosts", "127.0.0.1 localhost\n127.0.1.1 kali\n10.10.10.8 hackforge.lab www.hackforge.lab\n192.168.0.11 ubuntu.lab\n"),
+      file("hosts", "127.0.0.1 localhost\n127.0.1.1 kali\n10.10.10.8 gamehack.lab www.gamehack.lab\n192.168.0.11 ubuntu.lab\n"),
       file("resolv.conf", "nameserver 10.10.10.53\n"),
       file(
         "crontab",
-        "# /etc/crontab: system crontab (HackForge lab)\nSHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n# m h dom mon dow user command\n17 *    * * *   root    cd / && run-parts --report /etc/cron.hourly\n"
+        "# /etc/crontab: system crontab (GameHack lab)\nSHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n# m h dom mon dow user command\n17 *    * * *   root    cd / && run-parts --report /etc/cron.hourly\n"
       ),
       dir("ettercap", [file("etter.dns", ETTER)]),
       dir("Ettercap", [file("etter.dns", ETTER)]),
       dir("apt", [
         file(
           "sources.list",
-          "deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware\n# Add extra repos only when you understand the risk.\n# HackForge lab — do not add experimental repos.\n"
+          "deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware\n# Add extra repos only when you understand the risk.\n# GameHack lab — do not add experimental repos.\n"
         ),
       ]),
       dir("ssh", [file("sshd_config", "Port 22\nPermitRootLogin no\nPasswordAuthentication yes\n")]),
@@ -198,7 +198,7 @@ export function sudoRunFS(): FileNode {
       dir("rc6.d", []),
     ]),
     dir("opt", [
-      dir("labs", [file("hackforge", "HackForge marker file used by find / -type f -name hackforge\nFLAG{sudo_run_find}\n")]),
+      dir("labs", [file("gamehack", "GameHack marker file used by find / -type f -name gamehack\nFLAG{sudo_run_find}\n")]),
       dir("CTF", [file("readme", "CTF leftovers live here for the locate command.\n")]),
     ]),
     dir("usr", [
@@ -217,7 +217,7 @@ export function sudoRunFS(): FileNode {
     ]),
     dir("var", [
       dir("www", [dir("html", [file("index.html", INDEX_HTML)])]),
-      dir("log", [file("syslog", "Apr 12 08:00:01 kali systemd[1]: Started HackForge Sudo_Run services.\n")]),
+      dir("log", [file("syslog", "Apr 12 08:00:01 kali systemd[1]: Started GameHack Sudo_Run services.\n")]),
     ]),
     dir("tmp", []),
     dir("dev", [file("null", "")]),
@@ -599,7 +599,7 @@ qhydra - qt frontend`);
       if (cmd === "apt-cache" && sub === "show") {
         const packageName = pos[1] || "";
         if (!packageName) print("E: apt-cache show requires a package name", "err");
-        else print(`Package: ${packageName}\nVersion: 1.0-lab\nArchitecture: all\nDescription: Fictional HackForge training package ${packageName}.`);
+        else print(`Package: ${packageName}\nVersion: 1.0-lab\nArchitecture: all\nDescription: Fictional GameHack training package ${packageName}.`);
         return true;
       }
       const action = pos[0];
@@ -706,16 +706,16 @@ bound to ${t.net.ip} -- renewal in 1800 seconds.`);
     }
     case "dig": {
       t.flags.add("dig");
-      const target = (pos[0] || "hackforge.lab").replace(/\/$/, "");
+      const target = (pos[0] || "gamehack.lab").replace(/\/$/, "");
       const rec = (pos[1] || "A").toLowerCase();
       if (rec === "mx") {
         t.flags.add("dig-mx");
         print(`;; ANSWER SECTION:
-${target}.    300 IN MX 10 mail.hackforge.lab.`);
+${target}.    300 IN MX 10 mail.gamehack.lab.`);
       } else if (rec === "ns") {
         t.flags.add("dig-ns");
         print(`;; ANSWER SECTION:
-${target}.    300 IN NS ns1.hackforge.lab.`);
+${target}.    300 IN NS ns1.gamehack.lab.`);
       } else {
         t.flags.add("dig-a");
         print(`;; ANSWER SECTION:
@@ -754,7 +754,7 @@ ${target}.    300 IN A 10.10.10.8`);
           return `${String(process.pid).padStart(5)} ${process.user.padEnd(8)} 20 ${String(process.nice).padStart(2)}  64M   8M   4M ${state} ${String(process.cpu).padStart(4)} ${String(process.mem).padStart(4)} 0:00.08 ${process.cmd}`;
         });
       print(
-        `top - 09:00:00 up 2 days, 1 user, load average: 0.04, 0.08, 0.09 — HackForge virtual snapshot
+        `top - 09:00:00 up 2 days, 1 user, load average: 0.04, 0.08, 0.09 — GameHack virtual snapshot
 ` +
           `Tasks: ${processes.length} total, ${running} running, ${sleeping} sleeping, 0 stopped, ${zombies} zombie${zombies === 1 ? "" : "s"}
 ` +
@@ -997,9 +997,9 @@ ${target}.    300 IN A 10.10.10.8`);
       }
       const syslog = getNode(t.fs, "/var/log/syslog");
       if (syslog?.type === "file") {
-        syslog.content = `${syslog.content || ""}HackForge: simulated reboot; virtual services updated (${started.join(", ") || "none"}).\n`;
+        syslog.content = `${syslog.content || ""}GameHack: simulated reboot; virtual services updated (${started.join(", ") || "none"}).\n`;
       }
-      print(`HackForge reboot simulated; only virtual boot-enabled services were updated.\nStarted: ${started.join(", ") || "none"}. No host reboot occurred.`);
+      print(`GameHack reboot simulated; only virtual boot-enabled services were updated.\nStarted: ${started.join(", ") || "none"}. No host reboot occurred.`);
       return true;
     }
     case "read": {
@@ -1016,16 +1016,16 @@ ${target}.    300 IN A 10.10.10.8`);
       return true;
     }
     case "ftp": {
-      const host = (pos[0] || "ftp.forge.lab").toLowerCase();
-      if (host !== "ftp.forge.lab") {
+      const host = (pos[0] || "ftp.gamehack.lab").toLowerCase();
+      if (host !== "ftp.gamehack.lab") {
         t.flags.add("ftp-external-blocked");
-        print(`ftp: external host '${host}' is blocked in this lab. Use ftp ftp.forge.lab; no connection was attempted.`, "err");
+        print(`ftp: external host '${host}' is blocked in this lab. Use ftp ftp.gamehack.lab; no connection was attempted.`, "err");
         return true;
       }
       t.ftp = { host, user: null, cwd: "/", authenticated: false };
       t.flags.add("ftp");
       print(`Connected to ${host}.
-220 HackForge FTP server (simulated)
+220 GameHack FTP server (simulated)
 Name (${host}:root):`);
       return true;
     }

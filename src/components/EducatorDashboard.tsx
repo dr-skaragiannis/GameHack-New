@@ -122,13 +122,13 @@ function MetricCard({
   value,
   detail,
   icon,
-  tone = "ember",
+  tone = "cyan",
 }: {
   label: string;
   value: string | number;
   detail: string;
   icon: string;
-  tone?: "ember" | "cyan" | "violet" | "green";
+  tone?: "cyan" | "cyan" | "violet" | "green";
 }) {
   return (
     <article className={`educator-stat educator-stat--${tone}`}>
@@ -385,11 +385,11 @@ export default function EducatorDashboard({
         <div className="educator-dashboard__content">
           <section className="educator-stat-grid" aria-label={t("playerStatistics", lang)}>
             <MetricCard label={t("totalPlayers", lang)} value={filteredPlayers.length} detail={`${onlineCount} ${t("activeNow", lang).toLowerCase()}`} icon="users" tone="cyan" />
-            <MetricCard label={t("averageXp", lang)} value={avgXp.toLocaleString()} detail={t("overallScoreboard", lang)} icon="spark" tone="ember" />
+            <MetricCard label={t("averageXp", lang)} value={avgXp.toLocaleString()} detail={t("overallScoreboard", lang)} icon="spark" tone="cyan" />
             <MetricCard label={t("completion", lang)} value={`${avgCompletion}%`} detail={t("progress", lang)} icon="target" tone="green" />
             <MetricCard label={t("averageAccuracy", lang)} value={`${avgAccuracy}%`} detail={`${t("averageFidelity", lang)} ${avgFidelity}%`} icon="check" tone="violet" />
             <MetricCard label={t("cliCommands", lang)} value={commandCount.toLocaleString()} detail={`${scopedCommands.length} ${t("recentExecutions", lang).toLowerCase()}`} icon="terminal" tone="cyan" />
-            <MetricCard label={t("pendingApplications", lang)} value={applications.length} detail={`${teams.length} ${t("teamCount", lang).toLowerCase()}`} icon="users" tone="ember" />
+            <MetricCard label={t("pendingApplications", lang)} value={applications.length} detail={`${teams.length} ${t("teamCount", lang).toLowerCase()}`} icon="users" tone="cyan" />
           </section>
 
           <div className="educator-dashboard__overview-grid">
@@ -427,7 +427,7 @@ export default function EducatorDashboard({
                   </ResponsiveContainer>
                 ) : <div className="educator-chart-empty">{t("noPlayers", lang)}</div>}
               </div>
-              <div className="educator-chart-caption"><span><i className="is-ember" />{t("player", lang)}</span><span>{t("commandsPerPlayer", lang)} · bubble size</span></div>
+              <div className="educator-chart-caption"><span><i className="is-cyan" />{t("player", lang)}</span><span>{t("commandsPerPlayer", lang)} · bubble size</span></div>
             </ChartCard>
           </div>
 
@@ -534,7 +534,7 @@ export default function EducatorDashboard({
                         <td><div className="educator-table__player"><Avatar src={player.avatar} name={player.displayName} size={31} /><span><strong>{player.displayName}</strong><small>{isOnline(player) ? t("online", lang) : t("offline", lang)}</small></span></div></td>
                         <td>{team?.name || t("unassigned", lang)}</td>
                         <td>{level}</td>
-                        <td className="is-ember">{player.metrics.xp.toLocaleString()}</td>
+                        <td className="is-cyan">{player.metrics.xp.toLocaleString()}</td>
                         <td>{completedModuleCount(player)}/{TOTAL_MODULES} · {completionPercent(player)}%</td>
                         <td>{accuracyScore(player.metrics)}%</td>
                         <td>{fidelityScore(player.metrics)}%</td>
@@ -576,7 +576,7 @@ export default function EducatorDashboard({
           <section className="educator-card educator-requests">
             <header className="educator-card__header">
               <div><div className="educator-eyebrow">{uppercaseLabel(t("pendingApplications", lang), lang)}</div><h2>{t("teamApplications", lang)}</h2></div>
-              <span className="educator-card__header-icon is-amber"><Icon name="users" className="h-5 w-5" /></span>
+              <span className="educator-card__header-icon is-cyan"><Icon name="users" className="h-5 w-5" /></span>
             </header>
             {applications.length ? (
               <div className="educator-request-list">
@@ -672,7 +672,7 @@ export default function EducatorDashboard({
         <div className="educator-dashboard__content">
           <section className="educator-stat-grid educator-stat-grid--compact">
             <MetricCard label={t("cliCommands", lang)} value={scopedCommands.length} detail={t("recentExecutions", lang)} icon="terminal" tone="cyan" />
-            <MetricCard label={t("commandsPerPlayer", lang)} value={filteredPlayers.length ? Math.round(scopedCommands.length / filteredPlayers.length) : 0} detail={t("totalPlayers", lang)} icon="users" tone="ember" />
+            <MetricCard label={t("commandsPerPlayer", lang)} value={filteredPlayers.length ? Math.round(scopedCommands.length / filteredPlayers.length) : 0} detail={t("totalPlayers", lang)} icon="users" tone="cyan" />
             <MetricCard label={t("exitCode", lang)} value={commandErrors} detail={lang === "en" ? "non-zero results" : "μη μηδενικά αποτελέσματα"} icon="warning" tone="violet" />
             <MetricCard label={t("executedAt", lang)} value={commandsToday} detail={lang === "en" ? "today" : "σήμερα"} icon="radar" tone="green" />
           </section>

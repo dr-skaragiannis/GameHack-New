@@ -59,7 +59,7 @@ export const SUDO_RUN_MODULES_C: Module[] = [
         shots: [
           shot("./scanner", ["Enter the ip address", "Nmap scan report for 10.10.10.1", "Nmap scan report for 10.10.10.5", "Nmap scan report for 10.10.10.8"]),
         ],
-        tip: { en: "The published snippet had typos (nma -sp). In HackForge the script calls nmap -sn correctly.", el: "Στο HackForge το script καλεί σωστά nmap -sn." },
+        tip: { en: "The published snippet had typos (nma -sp). In GameHack the script calls nmap -sn correctly.", el: "Στο GameHack το script καλεί σωστά nmap -sn." },
       },
     ],
     cheats: [
@@ -95,7 +95,7 @@ export const SUDO_RUN_MODULES_C: Module[] = [
     id: "sr-cron",
     order: 12,
     icon: "settings",
-    color: "from-amber-300 to-stone-800",
+    color: "from-cyan-300 to-stone-800",
     difficulty: 3,
     scenario: lab,
     title: { en: "Scheduling & rc scripts", el: "Χρονοπρογραμματισμός & rc" },
@@ -163,7 +163,7 @@ export const SUDO_RUN_MODULES_C: Module[] = [
     id: "sr-svc",
     order: 13,
     icon: "globe",
-    color: "from-ember-400 to-rose-900",
+    color: "from-cyan-400 to-rose-900",
     difficulty: 4,
     scenario: lab,
     title: { en: "Linux services — Apache, SSH, FTP", el: "Υπηρεσίες — Apache, SSH, FTP" },
@@ -189,7 +189,7 @@ export const SUDO_RUN_MODULES_C: Module[] = [
           el: "nano /var/www/html/index.html και curl http://localhost",
         },
         shots: [
-          shot("nano /var/www/html/index.html", ["<h1>Apache2 Debian Default Page</h1>", "<p>It works! This is the HackForge Sudo_Run web root …</p>"]),
+          shot("nano /var/www/html/index.html", ["<h1>Apache2 Debian Default Page</h1>", "<p>It works! This is the GameHack Sudo_Run web root …</p>"]),
           shot("curl http://localhost", ["<h1>Apache2 Debian Default Page</h1>"]),
         ],
       },
@@ -201,17 +201,17 @@ export const SUDO_RUN_MODULES_C: Module[] = [
         },
         shots: [
           shot("service ssh start", ["starting ssh (simulated)."]),
-          shot("ssh ignite@192.168.0.11", ["Welcome to ubuntu (HackForge lab host)", "ignite@ubuntu:~$"]),
+          shot("ssh ignite@192.168.0.11", ["Welcome to ubuntu (GameHack lab host)", "ignite@ubuntu:~$"]),
         ],
       },
       {
         heading: { en: "FTP", el: "FTP" },
         body: {
-          en: "File Transfer Protocol moves files over the command line. ftp ftp.forge.lab  (the lab FTP service is a local simulation with fictional files). Name: anonymous  Password: anonymous  then ls, cd into a folder, get favicon.ico, bye, then ls locally to see the download.",
-          el: "ftp ftp.forge.lab → anonymous / anonymous → get favicon.ico → bye",
+          en: "File Transfer Protocol moves files over the command line. ftp ftp.gamehack.lab  (the lab FTP service is a local simulation with fictional files). Name: anonymous  Password: anonymous  then ls, cd into a folder, get favicon.ico, bye, then ls locally to see the download.",
+          el: "ftp ftp.gamehack.lab → anonymous / anonymous → get favicon.ico → bye",
         },
         shots: [
-          shot("ftp ftp.forge.lab", ["Connected to ftp.forge.lab.", "Name (ftp.forge.lab:root):"]),
+          shot("ftp ftp.gamehack.lab", ["Connected to ftp.gamehack.lab.", "Name (ftp.gamehack.lab:root):"]),
           shot("anonymous", ["331 Please specify the password."]),
           shot("anonymous", ["230 Login successful."]),
           shot("get favicon.ico", ["226 Transfer complete."]),
@@ -226,7 +226,7 @@ export const SUDO_RUN_MODULES_C: Module[] = [
       { cmd: "nano /var/www/html/index.html", desc: { en: "edit site", el: "επεξεργασία" } },
       { cmd: "service ssh start", desc: { en: "start sshd", el: "sshd" } },
       { cmd: "ssh ignite@192.168.0.11", desc: { en: "remote shell (sim)", el: "απομακρυσμένο shell" } },
-      { cmd: "ftp ftp.forge.lab", desc: { en: "open ftp (sim)", el: "ftp" } },
+      { cmd: "ftp ftp.gamehack.lab", desc: { en: "open ftp (sim)", el: "ftp" } },
       { cmd: "get favicon.ico", desc: { en: "download", el: "λήψη" } },
     ],
     tasks: [
@@ -237,7 +237,7 @@ export const SUDO_RUN_MODULES_C: Module[] = [
       { id: "curl", instruction: { en: "curl http://localhost", el: "curl http://localhost" }, hint: { en: "curl http://localhost", el: "curl http://localhost" }, explain: { en: "Same as browsing http://localhost", el: "Σαν browser." }, check: (t) => t.flags.has("curl-local") || usedCmd(t, /localhost/) },
       { id: "sshst", instruction: { en: "service ssh start", el: "service ssh start" }, hint: { en: "service ssh start", el: "service ssh start" }, explain: { en: "sshd must listen first.", el: "Πρώτα το sshd." }, check: (t) => t.flags.has("service-ssh-start") || usedCmd(t, /service\s+ssh\s+start/) },
       { id: "sshi", instruction: { en: "ssh ignite@192.168.0.11", el: "ssh ignite@192.168.0.11" }, hint: { en: "ssh ignite@192.168.0.11", el: "ssh ignite@192.168.0.11" }, explain: { en: "Simulated ubuntu host.", el: "Προσομοιωμένο ubuntu." }, check: (t) => t.flags.has("ssh-ignite") },
-      { id: "ftp", instruction: { en: "ftp ftp.forge.lab  then login anonymous / anonymous", el: "ftp ftp.forge.lab" }, hint: { en: "ftp ftp.forge.lab", el: "ftp ftp.forge.lab" }, explain: { en: "Then type anonymous twice.", el: "Μετά anonymous δύο φορές." }, check: (t) => t.flags.has("ftp") || t.flags.has("ftp-user") },
+      { id: "ftp", instruction: { en: "ftp ftp.gamehack.lab  then login anonymous / anonymous", el: "ftp ftp.gamehack.lab" }, hint: { en: "ftp ftp.gamehack.lab", el: "ftp ftp.gamehack.lab" }, explain: { en: "Then type anonymous twice.", el: "Μετά anonymous δύο φορές." }, check: (t) => t.flags.has("ftp") || t.flags.has("ftp-user") },
       { id: "get", instruction: { en: "In FTP: ls  then  get favicon.ico  then  bye", el: "ls, get favicon.ico, bye" }, hint: { en: "get favicon.ico", el: "get favicon.ico" }, explain: { en: "Download and quit.", el: "Λήψη και έξοδος." }, check: (t) => t.flags.has("ftp-get") || t.flags.has("ftp-bye") },
     ],
     challenges: [
@@ -248,7 +248,7 @@ export const SUDO_RUN_MODULES_C: Module[] = [
         check: (t) => t.flags.has("ftp-get") || usedCmd(t, /favicon/),
       },
       {
-        title: { en: "Submit the forge", el: "Υποβολή" },
+        title: { en: "Submit the final flag", el: "Υποβολή τελικής σημαίας" },
         brief: { en: "submit FLAG{sudo_run_complete} when you have walked Apache, SSH and FTP.", el: "submit FLAG{sudo_run_complete}" },
         success: { en: "Sudo_Run (Linux for Beginners) is complete. You are dangerous — stay ethical.", el: "Το Sudo_Run ολοκληρώθηκε. Μείνε ηθικός." },
         check: (t) => t.flags.has("submit:FLAG{sudo_run_complete}") || (t.flags.has("ssh-ignite") && t.flags.has("curl-local")),

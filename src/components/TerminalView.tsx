@@ -62,15 +62,15 @@ export default function TerminalView({
 
   return (
     <div
-      className="terminal-window relative flex min-h-0 flex-col rounded-xl border border-forge-border bg-black/80 crt overflow-hidden font-mono text-sm"
+      className="terminal-window relative flex min-h-0 flex-col rounded-xl border border-gamehack-border bg-black/80 crt overflow-hidden font-mono text-sm"
       onClick={() => input.current?.focus()}
     >
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5 bg-zinc-900/80 text-sm text-iron-400">
         <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
-        <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
+        <span className="h-2.5 w-2.5 rounded-full bg-cyan-400/80" />
         <span className="h-2.5 w-2.5 rounded-full bg-neon-green/80" />
         <span className="ml-2 min-w-0 truncate tracking-wider">
-          {term.user}@{term.host} — HACKFORGE
+          {term.user}@{term.host} — GameHack
         </span>
         <button
           type="button"
@@ -100,9 +100,9 @@ export default function TerminalView({
           }}
           className="terminal-window__command flex min-w-0 items-center gap-2 leading-relaxed"
         >
-          <span className="min-w-0 max-w-[55%] shrink truncate text-ember-400" title={prompt(term)}>{prompt(term)}</span>
+          <span className="min-w-0 max-w-[55%] shrink truncate text-cyan-400" title={prompt(term)}>{prompt(term)}</span>
           {!inputFocused && !buf && (
-            <span className="inline-block h-[1.1em] w-[0.55em] shrink-0 bg-ember-400 cursor-blink" aria-hidden="true" />
+            <span className="inline-block h-[1.1em] w-[0.55em] shrink-0 bg-cyan-400 cursor-blink" aria-hidden="true" />
           )}
           <input
             ref={input}
@@ -155,7 +155,7 @@ export default function TerminalView({
                 }
               } else if (e.key.length === 1) sound.key();
             }}
-            className="min-w-0 flex-1 bg-transparent p-0 font-mono text-sm leading-relaxed text-zinc-100 outline-none caret-ember-400"
+            className="min-w-0 flex-1 bg-transparent p-0 font-mono text-sm leading-relaxed text-zinc-100 outline-none caret-cyan-400"
           />
         </form>
       </div>
