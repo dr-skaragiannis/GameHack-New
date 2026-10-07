@@ -319,15 +319,33 @@ export default function App() {
     refresh();
   };
 
-  const nav: { id: View; icon: string; label: string; show: boolean; badge?: number }[] = [
+  type NavId = View | "scoreboard";
+  const totalLabs = LEARNING_PATHS.reduce((sum, path) => sum + path.modules.length, 0);
+  const nav: { id: NavId; icon: string; label: string; show: boolean; badge?: number; quietBadge?: boolean }[] = [
     { id: "dashboard", icon: "home", label: t("homeNav", lang), show: user.role === "player" },
-    { id: "profile", icon: "user", label: t("profileNav", lang), show: true },
+    { id: "campaigns", icon: "flag", label: t("challengesNav", lang), show: true, badge: totalLabs, quietBadge: true },
     { id: "map", icon: "map", label: t("learningMapNav", lang), show: true },
-    { id: "campaigns", icon: "flag", label: t("challengesNav", lang), show: true },
-    { id: "messages", icon: "mail", label: t("messagesNav", lang), show: true, badge: unread },
-    { id: "tickets", icon: "ticket", label: t("ticketsNav", lang), show: true, badge: openTickets },
+    { id: "scoreboard", icon: "crown", label: t("leaderboard", lang), show: true },
     { id: "educator", icon: "chart", label: t("educator", lang), show: user.role === "educator" },
+    { id: "messages", icon: "mail", label: t("messagesNav", lang), show: true, badge: unread },
+    { id: "profile", icon: "user", label: t("profileNav", lang), show: true },
+    { id: "tickets", icon: "ticket", label: t("ticketsNav", lang), show: true, badge: openTickets },
   ];
+  const sidebarSections: { title: string; ids: NavId[] }[] = [
+    { title: t("controlCenter", lang), ids: ["dashboard", "campaigns", "map", "scoreboard", "educator"] },
+    { title: t("community", lang), ids: ["messages"] },
+    { title: t("yourAccount", lang), ids: ["profile", "tickets"] },
+  ];
+  const onNavSelect = (id: NavId) => {
+    if (id === "scoreboard") {
+      sound.popup();
+      setScoreboardOpen(true);
+      setMobile(false);
+      return;
+    }
+    if (id === "profile") setProfileId(user.id);
+    go(id);
+  };
   const mobileMenuButton = (
     <button
       type="button"
@@ -517,14 +535,17 @@ export default function App() {
           mobile ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        <div className={cn("relative flex h-16 items-center border-b border-gamehack-border", collapsed ? "justify-center px-2 pt-5" : "gap-2 px-3")}>
-          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-cyan-500 to-cyan-700 grid place-items-center shrink-0">
-            <Icon name="terminal" className="w-4 h-4 text-white" />
+        <div className={cn("relative flex h-16 items-center border-b border-gamehack-border", collapsed ? "justify-center px-2 pt-5" : "gap-2.5 px-4")}>
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-700 shadow-lg shadow-cyan-900/40">
+            <Icon name="cybereye" className="h-5 w-5 text-white" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <div className="font-extrabold tracking-[0.18em] text-sm text-shine">{t("appName", lang)}</div>
-              <div className="text-sm text-iron-500 truncate">{t("tagline", lang)}</div>
+              <div className="text-base font-extrabold uppercase tracking-[0.12em]">
+                <span className="text-zinc-100">{t("appName", lang).slice(0, 4)}</span>
+                <span className="text-cyan-400">{t("appName", lang).slice(4)}</span>
+              </div>
+              <div className="truncate text-[11px] uppercase tracking-[0.14em] text-iron-500">{uppercaseLabel(t("tagline", lang), lang)}</div>
             </div>
           )}
           <button
@@ -543,47 +564,92 @@ export default function App() {
             {collapsed ? "»" : "«"}
           </button>
         </div>
-        <nav className="min-h-0 flex-1 overflow-y-auto p-2 space-y-1">
-          {nav
-            .filter((n) => n.show)
-            .map((n) => (
-              <button
-                key={n.id}
-                type="button"
-                onClick={() => {
-                  if (n.id === "profile") setProfileId(user.id);
-                  go(n.id);
-                }}
-                className={cn(
-                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition",
-                  view === n.id ? "bg-cyan-600/20 text-cyan-300" : "text-iron-400 hover:bg-white/5 hover:text-zinc-200",
-                  collapsed && "justify-center px-0"
-                )}
-              >
-                <span className="relative">
-                  <Icon name={n.icon} className="w-5 h-5" />
-                  {!!n.badge && n.badge > 0 && (
-                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-cyan-500" />
-                  )}
-                </span>
+        <nav className="min-h-0 flex-1 overflow-y-auto p-2">
+          {sidebarSections.map((section) => {
+            const items = nav.filter((n) => n.show && section.ids.includes(n.id));
+            if (!items.length) return null;
+            return (
+              <div key={section.title} className="mb-1">
                 {!collapsed && (
-                  <>
-                    <span className="flex-1 text-left">{n.label}</span>
-                    {!!n.badge && n.badge > 0 && (
-                      <span className="text-sm bg-cyan-600 text-white rounded-full px-1.5">{n.badge}</span>
-                    )}
-                  </>
+                  <div className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.2em] text-iron-500">
+                    {uppercaseLabel(section.title, lang)}
+                  </div>
                 )}
-              </button>
-            ))}
+                <div className="space-y-1">
+                  {items.map((n) => (
+                    <button
+                      key={n.id}
+                      type="button"
+                      onClick={() => onNavSelect(n.id)}
+                      title={n.label}
+                      aria-current={view === n.id ? "page" : undefined}
+                      className={cn(
+                        "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition",
+                        view === n.id
+                          ? "bg-cyan-600/20 font-semibold text-cyan-300"
+                          : "text-iron-400 hover:bg-white/5 hover:text-zinc-200",
+                        collapsed && "justify-center px-0"
+                      )}
+                    >
+                      <span className="relative">
+                        <Icon name={n.icon} className="w-5 h-5" />
+                        {!n.quietBadge && !!n.badge && n.badge > 0 && (
+                          <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-cyan-500" />
+                        )}
+                      </span>
+                      {!collapsed && (
+                        <>
+                          <span className="flex-1 text-left">{n.label}</span>
+                          {!!n.badge && n.badge > 0 && (
+                            <span
+                              className={cn(
+                                "rounded-full px-1.5 text-sm",
+                                n.quietBadge ? "bg-white/10 text-iron-300" : "bg-cyan-600 text-white"
+                              )}
+                            >
+                              {n.badge}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </nav>
-        <div className="mt-auto p-2 border-t border-gamehack-border">
+        <div className="mt-auto space-y-2 border-t border-gamehack-border p-2">
+          {!collapsed && (
+            <button
+              type="button"
+              onClick={() => go("campaigns")}
+              className="relative block w-full overflow-hidden rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-3 text-left transition hover:border-cyan-400/50 hover:bg-cyan-500/15"
+            >
+              <Icon name="plus" className="pointer-events-none absolute -right-3 -top-3 h-16 w-16 text-cyan-400/20" />
+              <span className="block text-sm font-bold text-zinc-100">{t("sidebarPromoTitle", lang)}</span>
+              <span className="mt-1 block text-xs leading-relaxed text-iron-400">{t("sidebarPromoBody", lang)}</span>
+              <span className="mt-2 flex items-center gap-1 text-xs font-bold text-cyan-300">
+                {t("sidebarPromoCta", lang)}
+                <Icon name="chevron" className="h-3 w-3" />
+              </span>
+            </button>
+          )}
+          {!collapsed && (
+            <div className="flex items-center gap-2 px-2 text-[11px] font-bold uppercase tracking-[0.14em] text-iron-400">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              </span>
+              <span className="truncate">{uppercaseLabel(t("systemsOperational", lang), lang)}</span>
+            </div>
+          )}
           <button
             type="button"
             onClick={logout}
             className={cn("w-full flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-iron-400 hover:text-rose-300", collapsed && "justify-center")}
           >
-            <Icon name="logout" className="w-4 h-4" />
+            <Icon name="logout" className="h-4 w-4" />
             {!collapsed && t("logout", lang)}
           </button>
         </div>
