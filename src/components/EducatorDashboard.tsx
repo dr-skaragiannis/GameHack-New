@@ -52,7 +52,7 @@ type TeamAnalytics = {
   challengeSuccess: number;
 };
 
-const CHART_COLORS = ["#fb8043", "#22d3ee", "#a78bfa", "#3ddc84"];
+const CHART_COLORS = ["var(--color-cyan-400)", "#22d3ee", "#a78bfa", "#3ddc84"];
 const TOTAL_MODULES = LEARNING_PATHS.reduce((total, campaign) => total + campaign.modules.length, 0);
 const ALL_MODULES = LEARNING_PATHS.flatMap((campaign) => campaign.modules);
 const TOOLTIP_STYLE = {
@@ -422,7 +422,7 @@ export default function EducatorDashboard({
                       <YAxis type="number" dataKey="xp" name="XP" stroke="#777780" tick={{ fill: "#909099", fontSize: 10 }} />
                       <ZAxis type="number" dataKey="commands" range={[55, 420]} name={t("commandsPerPlayer", lang)} />
                       <Tooltip cursor={{ strokeDasharray: "3 3", stroke: "#5b5b65" }} contentStyle={TOOLTIP_STYLE} formatter={(value, name) => [value, name]} />
-                      <Scatter name={t("player", lang)} data={scatterData} fill="#fb8043" fillOpacity={0.82} />
+                      <Scatter name={t("player", lang)} data={scatterData} fill="var(--color-cyan-400)" fillOpacity={0.82} />
                     </ScatterChart>
                   </ResponsiveContainer>
                 ) : <div className="educator-chart-empty">{t("noPlayers", lang)}</div>}
@@ -441,7 +441,7 @@ export default function EducatorDashboard({
                       <XAxis dataKey="name" stroke="#777780" tick={{ fill: "#a0a0a8", fontSize: 10 }} interval={0} angle={-18} textAnchor="end" height={48} />
                       <YAxis stroke="#777780" tick={{ fill: "#909099", fontSize: 10 }} />
                       <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value) => [`${value} XP`, t("averageXp", lang)]} />
-                      <Bar dataKey="xp" name="XP" fill="#fb8043" radius={[6, 6, 0, 0]} maxBarSize={42} />
+                      <Bar dataKey="xp" name="XP" fill="var(--color-cyan-400)" radius={[6, 6, 0, 0]} maxBarSize={42} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : <div className="educator-chart-empty">{t("noPlayers", lang)}</div>}

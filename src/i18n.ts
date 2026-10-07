@@ -84,6 +84,8 @@ export const UI: Dict = {
   keepGoing: { en: "Solid work, operator. Your skills are growing with every objective.", el: "Καλή δουλειά, χειριστή. Οι δεξιότητές σου εξελίσσονται." },
   clearedAll: { en: "You cleared every module — your training is complete.", el: "Ολοκλήρωσες όλες τις ενότητες — η εκπαίδευσή σου ολοκληρώθηκε." },
   langLabel: { en: "EL", el: "EN" },
+  switchToWarmTheme: { en: "Switch to warm palette", el: "Εναλλαγή σε θερμή παλέτα" },
+  switchToCyanTheme: { en: "Switch to cyan palette", el: "Εναλλαγή σε κυανή παλέτα" },
   showBoth: { en: "Both languages shown below", el: "Και οι δύο γλώσσες εμφανίζονται" },
   finalChallenge: { en: "Final Challenge", el: "Τελική Πρόκληση" },
   finalChallenges: { en: "Final Challenges", el: "Τελικές Προκλήσεις" },

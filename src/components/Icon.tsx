@@ -58,6 +58,7 @@ const paths: Record<string, string> = {
   "file-text": "M6 3h8l4 4v14H6z M14 3v5h5 M9 12h6 M9 16h6",
   "hard-drive": "M4 6h16v12H4z M4 10h16 M8 15h.01 M12 15h.01 M16 15h.01",
   layers: "m12 3 9 5-9 5-9-5 9-5z M3 12l9 5 9-5 M3 16l9 5 9-5",
+  palette: "M12 3a9 9 0 1 0 0 18h1a2.5 2.5 0 0 0 0-5h-.5a1.5 1.5 0 0 1 0-3H15a6 6 0 0 0-3-10z M7.5 10h.01 M10 7h.01 M14 7h.01",
 };
 
 export const MODULE_ICON: Record<string, string> = {

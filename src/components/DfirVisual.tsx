@@ -23,8 +23,8 @@ function NetworkGraphic({ items, lang }: { items: VisualItem[]; lang: Lang }) {
     <svg className="dfir-network" viewBox="0 0 600 240" role="img" aria-label={lang === "en" ? "Network evidence diagram" : "Διάγραμμα δικτυακών στοιχείων"}>
       <defs>
         <linearGradient id="dfir-network-line" x1="0" x2="1">
-          <stop offset="0" stopColor="#22d3ee" stopOpacity=".25" />
-          <stop offset=".5" stopColor="#22d3ee" stopOpacity=".9" />
+          <stop offset="0" stopColor="var(--color-cyan-400)" stopOpacity=".25" />
+          <stop offset=".5" stopColor="var(--color-cyan-400)" stopOpacity=".9" />
           <stop offset="1" stopColor="#22d3ee" stopOpacity=".4" />
         </linearGradient>
       </defs>

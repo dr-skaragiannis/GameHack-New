@@ -43,14 +43,14 @@ function DashboardEye({ lang }: { lang: Lang }) {
       <svg className="player-dashboard__eye-blueprint" viewBox="0 0 420 270" aria-hidden="true">
         <defs>
           <radialGradient id="dashboard-eye-iris">
-            <stop offset="0%" stopColor="#0b1720" />
-            <stop offset="36%" stopColor="#2dbbd4" stopOpacity="0.85" />
-            <stop offset="100%" stopColor="#1d596d" stopOpacity="0.12" />
+            <stop offset="0%" stopColor="var(--color-gamehack-panel)" />
+            <stop offset="36%" stopColor="var(--color-cyan-400)" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="var(--color-cyan-700)" stopOpacity="0.12" />
           </radialGradient>
           <linearGradient id="dashboard-eye-stroke" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0%" stopColor="#e4fdff" stopOpacity="0.9" />
-            <stop offset="52%" stopColor="#6ad9ee" stopOpacity="0.64" />
-            <stop offset="100%" stopColor="#4b7e96" stopOpacity="0.16" />
+            <stop offset="0%" stopColor="var(--color-cyan-50)" stopOpacity="0.9" />
+            <stop offset="52%" stopColor="var(--color-cyan-300)" stopOpacity="0.64" />
+            <stop offset="100%" stopColor="var(--color-cyan-400)" stopOpacity="0.16" />
           </linearGradient>
           <filter id="dashboard-eye-soft-glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="3" result="blur" />
@@ -361,6 +361,69 @@ export default function PlayerDashboard({
 
       <div className="player-dashboard__layout">
         <div className="player-dashboard__main">
+          <section className="player-dashboard__card player-dashboard__current-path" aria-labelledby="current-learning-path-title">
+            <div className="player-dashboard__path-heading">
+              <span className="player-dashboard__path-icon"><Icon name={campaignIcon(currentCampaign)} className="h-5 w-5" /></span>
+              <div className="player-dashboard__path-copy">
+                <div className="player-dashboard__eyebrow">{uppercaseLabel(t("currentLearningPath", lang), lang)}</div>
+                <h2 id="current-learning-path-title">
+                  <span>{String(currentCampaign.pathNumber).padStart(2, "0")}.</span> {bi(currentCampaign.title, lang)}
+                </h2>
+                <p>{bi(currentCampaign.subtitle, lang)}</p>
+              </div>
+              <div className="player-dashboard__path-percent">{currentPathPercent}%</div>
+            </div>
+            <div className="player-dashboard__path-progress" role="progressbar" aria-label={`${t("pathProgress", lang)}: ${currentPathPercent}%`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={currentPathPercent}>
+              <span style={{ width: `${currentPathPercent}%` }} />
+            </div>
+            <div className="player-dashboard__path-footer">
+              <div className="player-dashboard__path-next">
+                {currentModule ? (
+                  <>
+                    <span>{t("continueLearning", lang)}</span>
+                    <strong>{bi(currentModule.title, lang)}</strong>
+                  </>
+                ) : (
+                  <>
+                    <span>{t("pathCompleted", lang)}</span>
+                    <strong>{currentPathCompleted}/{currentCampaign.modules.length} {t("modules", lang)}</strong>
+                  </>
+                )}
+              </div>
+              {currentModule ? (
+                <button type="button" className="player-dashboard__primary-button dashboard-action" onClick={() => onOpen(currentCampaign.id, currentModule.id)}>
+                  <span>{t("continueLearning", lang)}</span><Icon name="chevron" className="h-4 w-4" />
+                </button>
+              ) : (
+                <button type="button" className="player-dashboard__secondary-button dashboard-action" onClick={() => onCampaign(currentCampaign.id)}>
+                  <span>{t("reviewPath", lang)}</span><Icon name="chevron" className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </section>
+
+          <section className="player-dashboard__card player-dashboard__stats-card" aria-labelledby="player-statistics-title">
+            <div className="player-dashboard__section-heading">
+              <div>
+                <div className="player-dashboard__eyebrow">{uppercaseLabel(t("playerStatistics", lang), lang)}</div>
+                <h2 id="player-statistics-title">{t("playerStatistics", lang)}</h2>
+              </div>
+              <span className="player-dashboard__live-status"><i />{lang === "en" ? "YOUR PROGRESS" : "Η ΠΡΟΟΔΟΣ ΣΟΥ"}</span>
+            </div>
+            <div className="player-dashboard__stats-grid">
+              {stats.map((stat, index) => (
+                <article key={stat.label} className="player-dashboard__stat dashboard-stagger" style={{ animationDelay: `${index * 45}ms` }}>
+                  <span className="player-dashboard__stat-icon"><Icon name={stat.icon} className="h-4 w-4" /></span>
+                  <span className="player-dashboard__stat-copy">
+                    <span>{uppercaseLabel(stat.label, lang)}</span>
+                    <strong>{stat.value}</strong>
+                    <small>{stat.detail}</small>
+                  </span>
+                </article>
+              ))}
+            </div>
+          </section>
+
           <div className="player-dashboard__leaderboards">
             <section className="player-dashboard__card player-dashboard__mvp-card" aria-labelledby="mvp-leaderboard-title">
               <div className="player-dashboard__section-heading">
@@ -414,68 +477,6 @@ export default function PlayerDashboard({
               </button>
             </section>
           </div>
-          <section className="player-dashboard__card player-dashboard__stats-card" aria-labelledby="player-statistics-title">
-            <div className="player-dashboard__section-heading">
-              <div>
-                <div className="player-dashboard__eyebrow">{uppercaseLabel(t("playerStatistics", lang), lang)}</div>
-                <h2 id="player-statistics-title">{t("playerStatistics", lang)}</h2>
-              </div>
-              <span className="player-dashboard__live-status"><i />{lang === "en" ? "YOUR PROGRESS" : "Η ΠΡΟΟΔΟΣ ΣΟΥ"}</span>
-            </div>
-            <div className="player-dashboard__stats-grid">
-              {stats.map((stat, index) => (
-                <article key={stat.label} className="player-dashboard__stat dashboard-stagger" style={{ animationDelay: `${index * 45}ms` }}>
-                  <span className="player-dashboard__stat-icon"><Icon name={stat.icon} className="h-4 w-4" /></span>
-                  <span className="player-dashboard__stat-copy">
-                    <span>{uppercaseLabel(stat.label, lang)}</span>
-                    <strong>{stat.value}</strong>
-                    <small>{stat.detail}</small>
-                  </span>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="player-dashboard__card player-dashboard__current-path" aria-labelledby="current-learning-path-title">
-            <div className="player-dashboard__path-heading">
-              <span className="player-dashboard__path-icon"><Icon name={campaignIcon(currentCampaign)} className="h-5 w-5" /></span>
-              <div className="player-dashboard__path-copy">
-                <div className="player-dashboard__eyebrow">{uppercaseLabel(t("currentLearningPath", lang), lang)}</div>
-                <h2 id="current-learning-path-title">
-                  <span>{String(currentCampaign.pathNumber).padStart(2, "0")}.</span> {bi(currentCampaign.title, lang)}
-                </h2>
-                <p>{bi(currentCampaign.subtitle, lang)}</p>
-              </div>
-              <div className="player-dashboard__path-percent">{currentPathPercent}%</div>
-            </div>
-            <div className="player-dashboard__path-progress" role="progressbar" aria-label={`${t("pathProgress", lang)}: ${currentPathPercent}%`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={currentPathPercent}>
-              <span style={{ width: `${currentPathPercent}%` }} />
-            </div>
-            <div className="player-dashboard__path-footer">
-              <div className="player-dashboard__path-next">
-                {currentModule ? (
-                  <>
-                    <span>{t("continueLearning", lang)}</span>
-                    <strong>{bi(currentModule.title, lang)}</strong>
-                  </>
-                ) : (
-                  <>
-                    <span>{t("pathCompleted", lang)}</span>
-                    <strong>{currentPathCompleted}/{currentCampaign.modules.length} {t("modules", lang)}</strong>
-                  </>
-                )}
-              </div>
-              {currentModule ? (
-                <button type="button" className="player-dashboard__primary-button dashboard-action" onClick={() => onOpen(currentCampaign.id, currentModule.id)}>
-                  <span>{t("continueLearning", lang)}</span><Icon name="chevron" className="h-4 w-4" />
-                </button>
-              ) : (
-                <button type="button" className="player-dashboard__secondary-button dashboard-action" onClick={() => onCampaign(currentCampaign.id)}>
-                  <span>{t("reviewPath", lang)}</span><Icon name="chevron" className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </section>
 
         </div>
 

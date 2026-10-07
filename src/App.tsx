@@ -25,6 +25,22 @@ import type { User } from "./lib/db";
 
 type View = "dashboard" | "educator" | "campaigns" | "map" | "module" | "messages" | "tickets" | "profile";
 type ModuleTab = "theory" | "guide" | "lab";
+type ThemeName = "cyan" | "warm";
+
+const THEME_STORAGE_KEY = "gamehack.theme";
+
+function readThemePreference(): ThemeName {
+  let theme: ThemeName = "cyan";
+  if (typeof window !== "undefined") {
+    try {
+      theme = window.localStorage.getItem(THEME_STORAGE_KEY) === "warm" ? "warm" : "cyan";
+    } catch {
+      // Keep the default palette when browser storage is unavailable.
+    }
+  }
+  if (typeof document !== "undefined") document.documentElement.dataset.theme = theme;
+  return theme;
+}
 
 const MODULE_BADGE: Record<string, string> = {
   "linux-basics": "shell_initiate",
@@ -108,6 +124,7 @@ function EthicsGate({ lang, onAccept }: { lang: Lang; onAccept: () => void }) {
 export default function App() {
   const { user, logout, refresh, authReady } = useAuth();
   const [view, setView] = useState<View>("dashboard");
+  const [theme, setTheme] = useState<ThemeName>(readThemePreference);
   const [campaignId, setCampaignId] = useState(LEARNING_PATHS[0].id);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [moduleInitialTab, setModuleInitialTab] = useState<ModuleTab | undefined>();
@@ -136,6 +153,16 @@ export default function App() {
   const setLang = (l: Lang) => {
     db.updateUser(user.id, { lang: l });
     refresh();
+  };
+  const toggleTheme = () => {
+    const nextTheme: ThemeName = theme === "cyan" ? "warm" : "cyan";
+    document.documentElement.dataset.theme = nextTheme;
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    } catch {
+      // The switch still works for this session when browser storage is unavailable.
+    }
+    setTheme(nextTheme);
   };
 
   if (!user.accepted) {
@@ -296,6 +323,16 @@ export default function App() {
   );
   const accountTools = (
     <div className="module-topbar__account-tools">
+      <button
+        type="button"
+        className="gamehack-theme-toggle"
+        onClick={toggleTheme}
+        aria-label={t(theme === "cyan" ? "switchToWarmTheme" : "switchToCyanTheme", lang)}
+        title={t(theme === "cyan" ? "switchToWarmTheme" : "switchToCyanTheme", lang)}
+        aria-pressed={theme === "warm"}
+      >
+        <Icon name="palette" className="h-4 w-4" />
+      </button>
       <button
         type="button"
         onClick={() => setLang(lang === "en" ? "el" : "en")}
