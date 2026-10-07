@@ -527,3 +527,12 @@ export function savePlayerTerminal(userId: string, term: Terminal): void {
     // The active terminal remains usable for this visit if browser storage is unavailable or full.
   }
 }
+
+export function resetPlayerTerminal(userId: string, moduleId: string, scenario: string): Terminal {
+  // Restart the lab: every fixture, process, service, and simulated-state field returns to its
+  // initial value. Completed objectives and XP live in the separate account-progress store and are
+  // untouched, so objectives stay checked and XP is neither lost nor granted again on re-completion.
+  const term = activateTerminalForModule(createPlayerTerminal(), moduleId, scenario);
+  savePlayerTerminal(userId, term);
+  return term;
+}

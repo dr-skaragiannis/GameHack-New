@@ -10,15 +10,18 @@ export default function TerminalView({
   onCommand,
   suggestion,
   onSuggestionConsumed,
+  onResetLab,
 }: {
   term: Terminal;
   lang: Lang;
   onCommand: (raw: string, pasted: boolean) => void;
   suggestion?: string | null;
   onSuggestionConsumed?: () => void;
+  onResetLab?: () => void;
 }) {
   const [buf, setBuf] = useState("");
   const [histIdx, setHistIdx] = useState(-1);
+  const [resetArmed, setResetArmed] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [, bumpScreen] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
@@ -72,19 +75,51 @@ export default function TerminalView({
         <span className="ml-2 min-w-0 truncate tracking-wider">
           {term.user}@{term.host} — GameHack
         </span>
-        <button
-          type="button"
-          aria-label="Show the shared 100-command Linux reference in this terminal"
-          title="Show the shared 100-command Linux reference"
-          onClick={(event) => {
-            event.stopPropagation();
-            sound.enter();
-            onCommand("help", false);
-          }}
-          className="ml-auto shrink-0 rounded-md border border-neon-cyan/30 bg-neon-cyan/10 px-2 py-1.5 text-sm font-semibold text-neon-cyan hover:bg-neon-cyan/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neon-cyan sm:px-3"
-        >
-          Top 100
-        </button>
+        {onResetLab ? (
+          resetArmed ? (
+            <span className="ml-auto flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                aria-label={t("resetLabConfirm", lang)}
+                title={t("resetLabHint", lang)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  sound.enter();
+                  setResetArmed(false);
+                  onResetLab();
+                }}
+                className="shrink-0 rounded-md border border-rose-400/50 bg-rose-400/10 px-2 py-1.5 text-sm font-semibold text-rose-200 hover:bg-rose-400/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-300 sm:px-3"
+              >
+                {t("resetLabConfirm", lang)}
+              </button>
+              <button
+                type="button"
+                aria-label={t("resetLabCancel", lang)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setResetArmed(false);
+                }}
+                className="shrink-0 rounded-md border border-white/15 bg-white/5 px-2 py-1.5 text-sm font-semibold text-zinc-300 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-300 sm:px-3"
+              >
+                {t("resetLabCancel", lang)}
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              aria-label={t("resetLab", lang)}
+              title={t("resetLabHint", lang)}
+              onClick={(event) => {
+                event.stopPropagation();
+                sound.enter();
+                setResetArmed(true);
+              }}
+              className="ml-auto shrink-0 rounded-md border border-neon-cyan/30 bg-neon-cyan/10 px-2 py-1.5 text-sm font-semibold text-neon-cyan hover:bg-neon-cyan/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neon-cyan sm:px-3"
+            >
+              ↺ {t("resetLab", lang)}
+            </button>
+          )
+        ) : null}
       </div>
       <div ref={scroller} className="terminal-window__scroll flex-1 px-3 py-3 space-y-0.5 leading-relaxed">
         {term.lines.map((l, i) => (

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { Module, Task } from "../data/lessons";
 import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import { runCommand, type Terminal } from "../lib/terminal";
-import { activateTerminalForModule, loadPlayerTerminal, savePlayerTerminal } from "../lib/playerTerminal";
+import { activateTerminalForModule, loadPlayerTerminal, resetPlayerTerminal, savePlayerTerminal } from "../lib/playerTerminal";
 import TerminalView from "./TerminalView";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
@@ -427,6 +427,10 @@ export default function ModuleView({
               lang={lang}
               suggestion={commandSuggestion}
               onSuggestionConsumed={() => setCommandSuggestion(null)}
+              onResetLab={() => {
+                setTerm(resetPlayerTerminal(userId, module.id, module.scenario || "lab"));
+                bump((count) => count + 1);
+              }}
               onCommand={(raw, pasted) => {
                 if (!raw.trim()) return;
                 const cwd = term.cwd;

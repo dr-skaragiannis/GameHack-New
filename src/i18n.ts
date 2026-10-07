@@ -98,6 +98,13 @@ export const UI: Dict = {
   nextModule: { en: "Next module", el: "Επόμενη ενότητα" },
   moduleComplete: { en: "Module complete!", el: "Η ενότητα ολοκληρώθηκε!" },
   reset: { en: "Reset progress", el: "Επαναφορά προόδου" },
+  resetLab: { en: "Reset lab", el: "Επαναφορά lab" },
+  resetLabConfirm: { en: "Confirm reset", el: "Επιβεβαίωση" },
+  resetLabCancel: { en: "Cancel", el: "Ακύρωση" },
+  resetLabHint: {
+    en: "Restart the lab: files, processes, and services return to their initial state. XP and completed objectives are kept.",
+    el: "Επανεκκίνηση του lab: αρχεία, διεργασίες και υπηρεσίες επιστρέφουν στην αρχική κατάσταση. Τα XP και οι ολοκληρωμένες εργασίες διατηρούνται.",
+  },
   typeCommand: { en: "Type a command…", el: "Γράψε μια εντολή…" },
   cheatsheet: { en: "Cheat sheet", el: "Συνοπτικός οδηγός" },
   task: { en: "Task", el: "Εργασία" },

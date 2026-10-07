@@ -380,7 +380,39 @@ try {
   assert.ok(storageValues.has(`gamehack.player-terminal.v2:${encodeURIComponent("legacy@example.ionio.gr")}`));
   assert.ok(!storageValues.has(legacyKey), "saving the migrated terminal should retire the legacy snapshot");
 
-  console.log(`Linux sandbox checks passed: ${ALL_LINUX_COMMANDS.length} advertised command examples, one unified VFS, per-player isolation, persistence, and legacy migration.`);
+  const dirtyTerm = playerTerminal.createPlayerTerminal();
+  playerTerminal.activateTerminalForModule(dirtyTerm, "sr-proc", "sudorun");
+  const originalFixture = terminal.getNode(dirtyTerm.fs, "/root/gamehack.txt")?.content;
+  assert.ok(originalFixture, "fresh terminals should ship the gamehack fixture");
+  const originalIp = dirtyTerm.net.ip;
+  terminal.runCommand(dirtyTerm, "rm /root/gamehack.txt");
+  terminal.runCommand(dirtyTerm, "kill -9 7440");
+  terminal.runCommand(dirtyTerm, "ifconfig eth0 9.9.9.9");
+  terminal.runCommand(dirtyTerm, "export RESET_MARKER=1");
+  terminal.runCommand(dirtyTerm, "service apache2 start");
+  assert.equal(terminal.getNode(dirtyTerm.fs, "/root/gamehack.txt"), null, "rm should delete the fixture before reset");
+  assert.equal(dirtyTerm.procs.find((process) => process.pid === 7440)?.alive, false, "kill should stop the training process before reset");
+  assert.equal(dirtyTerm.net.ip, "9.9.9.9");
+  assert.equal(dirtyTerm.services.apache2, "running");
+  playerTerminal.savePlayerTerminal("reset@example.ionio.gr", dirtyTerm);
+  const progressSentinel = JSON.stringify({ users: { "reset@example.ionio.gr": { xp: 123 } } });
+  storageValues.set("gamehack.platform.v1", progressSentinel);
+
+  const fresh = playerTerminal.resetPlayerTerminal("reset@example.ionio.gr", "sr-proc", "sudorun");
+  assert.equal(terminal.getNode(fresh.fs, "/root/gamehack.txt")?.content, originalFixture, "reset should restore deleted fixtures");
+  assert.equal(fresh.procs.find((process) => process.pid === 7440)?.alive, true, "reset should revive training processes");
+  assert.equal(fresh.net.ip, originalIp, "reset should restore the default lab IP");
+  assert.equal(fresh.services.apache2, "stopped", "reset should stop started services");
+  assert.equal(fresh.env.RESET_MARKER, undefined, "reset should clear exported markers");
+  assert.equal(fresh.flags.size, 0, "reset should clear completion flags");
+  assert.equal(fresh.history.length, 0, "reset should clear command history");
+  assert.equal(storageValues.get("gamehack.platform.v1"), progressSentinel, "reset should not touch account progress or XP");
+  const savedReset = JSON.parse(storageValues.get(`gamehack.player-terminal.v2:${encodeURIComponent("reset@example.ionio.gr")}`));
+  assert.deepEqual(savedReset.flags, [], "reset should persist the clean snapshot");
+  const reloaded = playerTerminal.loadPlayerTerminal("reset@example.ionio.gr");
+  assert.equal(terminal.getNode(reloaded.fs, "/root/gamehack.txt")?.content, originalFixture, "reloaded terminals should keep the restored fixtures");
+
+  console.log(`Linux sandbox checks passed: ${ALL_LINUX_COMMANDS.length} advertised command examples, one unified VFS, per-player isolation, persistence, lab reset, and legacy migration.`);
 } finally {
   await server.close();
 }
