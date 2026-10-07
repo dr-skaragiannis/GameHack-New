@@ -14,6 +14,9 @@ import ModuleView from "./components/ModuleView";
 import ProfileView from "./components/ProfileView";
 import Tickets from "./components/Tickets";
 import Messages from "./components/Messages";
+import TeamsView from "./components/TeamsView";
+import ActivityView from "./components/ActivityView";
+import SettingsView from "./components/SettingsView";
 import MuteButton from "./components/MuteButton";
 import Icon from "./components/Icon";
 import Avatar from "./components/Avatar";
@@ -24,7 +27,7 @@ import OverallScoreboardPopup from "./components/OverallScoreboardPopup";
 import type { User } from "./lib/db";
 
 
-type View = "dashboard" | "educator" | "campaigns" | "map" | "module" | "messages" | "tickets" | "profile";
+type View = "dashboard" | "educator" | "campaigns" | "map" | "module" | "messages" | "tickets" | "profile" | "teams" | "activity" | "settings";
 type ModuleTab = "theory" | "guide" | "lab";
 type ThemeName = "cyan" | "warm";
 
@@ -322,19 +325,21 @@ export default function App() {
   type NavId = View | "scoreboard";
   const totalLabs = LEARNING_PATHS.reduce((sum, path) => sum + path.modules.length, 0);
   const nav: { id: NavId; icon: string; label: string; show: boolean; badge?: number; quietBadge?: boolean }[] = [
-    { id: "dashboard", icon: "home", label: t("homeNav", lang), show: user.role === "player" },
+    { id: "dashboard", icon: "grid", label: t("homeNav", lang), show: user.role === "player" },
     { id: "campaigns", icon: "flag", label: t("challengesNav", lang), show: true, badge: totalLabs, quietBadge: true },
-    { id: "map", icon: "map", label: t("learningMapNav", lang), show: true },
+    { id: "map", icon: "book", label: t("learningMapNav", lang), show: true },
     { id: "scoreboard", icon: "crown", label: t("leaderboard", lang), show: true },
     { id: "educator", icon: "chart", label: t("educator", lang), show: user.role === "educator" },
-    { id: "messages", icon: "mail", label: t("messagesNav", lang), show: true, badge: unread },
+    { id: "teams", icon: "users", label: t("teamsNav", lang), show: true },
+    { id: "activity", icon: "activity", label: t("activityNav", lang), show: true },
     { id: "profile", icon: "user", label: t("profileNav", lang), show: true },
-    { id: "tickets", icon: "ticket", label: t("ticketsNav", lang), show: true, badge: openTickets },
+    { id: "settings", icon: "settings", label: t("settingsNav", lang), show: true },
+    { id: "tickets", icon: "help", label: t("ticketsNav", lang), show: true, badge: openTickets },
   ];
   const sidebarSections: { title: string; ids: NavId[] }[] = [
     { title: t("controlCenter", lang), ids: ["dashboard", "campaigns", "map", "scoreboard", "educator"] },
-    { title: t("community", lang), ids: ["messages"] },
-    { title: t("yourAccount", lang), ids: ["profile", "tickets"] },
+    { title: t("community", lang), ids: ["teams", "activity"] },
+    { title: t("yourAccount", lang), ids: ["profile", "settings", "tickets"] },
   ];
   const onNavSelect = (id: NavId) => {
     if (id === "scoreboard") {
@@ -789,6 +794,34 @@ export default function App() {
             <Messages user={db.userById(user.id)!} lang={lang} withId={chatWith} onChange={refresh} />
           )}
           {view === "tickets" && <Tickets user={db.userById(user.id)!} lang={lang} onChange={refresh} />}
+          {view === "teams" && (
+            <TeamsView
+              user={db.userById(user.id)!}
+              lang={lang}
+              onProfile={(id) => {
+                setProfileId(id);
+                go("profile");
+              }}
+            />
+          )}
+          {view === "activity" && <ActivityView lang={lang} />}
+          {view === "settings" && (
+            <SettingsView
+              user={db.userById(user.id)!}
+              lang={lang}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+              onLang={setLang}
+              onWidth={(w) => {
+                db.updateUser(user.id, { contentWidth: w });
+                refresh();
+              }}
+              onOpenProfile={() => {
+                setProfileId(user.id);
+                go("profile");
+              }}
+            />
+          )}
         </main>
       </div>
 
