@@ -3,6 +3,7 @@ import {
   accuracyScore,
   BADGES,
   fidelityScore,
+  HOBBIES_POOL,
   INTERESTS_POOL,
   levelFromXp,
   updateUser,
@@ -22,12 +23,14 @@ export default function ProfileView({
   lang,
   onChange,
   onChat,
+  onBadge,
 }: {
   user: User;
   viewer: User;
   lang: Lang;
   onChange: () => void;
   onChat?: (id: string) => void;
+  onBadge?: (badgeId: string) => void;
 }) {
   const mine = viewer.id === user.id;
   const { changePassword: requestPasswordChange, rotateRecoveryKey } = useAuth();
@@ -58,9 +61,36 @@ export default function ProfileView({
     onChange();
   };
 
+  const interests = user.interests ?? [];
+  const hobbies = user.hobbies ?? [];
+  const [interestInput, setInterestInput] = useState("");
+  const [hobbyInput, setHobbyInput] = useState("");
+
   const toggleInterest = (i: string) => {
-    const next = user.interests.includes(i) ? user.interests.filter((x) => x !== i) : [...user.interests, i];
+    const next = interests.includes(i) ? interests.filter((x) => x !== i) : [...interests, i];
     updateUser(user.id, { interests: next });
+    onChange();
+  };
+
+  const toggleHobby = (h: string) => {
+    const next = hobbies.includes(h) ? hobbies.filter((x) => x !== h) : [...hobbies, h];
+    updateUser(user.id, { hobbies: next });
+    onChange();
+  };
+
+  const addCustomInterest = () => {
+    const value = interestInput.trim();
+    if (!value || interests.some((x) => x.toLowerCase() === value.toLowerCase())) return;
+    updateUser(user.id, { interests: [...interests, value] });
+    setInterestInput("");
+    onChange();
+  };
+
+  const addCustomHobby = () => {
+    const value = hobbyInput.trim();
+    if (!value || hobbies.some((x) => x.toLowerCase() === value.toLowerCase())) return;
+    updateUser(user.id, { hobbies: [...hobbies, value] });
+    setHobbyInput("");
     onChange();
   };
 
@@ -262,24 +292,97 @@ export default function ProfileView({
       <div className="glass rounded-2xl border border-gamehack-border p-5">
         <div className="text-sm uppercase tracking-widest text-iron-400 mb-3">{uppercaseLabel(t("interests", lang), lang)}</div>
         <div className="flex flex-wrap gap-2">
-          {(mine ? INTERESTS_POOL : user.interests).map((i) => {
-            const on = user.interests.includes(i);
+          {(mine ? [...INTERESTS_POOL, ...interests.filter((i) => !INTERESTS_POOL.includes(i))] : interests).map((i) => {
+            const on = interests.includes(i);
+            const custom = !INTERESTS_POOL.includes(i);
             return (
               <button
                 key={i}
                 type="button"
                 disabled={!mine}
                 onClick={() => mine && toggleInterest(i)}
+                title={mine && custom && on ? t("remove", lang) : undefined}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-sm",
+                  "rounded-full border px-3 py-1 text-sm inline-flex items-center gap-1.5",
                   on ? "border-cyan-500 bg-cyan-500/15 text-cyan-300" : "border-gamehack-border text-iron-400"
                 )}
               >
                 {i}
+                {mine && custom && on && <Icon name="close" className="h-3.5 w-3.5" />}
               </button>
             );
           })}
         </div>
+        {mine && (
+          <div className="mt-3 flex gap-2">
+            <input
+              value={interestInput}
+              onChange={(e) => setInterestInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") addCustomInterest();
+              }}
+              placeholder={t("customInterestPlaceholder", lang)}
+              maxLength={32}
+              className="flex-1 min-w-0 rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2 text-sm outline-none focus:border-cyan-500"
+            />
+            <button
+              type="button"
+              onClick={addCustomInterest}
+              disabled={!interestInput.trim()}
+              className="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t("add", lang)}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="glass rounded-2xl border border-gamehack-border p-5">
+        <div className="text-sm uppercase tracking-widest text-iron-400 mb-3">{uppercaseLabel(t("hobbies", lang), lang)}</div>
+        <div className="flex flex-wrap gap-2">
+          {(mine ? [...HOBBIES_POOL, ...hobbies.filter((h) => !HOBBIES_POOL.includes(h))] : hobbies).map((h) => {
+            const on = hobbies.includes(h);
+            const custom = !HOBBIES_POOL.includes(h);
+            return (
+              <button
+                key={h}
+                type="button"
+                disabled={!mine}
+                onClick={() => mine && toggleHobby(h)}
+                title={mine && custom && on ? t("remove", lang) : undefined}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-sm inline-flex items-center gap-1.5",
+                  on ? "border-cyan-500 bg-cyan-500/15 text-cyan-300" : "border-gamehack-border text-iron-400"
+                )}
+              >
+                {h}
+                {mine && custom && on && <Icon name="close" className="h-3.5 w-3.5" />}
+              </button>
+            );
+          })}
+        </div>
+        {mine && (
+          <div className="mt-3 flex gap-2">
+            <input
+              value={hobbyInput}
+              onChange={(e) => setHobbyInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") addCustomHobby();
+              }}
+              placeholder={t("customHobbyPlaceholder", lang)}
+              maxLength={32}
+              className="flex-1 min-w-0 rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2 text-sm outline-none focus:border-cyan-500"
+            />
+            <button
+              type="button"
+              onClick={addCustomHobby}
+              disabled={!hobbyInput.trim()}
+              className="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t("add", lang)}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="glass rounded-2xl border border-gamehack-border p-5">
@@ -288,15 +391,32 @@ export default function ProfileView({
           {user.badges.map((id) => {
             const b = BADGES[id];
             if (!b) return null;
-            return (
-              <div key={id} className="flex gap-3 rounded-xl border border-gamehack-border p-3">
-                <div className="h-10 w-10 rounded-lg bg-cyan-500/15 grid place-items-center text-cyan-400">
+            const inner = (
+              <>
+                <div className="h-10 w-10 shrink-0 rounded-lg bg-cyan-500/15 grid place-items-center text-cyan-400">
                   <Icon name={b.icon} className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="min-w-0 text-left">
                   <div className="font-semibold text-sm">{b.name}</div>
                   <div className="text-sm text-iron-400">{b.desc}</div>
                 </div>
+                {onBadge && <Icon name="chevron" className="ml-auto h-4 w-4 shrink-0 self-center text-iron-500" />}
+              </>
+            );
+            return onBadge ? (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onBadge(id)}
+                title={`${b.name} — ${b.desc}`}
+                aria-label={`${b.name}. ${b.desc}`}
+                className="flex items-center gap-3 rounded-xl border border-gamehack-border p-3 transition hover:border-cyan-500/50 hover:bg-cyan-500/5"
+              >
+                {inner}
+              </button>
+            ) : (
+              <div key={id} className="flex items-center gap-3 rounded-xl border border-gamehack-border p-3">
+                {inner}
               </div>
             );
           })}

@@ -30,6 +30,7 @@ export type User = {
   avatar: string;
   bio: string;
   interests: string[];
+  hobbies: string[];
   createdAt: number;
   lastSeen?: number;
   activeCampaignId?: string;
@@ -153,6 +154,21 @@ export const INTERESTS_POOL = [
   "Blue Team",
   "Linux",
   "Python",
+];
+
+export const HOBBIES_POOL = [
+  "Gaming",
+  "CTFs",
+  "Coding",
+  "Reading",
+  "Music",
+  "Movies",
+  "Sports",
+  "Chess",
+  "Photography",
+  "Hiking",
+  "Cooking",
+  "Robotics",
 ];
 
 export type Badge = {
@@ -486,6 +502,7 @@ function seed(): DB {
     avatar: "ic:owl:#a78bfa",
     bio: "Lead cybersecurity instructor. Here to help you build practical skills.",
     interests: ["Red Team", "Networking", "Forensics"],
+    hobbies: ["Reading", "Chess"],
     createdAt: Date.now() - 86400000 * 30,
     lang: "en",
     accepted: true,
@@ -522,6 +539,7 @@ function seed(): DB {
       avatar: randomIconAvatar(u.length / 10 + 0.11),
       bio: "Aspiring ethical hacker.",
       interests: [...ints],
+      hobbies: ["CTFs", "Gaming"],
       createdAt: Date.now() - 86400000 * 7,
       lang: "en",
       accepted: true,
@@ -699,6 +717,7 @@ export function establishAuthenticatedUser(email: string, nickname: string): Use
       avatar: randomIconAvatar(),
       bio: "",
       interests: [],
+      hobbies: [],
       createdAt: Date.now(),
       lang: "en",
       accepted: false,

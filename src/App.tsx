@@ -811,6 +811,7 @@ export default function App() {
               viewer={db.userById(user.id)!}
               lang={lang}
               onChange={refresh}
+              onBadge={setBadgeId}
               onChat={(id) => {
                 setChatWith(id);
                 go("messages");
