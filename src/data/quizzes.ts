@@ -10,7 +10,7 @@ export type QuizQ = {
 export const QUIZZES: Record<string, QuizQ[]> = {
   "linux-basics": [
     {
-      q: { en: "What does the $ at the end of a bash prompt mean?", el: "Τι σημαίνει το $ στο τέλος του prompt;" },
+      q: { en: "What does the $ at the end of a bash prompt mean?", el: "Τι δηλώνει το $ στο τέλος του prompt;" },
       choices: [
         { en: "You are root", el: "Είσαι root" },
         { en: "You are a normal user", el: "Είσαι απλός χρήστης" },
@@ -18,10 +18,10 @@ export const QUIZZES: Record<string, QuizQ[]> = {
         { en: "SSH is connected", el: "Το SSH είναι συνδεδεμένο" },
       ],
       answer: 1,
-      why: { en: "$ = unprivileged user. # = root.", el: "Το $ είναι απλός χρήστης. Το # είναι root." },
+      why: { en: "$ = unprivileged user. # = root.", el: "Το $ δηλώνει απλό χρήστη. Το # δηλώνει root." },
     },
     {
-      q: { en: "Which command prints the current directory?", el: "Ποια εντολή τυπώνει τον τρέχοντα φάκελο;" },
+      q: { en: "Which command prints the current directory?", el: "Ποια εντολή εμφανίζει τον τρέχοντα φάκελο;" },
       choices: [
         { en: "whoami", el: "whoami" },
         { en: "ls", el: "ls" },
@@ -29,7 +29,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
         { en: "cd", el: "cd" },
       ],
       answer: 2,
-      why: { en: "pwd = print working directory.", el: "pwd = print working directory." },
+      why: { en: "pwd = print working directory.", el: "Η εντολή pwd εμφανίζει τον τρέχοντα φάκελο (print working directory)." },
     },
     {
       q: { en: "How do you list hidden files?", el: "Πώς εμφανίζεις κρυφά αρχεία;" },
@@ -134,7 +134,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
         { en: "65536", el: "65536" },
       ],
       answer: 1,
-      why: { en: "/24 means 8 host bits → 256 addresses (254 usable).", el: "/24 = 8 host bits → 256 διευθύνσεις." },
+      why: { en: "/24 means 8 host bits → 256 addresses (254 usable).", el: "Το /24 αφήνει 8 host bits → 256 διευθύνσεις." },
     },
     {
       q: { en: "Scanning a network you do not own is…", el: "Η σάρωση δικτύου που δεν σου ανήκει είναι…" },
@@ -150,7 +150,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
   ],
   recon: [
     {
-      q: { en: "Passive recon means…", el: "Παθητική recon σημαίνει…" },
+      q: { en: "Passive recon means…", el: "Η παθητική αναγνώριση (recon) είναι…" },
       choices: [
         { en: "Sending nmap SYN packets", el: "Αποστολή nmap SYN" },
         { en: "Using public data without touching the target", el: "Δημόσια δεδομένα χωρίς επαφή με τον στόχο" },
@@ -196,7 +196,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
       why: { en: "-sV probes banners so you know which software (and version) answers.", el: "Το -sV διαβάζει banners." },
     },
     {
-      q: { en: "An open port 22 typically means…", el: "Ανοιχτή θύρα 22 συνήθως σημαίνει…" },
+      q: { en: "An open port 22 typically means…", el: "Η ανοιχτή θύρα 22 συνήθως δηλώνει…" },
       choices: [
         { en: "HTTP", el: "HTTP" },
         { en: "SSH", el: "SSH" },
@@ -242,7 +242,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
       why: { en: "Key-only SSH plus monitoring makes hydra-style attacks fail loudly.", el: "SSH μόνο με κλειδιά και monitoring." },
     },
     {
-      q: { en: "Running hydra against a random internet host is…", el: "Το hydra σε τυχαίο host του internet είναι…" },
+      q: { en: "Running hydra against a random internet host is…", el: "Η εκτέλεση hydra εναντίον τυχαίου συστήματος στο διαδίκτυο είναι…" },
       choices: [
         { en: "Fine if you are curious", el: "ΟΚ αν είσαι περίεργος" },
         { en: "Illegal without authorisation", el: "Παράνομο χωρίς εξουσιοδότηση" },
@@ -312,7 +312,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
       why: { en: "Many Unix tools have breakout flags. Don't sudo them.", el: "Πολλά Unix tools έχουν breakout. Μην τα κάνεις sudo." },
     },
     {
-      q: { en: "Least privilege means…", el: "Least privilege σημαίνει…" },
+      q: { en: "Least privilege means…", el: "Η αρχή του ελάχιστου προνομίου (least privilege) είναι…" },
       choices: [
         { en: "Everyone is root", el: "Όλοι είναι root" },
         { en: "Grant only the rights needed to do the job", el: "Δώσε μόνο τα απαραίτητα δικαιώματα" },
@@ -333,7 +333,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
         { en: "An ISP core", el: "Πυρήνας ISP" },
       ],
       answer: 1,
-      why: { en: "CTF / lab machines exist so you never touch live systems.", el: "Τα CTF υπάρχουν για να μην αγγίζεις live συστήματα." },
+      why: { en: "CTF / lab machines exist so you never touch live systems.", el: "Τα CTF και τα εργαστήρια υπάρχουν για να μην αγγίζεις πραγματικά συστήματα." },
     },
     {
       q: { en: "Typical first step on a new box?", el: "Τυπικό πρώτο βήμα;" },
@@ -347,7 +347,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
       why: { en: "Don't skip recon. You cannot exploit a service you have not found.", el: "Μην παραλείπεις recon." },
     },
     {
-      q: { en: "Raven in this lab speaks which services?", el: "Ο Raven μιλά ποιες υπηρεσίες;" },
+      q: { en: "Raven in this lab speaks which services?", el: "Ποιες υπηρεσίες προσφέρει ο Raven στο εργαστήριο;" },
       choices: [
         { en: "Only FTP", el: "Μόνο FTP" },
         { en: "SSH and HTTP", el: "SSH και HTTP" },
@@ -452,7 +452,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
       why: { en: "That's the boot2root finish line.", el: "Η γραμμή τερματισμού boot2root." },
     },
     {
-      q: { en: "After rooting a lab, you should…", el: "Μετά το root σε lab πρέπει…" },
+      q: { en: "After rooting a lab, you should…", el: "Αφού αποκτήσεις root σε εργαστήριο, πρέπει…" },
       choices: [
         { en: "Attack the next random IP you know", el: "Χτυπήσεις την επόμενη τυχαία IP" },
         { en: "Write notes and stay inside authorised scope", el: "Σημειώσεις και παραμονή στο scope" },
@@ -535,10 +535,10 @@ export const QUIZZES: Record<string, QuizQ[]> = {
   ],
   "ssh-tunnel": [
     {
-      q: { en: "Network segmentation means…", el: "Segmentation σημαίνει…" },
+      q: { en: "Network segmentation means…", el: "Η τμηματοποίηση δικτύου (segmentation) είναι…" },
       choices: [
         { en: "One flat VLAN for all", el: "Ένα VLAN για όλους" },
-        { en: "Not every host can reach every other host", el: "Δεν φτάνει κάθε host σε κάθε άλλον" },
+        { en: "Not every host can reach every other host", el: "Δεν επικοινωνεί κάθε σύστημα με κάθε άλλο" },
         { en: "No logging", el: "Χωρίς logs" },
         { en: "Public IPs on printers", el: "Public IP σε εκτυπωτές" },
       ],
@@ -557,7 +557,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
       why: { en: "It maps localhost:port to a remote service through the SSH hop.", el: "Χαρτογραφεί localhost:port σε απομακρυσμένη υπηρεσία." },
     },
     {
-      q: { en: "A dual-homed host is a pivot because…", el: "Dual-homed host είναι pivot γιατί…" },
+      q: { en: "A dual-homed host is a pivot because…", el: "Ένα σύστημα με δύο συνδέσεις (dual-homed) λειτουργεί ως pivot γιατί…" },
       choices: [
         { en: "It sits on more than one network", el: "Κάθεται σε περισσότερα δίκτυα" },
         { en: "It has two keyboards", el: "Έχει δύο πληκτρολόγια" },
@@ -569,8 +569,8 @@ export const QUIZZES: Record<string, QuizQ[]> = {
     },
   ],
   "sr-intro": [
-    { q: { en: "pwd prints…", el: "Το pwd τυπώνει…" }, choices: [{ en: "Users", el: "Χρήστες" }, { en: "Working directory", el: "Τρέχοντα φάκελο" }, { en: "Processes", el: "Διεργασίες" }, { en: "IPs", el: "IP" }], answer: 1, why: { en: "print working directory", el: "print working directory" } },
-    { q: { en: "whoami as root means…", el: "whoami ως root σημαίνει…" }, choices: [{ en: "Guest", el: "Guest" }, { en: "Full administrator on this box", el: "Πλήρης διαχειριστής" }, { en: "FTP only", el: "Μόνο FTP" }, { en: "No privileges", el: "Χωρίς προνόμια" }], answer: 1, why: { en: "root is the superuser.", el: "root = superuser." } },
+    { q: { en: "pwd prints…", el: "Η εντολή pwd εμφανίζει…" }, choices: [{ en: "Users", el: "Χρήστες" }, { en: "Working directory", el: "Τρέχοντα φάκελο" }, { en: "Processes", el: "Διεργασίες" }, { en: "IPs", el: "IP" }], answer: 1, why: { en: "print working directory", el: "Τον τρέχοντα φάκελο εργασίας." } },
+    { q: { en: "whoami as root means…", el: "Το whoami ως root δηλώνει…" }, choices: [{ en: "Guest", el: "Guest" }, { en: "Full administrator on this box", el: "Πλήρης διαχειριστής" }, { en: "FTP only", el: "Μόνο FTP" }, { en: "No privileges", el: "Χωρίς προνόμια" }], answer: 1, why: { en: "root is the superuser.", el: "root = superuser." } },
     { q: { en: "ls is closest to Windows…", el: "Το ls μοιάζει με…" }, choices: [{ en: "dir", el: "dir" }, { en: "ipconfig", el: "ipconfig" }, { en: "taskmgr", el: "taskmgr" }, { en: "notepad", el: "notepad" }], answer: 0, why: { en: "ls lists directory contents.", el: "Το ls λιστάρει." } },
   ],
   "sr-help": [
@@ -599,7 +599,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
     { q: { en: "sources.list lists…", el: "Το sources.list έχει…" }, choices: [{ en: "Users", el: "Χρήστες" }, { en: "Package repositories", el: "Αποθετήρια πακέτων" }, { en: "Cron jobs", el: "Cron" }, { en: "SSH keys", el: "SSH keys" }], answer: 1, why: { en: "Don't add random experimental repos.", el: "Όχι τυχαία experimental repos." } },
   ],
   "sr-perms": [
-    { q: { en: "chmod 7 means…", el: "chmod 7 σημαίνει…" }, choices: [{ en: "---", el: "---" }, { en: "rwx", el: "rwx" }, { en: "r--", el: "r--" }, { en: "x only", el: "μόνο x" }], answer: 1, why: { en: "4+2+1 = rwx.", el: "4+2+1 = rwx." } },
+    { q: { en: "chmod 7 means…", el: "Το chmod 7 δηλώνει…" }, choices: [{ en: "---", el: "---" }, { en: "rwx", el: "rwx" }, { en: "r--", el: "r--" }, { en: "x only", el: "μόνο x" }], answer: 1, why: { en: "4+2+1 = rwx.", el: "4+2+1 = rwx." } },
     { q: { en: "SUID is set with prefix…", el: "SUID με πρόθεμα…" }, choices: [{ en: "2", el: "2" }, { en: "4", el: "4" }, { en: "7", el: "7" }, { en: "0", el: "0" }], answer: 1, why: { en: "4644 = SUID + 644. 2xxx = SGID.", el: "4=SUID, 2=SGID." } },
     { q: { en: "chown Raj file changes…", el: "chown Raj αλλάζει…" }, choices: [{ en: "The group only", el: "Μόνο ομάδα" }, { en: "The owner", el: "Τον ιδιοκτήτη" }, { en: "The kernel", el: "Το kernel" }, { en: "DNS", el: "DNS" }], answer: 1, why: { en: "chgrp changes group.", el: "chgrp = ομάδα." } },
   ],
@@ -615,17 +615,17 @@ export const QUIZZES: Record<string, QuizQ[]> = {
   ],
   "sr-env": [
     { q: { en: "HISTSIZE=0 must have…", el: "HISTSIZE=0 πρέπει…" }, choices: [{ en: "Spaces around =", el: "Κενά γύρω από =" }, { en: "No spaces around =", el: "Χωρίς κενά" }, { en: "A comma", el: "Κόμμα" }, { en: "sudo always", el: "πάντα sudo" }], answer: 1, why: { en: "VAR=value syntax.", el: "Σύνταξη VAR=value." } },
-    { q: { en: "export makes a var…", el: "Το export κάνει τη μεταβλητή…" }, choices: [{ en: "Hidden from ps", el: "Κρυφή από ps" }, { en: "Inherited by child processes", el: "Κληρονομήσιμη στα παιδιά" }, { en: "A firewall rule", el: "Κανόνα firewall" }, { en: "Immutable kernel", el: "Αμετάβλητο kernel" }], answer: 1, why: { en: "Environment vs shell scope.", el: "Περιβάλλον vs shell." } },
+    { q: { en: "export makes a var…", el: "Με το export, η μεταβλητή γίνεται…" }, choices: [{ en: "Hidden from ps", el: "Κρυφή από το ps" }, { en: "Inherited by child processes", el: "Κληρονομήσιμη από τις διεργασίες-παιδιά" }, { en: "A firewall rule", el: "Κανόνα firewall" }, { en: "Immutable kernel", el: "Αμετάβλητο kernel" }], answer: 1, why: { en: "Environment vs shell scope.", el: "Περιβάλλον vs shell." } },
     { q: { en: "unset NAME…", el: "unset NAME…" }, choices: [{ en: "Creates NAME", el: "Δημιουργεί NAME" }, { en: "Deletes the variable", el: "Διαγράφει τη μεταβλητή" }, { en: "Installs apt", el: "Εγκαθιστά apt" }, { en: "Opens nano", el: "Ανοίγει nano" }], answer: 1, why: { en: "Gone until you set it again.", el: "Φεύγει μέχρι να την ξαναθέσεις." } },
   ],
   "sr-bash": [
     { q: { en: "#!/bin/bash is the…", el: "#!/bin/bash είναι…" }, choices: [{ en: "SUID bit", el: "SUID" }, { en: "Shebang — interpreter line", el: "Shebang — διερμηνέας" }, { en: "Cron field", el: "Πεδίο cron" }, { en: "MAC", el: "MAC" }], answer: 1, why: { en: "Tells the kernel to use bash.", el: "Λέει στο kernel να χρησιμοποιήσει bash." } },
-    { q: { en: "./script means…", el: "./script σημαίνει…" }, choices: [{ en: "Run from PATH only", el: "Μόνο PATH" }, { en: "Run the file in the current directory", el: "Τρέξε το αρχείο εδώ" }, { en: "Delete it", el: "Διαγραφή" }, { en: "Compile it", el: "Compile" }], answer: 1, why: { en: "Need +x too.", el: "Χρειάζεται και +x." } },
+    { q: { en: "./script means…", el: "Το ./script δηλώνει…" }, choices: [{ en: "Run from PATH only", el: "Μόνο PATH" }, { en: "Run the file in the current directory", el: "Εκτέλεση του αρχείου στον τρέχοντα φάκελο" }, { en: "Delete it", el: "Διαγραφή" }, { en: "Compile it", el: "Compile" }], answer: 1, why: { en: "Need +x too.", el: "Χρειάζεται και +x." } },
     { q: { en: "nmap -sn is a…", el: "nmap -sn είναι…" }, choices: [{ en: "OS exploit", el: "OS exploit" }, { en: "Ping / host-discovery sweep", el: "Ping / ανακάλυψη hosts" }, { en: "Hash crack", el: "Hash crack" }, { en: "TLS MITM", el: "TLS MITM" }], answer: 1, why: { en: "Formerly -sP. Lab networks only.", el: "Πρώην -sP. Μόνο lab." } },
   ],
   "sr-cron": [
     { q: { en: "Crontab field 1 is…", el: "Το 1ο πεδίο crontab είναι…" }, choices: [{ en: "Year", el: "Έτος" }, { en: "Minute 0–59", el: "Λεπτό 0–59" }, { en: "User always", el: "Πάντα χρήστης" }, { en: "Path", el: "Path" }], answer: 1, why: { en: "Then hour, dom, month, dow.", el: "Μετά ώρα, μέρα, μήνας, εβδομάδα." } },
-    { q: { en: "55 23 * * * means…", el: "55 23 * * * σημαίνει…" }, choices: [{ en: "05:23 once", el: "05:23 μία φορά" }, { en: "23:55 every day", el: "23:55 κάθε μέρα" }, { en: "Every 23 seconds", el: "Κάθε 23 δευτ." }, { en: "Never", el: "Ποτέ" }], answer: 1, why: { en: "minute 55, hour 23.", el: "λεπτό 55, ώρα 23." } },
+    { q: { en: "55 23 * * * means…", el: "Το 55 23 * * * δηλώνει…" }, choices: [{ en: "05:23 once", el: "05:23 μία φορά" }, { en: "23:55 every day", el: "23:55 κάθε μέρα" }, { en: "Every 23 seconds", el: "Κάθε 23 δευτ." }, { en: "Never", el: "Ποτέ" }], answer: 1, why: { en: "minute 55, hour 23.", el: "λεπτό 55, ώρα 23." } },
     { q: { en: "Runlevel 0…", el: "Runlevel 0…" }, choices: [{ en: "Reboot", el: "Reboot" }, { en: "Halt the system", el: "Σβήσιμο συστήματος" }, { en: "GUI only", el: "Μόνο GUI" }, { en: "Single-user", el: "Single-user" }], answer: 1, why: { en: "6 is reboot, 1 is single-user.", el: "6=reboot, 1=single-user." } },
   ],
   "sr-svc": [
@@ -645,7 +645,7 @@ export const QUIZZES: Record<string, QuizQ[]> = {
   ],
   "dfir-documents": [
     { q: { en: "Modern .docx is commonly…", el: "Το σύγχρονο .docx είναι συνήθως…" }, choices: [{ en: "A ZIP-based OOXML container", el: "ZIP-based OOXML container" }, { en: "A packet capture", el: "Packet capture" }, { en: "An NTFS hive", el: "NTFS hive" }, { en: "A plain bitmap", el: "Bitmap" }], answer: 0, why: { en: "OOXML documents package XML, relationships, metadata, and media.", el: "Τα OOXML πακετάρουν XML, relationships, metadata και media." } },
-    { q: { en: "A detected macro means…", el: "Εντοπισμένο macro σημαίνει…" }, choices: [{ en: "It definitely executed", el: "Σίγουρα εκτελέστηκε" }, { en: "Perform static inspection; execution still needs evidence", el: "Κάνε static inspection· η εκτέλεση θέλει evidence" }, { en: "The document is benign", el: "Το έγγραφο είναι ακίνδυνο" }, { en: "The hash is wrong", el: "Λάθος hash" }], answer: 1, why: { en: "Presence is an indicator, not proof of execution.", el: "Η παρουσία είναι ένδειξη, όχι απόδειξη εκτέλεσης." } },
+    { q: { en: "A detected macro means…", el: "Ένα εντοπισμένο macro απαιτεί…" }, choices: [{ en: "It definitely executed", el: "Σίγουρα εκτελέστηκε" }, { en: "Perform static inspection; execution still needs evidence", el: "Χρειάζεται στατική εξέταση, η εκτέλεση απαιτεί τεκμήρια" }, { en: "The document is benign", el: "Το έγγραφο είναι ακίνδυνο" }, { en: "The hash is wrong", el: "Λάθος hash" }], answer: 1, why: { en: "Presence is an indicator, not proof of execution.", el: "Η παρουσία είναι ένδειξη, όχι απόδειξη εκτέλεσης." } },
     { q: { en: "A hidden image string is…", el: "Κρυφό string εικόνας είναι…" }, choices: [{ en: "Always malicious", el: "Πάντα κακόβουλο" }, { en: "A lead to validate and contextualize", el: "Lead προς επαλήθευση και πλαίσιο" }, { en: "A file hash", el: "File hash" }, { en: "A chain-of-custody record", el: "Chain-of-custody record" }], answer: 1, why: { en: "Steganography findings need independent validation.", el: "Ευρήματα steganography θέλουν ανεξάρτητη επικύρωση." } },
   ],
   "dfir-web": [
@@ -660,13 +660,13 @@ export const QUIZZES: Record<string, QuizQ[]> = {
   ],
   "dfir-disk": [
     { q: { en: "A forensic image should be…", el: "Ένα forensic image πρέπει να…" }, choices: [{ en: "Acquired read-only and verified", el: "Αποκτηθεί read-only και επαληθευτεί" }, { en: "Edited before hashing", el: "Τροποποιηθεί πριν το hash" }, { en: "Mounted read/write", el: "Mounted read/write" }, { en: "Renamed without notes", el: "Μετονομαστεί χωρίς σημειώσεις" }], answer: 0, why: { en: "Preserve source, document acquisition, and validate the copy.", el: "Διατήρησε πηγή, τεκμηρίωσε acquisition και επικύρωσε αντίγραφο." } },
-    { q: { en: "$MFT primarily stores…", el: "$MFT κυρίως αποθηκεύει…" }, choices: [{ en: "NTFS file metadata records", el: "NTFS file metadata records" }, { en: "PCAP streams", el: "PCAP streams" }, { en: "Passwords in plaintext", el: "Plaintext passwords" }, { en: "Browser cookies only", el: "Μόνο cookies" }], answer: 0, why: { en: "$LogFile records filesystem metadata transactions; the two serve different roles.", el: "$LogFile κρατά filesystem metadata transactions· έχουν διαφορετικούς ρόλους." } },
+    { q: { en: "$MFT primarily stores…", el: "$MFT κυρίως αποθηκεύει…" }, choices: [{ en: "NTFS file metadata records", el: "NTFS file metadata records" }, { en: "PCAP streams", el: "PCAP streams" }, { en: "Passwords in plaintext", el: "Plaintext passwords" }, { en: "Browser cookies only", el: "Μόνο cookies" }], answer: 0, why: { en: "$LogFile records filesystem metadata transactions; the two serve different roles.", el: "$LogFile κρατά filesystem metadata transactions, έχουν διαφορετικούς ρόλους." } },
     { q: { en: "A deleted MFT entry proves…", el: "Deleted MFT entry αποδεικνύει…" }, choices: [{ en: "All file contents are recoverable", el: "Ανακτάται όλο το περιεχόμενο" }, { en: "A metadata record is marked deleted", el: "Metadata record έχει σημειωθεί deleted" }, { en: "Who deleted the file", el: "Ποιος το διέγραψε" }, { en: "Malware execution", el: "Malware execution" }], answer: 1, why: { en: "Recovery and attribution require additional evidence.", el: "Ανάκτηση και attribution απαιτούν πρόσθετα evidence." } },
   ],
   "dfir-malware": [
-    { q: { en: "Static analysis means…", el: "Static analysis σημαίνει…" }, choices: [{ en: "Inspecting without executing the sample", el: "Εξέταση χωρίς εκτέλεση" }, { en: "Running it on a workstation", el: "Εκτέλεση σε workstation" }, { en: "Deleting logs", el: "Διαγραφή logs" }, { en: "Hash cracking", el: "Cracking hashes" }], answer: 0, why: { en: "Begin with metadata, hashes, strings, and safe code inspection.", el: "Ξεκίνα με metadata, hashes, strings και ασφαλή code inspection." } },
+    { q: { en: "Static analysis means…", el: "Η στατική ανάλυση είναι…" }, choices: [{ en: "Inspecting without executing the sample", el: "Εξέταση χωρίς εκτέλεση" }, { en: "Running it on a workstation", el: "Εκτέλεση σε workstation" }, { en: "Deleting logs", el: "Διαγραφή logs" }, { en: "Hash cracking", el: "Cracking hashes" }], answer: 0, why: { en: "Begin with metadata, hashes, strings, and safe code inspection.", el: "Ξεκίνα με metadata, hashes, strings και ασφαλή code inspection." } },
     { q: { en: "A defanged domain ending .invalid…", el: "Defanged domain με .invalid…" }, choices: [{ en: "Should resolve publicly", el: "Επιλύεται δημόσια" }, { en: "Is a safe, non-routable reporting placeholder", el: "Είναι ασφαλές reporting placeholder" }, { en: "Proves malware", el: "Αποδεικνύει malware" }, { en: "Is an MD5", el: "Είναι MD5" }], answer: 1, why: { en: ".invalid is reserved for examples and prevents accidental live navigation.", el: "Το .invalid είναι δεσμευμένο για παραδείγματα." } },
-    { q: { en: "A clean public scanner result proves…", el: "Καθαρό public scanner result αποδεικνύει…" }, choices: [{ en: "The sample is harmless", el: "Το sample είναι ακίνδυνο" }, { en: "Only that those scanners did not flag it then", el: "Μόνο ότι δεν το επισήμαναν τότε" }, { en: "Its author", el: "Δημιουργό" }, { en: "No behavior", el: "Καμία συμπεριφορά" }], answer: 1, why: { en: "Absence of detections is not proof of benignness; public upload may expose confidential data.", el: "Απουσία detection δεν αποδεικνύει benignness· public upload εκθέτει πιθανώς confidential data." } },
+    { q: { en: "A clean public scanner result proves…", el: "Καθαρό public scanner result αποδεικνύει…" }, choices: [{ en: "The sample is harmless", el: "Το sample είναι ακίνδυνο" }, { en: "Only that those scanners did not flag it then", el: "Μόνο ότι δεν το επισήμαναν τότε" }, { en: "Its author", el: "Δημιουργό" }, { en: "No behavior", el: "Καμία συμπεριφορά" }], answer: 1, why: { en: "Absence of detections is not proof of benignness; public upload may expose confidential data.", el: "Απουσία detection δεν αποδεικνύει benignness, public upload εκθέτει πιθανώς confidential data." } },
   ],
   "dfir-memory": [
     { q: { en: "Memory evidence is especially valuable because it can preserve…", el: "Memory evidence είναι πολύτιμο γιατί διατηρεί…" }, choices: [{ en: "Only old file names", el: "Μόνο ονόματα αρχείων" }, { en: "Volatile processes, sockets, environment, clipboard", el: "Volatile processes, sockets, environment, clipboard" }, { en: "Only registry backups", el: "Μόνο registry backups" }, { en: "Static disk sectors only", el: "Μόνο sectors δίσκου" }], answer: 1, why: { en: "RAM captures a moment-in-time volatile system state.", el: "Η RAM συλλαμβάνει στιγμιαία volatile κατάσταση." } },
@@ -675,11 +675,11 @@ export const QUIZZES: Record<string, QuizQ[]> = {
   ],
   "dfir-container": [
     { q: { en: "docker diff reports…", el: "Το docker diff αναφέρει…" }, choices: [{ en: "Added, deleted, changed paths", el: "Προσθήκες, διαγραφές, αλλαγές paths" }, { en: "Only network packets", el: "Μόνο packets" }, { en: "Password hashes", el: "Hashes κωδικών" }, { en: "VBA macros", el: "VBA macros" }], answer: 0, why: { en: "A/C/D changes compare a container's writable layer with its image.", el: "A/C/D συγκρίνουν writable layer με image." } },
-    { q: { en: "Deleting a secret in a later image layer…", el: "Διαγραφή secret σε μεταγενέστερο layer…" }, choices: [{ en: "Guarantees bytes are erased", el: "Εγγυάται διαγραφή bytes" }, { en: "May leave secret bytes in an earlier layer", el: "Μπορεί να αφήσει bytes σε παλιότερο layer" }, { en: "Changes the host kernel", el: "Αλλάζει host kernel" }, { en: "Rewrites all logs", el: "Ξαναγράφει logs" }], answer: 1, why: { en: "Container image layers are immutable; inspect history and rotate exposed secrets.", el: "Image layers είναι immutable· έλεγξε history και κάνε rotation." } },
+    { q: { en: "Deleting a secret in a later image layer…", el: "Διαγραφή secret σε μεταγενέστερο layer…" }, choices: [{ en: "Guarantees bytes are erased", el: "Εγγυάται διαγραφή bytes" }, { en: "May leave secret bytes in an earlier layer", el: "Μπορεί να αφήσει bytes σε παλιότερο layer" }, { en: "Changes the host kernel", el: "Αλλάζει host kernel" }, { en: "Rewrites all logs", el: "Ξαναγράφει logs" }], answer: 1, why: { en: "Container image layers are immutable; inspect history and rotate exposed secrets.", el: "Image layers είναι immutable, έλεγξε history και κάνε rotation." } },
     { q: { en: "docker export typically captures…", el: "Το docker export συνήθως συλλέγει…" }, choices: [{ en: "Filesystem snapshot, not full image history", el: "Filesystem snapshot, όχι όλο image history" }, { en: "Only registry keys", el: "Μόνο registry keys" }, { en: "Every memory page", el: "Κάθε memory page" }, { en: "No evidence", el: "Κανένα evidence" }], answer: 0, why: { en: "Container filesystem export and image-layer acquisition answer different questions.", el: "Filesystem export και image-layer acquisition απαντούν διαφορετικά ερωτήματα." } },
   ],
   "dfir-passwords": [
-    { q: { en: "A password hash is…", el: "Password hash είναι…" }, choices: [{ en: "Encrypted text with a reversible key", el: "Αναστρέψιμο κρυπτογραφημένο κείμενο" }, { en: "A one-way digest commonly checked against candidates", el: "One-way digest που συγκρίνεται με candidates" }, { en: "A username", el: "Username" }, { en: "A packet filter", el: "Packet filter" }], answer: 1, why: { en: "Candidate hashing and comparison can find weak passwords; the hash is not simply decrypted.", el: "Hash candidates και σύγκριση βρίσκουν αδύναμους κωδικούς· δεν αποκρυπτογραφείται απλά." } },
+    { q: { en: "A password hash is…", el: "Password hash είναι…" }, choices: [{ en: "Encrypted text with a reversible key", el: "Αναστρέψιμο κρυπτογραφημένο κείμενο" }, { en: "A one-way digest commonly checked against candidates", el: "One-way digest που συγκρίνεται με candidates" }, { en: "A username", el: "Username" }, { en: "A packet filter", el: "Packet filter" }], answer: 1, why: { en: "Candidate hashing and comparison can find weak passwords; the hash is not simply decrypted.", el: "Hash candidates και σύγκριση βρίσκουν αδύναμους κωδικούς, δεν αποκρυπτογραφείται απλά." } },
     { q: { en: "Why salt stored passwords?", el: "Γιατί salt στους κωδικούς;" }, choices: [{ en: "To make every account hash distinct and defeat precomputed reuse", el: "Μοναδικό hash ανά account και αποφυγή precomputed reuse" }, { en: "To reveal the password", el: "Για αποκάλυψη κωδικού" }, { en: "To speed up MD5", el: "Επιτάχυνση MD5" }, { en: "To encrypt a disk", el: "Κρυπτογράφηση δίσκου" }], answer: 0, why: { en: "Use a unique salt and a slow adaptive KDF such as Argon2id, bcrypt, or scrypt.", el: "Χρησιμοποίησε μοναδικό salt και αργό adaptive KDF όπως Argon2id, bcrypt ή scrypt." } },
     { q: { en: "A recovered candidate password proves…", el: "Ένας ανακτημένος candidate κωδικός αποδεικνύει…" }, choices: [{ en: "Which person typed it", el: "Ποιος τον πληκτρολόγησε" }, { en: "The candidate matches the supplied training digest", el: "Ο candidate ταιριάζει στο training digest" }, { en: "The account was used in the incident", el: "Το account χρησιμοποιήθηκε στο incident" }, { en: "The evidence is authentic", el: "Το evidence είναι authentic" }], answer: 1, why: { en: "Password recovery and user attribution are separate questions.", el: "Ανάκτηση κωδικού και attribution είναι διαφορετικά ερωτήματα." } },
   ],

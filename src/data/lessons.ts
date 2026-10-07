@@ -84,14 +84,14 @@ export const MODULES: Module[] = [
         heading: { en: "What is a terminal / CLI?", el: "Τι είναι το τερματικό / CLI;" },
         body: {
           en: "A terminal is a text window where you talk to the computer by typing commands instead of clicking. This is the Command Line Interface (CLI), driven by a program called the shell (here, bash). You type one line, press Enter, and the shell runs it and prints the result. Almost every hacking and security tool lives here — mastering the CLI is the single most important skill for a security professional.",
-          el: "Το τερματικό είναι ένα παράθυρο κειμένου όπου μιλάς στον υπολογιστή γράφοντας εντολές αντί να κάνεις κλικ. Αυτό είναι το Command Line Interface (CLI), που το οδηγεί ένα πρόγραμμα, το shell (εδώ, bash). Γράφεις μια γραμμή, πατάς Enter, το shell την εκτελεί και τυπώνει το αποτέλεσμα. Σχεδόν κάθε εργαλείο χάκινγκ ζει εδώ — η κατοχή του CLI είναι η πιο σημαντική δεξιότητα ενός επαγγελματία ασφάλειας.",
+          el: "Το τερματικό είναι ένα παράθυρο κειμένου όπου επικοινωνείς με τον υπολογιστή γράφοντας εντολές αντί να κάνεις κλικ. Αυτό είναι η διεπαφή γραμμής εντολών (Command Line Interface, CLI), την οποία οδηγεί ένα πρόγραμμα, το κέλυφος (shell, εδώ, bash). Γράφεις μια γραμμή, πατάς Enter, το shell την εκτελεί και εμφανίζει το αποτέλεσμα. Σχεδόν κάθε εργαλείο ασφαλείας ζει εδώ — η γνώση του CLI είναι η πιο σημαντική δεξιότητα ενός επαγγελματία ασφάλειας.",
         },
       },
       {
         heading: { en: "Reading the prompt", el: "Διαβάζοντας το prompt" },
         body: {
           en: "Before every command the shell shows a prompt, e.g. operator@kali:~$. It tells you WHO you are (operator), WHICH machine (kali) and WHERE you are (~ = home). The $ means a normal user; a # would mean you are root (admin). You type your command right after it and press Enter to run it.",
-          el: "Πριν από κάθε εντολή το shell δείχνει ένα prompt, π.χ. operator@kali:~$. Σου λέει ΠΟΙΟΣ είσαι (operator), ΠΟΙΟ μηχάνημα (kali) και ΠΟΥ βρίσκεσαι (~ = home). Το $ σημαίνει απλός χρήστης· ένα # θα σήμαινε ότι είσαι root (διαχειριστής). Γράφεις την εντολή αμέσως μετά και πατάς Enter.",
+          el: "Πριν από κάθε εντολή, το shell εμφανίζει ένα prompt, π.χ. operator@kali:~$. Το prompt δείχνει ΠΟΙΟΣ είσαι (operator), σε ΠΟΙΟ μηχάνημα βρίσκεσαι (kali) και ΠΟΥ βρίσκεσαι (~ = home). Το $ δηλώνει απλό χρήστη, το # θα δήλωνε ότι είσαι root (διαχειριστής). Γράψε την εντολή αμέσως μετά και πάτα Enter.",
         },
       },
       {
@@ -109,7 +109,7 @@ export const MODULES: Module[] = [
         heading: { en: "Where am I? (pwd, ls, cd, cat)", el: "Πού βρίσκομαι;" },
         body: {
           en: "The filesystem is a tree that starts at the root /. pwd prints your current location. ls lists a folder; ls -a also reveals hidden files (names starting with a dot). cd folder moves in, cd .. goes up, and cat file prints a file's contents.",
-          el: "Το σύστημα αρχείων είναι ένα δέντρο από τη ρίζα /. Το pwd δείχνει τη θέση σου. Το ls εμφανίζει φάκελο· το ls -a αποκαλύπτει κρυφά αρχεία. Το cd μπαίνει σε φάκελο, το cd .. ανεβαίνει, και το cat τυπώνει αρχείο.",
+          el: "Το σύστημα αρχείων είναι ένα δέντρο με ρίζα το /. Η εντολή pwd εμφανίζει τη θέση στην οποία βρίσκεσαι. Η εντολή ls εμφανίζει τα περιεχόμενα ενός φακέλου, το ls -a αποκαλύπτει και τα κρυφά αρχεία. Το cd μετακινεί σε φάκελο, το cd .. ανεβαίνει ένα επίπεδο, και το cat εμφανίζει το περιεχόμενο ενός αρχείου.",
         },
         tip: {
           en: "Hidden files are a favorite place to stash secrets and config — always check with ls -a.",
@@ -139,31 +139,31 @@ export const MODULES: Module[] = [
       },
       {
         id: "whoami",
-        instruction: { en: "Run whoami to confirm your identity.", el: "Τρέξε whoami για να επιβεβαιώσεις την ταυτότητά σου." },
+        instruction: { en: "Run whoami to confirm your identity.", el: "Εκτέλεσε whoami για να επιβεβαιώσεις την ταυτότητά σου." },
         hint: { en: "whoami", el: "whoami" },
         explain: {
           en: "WHY: Always know which user you are before you act. HOW: whoami prints the current account name.",
-          el: "ΓΙΑΤΙ: Πάντα να ξέρεις ποιος χρήστης είσαι. ΠΩΣ: το whoami τυπώνει το όνομα λογαριασμού.",
+          el: "ΓΙΑΤΙ: Πρέπει να γνωρίζεις πάντα ποιος χρήστης είσαι. ΠΩΣ: η εντολή whoami εμφανίζει το όνομα του λογαριασμού.",
         },
         check: (t) => t.flags.has("whoami") || usedCmd(t, /^\s*whoami\b/),
       },
       {
         id: "pwd",
-        instruction: { en: "Print your working directory with pwd.", el: "Τύπωσε τον τρέχοντα φάκελο με pwd." },
+        instruction: { en: "Print your working directory with pwd.", el: "Εμφάνισε τον τρέχοντα φάκελο με pwd." },
         hint: { en: "pwd", el: "pwd" },
         explain: {
           en: "WHY: Orientation. HOW: pwd → print working directory.",
-          el: "ΓΙΑΤΙ: Προσανατολισμός. ΠΩΣ: pwd.",
+          el: "ΓΙΑΤΙ: Προσανατολισμός στο σύστημα αρχείων. ΠΩΣ: εκτέλεσε pwd.",
         },
         check: (t) => t.flags.has("pwd") || usedCmd(t, /^\s*pwd\b/),
       },
       {
         id: "ls",
-        instruction: { en: "List the files in your home with ls.", el: "Λίσταρχεία στο home με ls." },
+        instruction: { en: "List the files in your home with ls.", el: "Εμφάνισε τα αρχεία του προσωπικού φακέλου (home) με ls." },
         hint: { en: "ls", el: "ls" },
         explain: {
           en: "WHY: See what is around you. HOW: ls lists the current directory.",
-          el: "ΓΙΑΤΙ: Δες τι υπάρχει γύρω σου. ΠΩΣ: ls.",
+          el: "ΓΙΑΤΙ: Δες τι υπάρχει γύρω σου. ΠΩΣ: εκτέλεσε ls.",
         },
         check: (t) => t.flags.has("ls") || usedCmd(t, /^\s*ls\b/),
       },
@@ -173,7 +173,7 @@ export const MODULES: Module[] = [
         hint: { en: "cat welcome.txt", el: "cat welcome.txt" },
         explain: {
           en: "WHY: cat concatenates and prints files. HOW: cat welcome.txt",
-          el: "ΓΙΑΤΙ: το cat τυπώνει αρχεία. ΠΩΣ: cat welcome.txt",
+          el: "ΓΙΑΤΙ: η εντολή cat εμφανίζει αρχεία. ΠΩΣ: cat welcome.txt",
         },
         check: (t) => t.flags.has("read-welcome") || usedCmd(t, /cat\s+.*welcome/),
       },
@@ -183,9 +183,9 @@ export const MODULES: Module[] = [
         title: { en: "Hidden in the home", el: "Κρυμμένο στο home" },
         brief: {
           en: "There is a hidden file in your home directory. Find it and read it.",
-          el: "Υπάρχει κρυφό αρχείο στο home. Βρες το και διάβασέ το.",
+          el: "Υπάρχει ένα κρυφό αρχείο στον προσωπικό φάκελο (home). Βρες το και διάβασέ το.",
         },
-        success: { en: "You uncovered a dotfile. Operators always ls -a.", el: "Αποκάλυψες ένα dotfile. Οι χειριστές πάντα κάνουν ls -a." },
+        success: { en: "You uncovered a dotfile. Operators always ls -a.", el: "Αποκάλυψες ένα κρυφό αρχείο (dotfile). Οι χειριστές ελέγχουν πάντα με ls -a." },
         check: (t) => t.flags.has("read-secret") || t.flags.has("saw:FLAG{hidden_in_plain_sight}"),
       },
       {
@@ -194,7 +194,7 @@ export const MODULES: Module[] = [
           en: "Change into the documents folder, then prove you were there by reading readme.md.",
           el: "Μπες στον φάκελο documents και διάβασε το readme.md.",
         },
-        success: { en: "Navigation locked in.", el: "Η πλοήγηση κλείδωσε." },
+        success: { en: "Navigation locked in.", el: "Η πλοήγηση εμπεδώθηκε." },
         check: (t) => t.filesRead.some((p) => p.includes("readme.md")) || usedCmd(t, /cat\s+.*readme/),
       },
     ],
@@ -220,7 +220,7 @@ export const MODULES: Module[] = [
         heading: { en: "find and grep", el: "find και grep" },
         body: {
           en: "find /home -name '*.txt' walks a tree looking for names. grep PATTERN file searches inside a file. Together they are how you hunt secrets, configs and leftovers on a box.",
-          el: "Το find περπατά το δέντρο. Το grep ψάχνει μέσα σε αρχείο. Μαζί κυνηγάς μυστικά και ρυθμίσεις.",
+          el: "Η εντολή find διασχίζει το δέντρο. Η εντολή grep ψάχνει μέσα σε αρχεία. Με τα δύο μαζί εντοπίζεις μυστικά και ρυθμίσεις.",
         },
         tip: {
           en: "On a real engagement, start with find and grep before you install anything new.",
@@ -256,7 +256,7 @@ export const MODULES: Module[] = [
       },
       {
         id: "grep-todo",
-        instruction: { en: "grep the word enumerate inside notes.txt.", el: "Κάνε grep τη λέξη enumerate στο notes.txt." },
+        instruction: { en: "grep the word enumerate inside notes.txt.", el: "Αναζήτησε τη λέξη enumerate στο notes.txt με grep." },
         hint: { en: "grep enumerate notes.txt", el: "grep enumerate notes.txt" },
         explain: {
           en: "WHY: grep pulls signal out of noise. HOW: grep enumerate notes.txt",
@@ -294,14 +294,14 @@ export const MODULES: Module[] = [
         heading: { en: "rwx and ls -l", el: "rwx και ls -l" },
         body: {
           en: "Every file has a mode string like -rw-r--r--. The first char is type (- file, d directory). Then three triples: owner, group, others — read, write, execute. ls -l shows this. Permission denied means you asked for a bit you do not have.",
-          el: "Κάθε αρχείο έχει mode όπως -rw-r--r--. Το ls -l το δείχνει. Permission denied σημαίνει ότι ζήτησες bit που δεν έχεις.",
+          el: "Κάθε αρχείο έχει λειτουργία (mode) όπως το -rw-r--r--. Η εντολή ls -l την εμφανίζει. Το μήνυμα Permission denied δηλώνει ότι ζήτησες δικαίωμα που δεν διαθέτεις.",
         },
       },
       {
         heading: { en: "sudo and the principle of least privilege", el: "sudo και ελάχιστο προνόμιο" },
         body: {
           en: "sudo lets a user run a command as root. sudo -l lists what YOU are allowed to run. On a pentest, sudo -l is one of the first privilege-escalation checks — misconfigured sudo is a classic path to root. Never run sudo on a system you do not own.",
-          el: "Το sudo τρέχει εντολή ως root. Το sudo -l δείχνει τι ΕΠΙΤΡΕΠΕΤΑΙ σε σένα. Σε pentest είναι από τους πρώτους ελέγχους ανύψωσης προνομίων.",
+          el: "Το sudo εκτελεί εντολές ως root. Το sudo -l εμφανίζει τι ΕΠΙΤΡΕΠΕΤΑΙ σε σένα. Σε έλεγχο διείσδυσης (pentest) είναι από τους πρώτους ελέγχους ανύψωσης προνομίων.",
         },
       },
     ],
@@ -313,23 +313,23 @@ export const MODULES: Module[] = [
     tasks: [
       {
         id: "lsl",
-        instruction: { en: "Run ls -l in your home to see file modes.", el: "Τρέξε ls -l στο home." },
+        instruction: { en: "Run ls -l in your home to see file modes.", el: "Εκτέλεσε ls -l στο home." },
         hint: { en: "ls -l", el: "ls -l" },
-        explain: { en: "WHY: Modes tell you what you can touch.", el: "ΓΙΑΤΙ: Τα modes λένε τι μπορείς να αγγίξεις." },
+        explain: { en: "WHY: Modes tell you what you can touch.", el: "ΓΙΑΤΙ: Οι λειτουργίες (modes) δείχνουν τι επιτρέπεται να αγγίξεις." },
         check: (t) => t.flags.has("ls-l") || usedCmd(t, /ls\s+-[al]*l/),
       },
       {
         id: "id",
-        instruction: { en: "Run id to see uid/gid/groups.", el: "Τρέξε id." },
+        instruction: { en: "Run id to see uid/gid/groups.", el: "Εκτέλεσε id." },
         hint: { en: "id", el: "id" },
-        explain: { en: "WHY: Groups often grant extra rights (sudo, docker, disk).", el: "ΓΙΑΤΙ: Οι ομάδες δίνουν έξτρα δικαιώματα." },
+        explain: { en: "WHY: Groups often grant extra rights (sudo, docker, disk).", el: "ΓΙΑΤΙ: Οι ομάδες παραχωρούν επιπλέον δικαιώματα." },
         check: (t) => t.flags.has("id") || usedCmd(t, /^\s*id\b/),
       },
       {
         id: "sudo-l",
-        instruction: { en: "Ask sudo what you are allowed to run: sudo -l", el: "Ρώτα το sudo: sudo -l" },
+        instruction: { en: "Ask sudo what you are allowed to run: sudo -l", el: "Ρώτησε το sudo τι επιτρέπεται: sudo -l" },
         hint: { en: "sudo -l", el: "sudo -l" },
-        explain: { en: "WHY: Misconfigured sudo is a highway to root.", el: "ΓΙΑΤΙ: Λάθος sudo οδηγεί σε root." },
+        explain: { en: "WHY: Misconfigured sudo is a highway to root.", el: "ΓΙΑΤΙ: Λανθασμένη ρύθμιση sudo οδηγεί σε root." },
         check: (t) => t.flags.has("sudo-l") || usedCmd(t, /sudo\s+-l/),
       },
     ],
@@ -383,12 +383,12 @@ export const MODULES: Module[] = [
         id: "ip",
         instruction: { en: "Show your interface with ip addr (or ifconfig).", el: "Δείξε τη διεπαφή με ip addr." },
         hint: { en: "ip addr", el: "ip addr" },
-        explain: { en: "WHY: Know your own IP before you scan others.", el: "ΓΙΑΤΙ: Ξέρε τη IP σου πριν σαρώσεις." },
+        explain: { en: "WHY: Know your own IP before you scan others.", el: "ΓΙΑΤΙ: Μάθε τη δική σου IP πριν σαρώσεις άλλα συστήματα." },
         check: (t) => t.flags.has("ip") || usedCmd(t, /\b(ip|ifconfig)\b/),
       },
       {
         id: "ping",
-        instruction: { en: "Ping raven.lab or 10.10.10.5.", el: "Κάνε ping το raven.lab ή 10.10.10.5." },
+        instruction: { en: "Ping raven.lab or 10.10.10.5.", el: "Εκτέλεσε ping προς το raven.lab ή το 10.10.10.5." },
         hint: { en: "ping 10.10.10.5", el: "ping 10.10.10.5" },
         explain: { en: "WHY: Host discovery 101.", el: "ΓΙΑΤΙ: Ανακάλυψη hosts." },
         check: (t) => t.flags.has("ping") || usedCmd(t, /^\s*ping\b/),
@@ -404,13 +404,13 @@ export const MODULES: Module[] = [
     challenges: [
       {
         title: { en: "Touch the web box", el: "Άγγιξε το web" },
-        brief: { en: "Ping 10.10.10.8 (web.lab) as well.", el: "Κάνε ping το 10.10.10.8." },
-        success: { en: "Two hosts alive on the GameHack lab network.", el: "Δύο hosts ζωντανοί." },
+        brief: { en: "Ping 10.10.10.8 (web.lab) as well.", el: "Εκτέλεσε ping προς το 10.10.10.8." },
+        success: { en: "Two hosts alive on the GameHack lab network.", el: "Δύο συστήματα (hosts) είναι ενεργά." },
         check: (t) => usedCmd(t, /ping\s+.*(10\.10\.10\.8|web\.lab)/),
       },
       {
         title: { en: "Know thyself", el: "Γνώθι σαυτόν" },
-        brief: { en: "Run hostname so you remember which box you are on.", el: "Τρέξε hostname." },
+        brief: { en: "Run hostname so you remember which box you are on.", el: "Εκτέλεσε hostname." },
         success: { en: "You are kali. Don't lose the plot.", el: "Είσαι kali." },
         check: (t) => usedCmd(t, /^\s*hostname\b/),
       },
@@ -437,11 +437,11 @@ export const MODULES: Module[] = [
         heading: { en: "Network sweeps with nmap", el: "Σαρώσεις με nmap" },
         body: {
           en: "nmap 10.10.10.0/24 asks every address in the /24 if it is up. On a /24 that is 256 hosts. Use this to build your target list before you port-scan a single machine.",
-          el: "Το nmap 10.10.10.0/24 ρωτά κάθε διεύθυνση αν είναι ζωντανή. Χτίσε λίστα στόχων πριν σαρώσεις θύρες.",
+          el: "Η εντολή nmap 10.10.10.0/24 ελέγχει κάθε διεύθυνση αν είναι ενεργή. Χτίσε λίστα στόχων πριν σαρώσεις θύρες.",
         },
         tip: {
           en: "Never sweep a network that is not in your written scope.",
-          el: "Μην σαρώνεις δίκτυο εκτός γραπτού scope.",
+          el: "Μην σαρώνεις δίκτυο εκτός γραπτού πεδίου εξουσιοδότησης (scope).",
         },
       },
     ],
@@ -454,12 +454,12 @@ export const MODULES: Module[] = [
         id: "sweep",
         instruction: { en: "Sweep the lab subnet: nmap 10.10.10.0/24", el: "Σάρωσε: nmap 10.10.10.0/24" },
         hint: { en: "nmap 10.10.10.0/24", el: "nmap 10.10.10.0/24" },
-        explain: { en: "WHY: You cannot hack a host you have not found.", el: "ΓΙΑΤΙ: Δεν χτυπάς host που δεν βρήκες." },
+        explain: { en: "WHY: You cannot hack a host you have not found.", el: "ΓΙΑΤΙ: Δεν μπορείς να ελέγξεις σύστημα που δεν έχεις βρει." },
         check: (t) => t.flags.has("nmap-sweep") || usedCmd(t, /nmap\s+.*10\.10\.10\.0\/24/),
       },
       {
         id: "host",
-        instruction: { en: "Scan a single host — try nmap 10.10.10.5", el: "Σάρωσε ένα host — nmap 10.10.10.5" },
+        instruction: { en: "Scan a single host — try nmap 10.10.10.5", el: "Σάρωσε ένα σύστημα — nmap 10.10.10.5" },
         hint: { en: "nmap 10.10.10.5", el: "nmap 10.10.10.5" },
         explain: { en: "WHY: Host scans reveal open ports.", el: "ΓΙΑΤΙ: Οι σαρώσεις αποκαλύπτουν θύρες." },
         check: (t) => t.flags.has("nmap-host") || t.flags.has("nmap-raven") || usedCmd(t, /nmap\s+.*10\.10\.10\.\d+/),
@@ -475,7 +475,7 @@ export const MODULES: Module[] = [
       {
         title: { en: "Web box ports", el: "Θύρες του web" },
         brief: { en: "Port-scan 10.10.10.8.", el: "Σάρωσε θύρες στο 10.10.10.8." },
-        success: { en: "web.lab fingerprint started.", el: "Το fingerprint του web.lab ξεκίνησε." },
+        success: { en: "web.lab fingerprint started.", el: "Ξεκίνησε η αποτύπωση (fingerprint) του web.lab." },
         check: (t) => t.flags.has("nmap-web") || usedCmd(t, /nmap\s+.*10\.10\.10\.8/),
       },
     ],
@@ -487,7 +487,7 @@ export const MODULES: Module[] = [
     color: "from-sky-400 to-indigo-800",
     difficulty: 3,
     title: { en: "Service Scanning", el: "Σάρωση υπηρεσιών" },
-    subtitle: { en: "Versions, banners, and what they imply", el: "Εκδόσεις, banners και τι σημαίνουν" },
+    subtitle: { en: "Versions, banners, and what they imply", el: "Εκδόσεις, banners και η σημασία τους" },
     badge: { en: "Port Mapper", el: "Χαρτογράφος θυρών" },
     theory: [
       {
@@ -505,7 +505,7 @@ export const MODULES: Module[] = [
     tasks: [
       {
         id: "sv",
-        instruction: { en: "Run nmap -sV against raven.lab (10.10.10.5).", el: "Τρέξε nmap -sV στο 10.10.10.5." },
+        instruction: { en: "Run nmap -sV against raven.lab (10.10.10.5).", el: "Εκτέλεσε nmap -sV στο 10.10.10.5." },
         hint: { en: "nmap -sV 10.10.10.5", el: "nmap -sV 10.10.10.5" },
         explain: { en: "WHY: Version detection turns ports into software.", el: "ΓΙΑΤΙ: Οι εκδόσεις μετατρέπουν θύρες σε λογισμικό." },
         check: (t) => t.flags.has("nmap-sv") || usedCmd(t, /nmap\s+.*-sV/),
@@ -514,7 +514,7 @@ export const MODULES: Module[] = [
         id: "curl",
         instruction: { en: "curl the web box: curl http://10.10.10.8/", el: "curl http://10.10.10.8/" },
         hint: { en: "curl http://10.10.10.8/", el: "curl http://10.10.10.8/" },
-        explain: { en: "WHY: HTTP is often the loudest service.", el: "ΓΙΑΤΙ: Το HTTP είναι συχνά η πιο φωνακλάδικη υπηρεσία." },
+        explain: { en: "WHY: HTTP is often the loudest service.", el: "ΓΙΑΤΙ: Το HTTP είναι συχνά η υπηρεσία που αποκαλύπτει τα περισσότερα." },
         check: (t) => t.flags.has("curl-web") || t.flags.has("curl-raven") || usedCmd(t, /^\s*curl\b/),
       },
     ],
@@ -564,7 +564,7 @@ export const MODULES: Module[] = [
         id: "wordlist",
         instruction: { en: "Read tools/wordlist.txt so you know the dictionary.", el: "Διάβασε tools/wordlist.txt." },
         hint: { en: "cat tools/wordlist.txt", el: "cat ~/tools/wordlist.txt" },
-        explain: { en: "WHY: Know your ammo.", el: "ΓΙΑΤΙ: Ξέρε τα πυρομαχικά σου." },
+        explain: { en: "WHY: Know your ammo.", el: "ΓΙΑΤΙ: Γνώριζε το λεξικό σου πριν το χρησιμοποιήσεις." },
         check: (t) => t.flags.has("read-wordlist"),
       },
       {
@@ -628,7 +628,7 @@ export const MODULES: Module[] = [
       },
       {
         id: "sqlmap",
-        instruction: { en: "Run sqlmap against the lab URL (simulated).", el: "Τρέξε sqlmap στο lab URL." },
+        instruction: { en: "Run sqlmap against the lab URL (simulated).", el: "Εκτέλεσε sqlmap στη διεύθυνση URL του εργαστηρίου." },
         hint: { en: "sqlmap -u http://10.10.10.8/login.php?id=1", el: "sqlmap -u http://10.10.10.8/login.php?id=1" },
         explain: { en: "WHY: Tools show how loud automated injection is — defenders notice.", el: "ΓΙΑΤΙ: Τα εργαλεία είναι θορυβώδη — οι defenders το βλέπουν." },
         check: (t) => t.flags.has("sqlmap") || t.flags.has("sqli-win"),
@@ -637,8 +637,8 @@ export const MODULES: Module[] = [
     challenges: [
       {
         title: { en: "Union extract", el: "Εξαγωγή UNION" },
-        brief: { en: "Trigger the simulated UNION path (quote + or/union in the id param) or finish sqlmap.", el: "Πυροδότησε το προσομοιωμένο UNION." },
-        success: { en: "You extracted a lab flag from a fake database.", el: "Έβγαλες flag από ψεύτικη βάση." },
+        brief: { en: "Trigger the simulated UNION path (quote + or/union in the id param) or finish sqlmap.", el: "Ενεργοποίησε την προσομοιωμένη διαδρομή UNION." },
+        success: { en: "You extracted a lab flag from a fake database.", el: "Απέσπασες flag από φανταστική βάση." },
         check: (t) => t.flags.has("sqli-win") || t.flags.has("saw:FLAG{sqli_union_selected}"),
       },
       {
@@ -674,16 +674,16 @@ export const MODULES: Module[] = [
     tasks: [
       {
         id: "sudo-l",
-        instruction: { en: "Re-check sudo -l.", el: "Ξανατσέκαρε sudo -l." },
+        instruction: { en: "Re-check sudo -l.", el: "Έλεγξε ξανά το sudo -l." },
         hint: { en: "sudo -l", el: "sudo -l" },
         explain: { en: "WHY: Always re-enumerate on a new box.", el: "ΓΙΑΤΙ: Πάντα επαναρίθμηση." },
         check: (t) => t.flags.has("sudo-l"),
       },
       {
         id: "root",
-        instruction: { en: "Escalate using sudo find (see cheatsheet).", el: "Ανύψωσε με sudo find." },
+        instruction: { en: "Escalate using sudo find (see cheatsheet).", el: "Κάνε ανύψωση προνομίων με sudo find." },
         hint: { en: "sudo find / -name flag.txt", el: "sudo find / -name flag.txt" },
-        explain: { en: "WHY: find with sudo can spawn a shell. Defenders: never sudo find.", el: "ΓΙΑΤΙ: το find με sudo μπορεί να δώσει shell." },
+        explain: { en: "WHY: find with sudo can spawn a shell. Defenders: never sudo find.", el: "ΓΙΑΤΙ: η εντολή find με sudo μπορεί να δώσει κέλυφος (shell)." },
         check: (t) => t.flags.has("got-root") || t.flags.has("privesc-find"),
       },
     ],
@@ -771,7 +771,7 @@ export const MODULES: Module[] = [
         heading: { en: "Password reuse is a gift", el: "Η επαναχρησιμοποίηση κωδικών είναι δώρο" },
         body: {
           en: "CTF boxes often hide the password in a wordlist or a CMS config. Here, hydra + the lab wordlist against raven SSH yields nevermore. Then grab user.txt.",
-          el: "Στα CTF συχνά ο κωδικός είναι στο wordlist. Εδώ hydra → nevermore.",
+          el: "Στα CTF ο κωδικός βρίσκεται συχνά στο λεξικό (wordlist). Εδώ το hydra δίνει nevermore.",
         },
       },
     ],
@@ -791,7 +791,7 @@ export const MODULES: Module[] = [
         id: "ssh-r",
         instruction: { en: "ssh raven@10.10.10.5", el: "ssh raven@10.10.10.5" },
         hint: { en: "ssh raven@10.10.10.5", el: "ssh raven@10.10.10.5" },
-        explain: { en: "WHY: Foothold is a shell.", el: "ΓΙΑΤΙ: Foothold = shell." },
+        explain: { en: "WHY: Foothold is a shell.", el: "ΓΙΑΤΙ: Το foothold είναι ένα shell." },
         check: (t) => t.flags.has("ssh-raven"),
       },
     ],
@@ -859,7 +859,7 @@ export const MODULES: Module[] = [
       {
         title: { en: "Cron clue", el: "Ίχνος cron" },
         brief: { en: "cat /etc/crontab — privilege lives in scheduled jobs.", el: "cat /etc/crontab" },
-        success: { en: "backup.sh runs as root. That's your ladder.", el: "Το backup.sh τρέχει ως root." },
+        success: { en: "backup.sh runs as root. That's your ladder.", el: "Το backup.sh εκτελείται ως root." },
         check: (t) => t.flags.has("read-cron") || usedCmd(t, /crontab/),
       },
     ],
@@ -907,7 +907,7 @@ export const MODULES: Module[] = [
         id: "run",
         instruction: { en: "sudo /usr/local/bin/backup.sh", el: "sudo /usr/local/bin/backup.sh" },
         hint: { en: "sudo /usr/local/bin/backup.sh", el: "sudo /usr/local/bin/backup.sh" },
-        explain: { en: "WHY: Trigger the job.", el: "ΓΙΑΤΙ: Πυροδότησε τη δουλειά." },
+        explain: { en: "WHY: Trigger the job.", el: "ΓΙΑΤΙ: Ενεργοποίησε την προγραμματισμένη εργασία." },
         check: (t) => t.flags.has("got-root") || t.flags.has("ran-backup-root"),
       },
     ],
@@ -921,7 +921,7 @@ export const MODULES: Module[] = [
       {
         title: { en: "Submit nevermore", el: "Υπέβαλε nevermore" },
         brief: { en: "submit FLAG{raven_rooted_the_nevermore}", el: "submit FLAG{raven_rooted_the_nevermore}" },
-        success: { en: "Box rooted. Hang the badge on the wall.", el: "Το κουτί rooted." },
+        success: { en: "Box rooted. Hang the badge on the wall.", el: "Το σύστημα παραβιάστηκε πλήρως (rooted)." },
         check: (t) => t.flags.has("submit:FLAG{raven_rooted_the_nevermore}") || t.flags.has("got-root"),
       },
     ],
@@ -1016,7 +1016,7 @@ export const MODULES: Module[] = [
         id: "hop",
         instruction: { en: "ssh -J jump dev@10.10.20.14   (or ssh with ProxyJump)", el: "ssh -J jump dev@10.10.20.14" },
         hint: { en: "ssh -J jump dev@10.10.20.14", el: "ssh -J jump dev@10.10.20.14" },
-        explain: { en: "WHY: -J is ProxyJump.", el: "ΓΙΑΤΙ: -J = ProxyJump." },
+        explain: { en: "WHY: -J is ProxyJump.", el: "ΓΙΑΤΙ: Η επιλογή -J ενεργοποιεί το ProxyJump." },
         check: (t) => t.flags.has("ssh-hop") || t.flags.has("ssh-dev"),
       },
     ],
@@ -1024,7 +1024,7 @@ export const MODULES: Module[] = [
       {
         title: { en: "Land on dev", el: "Προσγείωση στο dev" },
         brief: { en: "Reach host dev via the jump box.", el: "Φτάσε στο dev μέσω jump." },
-        success: { en: "You hopped.", el: "Πήδηξες." },
+        success: { en: "You hopped.", el: "Πραγματοποίησες την αναπήδηση (hop)." },
         check: (t) => t.flags.has("ssh-dev") || t.flags.has("ssh-hop"),
       },
       {
@@ -1061,7 +1061,7 @@ export const MODULES: Module[] = [
     tasks: [
       {
         id: "dev",
-        instruction: { en: "Hop to dev (ssh -J jump dev@10.10.20.14).", el: "Πήδα στο dev." },
+        instruction: { en: "Hop to dev (ssh -J jump dev@10.10.20.14).", el: "Μεταπήδησε στο dev." },
         hint: { en: "ssh -J jump dev@10.10.20.14", el: "ssh -J jump dev@10.10.20.14" },
         explain: { en: "WHY: You cannot skip the hop.", el: "ΓΙΑΤΙ: Δεν παραλείπεις το hop." },
         check: (t) => t.flags.has("ssh-dev") || t.flags.has("ssh-hop"),
@@ -1070,7 +1070,7 @@ export const MODULES: Module[] = [
         id: "db",
         instruction: { en: "From that context, ssh to 10.10.20.30 or db-int.", el: "ssh στο 10.10.20.30" },
         hint: { en: "ssh 10.10.20.30", el: "ssh 10.10.20.30" },
-        explain: { en: "WHY: Dual-homed hosts are pivots.", el: "ΓΙΑΤΙ: Dual-homed hosts = pivots." },
+        explain: { en: "WHY: Dual-homed hosts are pivots.", el: "ΓΙΑΤΙ: Τα συστήματα με δύο συνδέσεις (dual-homed) λειτουργούν ως pivots." },
         check: (t) => t.flags.has("ssh-db"),
       },
     ],

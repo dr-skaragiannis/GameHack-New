@@ -82,11 +82,11 @@ export default function PlayerQuickStats({
         type="button"
         className="player-quick-stats__item player-quick-stats__rank"
         title={rank
-          ? `${t("overallScoreboard", lang)} · ${t("position", lang)} ${rank} / ${scoreboard.length}`
-          : `${t("overallScoreboard", lang)} · ${t("position", lang)} —`}
+          ? `${t("overallScoreboard", lang)}, ${t("position", lang)} ${rank} / ${scoreboard.length}`
+          : `${t("overallScoreboard", lang)}, ${t("position", lang)} —`}
         aria-label={rank
           ? `${t("position", lang)} ${rank} of ${scoreboard.length} in the ${t("overallScoreboard", lang)}`
-          : `${t("overallScoreboard", lang)} · ${t("position", lang)} —`}
+          : `${t("overallScoreboard", lang)}, ${t("position", lang)} —`}
         onClick={onOpenScoreboard}
       >
         <Icon name="crown" className="h-3.5 w-3.5" />

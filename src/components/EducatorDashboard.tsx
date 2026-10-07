@@ -427,7 +427,7 @@ export default function EducatorDashboard({
                   </ResponsiveContainer>
                 ) : <div className="educator-chart-empty">{t("noPlayers", lang)}</div>}
               </div>
-              <div className="educator-chart-caption"><span><i className="is-cyan" />{t("player", lang)}</span><span>{t("commandsPerPlayer", lang)} · bubble size</span></div>
+              <div className="educator-chart-caption"><span><i className="is-cyan" />{t("player", lang)}</span><span>{t("commandsPerPlayer", lang)}, bubble size</span></div>
             </ChartCard>
           </div>
 
@@ -535,7 +535,7 @@ export default function EducatorDashboard({
                         <td>{team?.name || t("unassigned", lang)}</td>
                         <td>{level}</td>
                         <td className="is-cyan">{player.metrics.xp.toLocaleString()}</td>
-                        <td>{completedModuleCount(player)}/{TOTAL_MODULES} · {completionPercent(player)}%</td>
+                        <td>{completedModuleCount(player)}/{TOTAL_MODULES}, {completionPercent(player)}%</td>
                         <td>{accuracyScore(player.metrics)}%</td>
                         <td>{fidelityScore(player.metrics)}%</td>
                         <td>{player.metrics.commandsRun}</td>
@@ -583,7 +583,7 @@ export default function EducatorDashboard({
                 {applications.map(({ application, player, team }) => (
                   <article className="educator-request" key={application.id}>
                     <Avatar src={player.avatar} name={player.displayName} size={38} />
-                    <div className="min-w-0 flex-1"><strong>{player.displayName}</strong><p>{team.name} · {localizedDate(application.requestedAt, lang)}</p></div>
+                    <div className="min-w-0 flex-1"><strong>{player.displayName}</strong><p>{team.name}, {localizedDate(application.requestedAt, lang)}</p></div>
                     <button type="button" onClick={() => reviewApplication(application.id, false)} className="educator-request__decline dashboard-action">{t("declineRequest", lang)}</button>
                     <button type="button" onClick={() => reviewApplication(application.id, true)} className="educator-request__accept dashboard-action">{t("acceptRequest", lang)}</button>
                   </article>
@@ -610,7 +610,7 @@ export default function EducatorDashboard({
                   {stat.members.map((member) => (
                     <div key={member.id} className="educator-team-member">
                       <Avatar src={member.avatar} name={member.displayName} size={29} />
-                      <span className="min-w-0 flex-1"><strong>{member.displayName}</strong><small>{member.metrics.xp.toLocaleString()} XP · {completionPercent(member)}%</small></span>
+                      <span className="min-w-0 flex-1"><strong>{member.displayName}</strong><small>{member.metrics.xp.toLocaleString()} XP, {completionPercent(member)}%</small></span>
                       <button type="button" aria-label={`${t("removeFromTeam", lang)}: ${member.displayName}`} title={t("removeFromTeam", lang)} onClick={() => assignPlayerToTeam(user.id, member.id, null)}><Icon name="close" className="h-4 w-4" /></button>
                     </div>
                   ))}
@@ -630,7 +630,7 @@ export default function EducatorDashboard({
 
           {teamStats.length > 0 && (
             <div className="educator-dashboard__overview-grid">
-              <ChartCard title={t("teamProgressComparison", lang)} eyebrow="BAR / COMPLETION · ACCURACY · FIDELITY">
+              <ChartCard title={t("teamProgressComparison", lang)} eyebrow="BAR / COMPLETION, ACCURACY, FIDELITY">
                 <div className="educator-chart educator-chart--team">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={teamStats} margin={{ top: 8, right: 12, bottom: 30, left: 0 }}>
@@ -673,7 +673,7 @@ export default function EducatorDashboard({
           <section className="educator-stat-grid educator-stat-grid--compact">
             <MetricCard label={t("cliCommands", lang)} value={scopedCommands.length} detail={t("recentExecutions", lang)} icon="terminal" tone="cyan" />
             <MetricCard label={t("commandsPerPlayer", lang)} value={filteredPlayers.length ? Math.round(scopedCommands.length / filteredPlayers.length) : 0} detail={t("totalPlayers", lang)} icon="users" tone="cyan" />
-            <MetricCard label={t("exitCode", lang)} value={commandErrors} detail={lang === "en" ? "non-zero results" : "μη μηδενικά αποτελέσματα"} icon="warning" tone="violet" />
+            <MetricCard label={t("exitCode", lang)} value={commandErrors} detail={lang === "en" ? "non-zero results" : "εκτελέσεις με σφάλμα"} icon="warning" tone="violet" />
             <MetricCard label={t("executedAt", lang)} value={commandsToday} detail={lang === "en" ? "today" : "σήμερα"} icon="radar" tone="green" />
           </section>
 
@@ -730,7 +730,7 @@ export default function EducatorDashboard({
                 <span><small>{t("workingDirectory", lang)}</small><strong><code>{selectedCommand.cwd}</code></strong></span>
                 <span><small>{t("exitCode", lang)}</small><strong className={selectedCommand.exitCode === 0 ? "is-success" : "is-error"}>{selectedCommand.exitCode}</strong></span>
                 <span><small>{t("command", lang)}</small><strong><code>{selectedCommand.command}</code></strong></span>
-                <span><small>{t("typed", lang)} / {t("pasted", lang)}</small><strong>{selectedCommand.pasted ? t("pasted", lang) : t("typed", lang)}{selectedCommand.typo ? " · 127" : ""}</strong></span>
+                <span><small>{t("typed", lang)} / {t("pasted", lang)}</small><strong>{selectedCommand.pasted ? t("pasted", lang) : t("typed", lang)}{selectedCommand.typo ? ", 127" : ""}</strong></span>
               </div>
               <div className="educator-command-detail__output-heading">{t("output", lang)}</div>
               <pre className="educator-command-detail__output">{selectedCommand.output || "(no output)"}</pre>

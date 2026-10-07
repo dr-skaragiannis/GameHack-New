@@ -20,14 +20,14 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "apt and repositories", el: "apt και αποθετήρια" },
         body: {
           en: "Debian-family distros (Kali is one) use APT — Advanced Packaging Tool. Think of a repository as the app store: you search it, install from it, remove from it. Do this in the lab; do not blindly add random repos on a real box.",
-          el: "Debian/Kali: APT. Το repository είναι το app store.",
+          el: "Οι διανομές Debian/Kali χρησιμοποιούν το APT. Το αποθετήριο (repository) λειτουργεί σαν κατάστημα εφαρμογών.",
         },
       },
       {
         heading: { en: "Search", el: "Αναζήτηση" },
         body: {
           en: "apt-cache search hydra   (Hydra is a login-cracking tool — we only search the package name here.)",
-          el: "apt-cache search hydra",
+          el: "Αναζήτησε το πακέτο hydra με apt-cache search hydra.",
         },
         shots: [shot("apt-cache search hydra", ["hydra - very fast network logon cracker", "libhydra - hydra library (lab)", "qhydra - qt frontend"])],
       },
@@ -35,7 +35,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "Install, remove, purge", el: "Install, remove, purge" },
         body: {
           en: "apt-get install git   pulls git (useful to clone GitHub repos later). apt-get remove git   removes the package but may leave config. apt-get purge git   wipes residual files too. The sandbox stops remove and purge before changing package state, so you can practise the command syntax safely.",
-          el: "install / remove / purge. Εδώ το remove/purge κάνουν Abort όπως το 'press n' του οδηγού.",
+          el: "Οι ενέργειες install, remove και purge εγκαθιστούν ή αφαιρούν πακέτα. Εδώ τα remove/purge καταλήγουν σε Abort, όπως το «press n» του οδηγού.",
         },
         shots: [
           shot("apt-get install git", ["The following NEW packages will be installed:", "  git", "Setting up git (lab) ..."]),
@@ -46,7 +46,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "update vs upgrade", el: "update vs upgrade" },
         body: {
           en: "apt-get update   refreshes the list of available packages (downloads index, does not install). apt-get upgrade   applies those updates. Upgrade can take a while on a real machine.",
-          el: "update = ευρετήριο. upgrade = εγκατάσταση ενημερώσεων.",
+          el: "Το update ανανεώνει το ευρετήριο. Το upgrade εγκαθιστά τις ενημερώσεις.",
         },
         shots: [
           shot("apt-get update", ["Hit:1 http://http.kali.org/kali kali-rolling InRelease", "Reading package lists... Done"]),
@@ -57,7 +57,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "sources.list", el: "sources.list" },
         body: {
           en: "The servers that hold packages are listed in /etc/apt/sources.list. nano /etc/apt/sources.list to read it. Do NOT add experimental repos — they can break a box. Highlighted in a real Kali is the kali-rolling line.",
-          el: "nano /etc/apt/sources.list — μην προσθέτεις experimental repos.",
+          el: "Διάβασε το /etc/apt/sources.list με nano — μην προσθέτεις πειραματικά αποθετήρια.",
         },
         shots: [shot("nano /etc/apt/sources.list", ["deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware", "# GameHack lab — do not add experimental repos."])],
       },
@@ -73,24 +73,24 @@ export const SUDO_RUN_MODULES_B: Module[] = [
     ],
     tasks: [
       { id: "search", instruction: { en: "apt-cache search hydra", el: "apt-cache search hydra" }, hint: { en: "apt-cache search hydra", el: "apt-cache search hydra" }, explain: { en: "Search before you install.", el: "Ψάξε πριν εγκαταστήσεις." }, check: (t) => t.flags.has("apt-search") },
-      { id: "install", instruction: { en: "apt-get install git", el: "apt-get install git" }, hint: { en: "apt-get install git", el: "apt-get install git" }, explain: { en: "Install from the repo.", el: "Εγκατάσταση από το repo." }, check: (t) => t.flags.has("apt-install") },
-      { id: "remove", instruction: { en: "apt-get remove git  (sandbox aborts like pressing n)", el: "apt-get remove git" }, hint: { en: "apt-get remove git", el: "apt-get remove git" }, explain: { en: "The sandbox stops before removing the package.", el: "Το sandbox σταματά πριν αφαιρέσει το πακέτο." }, check: (t) => t.flags.has("apt-remove") },
-      { id: "purge", instruction: { en: "apt-get purge git", el: "apt-get purge git" }, hint: { en: "apt-get purge git", el: "apt-get purge git" }, explain: { en: "Purge leftover configs.", el: "Καθαρίζει configs." }, check: (t) => t.flags.has("apt-purge") },
-      { id: "update", instruction: { en: "apt-get update", el: "apt-get update" }, hint: { en: "apt-get update", el: "apt-get update" }, explain: { en: "Refresh package lists.", el: "Ανανέωση λιστών." }, check: (t) => t.flags.has("apt-update") },
-      { id: "upgrade", instruction: { en: "apt-get upgrade", el: "apt-get upgrade" }, hint: { en: "apt-get upgrade", el: "apt-get upgrade" }, explain: { en: "Apply the index from update.", el: "Εφαρμογή του update." }, check: (t) => t.flags.has("apt-upgrade") },
-      { id: "src", instruction: { en: "nano /etc/apt/sources.list", el: "nano /etc/apt/sources.list" }, hint: { en: "nano /etc/apt/sources.list", el: "nano /etc/apt/sources.list" }, explain: { en: "See which repo Kali uses.", el: "Δες το repo." }, check: (t) => t.flags.has("nano-sources") || t.flags.has("read-sources") || usedCmd(t, /sources\.list/) },
+      { id: "install", instruction: { en: "apt-get install git", el: "apt-get install git" }, hint: { en: "apt-get install git", el: "apt-get install git" }, explain: { en: "Install from the repo.", el: "Εγκαθιστά από το αποθετήριο." }, check: (t) => t.flags.has("apt-install") },
+      { id: "remove", instruction: { en: "apt-get remove git  (sandbox aborts like pressing n)", el: "apt-get remove git" }, hint: { en: "apt-get remove git", el: "apt-get remove git" }, explain: { en: "The sandbox stops before removing the package.", el: "Η προσομοίωση (sandbox) σταματά πριν αφαιρέσει το πακέτο." }, check: (t) => t.flags.has("apt-remove") },
+      { id: "purge", instruction: { en: "apt-get purge git", el: "apt-get purge git" }, hint: { en: "apt-get purge git", el: "apt-get purge git" }, explain: { en: "Purge leftover configs.", el: "Καθαρίζει και τις ρυθμίσεις (configs)." }, check: (t) => t.flags.has("apt-purge") },
+      { id: "update", instruction: { en: "apt-get update", el: "apt-get update" }, hint: { en: "apt-get update", el: "apt-get update" }, explain: { en: "Refresh package lists.", el: "Ανανεώνει τις λίστες πακέτων." }, check: (t) => t.flags.has("apt-update") },
+      { id: "upgrade", instruction: { en: "apt-get upgrade", el: "apt-get upgrade" }, hint: { en: "apt-get upgrade", el: "apt-get upgrade" }, explain: { en: "Apply the index from update.", el: "Εφαρμόζει το ευρετήριο του update." }, check: (t) => t.flags.has("apt-upgrade") },
+      { id: "src", instruction: { en: "nano /etc/apt/sources.list", el: "nano /etc/apt/sources.list" }, hint: { en: "nano /etc/apt/sources.list", el: "nano /etc/apt/sources.list" }, explain: { en: "See which repo Kali uses.", el: "Δες το αποθετήριο που χρησιμοποιεί το Kali." }, check: (t) => t.flags.has("nano-sources") || t.flags.has("read-sources") || usedCmd(t, /sources\.list/) },
     ],
     challenges: [
       {
         title: { en: "Read sources without nano", el: "Διάβασε χωρίς nano" },
         brief: { en: "cat /etc/apt/sources.list", el: "cat /etc/apt/sources.list" },
-        success: { en: "Same file, different tool.", el: "Ίδιο αρχείο." },
+        success: { en: "Same file, different tool.", el: "Το ίδιο αρχείο, με διαφορετικό εργαλείο." },
         check: (t) => t.filesRead.some((p) => p.includes("sources.list")) || t.flags.has("nano-sources"),
       },
       {
         title: { en: "Search then install", el: "Ψάξε μετά εγκατέστησε" },
-        brief: { en: "You already searched hydra and installed git — that is the full loop.", el: "Search + install = πλήρης βρόχος." },
-        success: { en: "Repo workflow complete.", el: "Ροή repo OK." },
+        brief: { en: "You already searched hydra and installed git — that is the full loop.", el: "Αναζήτηση και εγκατάσταση: ο πλήρης κύκλος." },
+        success: { en: "Repo workflow complete.", el: "Ο κύκλος του αποθετηρίου ολοκληρώθηκε." },
         check: (t) => t.flags.has("apt-search") && t.flags.has("apt-install"),
       },
     ],
@@ -110,7 +110,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "Users, groups, rwx", el: "Χρήστες, ομάδες, rwx" },
         body: {
           en: "Root can do anything. Other users are limited and often collected into groups (developers, admins…). Every file has three permission triples: owner, group, others. r = open/view, w = edit, x = execute (x does not imply you can read). ls -l shows: type (- file, d directory), rwxrwxrwx, links, owner, group, size, mtime, name.",
-          el: "r ανάγνωση, w εγγραφή, x εκτέλεση. ls -l δείχνει τα πάντα.",
+          el: "Το r δηλώνει ανάγνωση, το w εγγραφή και το x εκτέλεση. Η εντολή ls -l τα εμφανίζει όλα.",
         },
         shots: [shot("ls -l gamehack.txt", ["-rw-r--r-- 1 root root  142 gamehack.txt"])],
       },
@@ -118,7 +118,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "chown and chgrp", el: "chown και chgrp" },
         body: {
           en: "chown USER FILE changes the owner. chown Raj gamehack.txt  (Raj is a lab user). chgrp GROUP FILE changes the group. chgrp ignite gamehack.txt  so only the ignite team owns it as a group.",
-          el: "chown Raj gamehack.txt και chgrp ignite gamehack.txt",
+          el: "Η εντολή chown Raj gamehack.txt αλλάζει ιδιοκτήτη και η chgrp ignite gamehack.txt αλλάζει ομάδα.",
         },
         shots: [
           shot("chown Raj gamehack.txt", [""]),
@@ -129,8 +129,8 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       {
         heading: { en: "chmod numeric table", el: "Πίνακας chmod" },
         body: {
-          en: "0 ---  ·  1 --x  ·  2 -w-  ·  3 -wx  ·  4 r--  ·  5 r-x  ·  6 rw-  ·  7 rwx. chmod 777 FILE gives everyone everything. chmod 111 FILE is execute-only. Symbolic: chmod +x gamehack.txt makes it executable (often shown in a different colour on a real TTY).",
-          el: "chmod 777 όλα. chmod +x εκτελέσιμο.",
+          en: "0 ---, 1 --x, 2 -w-, 3 -wx, 4 r--, 5 r-x, 6 rw-, 7 rwx. chmod 777 FILE gives everyone everything. chmod 111 FILE is execute-only. Symbolic: chmod +x gamehack.txt makes it executable (often shown in a different colour on a real TTY).",
+          el: "Το chmod 777 παραχωρεί τα πάντα. Το chmod +x καθιστά το αρχείο εκτελέσιμο.",
         },
         shots: [shot("chmod +x gamehack.txt", ["-rwxr--r-- 1 Raj ignite  142 gamehack.txt"])],
       },
@@ -138,7 +138,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "SUID and SGID", el: "SUID και SGID" },
         body: {
           en: "SUID: any user executing the file runs it with the OWNER's permissions, only for that file. Set by prefixing 4: chmod 4644 gamehack.txt (regular 644 + SUID). SGID: same idea for the owner's GROUP, prefix 2: chmod 2466 gamehack.txt. These bits are famous privilege-escalation findings — understand them so you can remove them as a defender.",
-          el: "SUID = 4xxx (δικαιώματα ιδιοκτήτη). SGID = 2xxx (ομάδας).",
+          el: "Το SUID ορίζεται με 4xxx (δικαιώματα ιδιοκτήτη). Το SGID με 2xxx (δικαιώματα ομάδας).",
         },
         shots: [
           shot("chmod 4644 gamehack.txt", ["-rw-r--r-- with SUID bit set (rws / 4644)"]),
@@ -155,24 +155,24 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       { cmd: "chmod 2466 FILE", desc: { en: "SGID + 466", el: "SGID" } },
     ],
     tasks: [
-      { id: "lsl", instruction: { en: "ls -l gamehack.txt", el: "ls -l gamehack.txt" }, hint: { en: "ls -l /root/gamehack.txt", el: "ls -l" }, explain: { en: "Read the owner/group columns.", el: "Δες ιδιοκτήτη/ομάδα." }, check: (t) => t.flags.has("ls-l") || usedCmd(t, /ls\s+-l/) },
-      { id: "chown", instruction: { en: "chown Raj gamehack.txt", el: "chown Raj gamehack.txt" }, hint: { en: "chown Raj gamehack.txt", el: "chown Raj gamehack.txt" }, explain: { en: "Owner becomes Raj.", el: "Ιδιοκτήτης ο Raj." }, check: (t) => t.flags.has("chown-raj") || usedCmd(t, /chown\s+Raj/) },
-      { id: "chgrp", instruction: { en: "chgrp ignite gamehack.txt", el: "chgrp ignite gamehack.txt" }, hint: { en: "chgrp ignite gamehack.txt", el: "chgrp ignite gamehack.txt" }, explain: { en: "Group becomes ignite.", el: "Ομάδα ignite." }, check: (t) => t.flags.has("chgrp-ignite") || usedCmd(t, /chgrp\s+ignite/) },
-      { id: "plusx", instruction: { en: "chmod +x gamehack.txt", el: "chmod +x gamehack.txt" }, hint: { en: "chmod +x gamehack.txt", el: "chmod +x gamehack.txt" }, explain: { en: "Execute bit for the owner.", el: "Bit εκτέλεσης." }, check: (t) => t.flags.has("chmod-x") || usedCmd(t, /chmod\s+\+x/) },
-      { id: "suid", instruction: { en: "chmod 4644 gamehack.txt", el: "chmod 4644 gamehack.txt" }, hint: { en: "chmod 4644 gamehack.txt", el: "chmod 4644" }, explain: { en: "4 prefix = SUID.", el: "4 = SUID." }, check: (t) => t.flags.has("suid") || usedCmd(t, /chmod\s+4644/) },
-      { id: "sgid", instruction: { en: "chmod 2466 gamehack.txt", el: "chmod 2466 gamehack.txt" }, hint: { en: "chmod 2466 gamehack.txt", el: "chmod 2466" }, explain: { en: "2 prefix = SGID.", el: "2 = SGID." }, check: (t) => t.flags.has("sgid") || usedCmd(t, /chmod\s+2466/) },
+      { id: "lsl", instruction: { en: "ls -l gamehack.txt", el: "ls -l gamehack.txt" }, hint: { en: "ls -l /root/gamehack.txt", el: "ls -l" }, explain: { en: "Read the owner/group columns.", el: "Δες τις στήλες ιδιοκτήτη και ομάδας." }, check: (t) => t.flags.has("ls-l") || usedCmd(t, /ls\s+-l/) },
+      { id: "chown", instruction: { en: "chown Raj gamehack.txt", el: "chown Raj gamehack.txt" }, hint: { en: "chown Raj gamehack.txt", el: "chown Raj gamehack.txt" }, explain: { en: "Owner becomes Raj.", el: "Ο ιδιοκτήτης γίνεται ο Raj." }, check: (t) => t.flags.has("chown-raj") || usedCmd(t, /chown\s+Raj/) },
+      { id: "chgrp", instruction: { en: "chgrp ignite gamehack.txt", el: "chgrp ignite gamehack.txt" }, hint: { en: "chgrp ignite gamehack.txt", el: "chgrp ignite gamehack.txt" }, explain: { en: "Group becomes ignite.", el: "Η ομάδα γίνεται η ignite." }, check: (t) => t.flags.has("chgrp-ignite") || usedCmd(t, /chgrp\s+ignite/) },
+      { id: "plusx", instruction: { en: "chmod +x gamehack.txt", el: "chmod +x gamehack.txt" }, hint: { en: "chmod +x gamehack.txt", el: "chmod +x gamehack.txt" }, explain: { en: "Execute bit for the owner.", el: "Προσθέτει το bit εκτέλεσης." }, check: (t) => t.flags.has("chmod-x") || usedCmd(t, /chmod\s+\+x/) },
+      { id: "suid", instruction: { en: "chmod 4644 gamehack.txt", el: "chmod 4644 gamehack.txt" }, hint: { en: "chmod 4644 gamehack.txt", el: "chmod 4644" }, explain: { en: "4 prefix = SUID.", el: "Το πρόθεμα 4 ορίζει SUID." }, check: (t) => t.flags.has("suid") || usedCmd(t, /chmod\s+4644/) },
+      { id: "sgid", instruction: { en: "chmod 2466 gamehack.txt", el: "chmod 2466 gamehack.txt" }, hint: { en: "chmod 2466 gamehack.txt", el: "chmod 2466" }, explain: { en: "2 prefix = SGID.", el: "Το πρόθεμα 2 ορίζει SGID." }, check: (t) => t.flags.has("sgid") || usedCmd(t, /chmod\s+2466/) },
     ],
     challenges: [
       {
         title: { en: "Verify with ls -l", el: "Επιβεβαίωση ls -l" },
-        brief: { en: "ls -l gamehack.txt after the chown/chmod chain.", el: "ls -l μετά τις αλλαγές." },
-        success: { en: "You can read the mode string.", el: "Διαβάζεις το mode." },
+        brief: { en: "ls -l gamehack.txt after the chown/chmod chain.", el: "Εκτέλεσε ls -l μετά τις αλλαγές." },
+        success: { en: "You can read the mode string.", el: "Διαβάζεις τη λειτουργία (mode)." },
         check: (t) => t.flags.has("ls-l"),
       },
       {
-        title: { en: "Know the table", el: "Ξέρε τον πίνακα" },
-        brief: { en: "chmod 755 on any file you created (e.g. gamehack-2.txt if it still exists, or touch one).", el: "chmod 755 σε ένα αρχείο." },
-        success: { en: "755 = rwxr-xr-x — classic executable.", el: "755 = rwxr-xr-x." },
+        title: { en: "Know the table", el: "Μάθε τον πίνακα" },
+        brief: { en: "chmod 755 on any file you created (e.g. gamehack-2.txt if it still exists, or touch one).", el: "Εκτέλεσε chmod 755 σε ένα αρχείο." },
+        success: { en: "755 = rwxr-xr-x — classic executable.", el: "Το 755 αντιστοιχεί σε rwxr-xr-x." },
         check: (t) => usedCmd(t, /chmod\s+755/) || t.flags.has("chmod"),
       },
     ],
@@ -192,7 +192,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "ifconfig", el: "ifconfig" },
         body: {
           en: "ifconfig shows active interfaces. You should see eth0 (your NIC) and lo (loopback, always 127.0.0.1) with IP, netmask, broadcast, MAC.",
-          el: "ifconfig: eth0 και lo (127.0.0.1).",
+          el: "Η εντολή ifconfig εμφανίζει τις διεπαφές eth0 και lo (127.0.0.1).",
         },
         shots: [shot("ifconfig", ["eth0: flags=4163<UP,BROADCAST,RUNNING> mtu 1500", "        inet 10.10.10.2  netmask 255.255.255.0  broadcast 10.10.10.255", "        ether 08:00:27:12:34:56", "lo: flags=73<UP,LOOPBACK,RUNNING>", "        inet 127.0.0.1  netmask 255.0.0.0"])],
       },
@@ -200,7 +200,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "iwconfig", el: "iwconfig" },
         body: {
           en: "iwconfig talks to wireless adapters (SSID, mode, MAC…). No wifi in this lab? You still run it — output shows 'no wireless extensions' on eth0/lo.",
-          el: "iwconfig για ασύρματα. Εδώ: no wireless extensions.",
+          el: "Η εντολή iwconfig αφορά ασύρματες διεπαφές. Εδώ εμφανίζεται no wireless extensions.",
         },
         shots: [shot("iwconfig", ["lo        no wireless extensions.", "eth0      no wireless extensions.", "wlan0     IEEE 802.11  ESSID:off/any"])],
       },
@@ -208,15 +208,15 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "Change IP", el: "Αλλαγή IP" },
         body: {
           en: "ifconfig eth0 10.10.10.13   assigns that address. Run ifconfig again to see it.",
-          el: "ifconfig eth0 10.10.10.13",
+          el: "Η εντολή ifconfig eth0 10.10.10.13 εκχωρεί αυτή τη διεύθυνση. Εκτέλεσε ξανά ifconfig για να τη δεις.",
         },
         shots: [shot("ifconfig eth0 10.10.10.13", ["eth0 inet 10.10.10.13"])],
       },
       {
-        heading: { en: "Spoof MAC (lab only)", el: "Spoof MAC (μόνο lab)" },
+        heading: { en: "Spoof MAC (lab only)", el: "Spoof MAC (μόνο στο εργαστήριο)" },
         body: {
           en: "A MAC address identifies an interface on its local link; it is not reliable proof of a person's identity. In an authorized lab, the locally administered test value 02:00:00:00:00:13 can be set with ifconfig eth0 down, ifconfig eth0 hw ether 02:00:00:00:00:13, then ifconfig eth0 up. This simulator changes only the fictional interface; never use a MAC change to bypass access controls.",
-          el: "Η MAC χαρακτηρίζει διεπαφή στο τοπικό δίκτυο· δεν αποδεικνύει την ταυτότητα ανθρώπου. Σε εξουσιοδοτημένο εργαστήριο μπορείς να ορίσεις τη δοκιμαστική, τοπικά διαχειριζόμενη τιμή 02:00:00:00:00:13 με τη σειρά ifconfig eth0 down, ifconfig eth0 hw ether 02:00:00:00:00:13 και ifconfig eth0 up. Ο προσομοιωτής αλλάζει μόνο την εικονική διεπαφή· μην χρησιμοποιείς αλλαγή MAC για παράκαμψη ελέγχων πρόσβασης."
+          el: "Η MAC χαρακτηρίζει διεπαφή στο τοπικό δίκτυο, δεν αποδεικνύει την ταυτότητα ανθρώπου. Σε εξουσιοδοτημένο εργαστήριο μπορείς να ορίσεις τη δοκιμαστική, τοπικά διαχειριζόμενη τιμή 02:00:00:00:00:13 με τη σειρά ifconfig eth0 down, ifconfig eth0 hw ether 02:00:00:00:00:13 και ifconfig eth0 up. Ο προσομοιωτής αλλάζει μόνο την εικονική διεπαφή, μην χρησιμοποιείς αλλαγή MAC για παράκαμψη ελέγχων πρόσβασης."
         },
         shots: [
           shot("ifconfig eth0 down", [""]),
@@ -228,7 +228,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "dhclient", el: "dhclient" },
         body: {
           en: "DHCP assigns addresses automatically. dhclient eth0 asks the (simulated) server for a lease — it will overwrite the IP you set by hand.",
-          el: "dhclient eth0 ζητά IP από DHCP.",
+          el: "Η εντολή dhclient eth0 ζητά διεύθυνση IP από τον διακομιστή DHCP.",
         },
         shots: [shot("dhclient eth0", ["DHCPREQUEST of 10.10.10.42 on eth0", "bound to 10.10.10.42 -- renewal in 1800 seconds."])],
       },
@@ -236,7 +236,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "dig — DNS", el: "dig — DNS" },
         body: {
           en: "DNS maps names to IPs. dig gamehack.lab   (A record). dig gamehack.lab mx   (mail). dig gamehack.lab ns   (nameservers). All answers for gamehack.lab are fictional fixtures served inside the sandbox; no public domain is queried.",
-          el: "dig gamehack.lab  / mx / ns",
+          el: "Οι εντολές dig gamehack.lab, dig gamehack.lab mx και dig gamehack.lab ns ζητούν εγγραφές A, MX και NS.",
         },
         shots: [
           shot("dig gamehack.lab", ["gamehack.lab.    300 IN A 10.10.10.8"]),
@@ -248,7 +248,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "resolv.conf and hosts", el: "resolv.conf και hosts" },
         body: {
           en: "The resolver reads DNS server addresses from /etc/resolv.conf. In this isolated lab, echo \"nameserver 10.10.10.53\" > /etc/resolv.conf writes the fictional lab resolver. /etc/hosts is a static name-to-address table for this machine only; it does not publish DNS or redirect another user's traffic. Use nano /etc/hosts to inspect the entries, and add only authorized local training names.",
-          el: "Ο resolver διαβάζει διευθύνσεις DNS από το /etc/resolv.conf. Στο απομονωμένο εργαστήριο, η εντολή echo \"nameserver 10.10.10.53\" > /etc/resolv.conf γράφει τον εικονικό resolver. Το /etc/hosts είναι στατικός πίνακας ονομάτων για αυτόν τον υπολογιστή· δεν δημοσιεύει εγγραφή DNS ούτε αλλάζει την κίνηση άλλου χρήστη. Με το nano /etc/hosts ελέγχεις τις εγγραφές και προσθέτεις μόνο εξουσιοδοτημένα ονόματα εκπαίδευσης."
+          el: "Ο resolver διαβάζει διευθύνσεις DNS από το /etc/resolv.conf. Στο απομονωμένο εργαστήριο, η εντολή echo \"nameserver 10.10.10.53\" > /etc/resolv.conf γράφει τον εικονικό resolver. Το /etc/hosts είναι στατικός πίνακας ονομάτων για αυτόν τον υπολογιστή, δεν δημοσιεύει εγγραφή DNS ούτε αλλάζει την κίνηση άλλου χρήστη. Με το nano /etc/hosts ελέγχεις τις εγγραφές και προσθέτεις μόνο εξουσιοδοτημένα ονόματα εκπαίδευσης."
         },
         shots: [
           shot('echo "nameserver 10.10.10.53" > /etc/resolv.conf', [""]),
@@ -267,27 +267,27 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       { cmd: "echo nameserver 10.10.10.53 > /etc/resolv.conf", desc: { en: "set DNS", el: "DNS" } },
     ],
     tasks: [
-      { id: "ifc", instruction: { en: "ifconfig", el: "ifconfig" }, hint: { en: "ifconfig", el: "ifconfig" }, explain: { en: "See eth0 and lo.", el: "eth0 και lo." }, check: (t) => t.flags.has("ip") || usedCmd(t, /^\s*ifconfig\b/) },
+      { id: "ifc", instruction: { en: "ifconfig", el: "ifconfig" }, hint: { en: "ifconfig", el: "ifconfig" }, explain: { en: "See eth0 and lo.", el: "Εμφανίζει τις διεπαφές eth0 και lo." }, check: (t) => t.flags.has("ip") || usedCmd(t, /^\s*ifconfig\b/) },
       { id: "iw", instruction: { en: "iwconfig", el: "iwconfig" }, hint: { en: "iwconfig", el: "iwconfig" }, explain: { en: "Wireless info.", el: "Ασύρματα." }, check: (t) => t.flags.has("iwconfig") },
-      { id: "ipset", instruction: { en: "ifconfig eth0 10.10.10.13", el: "ifconfig eth0 10.10.10.13" }, hint: { en: "ifconfig eth0 10.10.10.13", el: "ifconfig eth0 10.10.10.13" }, explain: { en: "Static IP in the lab.", el: "Στατική IP." }, check: (t) => t.flags.has("ip-set") || usedCmd(t, /ifconfig\s+eth0\s+10\.10\.10\.13/) },
-      { id: "mac", instruction: { en: "ifconfig eth0 down ; ifconfig eth0 hw ether 02:00:00:00:00:13 ; ifconfig eth0 up  (one at a time is fine)", el: "down, hw ether, up" }, hint: { en: "ifconfig eth0 down\nifconfig eth0 hw ether 02:00:00:00:00:13\nifconfig eth0 up", el: "ifconfig eth0 down\nifconfig eth0 hw ether 02:00:00:00:00:13\nifconfig eth0 up" }, explain: { en: "Lab-only MAC change.", el: "Αλλαγή MAC μόνο lab." }, check: (t) => t.flags.has("mac-spoof") || usedCmd(t, /hw\s+ether/) },
-      { id: "dhcp", instruction: { en: "dhclient eth0", el: "dhclient eth0" }, hint: { en: "dhclient eth0", el: "dhclient eth0" }, explain: { en: "Ask DHCP for an address.", el: "Ζήτα DHCP." }, check: (t) => t.flags.has("dhclient") },
+      { id: "ipset", instruction: { en: "ifconfig eth0 10.10.10.13", el: "ifconfig eth0 10.10.10.13" }, hint: { en: "ifconfig eth0 10.10.10.13", el: "ifconfig eth0 10.10.10.13" }, explain: { en: "Static IP in the lab.", el: "Ορίζει στατική IP." }, check: (t) => t.flags.has("ip-set") || usedCmd(t, /ifconfig\s+eth0\s+10\.10\.10\.13/) },
+      { id: "mac", instruction: { en: "ifconfig eth0 down ; ifconfig eth0 hw ether 02:00:00:00:00:13 ; ifconfig eth0 up  (one at a time is fine)", el: "Εκτέλεσε διαδοχικά down, hw ether και up" }, hint: { en: "ifconfig eth0 down\nifconfig eth0 hw ether 02:00:00:00:00:13\nifconfig eth0 up", el: "ifconfig eth0 down\nifconfig eth0 hw ether 02:00:00:00:00:13\nifconfig eth0 up" }, explain: { en: "Lab-only MAC change.", el: "Αλλαγή MAC μόνο στο εργαστήριο." }, check: (t) => t.flags.has("mac-spoof") || usedCmd(t, /hw\s+ether/) },
+      { id: "dhcp", instruction: { en: "dhclient eth0", el: "dhclient eth0" }, hint: { en: "dhclient eth0", el: "dhclient eth0" }, explain: { en: "Ask DHCP for an address.", el: "Ζήτησε διεύθυνση από τον DHCP." }, check: (t) => t.flags.has("dhclient") },
       { id: "dig", instruction: { en: "dig gamehack.lab", el: "dig gamehack.lab" }, hint: { en: "dig gamehack.lab", el: "dig gamehack.lab" }, explain: { en: "A record.", el: "A record." }, check: (t) => t.flags.has("dig-a") || t.flags.has("dig") },
-      { id: "digmx", instruction: { en: "dig gamehack.lab mx  AND  dig gamehack.lab ns", el: "dig mx και ns" }, hint: { en: "dig gamehack.lab mx", el: "dig gamehack.lab mx" }, explain: { en: "Mail and nameserver records.", el: "MX και NS." }, check: (t) => t.flags.has("dig-mx") || t.flags.has("dig-ns") || usedCmd(t, /dig\s+.*mx/) },
-      { id: "dns", instruction: { en: 'echo "nameserver 10.10.10.53" > /etc/resolv.conf', el: "echo nameserver στο resolv.conf" }, hint: { en: 'echo "nameserver 10.10.10.53" > /etc/resolv.conf', el: "echo … > /etc/resolv.conf" }, explain: { en: "Overwrite resolver.", el: "Overwrite resolver." }, check: (t) => t.flags.has("dns-set") || usedCmd(t, /resolv\.conf/) },
-      { id: "hosts", instruction: { en: "nano /etc/hosts  (or cat it)", el: "nano /etc/hosts" }, hint: { en: "nano /etc/hosts", el: "nano /etc/hosts" }, explain: { en: "Static names.", el: "Στατικά ονόματα." }, check: (t) => t.flags.has("nano-hosts") || t.flags.has("read-hosts") || usedCmd(t, /\/etc\/hosts/) },
+      { id: "digmx", instruction: { en: "dig gamehack.lab mx  AND  dig gamehack.lab ns", el: "dig mx και ns" }, hint: { en: "dig gamehack.lab mx", el: "dig gamehack.lab mx" }, explain: { en: "Mail and nameserver records.", el: "Εμφανίζει εγγραφές MX και NS." }, check: (t) => t.flags.has("dig-mx") || t.flags.has("dig-ns") || usedCmd(t, /dig\s+.*mx/) },
+      { id: "dns", instruction: { en: 'echo "nameserver 10.10.10.53" > /etc/resolv.conf', el: "echo nameserver στο resolv.conf" }, hint: { en: 'echo "nameserver 10.10.10.53" > /etc/resolv.conf', el: "echo … > /etc/resolv.conf" }, explain: { en: "Overwrite resolver.", el: "Αντικαθιστά τον resolver." }, check: (t) => t.flags.has("dns-set") || usedCmd(t, /resolv\.conf/) },
+      { id: "hosts", instruction: { en: "nano /etc/hosts  (or cat it)", el: "nano /etc/hosts" }, hint: { en: "nano /etc/hosts", el: "nano /etc/hosts" }, explain: { en: "Static names.", el: "Εμφανίζει στατικά ονόματα." }, check: (t) => t.flags.has("nano-hosts") || t.flags.has("read-hosts") || usedCmd(t, /\/etc\/hosts/) },
     ],
     challenges: [
       {
         title: { en: "Prove the new DNS", el: "Νέο DNS" },
         brief: { en: "cat /etc/resolv.conf after the echo redirect.", el: "cat /etc/resolv.conf" },
-        success: { en: "10.10.10.53 is in the file.", el: "10.10.10.53 στο αρχείο." },
+        success: { en: "10.10.10.53 is in the file.", el: "Η διεύθυνση 10.10.10.53 βρίσκεται στο αρχείο." },
         check: (t) => t.flags.has("dns-set") || t.filesRead.some((p) => p.includes("resolv")),
       },
       {
         title: { en: "ifconfig after DHCP", el: "ifconfig μετά το DHCP" },
         brief: { en: "ifconfig and notice the lease IP.", el: "ifconfig — δες τη νέα IP." },
-        success: { en: "DHCP overwrote your static address.", el: "Το DHCP έγραψε από πάνω." },
+        success: { en: "DHCP overwrote your static address.", el: "Το DHCP αντικατέστησε τη στατική διεύθυνση." },
         check: (t) => t.flags.has("dhclient") && t.flags.has("ip"),
       },
     ],
@@ -307,7 +307,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "ps and ps aux", el: "ps και ps aux" },
         body: {
           en: "A process is a running program. ps lists YOUR active processes (PID is unique). ps aux lists ALL users: PID, user, %CPU, %MEM, COMMAND. Filter: ps aux | grep msfconsole",
-          el: "ps = δικές σου. ps aux = όλες. grep για φίλτρο.",
+          el: "Το ps εμφανίζει τις δικές σου διεργασίες. Το ps aux όλες. Το grep φιλτράρει τα αποτελέσματα.",
         },
         shots: [
           shot("ps", ["  PID TTY          TIME CMD", "    1 pts/0    00:00:00 init"]),
@@ -318,7 +318,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "top", el: "top" },
         body: {
           en: "top sorts by resource use and refreshes (about every 10s on a real box). Use it to find the greediest process.",
-          el: "Το top ταξινομεί κατά πόρους.",
+          el: "Η εντολή top ταξινομεί τις διεργασίες κατά κατανάλωση πόρων.",
         },
         shots: [shot("top", ["PID USER      %CPU %MEM COMMAND", "4378 root  8.4  6.2  [zombie-lab]"])],
       },
@@ -326,7 +326,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "nice / renice", el: "nice / renice" },
         body: {
           en: "nice -n 10 /usr/bin/ssh-agent starts a command with lower scheduling priority. Linux niceness ranges from -20 (highest priority) to 19 (lowest); renice 19 6242 sets the absolute value for PID 6242.",
-          el: "Η nice ορίζει τιμή κατά την εκκίνηση· η renice αλλάζει υπάρχον PID. Πιο θετική τιμή σημαίνει χαμηλότερη προτεραιότητα.",
+          el: "Η nice ορίζει τιμή κατά την εκκίνηση, η renice αλλάζει υπάρχον PID. Όσο πιο θετική είναι η τιμή, τόσο χαμηλότερη είναι η προτεραιότητα.",
         },
         shots: [
           shot("nice -n 10 /usr/bin/ssh-agent", ["would start /usr/bin/ssh-agent with nice 10 (simulated; positive values lower scheduling priority)"]),
@@ -337,7 +337,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "kill", el: "kill" },
         body: {
           en: "kill sends a signal to a PID. SIGTERM (15) requests a normal stop; SIGHUP (1) reports a hangup and some programs use it to reload configuration, so it is not a universal gentle-stop command. SIGKILL (9) forces termination without cleanup. Verify the PID first; every process here is fictional.",
-          el: "Το SIGHUP μπορεί να προκαλέσει επαναφόρτωση ή τερματισμό· το SIGKILL επιβάλλει άμεσο τερματισμό. Έλεγξε το PID και μείνε στο lab.",
+          el: "Το SIGHUP μπορεί να προκαλέσει επαναφόρτωση ή τερματισμό, το SIGKILL επιβάλλει άμεσο τερματισμό. Έλεγξε το PID και μείνε στο lab.",
         },
         shots: [
           shot("kill -1 6242", ["sent SIGHUP to 6242; outcome depends on the process (simulated)."]),
@@ -348,7 +348,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "Background, fg, jobs, at", el: "Background, fg, jobs, at" },
         body: {
           en: "Append & to run in the background: nano gamehack.txt &  (prints a PID). jobs lists background jobs. fg PID (or fg) brings one back. at 9:00pm  schedules a one-shot job (crond is for repeating). Example: at 9:00pm  then /root/simple_bash.sh",
-          el: "εντολή &  ·  jobs  ·  fg  ·  at 9:00pm",
+          el: "Πρόσθεσε & για παρασκήνιο, έλεγξε με jobs, επανάφερε με fg και προγραμμάτισε με at 9:00pm",
         },
         shots: [
           shot("nano gamehack.txt &", ["[1] 7100"]),
@@ -370,29 +370,29 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       { cmd: "at 9:00pm", desc: { en: "one-shot schedule", el: "προγραμματισμός μία φορά" } },
     ],
     tasks: [
-      { id: "ps", instruction: { en: "ps", el: "ps" }, hint: { en: "ps", el: "ps" }, explain: { en: "Your session's processes.", el: "Οι δικές σου." }, check: (t) => t.flags.has("ps") },
-      { id: "aux", instruction: { en: "ps aux", el: "ps aux" }, hint: { en: "ps aux", el: "ps aux" }, explain: { en: "Everyone's processes.", el: "Όλων." }, check: (t) => t.flags.has("ps-aux") || usedCmd(t, /ps\s+aux/) },
-      { id: "psg", instruction: { en: "ps aux | grep msfconsole", el: "ps aux | grep msfconsole" }, hint: { en: "ps aux | grep msfconsole", el: "ps aux | grep msfconsole" }, explain: { en: "Filter by name.", el: "Φίλτρο ονόματος." }, check: (t) => t.flags.has("ps-grep") || usedCmd(t, /ps\s+aux\s*\|/) },
-      { id: "top", instruction: { en: "top", el: "top" }, hint: { en: "top", el: "top" }, explain: { en: "Greediest first.", el: "Οι πιο αχόρταγοι πρώτα." }, check: (t) => t.flags.has("top") },
+      { id: "ps", instruction: { en: "ps", el: "ps" }, hint: { en: "ps", el: "ps" }, explain: { en: "Your session's processes.", el: "Εμφανίζει τις δικές σου διεργασίες." }, check: (t) => t.flags.has("ps") },
+      { id: "aux", instruction: { en: "ps aux", el: "ps aux" }, hint: { en: "ps aux", el: "ps aux" }, explain: { en: "Everyone's processes.", el: "Εμφανίζει τις διεργασίες όλων." }, check: (t) => t.flags.has("ps-aux") || usedCmd(t, /ps\s+aux/) },
+      { id: "psg", instruction: { en: "ps aux | grep msfconsole", el: "ps aux | grep msfconsole" }, hint: { en: "ps aux | grep msfconsole", el: "ps aux | grep msfconsole" }, explain: { en: "Filter by name.", el: "Φιλτράρει με βάση το όνομα." }, check: (t) => t.flags.has("ps-grep") || usedCmd(t, /ps\s+aux\s*\|/) },
+      { id: "top", instruction: { en: "top", el: "top" }, hint: { en: "top", el: "top" }, explain: { en: "Greediest first.", el: "Οι πιο απαιτητικές σε πόρους εμφανίζονται πρώτες." }, check: (t) => t.flags.has("top") },
       { id: "nice", instruction: { en: "nice -n 10 /usr/bin/ssh-agent", el: "nice -n 10 /usr/bin/ssh-agent" }, hint: { en: "nice -n 10 /usr/bin/ssh-agent", el: "nice -n 10 /usr/bin/ssh-agent" }, explain: { en: "Start with priority.", el: "Εκκίνηση με προτεραιότητα." }, check: (t) => t.flags.has("nice") || usedCmd(t, /^\s*nice\b/) },
-      { id: "renice", instruction: { en: "renice 19 6242", el: "renice 19 6242" }, hint: { en: "renice 19 6242", el: "renice 19 6242" }, explain: { en: "Absolute nice value + PID.", el: "Τιμή + PID." }, check: (t) => t.flags.has("renice") || usedCmd(t, /renice/) },
+      { id: "renice", instruction: { en: "renice 19 6242", el: "renice 19 6242" }, hint: { en: "renice 19 6242", el: "renice 19 6242" }, explain: { en: "Absolute nice value + PID.", el: "Ορίζει απόλυτη τιμή για το PID." }, check: (t) => t.flags.has("renice") || usedCmd(t, /renice/) },
       { id: "k1", instruction: { en: "kill -1 6242", el: "kill -1 6242" }, hint: { en: "kill -1 6242", el: "kill -1 6242" }, explain: { en: "SIGHUP.", el: "SIGHUP." }, check: (t) => t.flags.has("kill-1") || usedCmd(t, /kill\s+-1/) },
       { id: "k9", instruction: { en: "kill -9 4378", el: "kill -9 4378" }, hint: { en: "kill -9 4378", el: "kill -9 4378" }, explain: { en: "SIGKILL.", el: "SIGKILL." }, check: (t) => t.flags.has("kill-9") || usedCmd(t, /kill\s+-9/) },
-      { id: "bg", instruction: { en: "nano gamehack.txt &", el: "nano gamehack.txt &" }, hint: { en: "nano gamehack.txt &", el: "nano gamehack.txt &" }, explain: { en: "& backgrounds.", el: "Το & πάει πίσω." }, check: (t) => t.flags.has("bg") || usedCmd(t, /&\s*$/) },
-      { id: "jobs", instruction: { en: "jobs   then   fg", el: "jobs και fg" }, hint: { en: "jobs", el: "jobs" }, explain: { en: "Job control.", el: "Job control." }, check: (t) => t.flags.has("jobs") || t.flags.has("fg") || usedCmd(t, /^\s*jobs\b/) },
-      { id: "at", instruction: { en: "at 9:00pm", el: "at 9:00pm" }, hint: { en: "at 9:00pm", el: "at 9:00pm" }, explain: { en: "One-shot schedule.", el: "Μία φορά." }, check: (t) => t.flags.has("at") },
+      { id: "bg", instruction: { en: "nano gamehack.txt &", el: "nano gamehack.txt &" }, hint: { en: "nano gamehack.txt &", el: "nano gamehack.txt &" }, explain: { en: "& backgrounds.", el: "Το & στέλνει την εντολή στο παρασκήνιο." }, check: (t) => t.flags.has("bg") || usedCmd(t, /&\s*$/) },
+      { id: "jobs", instruction: { en: "jobs   then   fg", el: "jobs και fg" }, hint: { en: "jobs", el: "jobs" }, explain: { en: "Job control.", el: "Διαχείριση εργασιών (job control)." }, check: (t) => t.flags.has("jobs") || t.flags.has("fg") || usedCmd(t, /^\s*jobs\b/) },
+      { id: "at", instruction: { en: "at 9:00pm", el: "at 9:00pm" }, hint: { en: "at 9:00pm", el: "at 9:00pm" }, explain: { en: "One-shot schedule.", el: "Προγραμματίζει μία εκτέλεση." }, check: (t) => t.flags.has("at") },
     ],
     challenges: [
       {
         title: { en: "Confirm msf is a row", el: "Επιβεβαίωσε msf" },
-        brief: { en: "ps aux | grep msfconsole should have shown PID 880.", el: "PID 880." },
-        success: { en: "You can hunt processes by name.", el: "Κυνηγάς διεργασίες με όνομα." },
+        brief: { en: "ps aux | grep msfconsole should have shown PID 880.", el: "Εντόπισε το PID 880." },
+        success: { en: "You can hunt processes by name.", el: "Εντοπίζεις διεργασίες με βάση το όνομα." },
         check: (t) => t.flags.has("ps-grep") || t.flags.has("ps-aux"),
       },
       {
         title: { en: "Schedule the bash stub", el: "Προγραμμάτισε το bash" },
-        brief: { en: "You ran at 9:00pm — in a real shell you would then type /root/simple_bash.sh", el: "at + simple_bash.sh" },
-        success: { en: "Daemon scheduling introduced.", el: "Γνώρισες το at." },
+        brief: { en: "You ran at 9:00pm — in a real shell you would then type /root/simple_bash.sh", el: "Χρησιμοποίησε at μαζί με το simple_bash.sh" },
+        success: { en: "Daemon scheduling introduced.", el: "Γνώρισες την εντολή at." },
         check: (t) => t.flags.has("at"),
       },
     ],
@@ -412,7 +412,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "env vs shell", el: "env vs shell" },
         body: {
           en: "Variables are key=value strings. Shell variables last for this session; environment variables are inherited. set | more  dumps them (set is bigger than env).",
-          el: "set | more για όλες τις μεταβλητές.",
+          el: "Η εντολή set | more εμφανίζει όλες τις μεταβλητές.",
         },
         shots: [shot("set | more", ["HOME=/root", "USER=root", "HISTSIZE=1000", "PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin"])],
       },
@@ -428,7 +428,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "Temporary change", el: "Προσωρινή αλλαγή" },
         body: {
           en: "HISTSIZE=0   (no spaces around =). Up-arrow history goes quiet for this session. A new terminal would restore the default — unless you export.",
-          el: "HISTSIZE=0 χωρίς κενά.",
+          el: "Η εντολή HISTSIZE=0 γράφεται χωρίς κενά.",
         },
         shots: [shot("HISTSIZE=0", [""])],
       },
@@ -436,7 +436,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "Save then export", el: "Αποθήκευσε και export" },
         body: {
           en: "Always stash the old value: echo $HISTSIZE > ~/valueofHISTSIZE.txt   then HISTSIZE=0  and  export HISTSIZE  to make it stick for child processes.",
-          el: "echo $HISTSIZE > ~/valueofHISTSIZE.txt και export HISTSIZE",
+          el: "Αποθήκευσε με echo $HISTSIZE > ~/valueofHISTSIZE.txt και εξήγαγε με export HISTSIZE",
         },
         shots: [
           shot("echo $HISTSIZE > ~/valueofHISTSIZE.txt", [""]),
@@ -447,7 +447,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         heading: { en: "User-defined + unset", el: "Δικές σου + unset" },
         body: {
           en: 'url_variable="gamehack.lab/"   creates a custom variable. echo $url_variable to read it. unset url_variable deletes it — echo then prints nothing.',
-          el: "url_variable=… και unset url_variable",
+          el: "Όρισε τη url_variable=… και αφαίρεσέ την με unset url_variable",
         },
         shots: [
           shot('url_variable="gamehack.lab/"', [""]),
@@ -464,25 +464,25 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       { cmd: "unset NAME", desc: { en: "delete var", el: "διαγραφή" } },
     ],
     tasks: [
-      { id: "set", instruction: { en: "set | more   (or just set)", el: "set | more" }, hint: { en: "set | more", el: "set | more" }, explain: { en: "Dump vars.", el: "Dump." }, check: (t) => t.flags.has("set") || usedCmd(t, /^\s*set\b/) },
-      { id: "greph", instruction: { en: "set | grep HISTSIZE", el: "set | grep HISTSIZE" }, hint: { en: "set | grep HISTSIZE", el: "set | grep HISTSIZE" }, explain: { en: "Should show 1000 first.", el: "Αρχικά 1000." }, check: (t) => t.flags.has("grep-hist") || usedCmd(t, /grep\s+HISTSIZE/) },
-      { id: "zero", instruction: { en: "HISTSIZE=0", el: "HISTSIZE=0" }, hint: { en: "HISTSIZE=0", el: "HISTSIZE=0" }, explain: { en: "No spaces.", el: "Χωρίς κενά." }, check: (t) => t.flags.has("histsize") || usedCmd(t, /HISTSIZE=0/) },
-      { id: "save", instruction: { en: "echo $HISTSIZE > ~/valueofHISTSIZE.txt", el: "echo $HISTSIZE > ~/valueofHISTSIZE.txt" }, hint: { en: "echo $HISTSIZE > ~/valueofHISTSIZE.txt", el: "echo $HISTSIZE > ~/valueofHISTSIZE.txt" }, explain: { en: "Backup before you break history.", el: "Backup πριν πειράξεις το history." }, check: (t) => t.flags.has("hist-save") || usedCmd(t, /valueofHISTSIZE/) },
-      { id: "export", instruction: { en: "export HISTSIZE", el: "export HISTSIZE" }, hint: { en: "export HISTSIZE", el: "export HISTSIZE" }, explain: { en: "Inherit in children.", el: "Κληρονομιά στα παιδιά." }, check: (t) => t.flags.has("export") || usedCmd(t, /export\s+HISTSIZE/) },
-      { id: "url", instruction: { en: 'url_variable="gamehack.lab/"', el: "url_variable=gamehack.lab/" }, hint: { en: 'url_variable="gamehack.lab/"', el: "url_variable=…" }, explain: { en: "Custom variable.", el: "Δική σου μεταβλητή." }, check: (t) => t.flags.has("url-var") || usedCmd(t, /url_variable=/) },
-      { id: "unset", instruction: { en: "unset url_variable", el: "unset url_variable" }, hint: { en: "unset url_variable", el: "unset url_variable" }, explain: { en: "Delete it.", el: "Διαγραφή." }, check: (t) => t.flags.has("unset") || usedCmd(t, /unset\s+url_variable/) },
+      { id: "set", instruction: { en: "set | more   (or just set)", el: "set | more" }, hint: { en: "set | more", el: "set | more" }, explain: { en: "Dump vars.", el: "Εμφανίζει τις μεταβλητές." }, check: (t) => t.flags.has("set") || usedCmd(t, /^\s*set\b/) },
+      { id: "greph", instruction: { en: "set | grep HISTSIZE", el: "set | grep HISTSIZE" }, hint: { en: "set | grep HISTSIZE", el: "set | grep HISTSIZE" }, explain: { en: "Should show 1000 first.", el: "Αρχικά εμφανίζει 1000." }, check: (t) => t.flags.has("grep-hist") || usedCmd(t, /grep\s+HISTSIZE/) },
+      { id: "zero", instruction: { en: "HISTSIZE=0", el: "HISTSIZE=0" }, hint: { en: "HISTSIZE=0", el: "HISTSIZE=0" }, explain: { en: "No spaces.", el: "Γράφεται χωρίς κενά." }, check: (t) => t.flags.has("histsize") || usedCmd(t, /HISTSIZE=0/) },
+      { id: "save", instruction: { en: "echo $HISTSIZE > ~/valueofHISTSIZE.txt", el: "echo $HISTSIZE > ~/valueofHISTSIZE.txt" }, hint: { en: "echo $HISTSIZE > ~/valueofHISTSIZE.txt", el: "echo $HISTSIZE > ~/valueofHISTSIZE.txt" }, explain: { en: "Backup before you break history.", el: "Αντίγραφο ασφαλείας πριν αλλάξεις το ιστορικό." }, check: (t) => t.flags.has("hist-save") || usedCmd(t, /valueofHISTSIZE/) },
+      { id: "export", instruction: { en: "export HISTSIZE", el: "export HISTSIZE" }, hint: { en: "export HISTSIZE", el: "export HISTSIZE" }, explain: { en: "Inherit in children.", el: "Κληρονομείται από τις διεργασίες-παιδιά." }, check: (t) => t.flags.has("export") || usedCmd(t, /export\s+HISTSIZE/) },
+      { id: "url", instruction: { en: 'url_variable="gamehack.lab/"', el: "url_variable=gamehack.lab/" }, hint: { en: 'url_variable="gamehack.lab/"', el: "url_variable=…" }, explain: { en: "Custom variable.", el: "Ορίζει δική σου μεταβλητή." }, check: (t) => t.flags.has("url-var") || usedCmd(t, /url_variable=/) },
+      { id: "unset", instruction: { en: "unset url_variable", el: "unset url_variable" }, hint: { en: "unset url_variable", el: "unset url_variable" }, explain: { en: "Delete it.", el: "Διαγράφει τη μεταβλητή." }, check: (t) => t.flags.has("unset") || usedCmd(t, /unset\s+url_variable/) },
     ],
     challenges: [
       {
         title: { en: "Read the backup", el: "Διάβασε το backup" },
         brief: { en: "cat ~/valueofHISTSIZE.txt", el: "cat ~/valueofHISTSIZE.txt" },
-        success: { en: "You can undo because you saved.", el: "Σώθηκες γιατί αποθήκευσες." },
+        success: { en: "You can undo because you saved.", el: "Μπορείς να επαναφέρεις, επειδή αποθήκευσες." },
         check: (t) => t.filesRead.some((p) => p.includes("valueofHISTSIZE")) || t.flags.has("hist-save"),
       },
       {
         title: { en: "echo the custom var before unset", el: "echo πριν το unset" },
-        brief: { en: "If you already unset, recreate url_variable then echo $url_variable", el: "Ξαναφτιάξ' την και echo" },
-        success: { en: "$ expands variables.", el: "Το $ κάνει expand." },
+        brief: { en: "If you already unset, recreate url_variable then echo $url_variable", el: "Δημιούργησέ την ξανά και εκτέλεσε echo" },
+        success: { en: "$ expands variables.", el: "Το $ αναπτύσσει τη μεταβλητή (expansion)." },
         check: (t) => t.flags.has("url-var") || usedCmd(t, /echo\s+\$url/),
       },
     ],

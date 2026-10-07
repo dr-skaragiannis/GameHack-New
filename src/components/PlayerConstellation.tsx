@@ -227,7 +227,7 @@ export default function PlayerConstellation({ user, lang, compact = false }: { u
     { id: "top10", label: t("constellationTop10", lang), icon: "crown", count: Math.min(10, ranked.length) },
   ];
   const shownRange = visiblePlayers.length < filteredPlayers.length
-    ? `${visiblePlayers.length} / ${filteredPlayers.length} · ${ranked.length} ${t("constellationTotal", lang)}`
+    ? `${visiblePlayers.length} / ${filteredPlayers.length}, ${ranked.length} ${t("constellationTotal", lang)}`
     : `${visiblePlayers.length} / ${ranked.length}`;
 
   return (
@@ -384,7 +384,7 @@ export default function PlayerConstellation({ user, lang, compact = false }: { u
                 key={player.user.id}
                 role="img"
                 aria-label={accessibleName}
-                title={`${accessibleName} · ${player.user.metrics.xp.toLocaleString()} XP${player.user.interests.length ? ` · ${player.user.interests.join(", ")}` : ""}`}
+                title={`${accessibleName}, ${player.user.metrics.xp.toLocaleString()} XP${player.user.interests.length ? `, ${player.user.interests.join(", ")}` : ""}`}
                 className={cn("player-constellation__node", player.online && "is-online", player.user.id === user.id && "is-self")}
                 style={{ left: `${player.x}%`, top: `${player.y}%` }}
               >

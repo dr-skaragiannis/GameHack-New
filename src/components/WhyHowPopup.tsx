@@ -27,7 +27,7 @@ export default function WhyHowPopup({
 
   const labels = lang === "en"
     ? {
-        eyebrow: "FIELD GUIDE · WHY & HOW",
+        eyebrow: "FIELD GUIDE, WHY & HOW",
         title: "Why this matters",
         objective: "YOUR OBJECTIVE",
         principle: "THE PRINCIPLE",
@@ -42,7 +42,7 @@ export default function WhyHowPopup({
         stepThree: "Check the evidence",
       }
     : {
-        eyebrow: "ΟΔΗΓΟΣ ΠΕΔΙΟΥ · ΓΙΑΤΙ & ΠΩΣ",
+        eyebrow: "ΟΔΗΓΟΣ ΠΕΔΙΟΥ, ΓΙΑΤΙ & ΠΩΣ",
         title: "Γιατί έχει σημασία",
         objective: "ΣΤΟΧΟΣ",
         principle: "Η ΑΡΧΗ",
@@ -51,7 +51,7 @@ export default function WhyHowPopup({
         how: "ΠΩΣ ΛΕΙΤΟΥΡΓΕΙ",
         verify: "ΕΠΑΛΗΘΕΥΣΗ",
         close: "Κλείσιμο επεξήγησης",
-        footer: "Κατανόησε τα τεκμήρια· μην αντιγράφεις απλώς μια εντολή.",
+        footer: "Κατανόησε τα τεκμήρια, μην αντιγράφεις απλώς μια εντολή.",
         stepOne: "Ξεκίνα από τον στόχο",
         stepTwo: "Εφάρμοσε την ιδέα",
         stepThree: "Έλεγξε τα τεκμήρια",
@@ -157,7 +157,7 @@ export default function WhyHowPopup({
         <footer className="why-how-dialog__footer">
           <span>{labels.footer}</span>
           <button type="button" onClick={onClose}>
-            {lang === "en" ? "Got it" : "Έγινε"}
+            {lang === "en" ? "Got it" : "Κατάλαβα"}
             <Icon name="check" className="h-4 w-4" />
           </button>
         </footer>

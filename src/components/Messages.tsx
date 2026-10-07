@@ -95,7 +95,7 @@ export default function Messages({
               className={cn("glass rounded-xl border p-3 text-sm", m.read ? "border-gamehack-border" : "border-cyan-600/40")}
             >
               <div className="text-sm text-iron-400">
-                {m.fromName} {m.broadcast ? `· ${t("broadcast", lang)}` : ""} · {new Date(m.ts).toLocaleString()}
+                {m.fromName} {m.broadcast ? `, ${t("broadcast", lang)}` : ""}, {new Date(m.ts).toLocaleString()}
               </div>
               <div className="mt-1 text-zinc-200">{m.text}</div>
             </div>

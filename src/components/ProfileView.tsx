@@ -130,8 +130,8 @@ export default function ProfileView({
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold">{user.displayName}</h1>
           <div className="text-iron-400 text-sm">
-            {user.username.includes("@") ? null : `@${user.username} · `}
-            {t(user.role, lang)} · {t("level", lang)} {lv.level}
+            {user.username.includes("@") ? null : `@${user.username}, `}
+            {t(user.role, lang)}, {t("level", lang)} {lv.level}
           </div>
           <div className="flex gap-4 mt-3 text-sm">
             <span className="text-cyan-400 font-semibold">{user.metrics.xp} XP</span>

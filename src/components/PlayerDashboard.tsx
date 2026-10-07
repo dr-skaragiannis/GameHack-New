@@ -142,7 +142,7 @@ function DashboardMapPreview({
               <span className="player-dashboard__map-route-number">{String(campaign.pathNumber).padStart(2, "0")}</span>
               <span className="player-dashboard__map-route-copy">
                 <span className="player-dashboard__map-route-title">{bi(campaign.title, lang)}</span>
-                <span className="player-dashboard__map-route-meta">{completed}/{ordered.length} {t("modules", lang)} · {percent}%</span>
+                <span className="player-dashboard__map-route-meta">{completed}/{ordered.length} {t("modules", lang)}, {percent}%</span>
                 <span className="player-dashboard__map-route-track" aria-hidden="true">
                   <span style={{ width: `${percent}%` }} />
                 </span>
@@ -308,7 +308,7 @@ export default function PlayerDashboard({
             <span className="player-dashboard__hero-route-icon"><Icon name={campaignIcon(currentCampaign)} className="h-4 w-4" /></span>
             <span>
               <small>{uppercaseLabel(t("currentLearningPath", lang), lang)}</small>
-              <strong>{String(currentCampaign.pathNumber).padStart(2, "0")} · {bi(currentCampaign.title, lang)}</strong>
+              <strong>{String(currentCampaign.pathNumber).padStart(2, "0")}, {bi(currentCampaign.title, lang)}</strong>
             </span>
           </div>
         </div>
@@ -337,7 +337,7 @@ export default function PlayerDashboard({
         <div className="player-dashboard__hero-level">
           <Avatar src={user.avatar} name={user.displayName} size={36} />
           <div className="player-dashboard__hero-level-copy">
-            <span>{t("level", lang)} {lv.level} · #{myStanding?.rank ?? "—"}</span>
+            <span>{t("level", lang)} {lv.level}, #{myStanding?.rank ?? "—"}</span>
             <strong>{user.metrics.xp.toLocaleString()} XP</strong>
             <div className="player-dashboard__hero-progress" aria-label={`${lv.pct}% to next level`}>
               <span style={{ width: `${lv.pct}%` }} />
@@ -440,7 +440,7 @@ export default function PlayerDashboard({
                     <Avatar src={player.avatar} name={player.displayName} size={34} />
                     <span className="player-dashboard__leader-info">
                       <strong>{player.displayName}</strong>
-                      <small>LVL {levelFromXp(player.metrics.xp).level}{player.id === user.id ? ` · ${lang === "en" ? "You" : "Εσύ"}` : ""}</small>
+                      <small>LVL {levelFromXp(player.metrics.xp).level}{player.id === user.id ? `, ${lang === "en" ? "You" : "Εσύ"}` : ""}</small>
                     </span>
                     <span className="player-dashboard__leader-xp">{player.metrics.xp.toLocaleString()} <small>XP</small></span>
                   </div>

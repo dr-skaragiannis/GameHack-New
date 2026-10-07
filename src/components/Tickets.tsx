@@ -43,7 +43,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
               >
                 <div className="font-semibold truncate">{x.subject}</div>
                 <div className="text-sm text-iron-400">
-                  {x.playerName} · {t(x.status, lang)} · {t(x.priority, lang)}
+                  {x.playerName}, {t(x.status, lang)}, {t(x.priority, lang)}
                 </div>
               </button>
             </li>
@@ -55,7 +55,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
               <div>
                 <div className="font-bold">{tk.subject}</div>
                 <div className="text-sm text-iron-400">
-                  {tk.playerName} · {tk.moduleId || t("general", lang)}
+                  {tk.playerName}, {tk.moduleId || t("general", lang)}
                 </div>
               </div>
               {user.role === "educator" && (
@@ -77,7 +77,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
               {tk.messages.map((m, i) => (
                 <div key={i} className="rounded-xl bg-gamehack-bg border border-gamehack-line p-3 text-sm">
                   <div className="text-sm text-iron-400">
-                    {m.fromName} · {new Date(m.ts).toLocaleString()}
+                    {m.fromName}, {new Date(m.ts).toLocaleString()}
                   </div>
                   <div className="mt-1">{m.text}</div>
                 </div>

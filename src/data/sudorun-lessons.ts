@@ -39,7 +39,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "pwd — where am I?", el: "pwd — πού είμαι;" },
         body: {
           en: "Before you begin, know which directory you are in. pwd prints the working directory. In Sudo_Run you start in /root (the root user's home).",
-          el: "Το pwd τυπώνει τον τρέχοντα φάκελο. Στο Sudo_Run ξεκινάς από /root.",
+          el: "Η εντολή pwd, όταν εκτελείται, εμφανίζει τον φάκελο στον οποίο βρισκόμαστε αυτή τη στιγμή. Στο Sudo_Run ξεκινάς από το /root.",
         },
         shots: [shot("pwd", ["/root"])],
       },
@@ -47,7 +47,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "whoami — who am I?", el: "whoami — ποιος είμαι;" },
         body: {
           en: "whoami shows the logged-in user. Here you are root (the Windows equivalent of a full administrator).",
-          el: "Το whoami δείχνει τον χρήστη. Εδώ είσαι root.",
+          el: "Η εντολή whoami εμφανίζει τον συνδεδεμένο χρήστη. Εδώ είσαι root.",
         },
         shots: [shot("whoami", ["root"])],
       },
@@ -55,7 +55,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "cd — change directory", el: "cd — αλλαγή φακέλου" },
         body: {
           en: "cd moves you. Change into Desktop with: cd Desktop/",
-          el: "Το cd σε μετακινεί. Δοκίμασε cd Desktop/",
+          el: "Η εντολή cd σε μετακινεί σε άλλο φάκελο. Δοκίμασε cd Desktop/",
         },
         shots: [shot("cd Desktop/", ["root@kali:~/Desktop#"])],
       },
@@ -63,7 +63,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "ls — list contents", el: "ls — λίστα" },
         body: {
           en: "ls lists a directory (like dir on Windows). Run it after you cd into Desktop.",
-          el: "Το ls είναι σαν το dir των Windows.",
+          el: "Η εντολή ls λειτουργεί όπως η dir των Windows.",
         },
         shots: [shot("ls", ["CTF-notes.txt  todo.txt"])],
       },
@@ -77,44 +77,44 @@ export const SUDO_RUN_MODULES: Module[] = [
     tasks: [
       {
         id: "pwd",
-        instruction: { en: "Run pwd — you should see /root.", el: "Τρέξε pwd — πρέπει να δεις /root." },
+        instruction: { en: "Run pwd — you should see /root.", el: "Εκτέλεσε pwd — πρέπει να δεις /root." },
         hint: { en: "pwd", el: "pwd" },
         explain: { en: "WHY: orientation. HOW: pwd", el: "ΓΙΑΤΙ: προσανατολισμός." },
         check: (t) => t.flags.has("pwd") || usedCmd(t, /^\s*pwd\b/),
       },
       {
         id: "whoami",
-        instruction: { en: "Run whoami and confirm you are root.", el: "whoami — είσαι root." },
+        instruction: { en: "Run whoami and confirm you are root.", el: "Εκτέλεσε whoami και επιβεβαίωσε ότι είσαι root." },
         hint: { en: "whoami", el: "whoami" },
-        explain: { en: "Root is all-powerful. That is why the ethics oath exists.", el: "Ο root είναι πανίσχυρος." },
+        explain: { en: "Root is all-powerful. That is why the ethics oath exists.", el: "Ο χρήστης root έχει απεριόριστες δυνατότητες." },
         check: (t) => t.flags.has("whoami"),
       },
       {
         id: "cd",
-        instruction: { en: "cd into Desktop.", el: "cd στο Desktop." },
+        instruction: { en: "cd into Desktop.", el: "Μετακινήσου στο Desktop με cd." },
         hint: { en: "cd Desktop", el: "cd Desktop" },
         explain: { en: "cd Desktop/ or cd Desktop", el: "cd Desktop" },
         check: (t) => t.flags.has("cd-desktop") || usedCmd(t, /^\s*cd\s+Desktop/),
       },
       {
         id: "ls",
-        instruction: { en: "List the Desktop with ls.", el: "ls στο Desktop." },
+        instruction: { en: "List the Desktop with ls.", el: "Εμφάνισε τα περιεχόμενα του Desktop με ls." },
         hint: { en: "ls", el: "ls" },
-        explain: { en: "ls is your dir.", el: "ls = dir." },
+        explain: { en: "ls is your dir.", el: "Το ls αντιστοιχεί στο dir." },
         check: (t) => t.flags.has("ls"),
       },
     ],
     challenges: [
       {
         title: { en: "Home again", el: "Πίσω στο home" },
-        brief: { en: "cd ~ or cd /root and pwd again.", el: "cd ~ ή cd /root και pwd." },
-        success: { en: "You can move and know where you landed.", el: "Ξέρεις πού πατάς." },
+        brief: { en: "cd ~ or cd /root and pwd again.", el: "Εκτέλεσε cd ~ ή cd /root και μετά pwd." },
+        success: { en: "You can move and know where you landed.", el: "Γνωρίζεις πλέον πού βρίσκεσαι." },
         check: (t) => usedCmd(t, /^\s*cd\s+(\/root|~)\s*$/) || t.cwd === "/root",
       },
       {
         title: { en: "Read the desktop CTF note", el: "Διάβασε το CTF note" },
-        brief: { en: "cat Desktop/CTF-notes.txt from /root (or cat CTF-notes.txt if you are already in Desktop).", el: "cat το CTF-notes.txt" },
-        success: { en: "You found a Sudo_Run flag on the desktop.", el: "Βρήκες flag στο desktop." },
+        brief: { en: "cat Desktop/CTF-notes.txt from /root (or cat CTF-notes.txt if you are already in Desktop).", el: "Διάβασε το CTF-notes.txt με cat" },
+        success: { en: "You found a Sudo_Run flag on the desktop.", el: "Βρήκες ένα flag στην επιφάνεια εργασίας." },
         check: (t) => t.filesRead.some((p) => p.includes("CTF-notes")),
       },
     ],
@@ -134,7 +134,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "help / --help", el: "help / --help" },
         body: {
           en: "Nearly every command, application or utility on Linux has a dedicated help file. If you are stuck, -h / --help is your friend. Example: volatility --help (Volatility is a memory-forensics framework). In GameHack the same pattern applies to every tool.",
-          el: "Σχεδόν κάθε εντολή έχει --help. Π.χ. volatility --help.",
+          el: "Σχεδόν κάθε εντολή διαθέτει --help. Παράδειγμα: volatility --help.",
         },
         shots: [shot("volatility --help", ["Volatility Foundation Volatility Framework", "-h, --help   show help message and exit", "Plugins: pslist, netscan, filescan (lab stub)"])],
       },
@@ -142,7 +142,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "man — manual pages", el: "man — εγχειρίδια" },
         body: {
           en: "In addition to --help, most commands have a manual page: man COMMAND. man ls describes ls and its flags (-a, -l, …).",
-          el: "Το man ls περιγράφει την ls και τα flags.",
+          el: "Η εντολή man ls περιγράφει την ls και τις επιλογές (flags).",
         },
         shots: [shot("man ls", ["LS(1)  ls - list directory contents", "-a  do not ignore entries starting with .", "-l  use a long listing format"])],
       },
@@ -150,7 +150,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "locate — keyword search", el: "locate — αναζήτηση" },
         body: {
           en: "locate KEYWORD searches a database of the filesystem. Drawbacks: it can dump too much, and the database is typically updated once a day — so brand-new files may be missing. Pipe through more to page: locate CTF | more",
-          el: "Το locate ψάχνει μια βάση του filesystem. Συχνά: locate CTF | more",
+          el: "Η εντολή locate αναζητά σε μια βάση δεδομένων του συστήματος αρχείων. Συνήθης χρήση: locate CTF | more",
         },
         shots: [shot("locate CTF | more", ["/root/Desktop/CTF-notes.txt", "/opt/CTF/readme", "/usr/share/wordlists/CTF.txt"])],
       },
@@ -158,7 +158,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "Binaries, whereis, which", el: "Binaries, whereis, which" },
         body: {
           en: "Files you can execute (like .exe on Windows) are binaries. They usually live in /usr/bin or /usr/sbin. ls, cd, cat, ps live there too. whereis NAME returns the binary path AND its man page. which NAME is stricter: only the binary on your PATH. Try both on git.",
-          el: "Τα binaries ζουν σε /usr/bin. whereis δείχνει binary+man. which μόνο το PATH.",
+          el: "Τα εκτελέσιμα (binaries) βρίσκονται συνήθως στο /usr/bin. Η whereis εμφανίζει το εκτελέσιμο και τη σελίδα manual, η which μόνο το εκτελέσιμο στο PATH.",
         },
         shots: [
           shot("whereis git", ["git: /usr/bin/git /usr/share/man/man1/git.1"]),
@@ -176,7 +176,7 @@ export const SUDO_RUN_MODULES: Module[] = [
     tasks: [
       {
         id: "vol",
-        instruction: { en: "Run volatility --help", el: "Τρέξε volatility --help" },
+        instruction: { en: "Run volatility --help", el: "Εκτέλεσε volatility --help" },
         hint: { en: "volatility --help", el: "volatility --help" },
         explain: { en: "WHY: every tool documents itself.", el: "ΓΙΑΤΙ: κάθε εργαλείο αυτοπεριγράφεται." },
         check: (t) => t.flags.has("volatility-help") || usedCmd(t, /volatility/),
@@ -248,7 +248,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "Piping into grep", el: "Pipe στο grep" },
         body: {
           en: "The most common use of grep is to filter another command. ifconfig dumps a lot; keep only inet lines: ifconfig | grep inet",
-          el: "ifconfig | grep inet κρατά μόνο γραμμές inet.",
+          el: "Η εντολή ifconfig | grep inet κρατά μόνο τις γραμμές inet.",
         },
         shots: [shot("ifconfig | grep inet", ["        inet 10.10.10.2  netmask 255.255.255.0  broadcast 10.10.10.255", "        inet6 fe80::a00:27ff:fe12:3456  prefixlen 64", "        inet 127.0.0.1  netmask 255.0.0.0"])],
       },
@@ -256,7 +256,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "find — the flexible hunter", el: "find — κυνηγός" },
         body: {
           en: "find is the most powerful search: name, type, owner, size, mtime… find / -type f -name gamehack starts at / (root of the tree), looking for a regular file named gamehack. (In this lab the marker file is named gamehack.) Permission denied noise: append 2>&1 | grep -v \"Permission Denied\" to hide errors you cannot read.",
-          el: "find / -type f -name gamehack και προαιρετικά 2>&1 | grep -v \"Permission Denied\".",
+          el: "Η εντολή find / -type f -name gamehack αναζητά το αρχείο, προαιρετικά με 2>&1 | grep -v \"Permission Denied\" για απόκρυψη σφαλμάτων.",
         },
         shots: [
           shot("find / -type f -name gamehack", ["/opt/labs/gamehack"]),
@@ -288,7 +288,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         id: "find",
         instruction: { en: "find / -type f -name gamehack", el: "find / -type f -name gamehack" },
         hint: { en: "find / -type f -name gamehack", el: "find / -type f -name gamehack" },
-        explain: { en: "/ is the tree root. -type f means regular file.", el: "/ = ρίζα. -type f = αρχείο." },
+        explain: { en: "/ is the tree root. -type f means regular file.", el: "Το / είναι η ρίζα. Το -type f επιλέγει κανονικά αρχεία." },
         check: (t) => t.flags.has("find-gamehack") || t.flags.has("find") || usedCmd(t, /find\s+\/.*gamehack/),
       },
     ],
@@ -296,13 +296,13 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         title: { en: "Silence permission denied", el: "Σίγαση permission denied" },
         brief: { en: 'find / -type f -name gamehack 2>&1 | grep -v "Permission Denied"', el: "find … 2>&1 | grep -v" },
-        success: { en: "You redirected stderr and filtered it.", el: "Redirect έκανες στο stderr." },
+        success: { en: "You redirected stderr and filtered it.", el: "Ανακατεύθυνες το stderr." },
         check: (t) => usedCmd(t, /2>&1/) || t.flags.has("find-gamehack"),
       },
       {
         title: { en: "Read the marker", el: "Διάβασε τον δείκτη" },
         brief: { en: "cat /opt/labs/gamehack", el: "cat /opt/labs/gamehack" },
-        success: { en: "find led you to a GameHack flag.", el: "Το find σε πήγε στο flag." },
+        success: { en: "find led you to a GameHack flag.", el: "Η εντολή find σε οδήγησε στο flag." },
         check: (t) => t.filesRead.some((p) => p.includes("/opt/labs/gamehack")),
       },
     ],
@@ -322,7 +322,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "cat", el: "cat" },
         body: {
           en: "cat prints a file on the terminal. From /root: cat gamehack.txt  (the lab notes are stored in gamehack.txt).",
-          el: "cat gamehack.txt από /root.",
+          el: "Εκτέλεσε cat gamehack.txt από το /root.",
         },
         shots: [shot("cat gamehack.txt", ["Welcome to GameHack — Linux for Beginners (Sudo_Run).", "Keep notes here. Practice every command in the lab, not on the internet."])],
       },
@@ -346,17 +346,17 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "cp, mv, rm, rmdir", el: "cp, mv, rm, rmdir" },
         body: {
           en: "cp SRC DEST copies. mv SRC DEST moves OR renames. rm FILE deletes a file. rmdir DIR removes an empty directory (use rm -r if it has contents). Walkthrough: cp gamehack-2.txt Documents/ignite   then   mv Documents/ignite/gamehack-2.txt /root/Documents/   then   rm /root/Documents/gamehack-2.txt   then   rmdir ignite_screenshots/",
-          el: "cp αντιγράφει, mv μετακινεί/μετονομάζει, rm σβήνει αρχείο, rmdir άδειο φάκελο.",
+          el: "Η cp αντιγράφει, η mv μετακινεί ή μετονομάζει, η rm διαγράφει αρχείο και η rmdir αφαιρεί κενό φάκελο.",
         },
         shots: [
           shot("cp gamehack-2.txt Documents/ignite", [""]),
           shot("rmdir ignite_screenshots/", [""]),
         ],
-        tip: { en: "rm -r deletes a directory AND its contents. Be careful even in a lab.", el: "Το rm -r σβήνει φάκελο με περιεχόμενο." },
+        tip: { en: "rm -r deletes a directory AND its contents. Be careful even in a lab.", el: "Η εντολή rm -r διαγράφει φάκελο μαζί με το περιεχόμενό του." },
       },
     ],
     cheats: [
-      { cmd: "cat gamehack.txt", desc: { en: "print file", el: "εκτύπωση" } },
+      { cmd: "cat gamehack.txt", desc: { en: "print file", el: "εμφάνιση αρχείου" } },
       { cmd: "touch gamehack-2.txt", desc: { en: "create empty file", el: "κενό αρχείο" } },
       { cmd: "mkdir Documents/ignite", desc: { en: "make directory", el: "φάκελος" } },
       { cmd: "cp FILE DIR", desc: { en: "copy", el: "αντιγραφή" } },
@@ -395,7 +395,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "mv",
-        instruction: { en: "Move the copy with mv into /root/Documents/ (from the ignite folder or by path).", el: "mv στο /root/Documents/" },
+        instruction: { en: "Move the copy with mv into /root/Documents/ (from the ignite folder or by path).", el: "Μετακίνησε το αντίγραφο στο /root/Documents/ με mv" },
         hint: { en: "mv Documents/ignite/gamehack-2.txt /root/Documents/", el: "mv … /root/Documents/" },
         explain: { en: "mv moves or renames.", el: "Το mv μετακινεί ή μετονομάζει." },
         check: (t) => t.flags.has("mv") || usedCmd(t, /^\s*mv\b/),
@@ -417,14 +417,14 @@ export const SUDO_RUN_MODULES: Module[] = [
     ],
     challenges: [
       {
-        title: { en: "Rebuild ignite", el: "Ξαναφτιάξε ignite" },
-        brief: { en: "If you removed Documents/ignite, mkdir it again. ls Documents to prove it.", el: "mkdir ξανά και ls Documents" },
+        title: { en: "Rebuild ignite", el: "Δημιούργησε ξανά το ignite" },
+        brief: { en: "If you removed Documents/ignite, mkdir it again. ls Documents to prove it.", el: "Δημιούργησε ξανά τον φάκελο με mkdir και επιβεβαίωσε με ls Documents" },
         success: { en: "You can create on demand.", el: "Δημιουργείς κατ' απαίτηση." },
         check: (t) => t.flags.has("mkdir-ignite") || usedCmd(t, /ls\s+.*Documents/),
       },
       {
         title: { en: "Recursive reminder", el: "Υπενθύμιση -r" },
-        brief: { en: "Read the tip: run ls ignite_screenshots or confirm rmdir already succeeded.", el: "Επιβεβαίωσε το rmdir." },
+        brief: { en: "Read the tip: run ls ignite_screenshots or confirm rmdir already succeeded.", el: "Επιβεβαίωσε ότι το rmdir πέτυχε." },
         success: { en: "Empty directory gone.", el: "Ο άδειος φάκελος έφυγε." },
         check: (t) => t.flags.has("rmdir") || usedCmd(t, /rm\s+-r/),
       },
@@ -452,7 +452,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "head & tail", el: "head & tail" },
         body: {
           en: "head FILE shows the first 10 lines by default. tail FILE shows the last 10. Try both on /etc/ettercap/etter.dns (also at /etc/Ettercap/etter.dns).",
-          el: "head = πρώτες 10 γραμμές, tail = τελευταίες.",
+          el: "Η head εμφανίζει τις πρώτες 10 γραμμές, η tail τις τελευταίες.",
         },
         shots: [
           shot("head /etc/ettercap/etter.dns", ["# etter.dns — GameHack lab copy of a DNS spoof config (educational)", "# This file is a TEXT example. Never use spoofing outside a lab you own.", "microsoft.com A 10.10.10.8"]),
@@ -479,7 +479,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         heading: { en: "more and less", el: "more και less" },
         body: {
           en: "more FILE shows one page at a time (Enter to scroll). less FILE is similar and lets you search with /keyword (in a real terminal). Here they print the file so you can practise the commands. more /etc/ettercap/etter.dns   and   less /etc/ettercap/etter.dns",
-          el: "more και less σελιδοποιούν. Στο lab τυπώνουν το αρχείο.",
+          el: "Τα more και less σελιδοποιούν την έξοδο. Στο εργαστήριο εμφανίζουν το αρχείο.",
         },
         shots: [shot("more /etc/ettercap/etter.dns", ["# etter.dns — GameHack lab copy …", "(page 1 — Enter would continue on a TTY)"])],
       },
@@ -497,14 +497,14 @@ export const SUDO_RUN_MODULES: Module[] = [
         id: "head",
         instruction: { en: "head /etc/ettercap/etter.dns", el: "head /etc/ettercap/etter.dns" },
         hint: { en: "head /etc/ettercap/etter.dns", el: "head …" },
-        explain: { en: "First ten lines.", el: "Πρώτες δέκα." },
+        explain: { en: "First ten lines.", el: "Εμφανίζει τις πρώτες δέκα γραμμές." },
         check: (t) => usedCmd(t, /^\s*head\b/) || t.flags.has("etter"),
       },
       {
         id: "tail",
         instruction: { en: "tail /etc/ettercap/etter.dns", el: "tail /etc/ettercap/etter.dns" },
         hint: { en: "tail /etc/ettercap/etter.dns", el: "tail …" },
-        explain: { en: "Last ten lines.", el: "Τελευταίες δέκα." },
+        explain: { en: "Last ten lines.", el: "Εμφανίζει τις τελευταίες δέκα γραμμές." },
         check: (t) => usedCmd(t, /^\s*tail\b/),
       },
       {
@@ -518,21 +518,21 @@ export const SUDO_RUN_MODULES: Module[] = [
         id: "sed",
         instruction: { en: "sed s/WWW/www/g gamehack.in", el: "sed s/WWW/www/g gamehack.in" },
         hint: { en: "sed s/WWW/www/g /root/gamehack.in", el: "sed s/WWW/www/g /root/gamehack.in" },
-        explain: { en: "/g = replace every occurrence.", el: "/g = όλες τις εμφανίσεις." },
+        explain: { en: "/g = replace every occurrence.", el: "Το /g εφαρμόζει την αντικατάσταση σε όλες τις εμφανίσεις." },
         check: (t) => t.flags.has("sed-www") || usedCmd(t, /sed\s+s\/WWW\/www/),
       },
       {
         id: "more",
         instruction: { en: "more /etc/ettercap/etter.dns", el: "more /etc/ettercap/etter.dns" },
         hint: { en: "more /etc/ettercap/etter.dns", el: "more …" },
-        explain: { en: "Pager.", el: "Pager." },
+        explain: { en: "Pager.", el: "Σελιδοποιητής (pager)." },
         check: (t) => usedCmd(t, /^\s*more\b/),
       },
       {
         id: "less",
         instruction: { en: "less /etc/ettercap/etter.dns", el: "less /etc/ettercap/etter.dns" },
         hint: { en: "less /etc/ettercap/etter.dns", el: "less …" },
-        explain: { en: "less can search with / in a real TTY.", el: "Σε αληθινό TTY το less ψάχνει με /." },
+        explain: { en: "less can search with / in a real TTY.", el: "Σε πραγματικό τερματικό (TTY), η less αναζητά με /." },
         check: (t) => usedCmd(t, /^\s*less\b/),
       },
     ],

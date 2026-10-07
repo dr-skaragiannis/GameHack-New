@@ -225,7 +225,7 @@ export default function InteractiveMap({
                         <span className="map-player-row__details">
                           <span className="map-player-row__name">{entry.player.displayName}</span>
                           <span className="map-player-row__location">
-                            {bi(campaign.title, lang)} <span>·</span> {bi(module.title, lang)}
+                            {bi(campaign.title, lang)}, {bi(module.title, lang)}
                           </span>
                         </span>
                         <span className={cn("map-presence-label", entry.online ? "is-online" : "is-offline")}>
@@ -406,7 +406,7 @@ function CampaignUniverse({
                 <span className="map-campaign-card__copy">
                   <span className="map-campaign-card__kicker">{campaignKicker(campaign)}</span>
                   <span className="map-campaign-card__name">{String(campaign.pathNumber).padStart(2, "0")}. {bi(campaign.title, lang)}</span>
-                  <span className="map-campaign-card__progress">{completed}/{ordered.length} labs <i>·</i> {percent}%</span>
+                  <span className="map-campaign-card__progress">{completed}/{ordered.length} labs, {percent}%</span>
                   <span className="map-campaign-card__bar"><i style={{ width: `${percent}%` }} /></span>
                 </span>
                 <span className="map-campaign-card__presence" aria-label={`${routeOnline} online, ${routePlayers.length - routeOnline} offline`}>
@@ -436,7 +436,7 @@ function CampaignUniverse({
                       type="button"
                       disabled={!clickable}
                       aria-label={`${bi(module.title, lang)} — ${stateText}${current ? ` — ${t("mapYourPosition", lang)}` : ""}`}
-                      title={clickable ? `${bi(module.title, lang)} · ${stateText}` : t("moduleLocked", lang)}
+                      title={clickable ? `${bi(module.title, lang)}, ${stateText}` : t("moduleLocked", lang)}
                       className={cn("map-node-button", `is-${state}`, current && "is-viewer-node")}
                       onClick={() => clickable && onOpen(campaign.id, module.id)}
                     >
@@ -455,7 +455,7 @@ function CampaignUniverse({
                             key={entry.player.id}
                             type="button"
                             className={cn("map-player-pin", entry.online ? "is-online" : "is-offline", entry.player.id === viewer.id && "is-self", entry.player.id === focusedPlayerId && "is-focused")}
-                            title={`${entry.player.displayName} · ${uppercaseLabel(entry.online ? t("online", lang) : t("offline", lang), lang)} · ${bi(module.title, lang)}`}
+                            title={`${entry.player.displayName}, ${uppercaseLabel(entry.online ? t("online", lang) : t("offline", lang), lang)}, ${bi(module.title, lang)}`}
                             onClick={() => onOpen(campaign.id, module.id)}
                           >
                             <span className="map-pin-avatar"><Avatar src={entry.player.avatar} name={entry.player.displayName} size={22} /><i className={cn("map-status-dot", entry.online ? "is-online" : "is-offline")} /></span>
@@ -472,7 +472,7 @@ function CampaignUniverse({
               {isCollapsed && (
                 <button type="button" className="map-collapsed-route" onClick={() => onToggle(campaign.id)} style={{ left: firstNodeX, top: y }}>
                   <span className="map-collapsed-route__dots">{ordered.slice(0, 8).map((module) => <i key={module.id} className={viewer.progress[module.id]?.completed ? "is-complete" : ""} />)}</span>
-                  <span>{t("mapExpand", lang)} · {ordered.length} labs</span>
+                  <span>{t("mapExpand", lang)}, {ordered.length} labs</span>
                 </button>
               )}
             </div>

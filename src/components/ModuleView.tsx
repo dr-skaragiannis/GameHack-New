@@ -90,7 +90,7 @@ function taskWhyHow(task: Task, lang: Lang): string[] {
     details.push(lang === "en" ? catalog.summary : `${catalog.name}: ${bi(task.instruction, lang)}`);
     details.push(lang === "en"
       ? `Use ${catalog.synopsis} to structure the arguments; compare the output with the objective.`
-      : `Η σύνταξη ${catalog.synopsis} οργανώνει τα ορίσματα· σύγκρινε την έξοδο με τον στόχο.`);
+      : `Η σύνταξη ${catalog.synopsis} οργανώνει τα ορίσματα, σύγκρινε την έξοδο με τον στόχο.`);
   } else {
     details.push(taskObjectiveContext(task, lang));
     details.push(lang === "en"
@@ -118,7 +118,7 @@ function commandTheoryParagraphs(item: StudyItem, lang: Lang): string[] {
     bi(item.desc, lang),
     lang === "en"
       ? "Use this shell shortcut to complete or inspect the current input; it does not run a command by itself."
-      : "Χρησιμοποίησε αυτή τη συντόμευση του shell για συμπλήρωση ή έλεγχο της εισόδου· δεν εκτελεί μόνη της εντολή.",
+      : "Χρησιμοποίησε αυτή τη συντόμευση του shell για συμπλήρωση ή έλεγχο της εισόδου, δεν εκτελεί μόνη της εντολή.",
     lang === "en"
       ? "Confirm the resulting command or candidate path before pressing Enter."
       : "Έλεγξε την εντολή ή τη διαδρομή που προέκυψε πριν πατήσεις Enter.",
@@ -384,7 +384,7 @@ export default function ModuleView({
                       <span className="h-2 w-2 rounded-full bg-rose-500/80" />
                       <span className="h-2 w-2 rounded-full bg-cyan-400/80" />
                       <span className="h-2 w-2 rounded-full bg-neon-green/80" />
-                      <span className="ml-2 tracking-wider text-iron-400">screenshot · GameHack lab</span>
+                      <span className="ml-2 tracking-wider text-iron-400">screenshot, GameHack lab</span>
                     </div>
                     <pre className="px-3 py-3 text-zinc-200 whitespace-pre-wrap leading-relaxed">
                       {sh.cmd && <span className="text-cyan-400">root@kali:~# {sh.cmd}{"\n"}</span>}

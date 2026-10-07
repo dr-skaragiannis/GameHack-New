@@ -70,7 +70,7 @@ export default function PlayerTeamPanel({ user, lang }: { user: User; lang: Lang
           <span className="player-team-panel__pending-icon"><Icon name="users" className="h-5 w-5" /></span>
           <div className="min-w-0 flex-1">
             <strong>{pending.team.name}</strong>
-            <p>{t("applicationPending", lang)} · {new Date(pending.application.requestedAt).toLocaleDateString(lang === "el" ? "el-GR" : "en-GB")}</p>
+            <p>{t("applicationPending", lang)}, {new Date(pending.application.requestedAt).toLocaleDateString(lang === "el" ? "el-GR" : "en-GB")}</p>
           </div>
           <button type="button" onClick={withdraw} className="player-team-panel__withdraw dashboard-action">
             {t("withdrawRequest", lang)}

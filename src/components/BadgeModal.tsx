@@ -72,7 +72,7 @@ export default function BadgeModal({
           <span className={`badge-certificate__tier is-${badge.tier}`}>{uppercaseLabel(badge.tier, lang)}</span>
         </div>
 
-        <div className="badge-certificate__issuer">GameHack · {uppercaseLabel(certificateTitle, lang)}</div>
+        <div className="badge-certificate__issuer">GameHack, {uppercaseLabel(certificateTitle, lang)}</div>
         <h2 id="badge-certificate-title">{badge.name}</h2>
         <p className="badge-certificate__description">{badge.desc}</p>
         <div className="badge-certificate__divider"><span /><Icon name="spark" className="h-4 w-4" /><span /></div>

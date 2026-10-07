@@ -46,7 +46,7 @@ export default function CommandResultPopup({
             </span>
             <span>
               <span className="command-explanation__eyebrow">
-                {hasError ? (lang === "en" ? "LAB RESULT · REVIEW" : "ΑΠΟΤΕΛΕΣΜΑ LAB · ΕΛΕΓΧΟΣ") : (lang === "en" ? "LAB RESULT · EXPLAINED" : "ΑΠΟΤΕΛΕΣΜΑ LAB · ΕΠΕΞΗΓΗΣΗ")}
+                {hasError ? (lang === "en" ? "LAB RESULT, REVIEW" : "ΑΠΟΤΕΛΕΣΜΑ LAB, ΕΛΕΓΧΟΣ") : (lang === "en" ? "LAB RESULT, EXPLAINED" : "ΑΠΟΤΕΛΕΣΜΑ LAB, ΕΠΕΞΗΓΗΣΗ")}
               </span>
               <h2 id="command-explanation-title">{title}</h2>
             </span>
@@ -122,9 +122,9 @@ export default function CommandResultPopup({
         </div>
 
         <footer className="command-explanation__footer">
-          <span>{lang === "en" ? "Output is from the isolated GameHack virtual lab." : "Η έξοδος προέρχεται από το απομονωμένο εικονικό lab του GameHack."}</span>
+          <span>{lang === "en" ? "Output is from the isolated GameHack virtual lab." : "Η έξοδος προέρχεται από το απομονωμένο εικονικό εργαστήριο του GameHack."}</span>
           <button type="button" onClick={onClose} autoFocus>
-            {lang === "en" ? "Back to terminal" : "Πίσω στο terminal"}
+            {lang === "en" ? "Back to terminal" : "Πίσω στο τερματικό"}
             <Icon name="chevron" className="h-4 w-4" />
           </button>
         </footer>
