@@ -319,6 +319,7 @@ export const UI: Dict = {
   leaderboard: { en: "Leaderboard", el: "Κατάταξη" },
   overallScoreboard: { en: "Overall Scoreboard", el: "Συνολικό Scoreboard" },
   position: { en: "Position", el: "Θέση" },
+  unranked: { en: "Unranked", el: "Χωρίς κατάταξη" },
   continueLearning: { en: "Continue learning", el: "Συνέχεια μάθησης" },
   openInbox: { en: "Inbox", el: "Εισερχόμενα" },
   newTicket: { en: "New ticket", el: "Νέο αίτημα" },

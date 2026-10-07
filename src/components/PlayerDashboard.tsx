@@ -289,20 +289,10 @@ export default function PlayerDashboard({
           </button>
         </div>
 
-        <figure className="player-dashboard__hero-eye player-dashboard__hero-player" aria-label={user.displayName}>
-          <span className="player-dashboard__hero-avatar-ring">
-            <Avatar src={user.avatar} name={user.displayName} size={120} />
-          </span>
-          <figcaption className="player-dashboard__eye-caption">
-            <span>{uppercaseLabel(user.displayName, lang)}</span>
-            <strong><i />{uppercaseLabel(`${t("level", lang)} ${lv.level}`, lang)}</strong>
-          </figcaption>
-        </figure>
-
         <div className="player-dashboard__hero-level">
           <Avatar src={user.avatar} name={user.displayName} size={36} />
           <div className="player-dashboard__hero-level-copy">
-            <span>{t("level", lang)} {lv.level}, #{myStanding?.rank ?? "—"}</span>
+            <span>{t("level", lang)} {lv.level}, {myStanding ? `#${myStanding.rank}` : t("unranked", lang)}</span>
             <strong>{user.metrics.xp.toLocaleString()} XP</strong>
             <div className="player-dashboard__hero-progress" aria-label={`${lv.pct}% to next level`}>
               <span style={{ width: `${lv.pct}%` }} />
@@ -330,7 +320,7 @@ export default function PlayerDashboard({
           >
             <Icon name="crown" className="h-4 w-4" />
             <span>
-              <strong>#{myStanding?.rank ?? "—"}/{scoreboard.length}</strong>
+              <strong>{myStanding ? `#${myStanding.rank}/${scoreboard.length}` : t("unranked", lang)}</strong>
               <small>{t("leaderboard", lang)}</small>
             </span>
             <Icon name="chevron" className="h-4 w-4" />
@@ -456,9 +446,6 @@ export default function PlayerDashboard({
                 ))}
                 {scoreboard.length === 0 && <p className="player-dashboard__empty">{lang === "en" ? "No players on the leaderboard yet." : "Δεν υπάρχουν ακόμη παίκτες στην κατάταξη."}</p>}
               </div>
-              <button type="button" className="player-dashboard__scoreboard-button dashboard-action" onClick={onOpenScoreboard}>
-                <span>{t("viewFullScoreboard", lang)}</span><Icon name="chevron" className="h-4 w-4" />
-              </button>
             </section>
           </div>
 
