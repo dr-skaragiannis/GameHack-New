@@ -4107,13 +4107,13 @@ button.player-quick-stats__item:hover {
 @keyframes dashboard-dialog-out { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(9px) scale(0.98); } }
 .player-dashboard__map-backdrop { z-index: 110; }
 .player-dashboard__map-dialog {
-  width: min(1640px, 97vw);
-  height: min(94vh, 1120px);
+  width: min(860px, calc(100vw - 32px));
+  height: min(82vh, 780px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border: 1px solid rgba(76, 238, 255, 0.28);
-  border-radius: 20px;
+  border-radius: 16px;
   background: #0b0b0d;
   box-shadow: 0 32px 100px rgba(0, 0, 0, 0.72), 0 0 40px rgba(43, 245, 255, 0.08);
 }
@@ -4148,6 +4148,25 @@ button.player-quick-stats__item:hover {
   overscroll-behavior: contain;
 }
 .player-dashboard__map-dialog-body > .interactive-map { min-height: 100%; }
+@media (min-width: 1024px) {
+  .player-dashboard__map-backdrop { padding-left: calc(240px + clamp(8px, 2vw, 24px)); }
+}
+.player-dashboard__map-dialog-header { min-height: 52px; padding: 7px 12px; }
+.player-dashboard__map-dialog-header h2 { font-size: 0.82rem; }
+.player-dashboard__map-dialog-body { padding: 10px; }
+.player-dashboard__map-dialog .interactive-map { --type-small: 0.72rem; border-radius: 14px; }
+.player-dashboard__map-dialog .interactive-map__header { min-height: 0; padding: 12px 14px 10px; gap: 12px; }
+.player-dashboard__map-dialog .interactive-map__title { min-width: 0; }
+.player-dashboard__map-dialog .interactive-map__title h2 { font-size: 1.05rem; }
+.player-dashboard__map-dialog .interactive-map__title p { display: none; }
+.player-dashboard__map-dialog .map-campaign-heading { min-height: 64px; gap: 10px; padding: 9px 6px; }
+.player-dashboard__map-dialog .map-campaign-icon { width: 34px; height: 34px; }
+.player-dashboard__map-dialog .map-campaign-heading__copy { min-width: 0; }
+.player-dashboard__map-dialog .map-campaign-name { font-size: 0.88rem; }
+.player-dashboard__map-dialog .map-campaign-progress { width: min(150px, 30vw); flex-basis: 150px; }
+.player-dashboard__map-dialog .map-node-button { width: 50px; height: 50px; }
+.player-dashboard__map-dialog .map-node-label { min-height: 60px; margin-top: 6px; }
+.player-dashboard__map-dialog .map-node-progress { min-width: 23px; height: 17px; }
 .badge-certificate-backdrop { z-index: 130; }
 .badge-certificate {
   position: relative;
