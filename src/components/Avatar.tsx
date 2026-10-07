@@ -29,7 +29,10 @@ export default function Avatar({
     .map((s) => s[0])
     .join("")
     .slice(0, 2)
-    .toUpperCase();
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/([\u0370-\u03ff\u1f00-\u1fff]\u0308?)[\u0301\u0341]/gu, "$1")
+    .normalize("NFC");
 
   if (a.kind === "img") {
     return (

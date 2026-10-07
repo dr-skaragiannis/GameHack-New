@@ -503,6 +503,18 @@ export function loadPlayerTerminal(userId: string): Terminal {
   }
 }
 
+/** Restore lab files, processes, and services. Player XP and completed objectives live outside this snapshot. */
+export function resetPlayerTerminal(
+  userId: string,
+  options: { moduleId?: string; scenario?: string; notice?: string } = {},
+): Terminal {
+  const fresh = createPlayerTerminal();
+  if (options.moduleId) activateTerminalForModule(fresh, options.moduleId, options.scenario || "lab");
+  if (options.notice) fresh.lines.push({ kind: "sys", text: options.notice });
+  savePlayerTerminal(userId, fresh);
+  return fresh;
+}
+
 export function savePlayerTerminal(userId: string, term: Terminal): void {
   const storage = localStorageOrNull();
   if (!storage) return;

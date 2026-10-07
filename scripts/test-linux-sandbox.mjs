@@ -380,7 +380,28 @@ try {
   assert.ok(storageValues.has(`gamehack.player-terminal.v2:${encodeURIComponent("legacy@example.ionio.gr")}`));
   assert.ok(!storageValues.has(legacyKey), "saving the migrated terminal should retire the legacy snapshot");
 
-  console.log(`Linux sandbox checks passed: ${ALL_LINUX_COMMANDS.length} advertised command examples, one unified VFS, per-player isolation, persistence, and legacy migration.`);
+  const resetUser = "reset-lab@example.ionio.gr";
+  const dirty = playerTerminal.createPlayerTerminal();
+  const operatorHome = terminal.getNode(dirty.fs, "/home/operator");
+  assert.ok(operatorHome?.children);
+  delete operatorHome.children["welcome.txt"];
+  dirty.procs = dirty.procs.filter((proc) => proc.pid !== 7440);
+  dirty.services.apache2 = "running";
+  dirty.flags.add("should-not-survive-revert");
+  playerTerminal.savePlayerTerminal(resetUser, dirty);
+  const reverted = playerTerminal.resetPlayerTerminal(resetUser, {
+    moduleId: "sr-files",
+    scenario: "sudorun",
+    notice: "Lab restored.",
+  });
+  assert.ok(terminal.getNode(reverted.fs, "/home/operator/welcome.txt"), "revert should restore deleted lab files");
+  assert.equal(reverted.services.apache2, "stopped", "revert should restore service state");
+  assert.ok(reverted.procs.some((proc) => proc.pid === 7440 && proc.alive), "revert should restore lab processes");
+  assert.equal(reverted.flags.has("should-not-survive-revert"), false, "revert clears lab flags so completed objectives are not replayed for XP");
+  assert.equal(reverted.activeModuleId, "sr-files");
+  assert.match(reverted.lines.at(-1)?.text || "", /Lab restored/);
+
+  console.log(`Linux sandbox checks passed: ${ALL_LINUX_COMMANDS.length} advertised command examples, one unified VFS, per-player isolation, persistence, legacy migration, and lab revert.`);
 } finally {
   await server.close();
 }

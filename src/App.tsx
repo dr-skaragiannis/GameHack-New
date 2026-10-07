@@ -559,7 +559,11 @@ export default function App() {
   );
 
   return (
-    <div className="gamehack-grid min-h-full flex">
+    <div
+      className="gamehack-grid min-h-full flex"
+      data-sidebar={collapsed ? "collapsed" : "open"}
+      style={{ ["--app-sidebar-width" as string]: collapsed ? "72px" : "15rem" }}
+    >
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-30 flex flex-col border-r border-gamehack-border bg-gamehack-panel/95 backdrop-blur-md transition-all lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:self-start",
@@ -567,7 +571,7 @@ export default function App() {
           mobile ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        <div className={cn("relative flex h-16 items-center border-b border-gamehack-border", collapsed ? "justify-center px-2 pt-5" : "gap-2.5 px-4")}>
+        <div className={cn("relative flex h-16 items-center border-b border-gamehack-border", collapsed ? "justify-center px-2" : "gap-2.5 px-4 pr-8")}>
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-700 shadow-lg shadow-cyan-900/40">
             <Icon name="cybereye" className="h-5 w-5 text-white" />
           </div>
@@ -586,14 +590,15 @@ export default function App() {
               db.updateUser(user.id, { sidebarCollapsed: !collapsed });
               refresh();
             }}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={cn(
-              "grid shrink-0 place-items-center rounded-lg text-iron-500 hover:bg-white/5 hover:text-iron-200 transition",
-              collapsed ? "absolute right-1 top-1 h-5 w-5 text-sm" : "ml-auto h-8 w-8 text-lg"
-            )}
+            aria-label={t(collapsed ? "expandSidebar" : "collapseSidebar", lang)}
+            title={t(collapsed ? "expandSidebar" : "collapseSidebar", lang)}
+            className={cn("sidebar-collapse", collapsed && "is-collapsed")}
           >
-            {collapsed ? "»" : "«"}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3.5" y="4.5" width="17" height="15" rx="3.2" />
+              <path d="M9 4.5v15" />
+              <path className="sidebar-collapse__chevron" d={collapsed ? "M13.2 9.2 16.2 12l-3 2.8" : "M15.8 9.2 12.8 12l3 2.8"} />
+            </svg>
           </button>
         </div>
         <nav className="min-h-0 flex-1 overflow-y-auto p-2">

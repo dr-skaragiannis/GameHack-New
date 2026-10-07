@@ -20,6 +20,7 @@ type PlayerEntry = { user: User; rank: number; online: boolean; x: number; y: nu
 type GraphLink = { from: PlayerEntry; to: PlayerEntry; online: boolean; index: number };
 
 const MAX_VISIBLE_PLAYERS = 32;
+const SIGNAL_BUBBLE_MS = 30_000;
 
 function arrangePlayers(players: { user: User; rank: number; online: boolean }[], compact: boolean, top10: boolean): PlayerEntry[] {
   if (!players.length) return [];
@@ -187,8 +188,9 @@ export default function PlayerConstellation({ user, lang, compact = false }: { u
   const feed = useMemo(() => getFeed().slice().sort((a, b) => b.ts - a.ts), [revision]);
   const allInterests = useMemo(() => [...new Set(ranked.flatMap(({ user: player }) => player.interests))].sort((a, b) => a.localeCompare(b)), [ranked]);
 
-  const broadcast = feed.find((event) => event.kind === "broadcast");
-  const completedPath = feed.find((event) => event.kind === "module" && event.pathCompleted);
+  const recentSignal = (event: FeedEvent) => now - event.ts <= SIGNAL_BUBBLE_MS;
+  const broadcast = feed.find((event) => event.kind === "broadcast" && recentSignal(event));
+  const completedPath = feed.find((event) => event.kind === "module" && event.pathCompleted && recentSignal(event));
   const path = completedPath?.campaignId ? LEARNING_PATHS.find((campaign) => campaign.id === completedPath.campaignId) : undefined;
   const events = [
     broadcast && {
@@ -206,6 +208,15 @@ export default function PlayerConstellation({ user, lang, compact = false }: { u
       ts: completedPath.ts,
     },
   ].filter((event): event is NonNullable<typeof event> => !!event).sort((a, b) => a.ts - b.ts);
+  const nextBubbleExpiry = events.reduce((soonest, event) => Math.min(soonest, event.ts + SIGNAL_BUBBLE_MS), Number.POSITIVE_INFINITY);
+
+  useEffect(() => {
+    if (!Number.isFinite(nextBubbleExpiry)) return;
+    const remaining = nextBubbleExpiry - Date.now();
+    if (remaining <= 0) return;
+    const timer = window.setTimeout(() => setRevision((value) => value + 1), remaining + 40);
+    return () => window.clearTimeout(timer);
+  }, [nextBubbleExpiry]);
 
   const recentObjectives = feed
     .filter((event) => event.kind === "task" && event.objectiveId)
@@ -276,7 +287,7 @@ export default function PlayerConstellation({ user, lang, compact = false }: { u
             </button>
             {interestOpen && (
               <div className="player-constellation__interest-menu" role="group" aria-label={t("constellationInterestFilter", lang)}>
-                <div className="player-constellation__interest-menu-heading">{t("constellationInterestFilter", lang)}</div>
+                <div className="player-constellation__interest-menu-heading">{uppercaseLabel(t("constellationInterestFilter", lang), lang)}</div>
                 <button
                   type="button"
                   className={cn("player-constellation__interest-option", !interestFilter && "is-selected")}

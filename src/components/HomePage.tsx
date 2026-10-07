@@ -200,15 +200,15 @@ export default function HomePage({
             </div>
             <dl className="landing-stats">
               <div>
-                <dt>{t("landingStatsPaths", lang)}</dt>
+                <dt>{uppercaseLabel(t("landingStatsPaths", lang), lang)}</dt>
                 <dd>{LEARNING_PATHS.length}</dd>
               </div>
               <div>
-                <dt>{t("landingStatsLabs", lang)}</dt>
+                <dt>{uppercaseLabel(t("landingStatsLabs", lang), lang)}</dt>
                 <dd>{labCount}</dd>
               </div>
               <div>
-                <dt>{t("landingStatsBadges", lang)}</dt>
+                <dt>{uppercaseLabel(t("landingStatsBadges", lang), lang)}</dt>
                 <dd>{badgeCount}</dd>
               </div>
             </dl>

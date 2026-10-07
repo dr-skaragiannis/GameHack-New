@@ -272,7 +272,7 @@ function BadgesDialog({
                     <strong>{badge.name}</strong>
                     <small>{badge.desc}</small>
                   </span>
-                  <span className="badges-dialog__state">{t("locked", lang)}</span>
+                  <span className="badges-dialog__state">{uppercaseLabel(t("locked", lang), lang)}</span>
                 </div>
               );
             }
@@ -403,7 +403,7 @@ export default function PlayerDashboard({
                 <Icon name={stat.icon} className="h-4 w-4" />
                 <span>
                   <strong>{stat.value}</strong>
-                  <small>{stat.label}</small>
+                  <small>{uppercaseLabel(stat.label, lang)}</small>
                 </span>
               </div>
             ))}
@@ -417,12 +417,12 @@ export default function PlayerDashboard({
             <Icon name="crown" className="h-4 w-4" />
             <span>
               <strong>{myStanding ? `#${myStanding.rank}/${scoreboard.length}` : t("unranked", lang)}</strong>
-              <small>{t("leaderboard", lang)}</small>
+              <small>{uppercaseLabel(t("leaderboard", lang), lang)}</small>
             </span>
             <Icon name="chevron" className="h-4 w-4" />
           </button>
           <div className="player-dashboard__hero-badges">
-            <span className="player-dashboard__hero-badges-label">{t("badges", lang)} ({user.badges.length})</span>
+            <span className="player-dashboard__hero-badges-label">{uppercaseLabel(t("badges", lang), lang)} ({user.badges.length})</span>
             {user.badges.length ? (
               <span className="player-dashboard__hero-medallions">
                 {user.badges.slice(0, 5).map((id) => {

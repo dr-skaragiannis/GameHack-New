@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import Avatar, { AVATAR_CATEGORIES, AVATAR_COLORS } from "./Avatar";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
-import { t, type Lang } from "../i18n";
+import { t, uppercaseLabel, type Lang } from "../i18n";
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const AVATAR_SQUARE = 256;
@@ -120,7 +120,7 @@ export default function AvatarPicker({
         <div className="mb-4 flex items-center gap-3 rounded-xl border border-gamehack-border bg-gamehack-bg/60 p-3">
           <Avatar src={value} name={t("avatarCurrent", lang)} size={52} />
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-bold uppercase tracking-widest text-iron-400">{t("avatarCurrent", lang)}</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-iron-400">{uppercaseLabel(t("avatarCurrent", lang), lang)}</div>
             <div className="mt-0.5 truncate text-xs text-iron-500">{t("avatarUploadHint", lang)}</div>
             {uploadError && <div role="alert" className="mt-1 text-xs text-rose-400">{uploadError}</div>}
           </div>
@@ -135,7 +135,7 @@ export default function AvatarPicker({
           </button>
         </div>
 
-        <div className="mb-1 text-xs font-bold uppercase tracking-widest text-iron-400">{t("avatarCustomColor", lang)}</div>
+        <div className="mb-1 text-xs font-bold uppercase tracking-widest text-iron-400">{uppercaseLabel(t("avatarCustomColor", lang), lang)}</div>
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {AVATAR_COLORS.map((c) => (
             <button

@@ -5,15 +5,17 @@ import Icon from "./Icon";
 export default function WhyHowPopup({
   moduleTitle,
   objective,
-  context,
-  details,
+  why,
+  how,
+  verify,
   lang,
   onClose,
 }: {
   moduleTitle: string;
   objective: string;
-  context: string;
-  details: string[];
+  why: string;
+  how: string[];
+  verify: string;
   lang: Lang;
   onClose: () => void;
 }) {
@@ -29,37 +31,23 @@ export default function WhyHowPopup({
     ? {
         eyebrow: "FIELD GUIDE, WHY & HOW",
         title: "Why this matters",
-        objective: "YOUR OBJECTIVE",
-        principle: "THE PRINCIPLE",
-        steps: "A SIMPLE WAY TO THINK ABOUT IT",
+        objective: "OBJECTIVE",
         why: "WHY",
         how: "HOW IT WORKS",
         verify: "VERIFY",
         close: "Close explanation",
         footer: "Understand the evidence; do not just copy a command.",
-        stepOne: "Start with the goal",
-        stepTwo: "Apply the idea",
-        stepThree: "Check the evidence",
       }
     : {
         eyebrow: "ΟΔΗΓΟΣ ΠΕΔΙΟΥ, ΓΙΑΤΙ & ΠΩΣ",
         title: "Γιατί έχει σημασία",
         objective: "ΣΤΟΧΟΣ",
-        principle: "Η ΑΡΧΗ",
-        steps: "ΕΝΑΣ ΑΠΛΟΣ ΤΡΟΠΟΣ ΣΚΕΨΗΣ",
         why: "ΓΙΑΤΙ",
         how: "ΠΩΣ ΛΕΙΤΟΥΡΓΕΙ",
         verify: "ΕΠΑΛΗΘΕΥΣΗ",
         close: "Κλείσιμο επεξήγησης",
         footer: "Κατανόησε τα τεκμήρια, μην αντιγράφεις απλώς μια εντολή.",
-        stepOne: "Ξεκίνα από τον στόχο",
-        stepTwo: "Εφάρμοσε την ιδέα",
-        stepThree: "Έλεγξε τα τεκμήρια",
       };
-
-  const why = details[0] || context;
-  const how = details.slice(1).filter(Boolean);
-  const verification = how[how.length - 1] || context;
 
   return (
     <div
@@ -95,53 +83,36 @@ export default function WhyHowPopup({
           <section className="why-how-dialog__objective">
             <div className="why-how-dialog__section-label">{labels.objective}</div>
             <p id="why-how-objective">{objective}</p>
-            <div className="why-how-dialog__context">
-              <Icon name="target" className="h-4 w-4" />
-              <span>{context}</span>
-            </div>
-          </section>
-
-          <section aria-label={labels.steps}>
-            <div className="why-how-dialog__section-label">{labels.steps}</div>
-            <div className="why-how-flow">
-              <article className="why-how-flow__step is-goal">
-                <span className="why-how-flow__number">01</span>
-                <Icon name="target" className="h-5 w-5" />
-                <h3>{labels.stepOne}</h3>
-                <p>{objective}</p>
-              </article>
-              <span className="why-how-flow__connector" aria-hidden="true" />
-              <article className="why-how-flow__step is-action">
-                <span className="why-how-flow__number">02</span>
-                <Icon name="terminal" className="h-5 w-5" />
-                <h3>{labels.stepTwo}</h3>
-                <p>{context}</p>
-              </article>
-              <span className="why-how-flow__connector" aria-hidden="true" />
-              <article className="why-how-flow__step is-evidence">
-                <span className="why-how-flow__number">03</span>
-                <Icon name="check" className="h-5 w-5" />
-                <h3>{labels.stepThree}</h3>
-                <p>{verification}</p>
-              </article>
-            </div>
           </section>
 
           <div className="why-how-dialog__explanation-grid">
-            <article className="why-how-dialog__card is-why">
-              <span className="why-how-dialog__card-mark"><Icon name="bulb" className="h-4 w-4" /></span>
-              <div>
-                <div className="why-how-dialog__section-label">{labels.why}</div>
-                <p>{why}</p>
-              </div>
-            </article>
-            <article className="why-how-dialog__card is-how">
-              <span className="why-how-dialog__card-mark"><Icon name="layers" className="h-4 w-4" /></span>
-              <div>
-                <div className="why-how-dialog__section-label">{labels.how}</div>
-                {(how.length ? how : [context]).map((paragraph, index) => <p key={`${index}-${paragraph}`}>{paragraph}</p>)}
-              </div>
-            </article>
+            {why && (
+              <article className="why-how-dialog__card is-why">
+                <span className="why-how-dialog__card-mark"><Icon name="bulb" className="h-4 w-4" /></span>
+                <div>
+                  <div className="why-how-dialog__section-label">{labels.why}</div>
+                  <p>{why}</p>
+                </div>
+              </article>
+            )}
+            {how.length > 0 && (
+              <article className="why-how-dialog__card is-how">
+                <span className="why-how-dialog__card-mark"><Icon name="layers" className="h-4 w-4" /></span>
+                <div>
+                  <div className="why-how-dialog__section-label">{labels.how}</div>
+                  {how.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                </div>
+              </article>
+            )}
+            {verify && (
+              <article className="why-how-dialog__card is-verify">
+                <span className="why-how-dialog__card-mark"><Icon name="check" className="h-4 w-4" /></span>
+                <div>
+                  <div className="why-how-dialog__section-label">{labels.verify}</div>
+                  <p>{verify}</p>
+                </div>
+              </article>
+            )}
           </div>
         </div>
 

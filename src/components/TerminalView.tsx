@@ -3,6 +3,7 @@ import { complete, prompt, type Terminal, type TermLine } from "../lib/terminal"
 import { sound } from "../lib/sound";
 import { t, type Lang } from "../i18n";
 import { cn } from "../utils/cn";
+import Icon from "./Icon";
 
 export default function TerminalView({
   term,
@@ -10,16 +11,19 @@ export default function TerminalView({
   onCommand,
   suggestion,
   onSuggestionConsumed,
+  onRevert,
 }: {
   term: Terminal;
   lang: Lang;
   onCommand: (raw: string, pasted: boolean) => void;
   suggestion?: string | null;
   onSuggestionConsumed?: () => void;
+  onRevert?: () => void;
 }) {
   const [buf, setBuf] = useState("");
   const [histIdx, setHistIdx] = useState(-1);
   const [inputFocused, setInputFocused] = useState(false);
+  const [revertArmed, setRevertArmed] = useState(false);
   const [, bumpScreen] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -65,7 +69,7 @@ export default function TerminalView({
       className="terminal-window relative flex min-h-0 flex-col rounded-xl border border-gamehack-border bg-black/80 crt overflow-hidden font-mono text-sm"
       onClick={() => input.current?.focus()}
     >
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5 bg-zinc-900/80 text-sm text-iron-400">
+      <div className="terminal-window__bar relative flex items-center gap-2 px-3 py-2 border-b border-white/5 bg-zinc-900/80 text-sm text-iron-400">
         <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
         <span className="h-2.5 w-2.5 rounded-full bg-cyan-400/80" />
         <span className="h-2.5 w-2.5 rounded-full bg-neon-green/80" />
@@ -74,17 +78,45 @@ export default function TerminalView({
         </span>
         <button
           type="button"
-          aria-label="Show the shared 100-command Linux reference in this terminal"
-          title="Show the shared 100-command Linux reference"
+          aria-expanded={revertArmed}
+          aria-label={t("revertLabTitle", lang)}
+          title={t("revertLabTitle", lang)}
           onClick={(event) => {
             event.stopPropagation();
-            sound.enter();
-            onCommand("help", false);
+            sound.nav();
+            setRevertArmed((open) => !open);
           }}
-          className="ml-auto shrink-0 rounded-md border border-neon-cyan/30 bg-neon-cyan/10 px-2 py-1.5 text-sm font-semibold text-neon-cyan hover:bg-neon-cyan/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neon-cyan sm:px-3"
+          className="terminal-revert ml-auto shrink-0"
         >
-          Top 100
+          <Icon name="revert" className="h-3.5 w-3.5" />
+          <span>{t("revertLab", lang)}</span>
         </button>
+        {revertArmed && (
+          <div
+            className="terminal-revert__confirm"
+            role="dialog"
+            aria-label={t("revertLabConfirm", lang)}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <strong>{t("revertLabConfirm", lang)}</strong>
+            <p>{t("revertLabBody", lang)}</p>
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  sound.enter();
+                  setRevertArmed(false);
+                  onRevert?.();
+                }}
+              >
+                {t("revertLabYes", lang)}
+              </button>
+              <button type="button" onClick={() => setRevertArmed(false)}>
+                {t("revertLabCancel", lang)}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <div ref={scroller} className="terminal-window__scroll flex-1 px-3 py-3 space-y-0.5 leading-relaxed">
         {term.lines.map((l, i) => (

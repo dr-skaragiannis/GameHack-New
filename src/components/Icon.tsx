@@ -53,6 +53,7 @@ const paths: Record<string, string> = {
   close: "M6 6l12 12 M18 6 6 18",
   maximize: "M8 3H3v5 M3 3l7 7 M16 3h5v5 M21 3l-7 7 M3 16v5h5 M3 21l7-7 M21 16v5h-5 M21 21l-7-7",
   minimize: "M8 3v5H3 M3 3l7 7 M16 3v5h5 M21 3l-7 7 M3 16h5v5 M3 21l7-7 M21 16h-5v5 M21 21l-7-7",
+  revert: "M3 12a9 9 0 1 0 3-6.7 M3 4v5h5",
   plus: "M12 5v14 M5 12h14",
   spark: "M12 2v6 M12 16v6 M4 12h6 M14 12h6 M6 6l4 4 M14 14l4 4 M18 6l-4 4 M10 14l-4 4",
   target: "M12 12m-8 0a8 8 0 1 0 16 0 8 8 0 1 0-16 0 M12 12m-4 0a4 4 0 1 0 8 0 4 4 0 1 0-8 0 M12 12m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0",

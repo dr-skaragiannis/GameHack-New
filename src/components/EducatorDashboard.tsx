@@ -152,7 +152,7 @@ function ChartCard({ title, eyebrow, children, className = "" }: {
     <section className={`educator-card educator-chart-card ${className}`}>
       <header className="educator-card__header">
         <div>
-          {eyebrow && <div className="educator-eyebrow">{eyebrow}</div>}
+          {eyebrow && <div className="educator-eyebrow">{uppercaseLabel(eyebrow, "el")}</div>}
           <h2>{title}</h2>
         </div>
       </header>
@@ -719,7 +719,7 @@ export default function EducatorDashboard({
         <div className="dashboard-modal-backdrop educator-command-modal" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedCommandId(null); }}>
           <section className="educator-command-detail dashboard-modal-surface" role="dialog" aria-modal="true" aria-labelledby="educator-command-title">
             <header className="educator-command-detail__header">
-              <div><div className="educator-eyebrow">{t("commandActivity", lang)}</div><h2 id="educator-command-title">{t("viewDetails", lang)}</h2></div>
+              <div><div className="educator-eyebrow">{uppercaseLabel(t("commandActivity", lang), lang)}</div><h2 id="educator-command-title">{t("viewDetails", lang)}</h2></div>
               <button type="button" onClick={() => setSelectedCommandId(null)} aria-label={t("close", lang)} className="educator-command-detail__close dashboard-action"><Icon name="close" className="h-4 w-4" /></button>
             </header>
             <div className="educator-command-detail__body">

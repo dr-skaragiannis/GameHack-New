@@ -300,7 +300,7 @@ export function createTerminal(opts?: { fs?: FileNode; user?: string; host?: str
     history: [],
     lines: [
       { kind: "sys", text: "GameHack simulated Linux terminal — educational sandbox only." },
-      { kind: "sys", text: "Run `help` or use the Top 100 button for the shared command reference. Type `man COMMAND` for a manual." },
+      { kind: "sys", text: "Run `help` for the shared command reference. Type `man COMMAND` for a manual. Revert restarts lab files and processes without changing XP." },
       { kind: "sys", text: "Filesystem, package, network, and process commands run against fictional lab fixtures." },
     ],
     fs: opts?.fs || defaultFS(),

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { Module, Task } from "../data/lessons";
 import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import { runCommand, type Terminal } from "../lib/terminal";
-import { activateTerminalForModule, loadPlayerTerminal, savePlayerTerminal } from "../lib/playerTerminal";
+import { activateTerminalForModule, loadPlayerTerminal, resetPlayerTerminal, savePlayerTerminal } from "../lib/playerTerminal";
 import TerminalView from "./TerminalView";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
@@ -66,38 +66,75 @@ function taskLearningSources(task: Task) {
   return { lesson, catalog };
 }
 
-function taskObjectiveContext(task: Task, lang: Lang): string {
-  const { lesson, catalog } = taskLearningSources(task);
-  if (lesson) {
-    return `${lesson.purpose[lang]} ${lesson.mechanics[lang].split(/(?<=[.!?])\s+/, 1)[0]}`;
-  }
-  if (catalog) {
-    return lang === "en"
-      ? `${catalog.summary} Syntax: ${catalog.synopsis}.`
-      : `${catalog.name}: ${bi(task.instruction, lang)} Η σύνταξη ${catalog.synopsis} δείχνει τη σειρά των ορισμάτων.`;
-  }
-  return lang === "en"
-    ? "Practice the command shown above, then inspect its output as evidence before continuing."
-    : "Εξασκήσου στην εντολή που εμφανίζεται και έλεγξε την έξοδό της ως τεκμήριο πριν συνεχίσεις.";
+function normalizeCopy(text: string): string {
+  return text.replace(/\s+/g, " ").trim().toLocaleLowerCase("el");
 }
 
-function taskWhyHow(task: Task, lang: Lang): string[] {
-  const { lesson, catalog } = taskLearningSources(task);
-  const details = [bi(task.explain, lang)];
-  if (lesson) {
-    details.push(lesson.mechanics[lang], lesson.output[lang]);
-  } else if (catalog) {
-    details.push(lang === "en" ? catalog.summary : `${catalog.name}: ${bi(task.instruction, lang)}`);
-    details.push(lang === "en"
-      ? `Use ${catalog.synopsis} to structure the arguments; compare the output with the objective.`
-      : `Η σύνταξη ${catalog.synopsis} οργανώνει τα ορίσματα, σύγκρινε την έξοδο με τον στόχο.`);
-  } else {
-    details.push(taskObjectiveContext(task, lang));
-    details.push(lang === "en"
-      ? "Compare the command output with the objective; matching lines are your evidence of success."
-      : "Σύγκρινε την έξοδο της εντολής με τον στόχο, οι γραμμές που ταιριάζουν είναι το τεκμήριο επιτυχίας.");
+function overlapsCopy(candidate: string, existing: string[]): boolean {
+  const next = normalizeCopy(candidate);
+  if (!next) return true;
+  return existing.some((item) => {
+    const prior = normalizeCopy(item);
+    if (!prior) return false;
+    if (prior === next) return true;
+    const shorter = prior.length <= next.length ? prior : next;
+    const longer = prior.length <= next.length ? next : prior;
+    return shorter.length >= 18 && longer.includes(shorter);
+  });
+}
+
+function markerAt(lower: string, markers: string[]): { index: number; length: number } | null {
+  let best: { index: number; length: number } | null = null;
+  for (const marker of markers) {
+    const index = lower.indexOf(marker);
+    if (index === -1) continue;
+    if (!best || index < best.index) best = { index, length: marker.length };
   }
-  return details.filter(Boolean).slice(0, 4);
+  return best;
+}
+
+/** Keep the reason separate from a trailing how-clause so the popup does not print both. */
+function splitExplain(text: string): { why: string; howHint: string } {
+  const source = text.trim();
+  const lower = source.toLocaleLowerCase("el");
+  const why = markerAt(lower, ["why:", "γιατί:", "γιατι:"]);
+  const how = markerAt(lower, ["how:", "πώς:", "πως:"]);
+  if (why && why.index <= 2 && how && how.index > why.index) {
+    return {
+      why: source.slice(why.index + why.length, how.index).trim(),
+      howHint: source.slice(how.index + how.length).trim(),
+    };
+  }
+  if (why && why.index <= 2) return { why: source.slice(why.index + why.length).trim(), howHint: "" };
+  return { why: source, howHint: "" };
+}
+
+function fieldGuideForTask(task: Task, lang: Lang): { why: string; how: string[]; verify: string } {
+  const { lesson, catalog } = taskLearningSources(task);
+  const objective = bi(task.instruction, lang);
+  const { why, howHint } = splitExplain(bi(task.explain, lang));
+  const kept = [objective, why];
+  const how: string[] = [];
+  const push = (text: string) => {
+    const clean = text.trim();
+    if (!clean || overlapsCopy(clean, [...kept, ...how])) return;
+    how.push(clean);
+  };
+
+  // Short how-clauses only restate the command already shown as the objective.
+  if (howHint.length > 80) {
+    const sentence = howHint.charAt(0).toLocaleUpperCase("el") + howHint.slice(1);
+    push(sentence);
+  }
+  if (lesson) push(lesson.mechanics[lang]);
+  else if (catalog) {
+    push(catalog.summary);
+    push(lang === "en" ? `Syntax: ${catalog.synopsis}.` : `Σύνταξη: ${catalog.synopsis}.`);
+  }
+
+  const output = lesson?.output[lang].trim() || "";
+  const verify = output && !overlapsCopy(output, [...kept, ...how]) ? output : "";
+  return { why: why || bi(task.explain, lang), how, verify };
 }
 
 function commandTheoryParagraphs(item: StudyItem, lang: Lang): string[] {
@@ -427,6 +464,17 @@ export default function ModuleView({
               lang={lang}
               suggestion={commandSuggestion}
               onSuggestionConsumed={() => setCommandSuggestion(null)}
+              onRevert={() => {
+                const restored = resetPlayerTerminal(userId, {
+                  moduleId: module.id,
+                  scenario: module.scenario || "lab",
+                  notice: t("labRestored", lang),
+                });
+                setCommandResult(null);
+                setCommandSuggestion(null);
+                setTerm(restored);
+                bump((x) => x + 1);
+              }}
               onCommand={(raw, pasted) => {
                 if (!raw.trim()) return;
                 const cwd = term.cwd;
@@ -487,7 +535,7 @@ export default function ModuleView({
                               {idx + 1}. {bi(task.instruction, lang)}
                             </div>
                             <p className="mt-1 text-sm text-zinc-400 leading-5 line-clamp-3">
-                              {taskObjectiveContext(task, lang)}
+                              {splitExplain(bi(task.explain, lang)).why}
                             </p>
                             <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
                               {!ok && (
@@ -586,8 +634,7 @@ export default function ModuleView({
         <WhyHowPopup
           moduleTitle={bi(module.title, lang)}
           objective={bi(whyHowTask.instruction, lang)}
-          context={taskObjectiveContext(whyHowTask, lang)}
-          details={taskWhyHow(whyHowTask, lang)}
+          {...fieldGuideForTask(whyHowTask, lang)}
           lang={lang}
           onClose={() => setExplain(null)}
         />
