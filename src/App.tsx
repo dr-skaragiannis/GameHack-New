@@ -136,6 +136,8 @@ export default function App() {
   const [badgeId, setBadgeId] = useState<string | null>(null);
   const [quizFor, setQuizFor] = useState<string | null>(null);
   const [scoreboardOpen, setScoreboardOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const nextUserId = user?.id ?? null;
@@ -151,6 +153,24 @@ export default function App() {
   }, [user?.id]);
 
   useEffect(() => db.subscribeDB(refresh), [refresh]);
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node)) {
+        setAccountMenuOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAccountMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [accountMenuOpen]);
 
   if (!authReady) {
     return <div className="gamehack-grid min-h-screen grid place-items-center text-sm text-iron-300">Checking session…</div>;
@@ -338,9 +358,83 @@ export default function App() {
         {t("langLabel", lang)}
       </button>
       <MuteButton lang={lang} />
-      <button type="button" onClick={() => { setProfileId(user.id); go("profile"); }} className="flex items-center gap-2">
-        <Avatar src={user.avatar} name={user.displayName} size={32} />
-      </button>
+      <div ref={accountMenuRef} className="relative">
+        <button
+          type="button"
+          onClick={() => {
+            sound.nav();
+            setAccountMenuOpen((open) => !open);
+          }}
+          className="flex items-center gap-1 rounded-full border border-transparent p-0.5 transition hover:border-gamehack-border hover:bg-white/5"
+          aria-haspopup="menu"
+          aria-expanded={accountMenuOpen}
+          aria-label={t("accountMenu", lang)}
+          title={user.displayName}
+        >
+          <Avatar src={user.avatar} name={user.displayName} size={32} />
+          <Icon
+            name="chevron"
+            className={cn("h-3.5 w-3.5 text-iron-500 transition-transform", accountMenuOpen ? "-rotate-90" : "rotate-90")}
+          />
+        </button>
+        {accountMenuOpen && (
+          <div
+            role="menu"
+            aria-label={t("accountMenu", lang)}
+            className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-gamehack-border bg-gamehack-panel/95 shadow-xl backdrop-blur-md"
+          >
+            <div className="flex items-center gap-3 border-b border-gamehack-border px-4 py-3">
+              <Avatar src={user.avatar} name={user.displayName} size={40} />
+              <div className="min-w-0">
+                <div className="truncate text-sm font-bold text-zinc-100">{user.displayName}</div>
+                <div className="truncate text-xs text-iron-500">{user.username}</div>
+                <div className="mt-0.5 text-xs font-semibold text-cyan-300">
+                  LVL {db.levelFromXp(user.metrics.xp).level}, {user.metrics.xp.toLocaleString()} XP
+                </div>
+              </div>
+            </div>
+            <div className="p-1.5">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setAccountMenuOpen(false);
+                  setProfileId(user.id);
+                  go("profile");
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-iron-300 transition hover:bg-white/5 hover:text-zinc-100"
+              >
+                <Icon name="user" className="h-4 w-4 text-cyan-400" />
+                {t("profileNav", lang)}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setAccountMenuOpen(false);
+                  sound.popup();
+                  setScoreboardOpen(true);
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-iron-300 transition hover:bg-white/5 hover:text-zinc-100"
+              >
+                <Icon name="crown" className="h-4 w-4 text-amber-400" />
+                {t("overallScoreboard", lang)}
+              </button>
+            </div>
+            <div className="border-t border-gamehack-border p-1.5">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={logout}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-200"
+              >
+                <Icon name="logout" className="h-4 w-4" />
+                {t("logout", lang)}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
   const continueTarget = continueLearningTarget(user);

@@ -282,6 +282,7 @@ export const UI: Dict = {
   messages: { en: "Messages", el: "Μηνύματα" },
   tickets: { en: "Tickets", el: "Αιτήματα" },
   logout: { en: "Log out", el: "Αποσύνδεση" },
+  accountMenu: { en: "Account menu", el: "Μενού λογαριασμού" },
   students: { en: "Students", el: "Μαθητές" },
   liveFeed: { en: "Live feed", el: "Ζωντανή ροή" },
   noOtherPlayerActivity: { en: "Waiting for another player's signal…", el: "Αναμονή για σήμα από άλλον παίκτη…" },
