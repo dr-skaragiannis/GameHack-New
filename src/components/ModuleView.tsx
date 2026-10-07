@@ -473,10 +473,6 @@ export default function ModuleView({
             <aside className="module-objectives space-y-4">
               <div className="glass rounded-2xl border border-gamehack-border p-4">
                 <div className="text-sm uppercase tracking-widest text-cyan-400 mb-3">{uppercaseLabel(t("objectives", lang), lang)}</div>
-                <p className="mb-3 flex items-start gap-2 rounded-lg border border-neon-cyan/15 bg-neon-cyan/5 p-2.5 text-sm leading-5 text-iron-300">
-                  <Icon name="shield" className="mt-0.5 h-4 w-4 shrink-0 text-neon-cyan" />
-                  <span>{t("commandAuditNotice", lang)}</span>
-                </p>
                 <ol className="space-y-3">
                   {module.tasks.map((task, idx) => {
                     const ok = done.includes(task.id) || task.check(term);

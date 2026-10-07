@@ -259,7 +259,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "apt-cache", aliases: ["apt-cache"], title: both("Search package metadata", "Αναζήτηση μεταδεδομένων πακέτων"),
     purpose: both("Check the configured package index before installing software.", "Έλεγξε το ευρετήριο πακέτων πριν εγκαταστήσεις λογισμικό."),
-    mechanics: both("apt-cache search matches package names and descriptions in the local package index. It does not install the package.", "Το apt-cache search ταιριάζει ονόματα και περιγραφές στο τοπικό ευρετήριο. Δεν εγκαθιστά πακέτο."),
+    mechanics: both("apt-cache search matches package names and descriptions in the local package index and lists one candidate row per match, each with a short description.", "Το apt-cache search ταιριάζει ονόματα και περιγραφές στο τοπικό ευρετήριο και εμφανίζει μία γραμμή ανά ταίριασμα, με σύντομη περιγραφή."),
     output: both("Each result is a package candidate and short description; availability depends on configured repositories.", "Κάθε αποτέλεσμα είναι υποψήφιο πακέτο με σύντομη περιγραφή, η διαθεσιμότητα εξαρτάται από τα repositories."),
     syntax: "apt-cache search KEYWORD", example: "apt-cache search git",
   },
@@ -1137,8 +1137,8 @@ function resultReading(
   }
   if (first === "apt-cache") {
     return lang === "en"
-      ? "Each row is a package candidate plus a short description. Search does not install anything; review the package and repository before installing on a real machine."
-      : "Κάθε γραμμή είναι υποψήφιο πακέτο με περιγραφή. Η αναζήτηση δεν εγκαθιστά, έλεγξε πακέτο και repository πριν από πραγματική εγκατάσταση.";
+      ? "Each row is a package candidate plus a short description. Read the name, description, and repository of each row before choosing a package to install."
+      : "Κάθε γραμμή είναι υποψήφιο πακέτο με περιγραφή. Διάβασε το όνομα, την περιγραφή και το repository κάθε γραμμής πριν επιλέξεις πακέτο για εγκατάσταση.";
   }
   if (first === "apt-get" || first === "apt") {
     return lang === "en"
@@ -1147,8 +1147,8 @@ function resultReading(
   }
   if (first === "date") {
     return lang === "en"
-      ? "The line is the simulator's current local date and time. It is informational; date without a setting does not change the clock."
-      : "Η γραμμή είναι τοπική ημερομηνία και ώρα του προσομοιωτή. Είναι πληροφοριακή, το date χωρίς ρύθμιση δεν αλλάζει το ρολόι.";
+      ? "The line is the simulator's current local date and time. Read it as the current clock value; displaying it does not change the clock."
+      : "Η γραμμή είναι τοπική ημερομηνία και ώρα του προσομοιωτή. Διάβασέ την ως ένδειξη της τρέχουσας ώρας, η εμφάνιση από μόνη της δεν αλλάζει το ρολόι.";
   }
   if (first === "history") {
     return lang === "en"

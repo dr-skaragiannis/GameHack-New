@@ -433,7 +433,6 @@ export const UI: Dict = {
   outputTruncated: { en: "Output shortened for safe storage.", el: "Η έξοδος συντομεύτηκε για ασφαλή αποθήκευση." },
   showingRecentExecutions: { en: "Showing the 200 most recent matching executions.", el: "Εμφανίζονται οι 200 πιο πρόσφατες εκτελέσεις που ταιριάζουν." },
   redactedSecrets: { en: "Password and token arguments are masked in the audit trail.", el: "Τα ορίσματα με κωδικούς και token αποκρύπτονται στο ιστορικό." },
-  commandAuditNotice: { en: "Commands and simulated output are recorded for educator feedback; password and token arguments are masked.", el: "Οι εντολές και η προσομοιωμένη έξοδος καταγράφονται για την ανατροφοδότηση του εκπαιδευτή, τα ορίσματα κωδικών και token αποκρύπτονται." },
   assignedTeam: { en: "Assigned team", el: "Ομάδα" },
   unassigned: { en: "Unassigned", el: "Χωρίς ομάδα" },
   playerComparison: { en: "Player comparison", el: "Σύγκριση παικτών" },
