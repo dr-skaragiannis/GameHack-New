@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../lib/useAuth";
 import { t, uppercaseLabel, type Lang } from "../i18n";
 import { sound } from "../lib/sound";
+import { downloadRecoveryKeyFile, parseRecoveryKeyFile, type RecoveryKeyCredential } from "../lib/recoveryKeyFile";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
 
-type AuthMode = "in" | "up" | "forgot" | "reset";
+type AuthMode = "in" | "up" | "forgot" | "reset" | "key" | "registered";
 
 function clearAuthQuery() {
   const url = new URL(window.location.href);
@@ -15,7 +16,7 @@ function clearAuthQuery() {
 }
 
 export default function AuthScreen() {
-  const { login, register, activate, requestPasswordReset, resetPassword } = useAuth();
+  const { login, loginWithRecoveryKey, register, activate, requestPasswordReset, resetPassword } = useAuth();
   const [mode, setMode] = useState<AuthMode>("in");
   const [lang, setLang] = useState<Lang>("en");
   const [identity, setIdentity] = useState("");
@@ -23,6 +24,8 @@ export default function AuthScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [nickname, setNickname] = useState("");
   const [resetToken, setResetToken] = useState("");
+  const [registrationRecoveryKey, setRegistrationRecoveryKey] = useState("");
+  const [recoveryKeyCredential, setRecoveryKeyCredential] = useState<RecoveryKeyCredential | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,6 +53,28 @@ export default function AuthScreen() {
     }
   }, [activate, lang]);
 
+  const readRecoveryKeyFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    setRecoveryKeyCredential(null);
+    setError("");
+    if (!file) return;
+    if (file.size > 16_384) {
+      setError(t("invalidRecoveryKeyFile", lang));
+      return;
+    }
+    try {
+      const credential = parseRecoveryKeyFile(await file.text());
+      if (!credential) {
+        setError(t("invalidRecoveryKeyFile", lang));
+        return;
+      }
+      setRecoveryKeyCredential(credential);
+      setIdentity(credential.email);
+    } catch {
+      setError(t("invalidRecoveryKeyFile", lang));
+    }
+  };
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     sound.unlock();
@@ -67,15 +92,28 @@ export default function AuthScreen() {
 
       if (mode === "up") {
         const result = await register(identity, password, nickname);
-        if (!result.ok) {
+        if (!result.ok || !result.recoveryKey) {
           setError(t(result.error || "authServerUnavailable", lang));
           return;
         }
-        setMode("in");
+        setIdentity(result.account?.email || identity.trim().toLowerCase());
         setPassword("");
-        setNotice(t(result.message || "activationEmailSent", lang));
+        setRegistrationRecoveryKey(result.recoveryKey);
+        setMode("registered");
         return;
       }
+
+      if (mode === "key") {
+        if (!recoveryKeyCredential) {
+          setError(t("selectRecoveryKeyFile", lang));
+          return;
+        }
+        const result = await loginWithRecoveryKey(recoveryKeyCredential.email, recoveryKeyCredential.recoveryKey);
+        if (!result.ok) setError(t(result.error || "invalidRecoveryKey", lang));
+        return;
+      }
+
+      if (mode === "registered") return;
 
       if (mode === "forgot") {
         if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@ionio\.gr$/i.test(identity.trim())) {
@@ -115,6 +153,16 @@ export default function AuthScreen() {
 
   const switchMode = (nextMode: AuthMode) => {
     setMode(nextMode);
+    setError("");
+    setNotice("");
+    setRecoveryKeyCredential(null);
+    setRegistrationRecoveryKey("");
+  };
+
+  const continueToSignIn = () => {
+    setMode("in");
+    setPassword("");
+    setRegistrationRecoveryKey("");
     setError("");
     setNotice("");
   };
@@ -158,9 +206,20 @@ export default function AuthScreen() {
             </div>
           ) : (
             <div className="mb-5 flex items-center justify-between gap-3">
-              <h2 className="text-lg font-bold text-zinc-100">{t(mode === "forgot" ? "forgotPasswordTitle" : "chooseNewPassword", lang)}</h2>
-              <button type="button" onClick={() => switchMode("in")} className="text-sm text-cyan-400 hover:text-cyan-300">
-                {t("backToSignIn", lang)}
+              <h2 className="text-lg font-bold text-zinc-100">
+                {t(
+                  mode === "forgot" ? "forgotPasswordTitle"
+                    : mode === "reset" ? "chooseNewPassword"
+                      : mode === "key" ? "recoveryKeyLoginTitle" : "registrationCompleteTitle",
+                  lang,
+                )}
+              </h2>
+              <button
+                type="button"
+                onClick={mode === "registered" ? continueToSignIn : () => switchMode("in")}
+                className="text-sm text-cyan-400 hover:text-cyan-300"
+              >
+                {t(mode === "registered" ? "continueToSignIn" : "backToSignIn", lang)}
               </button>
             </div>
           )}
@@ -172,6 +231,29 @@ export default function AuthScreen() {
             </div>
           )}
 
+          {mode === "registered" ? (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-zinc-300">{t("registrationComplete", lang)}</p>
+              <div className="rounded-xl border border-amber-400/25 bg-amber-400/5 p-3 text-sm leading-relaxed text-amber-100/90">
+                {t("recoveryKeySecurityNotice", lang)}
+              </div>
+              <button
+                type="button"
+                onClick={() => downloadRecoveryKeyFile(identity, registrationRecoveryKey)}
+                className="w-full rounded-xl bg-cyan-600 py-2.5 font-semibold text-white hover:bg-cyan-500"
+              >
+                {t("downloadRecoveryKey", lang)}
+              </button>
+              <p className="text-xs leading-relaxed text-iron-400">{t("recoveryKeyProfileReminder", lang)}</p>
+              <button
+                type="button"
+                onClick={continueToSignIn}
+                className="w-full rounded-xl border border-gamehack-border py-2.5 font-semibold text-zinc-200 hover:border-cyan-500/50"
+              >
+                {t("continueToSignIn", lang)}
+              </button>
+            </div>
+          ) : (
           <form onSubmit={submit} className="space-y-3">
             {mode === "up" && (
               <input
@@ -201,6 +283,24 @@ export default function AuthScreen() {
                 required
                 className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
               />
+            )}
+
+            {mode === "key" && (
+              <label className="block space-y-2">
+                <span className="text-sm text-iron-300">{t("recoveryKeyFileLabel", lang)}</span>
+                <input
+                  type="file"
+                  accept=".json,.gamehack-key,application/json"
+                  onChange={readRecoveryKeyFile}
+                  required
+                  className="block w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm text-iron-300 file:mr-3 file:rounded-lg file:border-0 file:bg-cyan-600 file:px-3 file:py-1.5 file:font-semibold file:text-white"
+                />
+                {recoveryKeyCredential && (
+                  <span className="block text-xs text-neon-green">
+                    {t("recoveryFileLoaded", lang)} {recoveryKeyCredential.email}
+                  </span>
+                )}
+              </label>
             )}
 
             {(mode === "in" || mode === "up" || mode === "reset") && (
@@ -247,18 +347,30 @@ export default function AuthScreen() {
                     ? t("register", lang)
                     : mode === "forgot"
                       ? t("sendResetLink", lang)
-                      : t("resetPassword", lang)}
+                      : mode === "key"
+                        ? t("signInWithRecoveryFile", lang)
+                        : t("resetPassword", lang)}
             </button>
           </form>
+          )}
 
           {mode === "in" && (
-            <button
-              type="button"
-              onClick={() => switchMode("forgot")}
-              className="mt-3 w-full text-right text-sm text-cyan-400 hover:text-cyan-300"
-            >
-              {t("forgotPassword", lang)}
-            </button>
+            <div className="mt-3 flex flex-col items-end gap-2 text-sm">
+              <button
+                type="button"
+                onClick={() => switchMode("key")}
+                className="text-cyan-400 hover:text-cyan-300"
+              >
+                {t("useRecoveryKey", lang)}
+              </button>
+              <button
+                type="button"
+                onClick={() => switchMode("forgot")}
+                className="text-iron-400 hover:text-cyan-300"
+              >
+                {t("forgotPassword", lang)}
+              </button>
+            </div>
           )}
 
           {mode === "in" && (

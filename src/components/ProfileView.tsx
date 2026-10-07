@@ -13,6 +13,8 @@ import Avatar from "./Avatar";
 import AvatarPicker from "./AvatarPicker";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
+import { useAuth } from "../lib/useAuth";
+import { downloadRecoveryKeyFile } from "../lib/recoveryKeyFile";
 
 export default function ProfileView({
   user,
@@ -28,10 +30,21 @@ export default function ProfileView({
   onChat?: (id: string) => void;
 }) {
   const mine = viewer.id === user.id;
+  const { changePassword: requestPasswordChange, rotateRecoveryKey } = useAuth();
   const lv = levelFromXp(user.metrics.xp);
   const [nickname, setNickname] = useState(user.displayName);
   const [bio, setBio] = useState(user.bio);
   const [picker, setPicker] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordNotice, setPasswordNotice] = useState("");
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [recoveryError, setRecoveryError] = useState("");
+  const [recoveryNotice, setRecoveryNotice] = useState("");
+  const [recoveryBusy, setRecoveryBusy] = useState(false);
+  const canManageAuth = mine && user.role === "player" && user.id.toLowerCase().endsWith("@ionio.gr");
 
   useEffect(() => {
     setNickname(user.displayName);
@@ -49,6 +62,51 @@ export default function ProfileView({
     const next = user.interests.includes(i) ? user.interests.filter((x) => x !== i) : [...user.interests, i];
     updateUser(user.id, { interests: next });
     onChange();
+  };
+
+  const submitPasswordChange = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setPasswordError("");
+    setPasswordNotice("");
+    if (newPassword !== confirmPassword) {
+      setPasswordError(t("passwordsDoNotMatch", lang));
+      return;
+    }
+    setPasswordBusy(true);
+    try {
+      const result = await requestPasswordChange(currentPassword, newPassword);
+      if (!result.ok) {
+        setPasswordError(t(result.error || "authServerUnavailable", lang));
+        return;
+      }
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordNotice(t(result.message || "passwordChanged", lang));
+    } catch {
+      setPasswordError(t("authServerUnavailable", lang));
+    } finally {
+      setPasswordBusy(false);
+    }
+  };
+
+  const downloadNewRecoveryKey = async () => {
+    setRecoveryError("");
+    setRecoveryNotice("");
+    setRecoveryBusy(true);
+    try {
+      const result = await rotateRecoveryKey();
+      if (!result.ok || !result.recoveryKey) {
+        setRecoveryError(t(result.error || "authServerUnavailable", lang));
+        return;
+      }
+      downloadRecoveryKeyFile(user.id, result.recoveryKey);
+      setRecoveryNotice(t(result.message || "recoveryKeyRotated", lang));
+    } catch {
+      setRecoveryError(t("authServerUnavailable", lang));
+    } finally {
+      setRecoveryBusy(false);
+    }
   };
 
   return (
@@ -138,6 +196,68 @@ export default function ProfileView({
           </>
         )}
       </div>
+
+      {canManageAuth && (
+        <section className="glass rounded-2xl border border-gamehack-border p-5 space-y-6" aria-labelledby="account-security-title">
+          <h2 id="account-security-title" className="text-lg font-semibold text-zinc-100">{t("accountSecurity", lang)}</h2>
+          <form onSubmit={submitPasswordChange} className="space-y-3">
+            <h3 className="text-sm font-semibold text-zinc-200">{t("passwordChangeTitle", lang)}</h3>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              placeholder={t("currentPassword", lang)}
+              autoComplete="current-password"
+              className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
+            />
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              placeholder={t("newPassword", lang)}
+              autoComplete="new-password"
+              minLength={8}
+              required
+              className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
+            />
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder={t("confirmNewPassword", lang)}
+              autoComplete="new-password"
+              minLength={8}
+              required
+              className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
+            />
+            <p className="text-sm leading-relaxed text-iron-400">{t("recoveryKeyPasswordNote", lang)}</p>
+            {passwordError && <p role="alert" className="text-sm text-rose-300">{passwordError}</p>}
+            {passwordNotice && <p role="status" className="text-sm text-neon-green">{passwordNotice}</p>}
+            <button
+              type="submit"
+              disabled={passwordBusy || !newPassword || !confirmPassword}
+              className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500 disabled:cursor-wait disabled:opacity-60"
+            >
+              {passwordBusy ? t("working", lang) : t("passwordChangeTitle", lang)}
+            </button>
+          </form>
+
+          <div className="space-y-3 border-t border-gamehack-border pt-5">
+            <h3 className="text-sm font-semibold text-zinc-200">{t("recoveryKeyTitle", lang)}</h3>
+            <p className="text-sm leading-relaxed text-iron-400">{t("recoveryKeyRotationNote", lang)}</p>
+            {recoveryError && <p role="alert" className="text-sm text-rose-300">{recoveryError}</p>}
+            {recoveryNotice && <p role="status" className="text-sm text-neon-green">{recoveryNotice}</p>}
+            <button
+              type="button"
+              onClick={downloadNewRecoveryKey}
+              disabled={recoveryBusy}
+              className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 hover:bg-cyan-500/20 disabled:cursor-wait disabled:opacity-60"
+            >
+              {recoveryBusy ? t("working", lang) : t("downloadRecoveryKey", lang)}
+            </button>
+          </div>
+        </section>
+      )}
 
       <div className="glass rounded-2xl border border-gamehack-border p-5">
         <div className="text-sm uppercase tracking-widest text-iron-400 mb-3">{uppercaseLabel(t("interests", lang), lang)}</div>

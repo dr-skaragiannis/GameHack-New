@@ -205,10 +205,11 @@ async function sendResetEmail(req, account, token) {
   });
 }
 
-function signSession(account) {
+function signSession(account, authMethod = "password") {
   const payload = Buffer.from(JSON.stringify({
     sub: account.email,
     ver: account.sessionVersion,
+    authMethod,
     exp: Math.floor(Date.now() / 1000) + sessionLifetimeSeconds,
   })).toString("base64url");
   const signature = crypto.createHmac("sha256", sessionSecret).update(payload).digest("base64url");
@@ -220,7 +221,7 @@ function readCookie(req, name) {
   return item ? item.slice(name.length + 1) : "";
 }
 
-function authenticatedAccount(req) {
+function authenticatedSession(req) {
   const token = readCookie(req, sessionCookieName) || readCookie(req, legacySessionCookieName);
   const [payload, signature] = token.split(".");
   if (!payload || !signature) return null;
@@ -238,10 +239,14 @@ function authenticatedAccount(req) {
     if (!decoded.sub || decoded.exp <= Date.now() / 1000) return null;
     const account = store.accounts.find((item) => item.email === decoded.sub && item.activatedAt);
     if (!account || account.sessionVersion !== decoded.ver) return null;
-    return account;
+    return { account, authMethod: decoded.authMethod === "recovery" ? "recovery" : "password" };
   } catch {
     return null;
   }
+}
+
+function authenticatedAccount(req) {
+  return authenticatedSession(req)?.account || null;
 }
 
 function sessionCookie(req, token, maxAge, name = sessionCookieName) {
@@ -284,7 +289,6 @@ async function handleAuth(req, res, pathname) {
     if (!nickname) return sendJson(res, 400, { error: "nicknameRequired" });
     if (nickname.length > 32) return sendJson(res, 400, { error: "nicknameTooLong" });
     if (!password || password.length < minimumPasswordLength) return sendJson(res, 400, { error: "passwordTooShort" });
-    if (!mailReady()) return sendJson(res, 503, { error: "emailServiceUnavailable" });
 
     if (registeringEmails.has(email)) return sendJson(res, 409, { error: "registrationInProgress" });
     registeringEmails.add(email);
@@ -292,17 +296,19 @@ async function handleAuth(req, res, pathname) {
       let account = store.accounts.find((item) => item.email === email);
       if (account?.activatedAt) return sendJson(res, 409, { error: "emailAlreadyRegistered" });
       const previousAccount = account ? { ...account } : null;
+      const now = Date.now();
       const passwordHash = await hashPassword(password);
-      const token = crypto.randomBytes(32).toString("base64url");
+      const recoveryKey = crypto.randomBytes(32).toString("base64url");
       if (!account) {
         account = {
           email,
           nickname,
           passwordHash,
-          createdAt: Date.now(),
-          activatedAt: null,
-          activationTokenHash: tokenHash(token),
-          activationExpiresAt: Date.now() + activationLifetimeMs,
+          createdAt: now,
+          activatedAt: now,
+          activationTokenHash: null,
+          activationExpiresAt: null,
+          recoveryKeyHash: tokenHash(recoveryKey),
           resetTokenHash: null,
           resetExpiresAt: null,
           sessionVersion: 0,
@@ -311,20 +317,27 @@ async function handleAuth(req, res, pathname) {
       } else {
         account.nickname = nickname;
         account.passwordHash = passwordHash;
-        account.activationTokenHash = tokenHash(token);
-        account.activationExpiresAt = Date.now() + activationLifetimeMs;
+        account.activatedAt = now;
+        account.activationTokenHash = null;
+        account.activationExpiresAt = null;
+        account.recoveryKeyHash = tokenHash(recoveryKey);
+        account.resetTokenHash = null;
+        account.resetExpiresAt = null;
+        account.sessionVersion = (account.sessionVersion || 0) + 1;
       }
-      await saveStore();
       try {
-        await sendActivationEmail(req, account, token);
+        await saveStore();
       } catch (error) {
         if (previousAccount) Object.assign(account, previousAccount);
         else store.accounts = store.accounts.filter((item) => item.email !== email);
-        await saveStore();
-        console.error("Activation email delivery failed:", error);
-        return sendJson(res, 502, { error: "emailDeliveryFailed" });
+        throw error;
       }
-      return sendJson(res, 200, { ok: true, message: "activationEmailSent" });
+      return sendJson(res, 201, {
+        ok: true,
+        message: "registrationComplete",
+        account: publicAccount(account),
+        recoveryKey,
+      });
     } finally {
       registeringEmails.delete(email);
     }
@@ -349,11 +362,64 @@ async function handleAuth(req, res, pathname) {
     const password = typeof body.password === "string" ? body.password : "";
     if (!validUniversityEmail(email)) return sendJson(res, 401, { error: "invalidCredentials" });
     const account = store.accounts.find((item) => item.email === email);
-    if (!account) return sendJson(res, 401, { error: "invalidCredentials" });
-    if (!account.activatedAt) return sendJson(res, 403, { error: "accountNeedsActivation" });
-    if (!(await verifyPassword(password, account.passwordHash))) return sendJson(res, 401, { error: "invalidCredentials" });
+    if (!account || !(await verifyPassword(password, account.passwordHash))) {
+      return sendJson(res, 401, { error: "invalidCredentials" });
+    }
+    if (!account.activatedAt) {
+      account.activatedAt = Date.now();
+      account.activationTokenHash = null;
+      account.activationExpiresAt = null;
+      await saveStore();
+    }
     const cookie = sessionCookie(req, signSession(account), sessionLifetimeSeconds);
     return sendJson(res, 200, { account: publicAccount(account) }, { "Set-Cookie": cookie });
+  }
+
+  if (pathname === "/api/auth/login-with-key") {
+    if (isRateLimited(req, "login-key", 15, 10 * 60 * 1000)) return sendJson(res, 429, { error: "tryAgainLater" });
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const recoveryKey = typeof body.recoveryKey === "string" ? body.recoveryKey.trim() : "";
+    if (!validUniversityEmail(email) || !/^[A-Za-z0-9_-]{43}$/.test(recoveryKey)) {
+      return sendJson(res, 401, { error: "invalidRecoveryKey" });
+    }
+    const account = store.accounts.find((item) => item.email === email && item.activatedAt);
+    if (!account || !account.recoveryKeyHash || tokenHash(recoveryKey) !== account.recoveryKeyHash) {
+      return sendJson(res, 401, { error: "invalidRecoveryKey" });
+    }
+    const cookie = sessionCookie(req, signSession(account, "recovery"), sessionLifetimeSeconds);
+    return sendJson(res, 200, { account: publicAccount(account) }, { "Set-Cookie": cookie });
+  }
+
+  if (pathname === "/api/auth/change-password") {
+    if (isRateLimited(req, "change-password", 12, 10 * 60 * 1000)) return sendJson(res, 429, { error: "tryAgainLater" });
+    const session = authenticatedSession(req);
+    if (!session) return sendJson(res, 401, { error: "notAuthenticated" });
+    const currentPassword = typeof body.currentPassword === "string" ? body.currentPassword : "";
+    const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
+    if (newPassword.length < minimumPasswordLength) return sendJson(res, 400, { error: "passwordTooShort" });
+    if (session.authMethod !== "recovery" || currentPassword) {
+      if (!currentPassword) return sendJson(res, 400, { error: "currentPasswordRequired" });
+      if (!(await verifyPassword(currentPassword, session.account.passwordHash))) {
+        return sendJson(res, 400, { error: "currentPasswordIncorrect" });
+      }
+    }
+    session.account.passwordHash = await hashPassword(newPassword);
+    session.account.sessionVersion = (session.account.sessionVersion || 0) + 1;
+    session.account.resetTokenHash = null;
+    session.account.resetExpiresAt = null;
+    await saveStore();
+    const cookie = sessionCookie(req, signSession(session.account), sessionLifetimeSeconds);
+    return sendJson(res, 200, { ok: true, message: "passwordChanged" }, { "Set-Cookie": cookie });
+  }
+
+  if (pathname === "/api/auth/recovery-key/rotate") {
+    if (isRateLimited(req, "recovery-key-rotate", 10, 10 * 60 * 1000)) return sendJson(res, 429, { error: "tryAgainLater" });
+    const account = authenticatedAccount(req);
+    if (!account) return sendJson(res, 401, { error: "notAuthenticated" });
+    const recoveryKey = crypto.randomBytes(32).toString("base64url");
+    account.recoveryKeyHash = tokenHash(recoveryKey);
+    await saveStore();
+    return sendJson(res, 200, { ok: true, message: "recoveryKeyRotated", recoveryKey });
   }
 
   if (pathname === "/api/auth/forgot-password") {
@@ -461,5 +527,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, process.env.HOST || "0.0.0.0", () => {
   console.log(`GameHack server listening on ${port}`);
-  if (!mailReady()) console.warn("Email is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER/SMTP_PASS, and MAIL_FROM to enable account emails.");
+  if (!mailReady()) console.warn("Email is not configured; email-based password resets are disabled. Registration and recovery-key sign-in still work.");
 });

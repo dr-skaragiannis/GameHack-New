@@ -2,7 +2,13 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 import * as db from "./db";
 import type { User } from "./db";
 
-type AuthResult = { ok: boolean; error?: string; message?: string };
+type AuthResult = {
+  ok: boolean;
+  error?: string;
+  message?: string;
+  account?: RemoteAccount;
+  recoveryKey?: string;
+};
 type RemoteAccount = { email: string; nickname: string; role: "player" };
 type AuthCtx = {
   user: User | null;
@@ -10,16 +16,19 @@ type AuthCtx = {
   authReady: boolean;
   refresh: () => void;
   login: (identity: string, password: string) => Promise<AuthResult>;
+  loginWithRecoveryKey: (email: string, recoveryKey: string) => Promise<AuthResult>;
   register: (email: string, password: string, nickname: string) => Promise<AuthResult>;
   activate: (token: string) => Promise<AuthResult>;
   requestPasswordReset: (email: string) => Promise<AuthResult>;
   resetPassword: (token: string, password: string) => Promise<AuthResult>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<AuthResult>;
+  rotateRecoveryKey: () => Promise<AuthResult>;
   logout: () => void;
 };
 
 const Ctx = createContext<AuthCtx | null>(null);
 
-async function postAuth(path: string, payload: Record<string, string>): Promise<AuthResult & { account?: RemoteAccount }> {
+async function postAuth(path: string, payload: Record<string, string>): Promise<AuthResult> {
   try {
     const response = await fetch(path, {
       method: "POST",
@@ -127,6 +136,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: result.ok, error: result.error };
   }, []);
 
+  const doLoginWithRecoveryKey = useCallback(async (email: string, recoveryKey: string): Promise<AuthResult> => {
+    const result = await postAuth("/api/auth/login-with-key", { email, recoveryKey });
+    if (!result.ok || !result.account) return { ok: false, error: result.error || "invalidRecoveryKey" };
+    try {
+      db.establishAuthenticatedUser(result.account.email, result.account.nickname);
+      setUser(snapshot());
+      setVersion((value) => value + 1);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "authServerUnavailable" };
+    }
+  }, []);
+
   const doRegister = useCallback((email: string, password: string, nickname: string) =>
     postAuth("/api/auth/register", { email, password, nickname }), []);
 
@@ -135,6 +157,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     postAuth("/api/auth/forgot-password", { email }), []);
   const resetPassword = useCallback((token: string, password: string) =>
     postAuth("/api/auth/reset-password", { token, password }), []);
+  const changePassword = useCallback((currentPassword: string, newPassword: string) =>
+    postAuth("/api/auth/change-password", { currentPassword, newPassword }), []);
+  const rotateRecoveryKey = useCallback(() =>
+    postAuth("/api/auth/recovery-key/rotate", {}), []);
 
   const doLogout = useCallback(() => {
     void fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => {});
@@ -151,10 +177,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authReady,
         refresh,
         login: doLogin,
+        loginWithRecoveryKey: doLoginWithRecoveryKey,
         register: doRegister,
         activate,
         requestPasswordReset,
         resetPassword,
+        changePassword,
+        rotateRecoveryKey,
         logout: doLogout,
       }}
     >

@@ -56,10 +56,11 @@ export default function LiveFeed({
 
   if (compact) {
     if (!items.length) {
+      const emptyMessage = excludeUserId || excludeUsername ? "noOtherPlayerActivity" : "noPlayerActivity";
       return (
         <div className="live-feed__ticker-empty">
           <span><Icon name="wifi" className="h-4 w-4" /></span>
-          <p>{t("noOtherPlayerActivity", lang)}</p>
+          <p>{t(emptyMessage, lang)}</p>
         </div>
       );
     }

@@ -547,7 +547,7 @@ export default function PlayerDashboard({
             </div>
             <span className="player-dashboard__activity-pulse"><i /></span>
           </div>
-          <div className="player-dashboard__activity-list"><LiveFeed lang={lang} /></div>
+          <div className="player-dashboard__activity-list"><LiveFeed compact playersOnly lang={lang} /></div>
         </section>
       </div>
 

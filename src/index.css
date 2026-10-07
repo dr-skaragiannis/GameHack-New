@@ -6154,7 +6154,13 @@ button.player-quick-stats__item:hover {
   white-space: nowrap;
 }
 .player-dashboard__feed-ticker-window { min-width: 0; overflow: hidden; }
-.player-dashboard .live-feed__ticker { min-width: 0; overflow: hidden; }
+.player-dashboard .live-feed__ticker {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+}
 .player-dashboard .live-feed__ticker-track {
   width: max-content;
   min-height: 38px;
@@ -6279,7 +6285,16 @@ button.player-quick-stats__item:hover {
 .player-dashboard__support-feed { grid-column: 1 / -1; }
 .player-dashboard__support-feed .player-dashboard__section-heading { margin-bottom: 7px; }
 .player-dashboard__support-feed .player-dashboard__section-heading h2 { font-size: 0.9rem; }
-.player-dashboard__support-feed .player-dashboard__activity-list { max-height: 138px; padding: 1px; }
+.player-dashboard__support-feed .player-dashboard__activity-list {
+  min-height: 42px;
+  max-height: none;
+  overflow: hidden;
+  padding: 0;
+}
+.player-dashboard__support-feed .live-feed__ticker-track {
+  min-height: 42px;
+  animation-duration: 32s;
+}
 .player-dashboard .live-feed__list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

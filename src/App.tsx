@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CAMPAIGNS, LEARNING_PATHS, campaignById, moduleById } from "./data/lessons";
 import { t, uppercaseLabel, type Lang } from "./i18n";
 import * as db from "./lib/db";
 import { useAuth } from "./lib/useAuth";
 import { sound } from "./lib/sound";
+import { passesQuickQuiz } from "./lib/quizProgress";
 import { cn } from "./utils/cn";
 import AuthScreen from "./components/AuthScreen";
 import PlayerDashboard from "./components/PlayerDashboard";
@@ -124,6 +125,7 @@ function EthicsGate({ lang, onAccept }: { lang: Lang; onAccept: () => void }) {
 export default function App() {
   const { user, logout, refresh, authReady } = useAuth();
   const [view, setView] = useState<View>("dashboard");
+  const previousUserId = useRef<string | null>(user?.id ?? null);
   const [theme, setTheme] = useState<ThemeName>(readThemePreference);
   const [campaignId, setCampaignId] = useState(LEARNING_PATHS[0].id);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -134,6 +136,12 @@ export default function App() {
   const [badgeId, setBadgeId] = useState<string | null>(null);
   const [quizFor, setQuizFor] = useState<string | null>(null);
   const [scoreboardOpen, setScoreboardOpen] = useState(false);
+
+  useEffect(() => {
+    const nextUserId = user?.id ?? null;
+    if (nextUserId && nextUserId !== previousUserId.current) setView("dashboard");
+    previousUserId.current = nextUserId;
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -178,7 +186,6 @@ export default function App() {
   }
 
   const campaign = campaignById(campaignId) || LEARNING_PATHS[0];
-  const ordered = [...campaign.modules].sort((a, b) => a.order - b.order);
   const active = activeId ? moduleById(activeId) : null;
   const collapsed = !!user.sidebarCollapsed;
   const unread = db.inboxFor(user.id).filter((m) => !m.read).length;
@@ -262,25 +269,15 @@ export default function App() {
     refresh();
   };
 
-  const markComplete = (moduleId: string) => {
+  const completeModuleAfterQuiz = (moduleId: string) => {
     const u = db.userById(user.id)!;
     const mp = u.progress[moduleId] || { completed: false, done: [] };
-    if (mp.completed) {
-      setQuizFor(moduleId);
-      return;
-    }
+    if (mp.completed) return;
+
     const nextProgress = { ...u.progress, [moduleId]: { ...mp, completed: true } };
-    db.updateUser(user.id, { progress: nextProgress });
     const currentCampaign = CAMPAIGNS.find((item) => item.modules.some((module) => module.id === moduleId));
-    const orderedModules = currentCampaign ? [...currentCampaign.modules].sort((a, b) => a.order - b.order) : [];
-    const currentIndex = orderedModules.findIndex((module) => module.id === moduleId);
-    const nextModule = orderedModules.slice(currentIndex + 1).find((module) => !u.progress[module.id]?.completed);
-    if (currentCampaign) {
-      db.updateUser(user.id, {
-        activeCampaignId: currentCampaign.id,
-        activeModuleId: nextModule?.id || moduleId,
-      });
-    }
+    db.updateUser(user.id, { progress: nextProgress });
+
     const { gained } = db.awardXp(user.id, 15);
     const pathCompleted = !!currentCampaign && currentCampaign.modules.every((module) => nextProgress[module.id]?.completed);
     db.pushFeed(db.userById(user.id)!, "module", `${u.displayName} completed a module (+${gained} XP)`, {
@@ -298,18 +295,18 @@ export default function App() {
     }
     awardMetricBadges();
     db.saveDB();
+    sound.moduleComplete();
     refresh();
-    setQuizFor(moduleId);
   };
 
   const nav: { id: View; icon: string; label: string; show: boolean; badge?: number }[] = [
-    { id: "dashboard", icon: "home", label: t("dashboard", lang), show: user.role === "player" },
+    { id: "dashboard", icon: "home", label: t("homeNav", lang), show: user.role === "player" },
+    { id: "profile", icon: "user", label: t("profileNav", lang), show: true },
+    { id: "map", icon: "map", label: t("learningMapNav", lang), show: true },
+    { id: "campaigns", icon: "flag", label: t("challengesNav", lang), show: true },
+    { id: "messages", icon: "mail", label: t("messagesNav", lang), show: true, badge: unread },
+    { id: "tickets", icon: "ticket", label: t("ticketsNav", lang), show: true, badge: openTickets },
     { id: "educator", icon: "chart", label: t("educator", lang), show: user.role === "educator" },
-    { id: "map", icon: "map", label: t("map", lang), show: true },
-    { id: "campaigns", icon: "flag", label: t("campaigns", lang), show: true },
-    { id: "messages", icon: "mail", label: t("messages", lang), show: true, badge: unread },
-    { id: "tickets", icon: "ticket", label: t("tickets", lang), show: true, badge: openTickets },
-    { id: "profile", icon: "user", label: t("profile", lang), show: true },
   ];
   const mobileMenuButton = (
     <button
@@ -347,6 +344,17 @@ export default function App() {
     </div>
   );
   const continueTarget = continueLearningTarget(user);
+  const quizCampaign = quizFor ? CAMPAIGNS.find((item) => item.modules.some((module) => module.id === quizFor)) : undefined;
+  const quizModules = quizCampaign ? [...quizCampaign.modules].sort((a, b) => a.order - b.order) : [];
+  const quizModuleIndex = quizModules.findIndex((module) => module.id === quizFor);
+  const quizNextLab = quizModuleIndex >= 0
+    ? quizModules.slice(quizModuleIndex + 1).find((module, offset) => {
+        const previousModule = quizModules[quizModuleIndex + offset];
+        return !user.progress[module.id]?.completed && !!previousModule &&
+          (previousModule.id === quizFor || !!user.progress[previousModule.id]?.completed);
+      })
+    : undefined;
+  const quizContinueLabel = t(quizNextLab ? "continueToNextLab" : "backToMap", lang);
   const quickStats = (
     <PlayerQuickStats
       user={user}
@@ -543,6 +551,7 @@ export default function App() {
               initialTab={moduleInitialTab}
               topbarTools={moduleTopbarTools}
               done={user.progress[active.id]?.done || []}
+              moduleCompleted={!!user.progress[active.id]?.completed}
               contentWidth={user.contentWidth}
               onWidth={(w) => {
                 db.updateUser(user.id, { contentWidth: w });
@@ -556,7 +565,10 @@ export default function App() {
                 const u = db.userById(user.id)!;
                 db.updateUser(user.id, { metrics: { ...u.metrics, hintsUsed: u.metrics.hintsUsed + 1 } });
               }}
-              onComplete={() => markComplete(active.id)}
+              onStartQuiz={() => {
+                setQuizFor(active.id);
+                sound.popup();
+              }}
               onBack={() => go("map")}
             />
           )}
@@ -589,16 +601,34 @@ export default function App() {
       {badgeId && <BadgeModal badgeId={badgeId} lang={lang} onClose={() => setBadgeId(null)} />}
       {quizFor && (
         <QuizPopup
+          key={quizFor}
           moduleId={quizFor}
           lang={lang}
-          onDone={() => {
+          continueLabel={quizContinueLabel}
+          onCancel={() => setQuizFor(null)}
+          onDone={(score, total) => {
+            const moduleId = quizFor;
+            if (!moduleId || !passesQuickQuiz(score, total)) return;
+
+            const currentCampaign = CAMPAIGNS.find((item) => item.modules.some((module) => module.id === moduleId));
+            const orderedModules = currentCampaign ? [...currentCampaign.modules].sort((a, b) => a.order - b.order) : [];
+            const currentIndex = orderedModules.findIndex((module) => module.id === moduleId);
+            completeModuleAfterQuiz(moduleId);
             setQuizFor(null);
-            const idx = ordered.findIndex((m) => m.id === quizFor);
-            if (idx >= 0 && idx < ordered.length - 1) {
-              setActiveId(ordered[idx + 1].id);
-            } else {
-              go("map");
+
+            if (currentCampaign && currentIndex >= 0) {
+              const progress = db.userById(user.id)!.progress;
+              const nextModule = orderedModules.slice(currentIndex + 1).find((module, offset) => {
+                const previousModule = orderedModules[currentIndex + offset];
+                return !progress[module.id]?.completed && !!previousModule &&
+                  (previousModule.id === moduleId || !!progress[previousModule.id]?.completed);
+              });
+              if (nextModule) {
+                openModule(currentCampaign.id, nextModule.id, "lab");
+                return;
+              }
             }
+            go("map");
           }}
         />
       )}

@@ -133,12 +133,13 @@ export default function ModuleView({
   initialTab,
   topbarTools,
   done,
+  moduleCompleted,
   contentWidth,
   onWidth,
   onTask,
   onCommandMetric,
   onHint,
-  onComplete,
+  onStartQuiz,
   onBack,
 }: {
   module: Module;
@@ -148,12 +149,13 @@ export default function ModuleView({
   initialTab?: "theory" | "guide" | "lab";
   topbarTools: ReactNode;
   done: string[];
+  moduleCompleted: boolean;
   contentWidth?: ContentWidth;
   onWidth: (w: ContentWidth) => void;
   onTask: (taskId: string, hintUsed: boolean) => void;
   onCommandMetric: (pasted: boolean, typo: boolean, execution: CommandExecutionInput) => void;
   onHint: () => void;
-  onComplete: () => void;
+  onStartQuiz: () => void;
   onBack: () => void;
 }) {
   const [tab, setTab] = useState<"theory" | "guide" | "lab">(initialTab || (done.length ? "lab" : "theory"));
@@ -174,7 +176,6 @@ export default function ModuleView({
     }
   });
   const [explain, setExplain] = useState<string | null>(null);
-  const [finished, setFinished] = useState(false);
   const [commandResult, setCommandResult] = useState<CommandExplanation | null>(null);
   const [commandSuggestion, setCommandSuggestion] = useState<string | null>(null);
   const commandPopupStorageKey = `gamehack.command-tutor.v1:${userId}:${module.id}`;
@@ -226,6 +227,7 @@ export default function ModuleView({
   const allTasks = tasksDone.length >= module.tasks.length;
   const ch1 = done.includes("ch-0") || module.challenges[0].check(term);
   const ch2 = done.includes("ch-1") || module.challenges[1].check(term);
+  const moduleComplete = allTasks && ch1 && ch2;
 
   const progress = useMemo(() => {
     const total = module.tasks.length + 2;
@@ -264,14 +266,6 @@ export default function ModuleView({
         onTask("ch-1", false);
         sound.challengeDone();
       }
-    }
-    const tasksNow = module.tasks.every((x) => done.includes(x.id) || x.check(t0));
-    const c1 = done.includes("ch-0") || module.challenges[0].check(t0);
-    const c2 = done.includes("ch-1") || module.challenges[1].check(t0);
-    if (tasksNow && c1 && c2 && !finished) {
-      setFinished(true);
-      sound.moduleComplete();
-      onComplete();
     }
   };
 
@@ -566,6 +560,22 @@ export default function ModuleView({
               </div>
 
             </aside>
+            {moduleComplete && !moduleCompleted && (
+              <section className="glass flex flex-col gap-4 rounded-2xl border border-neon-green/25 p-4 sm:flex-row sm:items-center sm:justify-between lg:col-span-2" aria-labelledby="lab-quiz-prompt-title">
+                <div>
+                  <h2 id="lab-quiz-prompt-title" className="text-base font-semibold text-zinc-100">{t("labComplete", lang)}</h2>
+                  <p className="mt-1 text-sm leading-relaxed text-zinc-400">{t("quizPassRequirement", lang)}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onStartQuiz}
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 font-semibold text-white transition hover:bg-cyan-500"
+                >
+                  {t("startQuickQuiz", lang)}
+                  <Icon name="chevron" className="h-4 w-4" />
+                </button>
+              </section>
+            )}
           </div>
         )}
       </div>
