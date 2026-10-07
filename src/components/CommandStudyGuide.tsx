@@ -1,6 +1,6 @@
 import type { Module } from "../data/lessons";
 import { studyItemsForModule } from "../data/commandGuide";
-import { bi, t, type Lang } from "../i18n";
+import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import Icon from "./Icon";
 
 export default function CommandStudyGuide({
@@ -18,7 +18,7 @@ export default function CommandStudyGuide({
     <div className="command-study-guide enter">
       <header className="command-study-guide__header">
         <div>
-          <div className="command-study-guide__eyebrow">{t("studyGuide", lang)}</div>
+          <div className="command-study-guide__eyebrow">{uppercaseLabel(t("studyGuide", lang), lang)}</div>
           <h2>{bi(module.title, lang)}</h2>
           <p>{t("studyGuideDescription", lang)}</p>
         </div>
@@ -41,19 +41,19 @@ export default function CommandStudyGuide({
                     <p>{lesson.purpose[lang]}</p>
                   </div>
                   <div className="command-study-entry__detail">
-                    <span>{t("commandMechanics", lang)}</span>
+                    <span>{uppercaseLabel(t("commandMechanics", lang), lang)}</span>
                     <p>{lesson.mechanics[lang]}</p>
                   </div>
                   <div className="command-study-entry__detail">
-                    <span>{t("commandOutput", lang)}</span>
+                    <span>{uppercaseLabel(t("commandOutput", lang), lang)}</span>
                     <p>{lesson.output[lang]}</p>
                   </div>
                   <div className="command-study-entry__detail command-study-entry__syntax">
-                    <span>{t("commandSyntax", lang)}</span>
+                    <span>{uppercaseLabel(t("commandSyntax", lang), lang)}</span>
                     <code>{lesson.syntax}</code>
                   </div>
                   <div className="command-study-entry__example">
-                    <span>{t("commandExample", lang)}</span>
+                    <span>{uppercaseLabel(t("commandExample", lang), lang)}</span>
                     <code>{lesson.example}</code>
                     <button
                       type="button"
@@ -78,11 +78,6 @@ export default function CommandStudyGuide({
           );
         })}
       </div>
-
-      <footer className="command-study-guide__footer">
-        <Icon name="shield" className="h-4 w-4" />
-        {t("educationalNote", lang)}
-      </footer>
     </div>
   );
 }

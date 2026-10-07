@@ -10,15 +10,19 @@ export default function TerminalView({
   onCommand,
   suggestion,
   onSuggestionConsumed,
+  onResetLab,
 }: {
   term: Terminal;
   lang: Lang;
   onCommand: (raw: string, pasted: boolean) => void;
   suggestion?: string | null;
   onSuggestionConsumed?: () => void;
+  onResetLab?: () => void;
 }) {
   const [buf, setBuf] = useState("");
   const [histIdx, setHistIdx] = useState(-1);
+  const [resetArmed, setResetArmed] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
   const [, bumpScreen] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -61,39 +65,92 @@ export default function TerminalView({
 
   return (
     <div
-      className="relative flex flex-col h-full min-h-[420px] rounded-xl border border-forge-border bg-black/80 crt overflow-hidden font-mono text-[13px]"
+      className="terminal-window relative flex min-h-0 flex-col rounded-xl border border-gamehack-border bg-black/80 crt overflow-hidden font-mono text-sm"
       onClick={() => input.current?.focus()}
     >
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5 bg-zinc-900/80 text-[11px] text-iron-400">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5 bg-zinc-900/80 text-sm text-iron-400">
         <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
-        <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
+        <span className="h-2.5 w-2.5 rounded-full bg-cyan-400/80" />
         <span className="h-2.5 w-2.5 rounded-full bg-neon-green/80" />
-        <span className="ml-2 tracking-wider">
-          {term.user}@{term.host} — HACKFORGE
+        <span className="ml-2 min-w-0 truncate tracking-wider">
+          {term.user}@{term.host} — GameHack
         </span>
+        {onResetLab ? (
+          resetArmed ? (
+            <span className="ml-auto flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                aria-label={t("resetLabConfirm", lang)}
+                title={t("resetLabHint", lang)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  sound.enter();
+                  setResetArmed(false);
+                  onResetLab();
+                }}
+                className="shrink-0 rounded-md border border-rose-400/50 bg-rose-400/10 px-2 py-1.5 text-sm font-semibold text-rose-200 hover:bg-rose-400/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-300 sm:px-3"
+              >
+                {t("resetLabConfirm", lang)}
+              </button>
+              <button
+                type="button"
+                aria-label={t("resetLabCancel", lang)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setResetArmed(false);
+                }}
+                className="shrink-0 rounded-md border border-white/15 bg-white/5 px-2 py-1.5 text-sm font-semibold text-zinc-300 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-300 sm:px-3"
+              >
+                {t("resetLabCancel", lang)}
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              aria-label={t("resetLab", lang)}
+              title={t("resetLabHint", lang)}
+              onClick={(event) => {
+                event.stopPropagation();
+                sound.enter();
+                setResetArmed(true);
+              }}
+              className="ml-auto shrink-0 rounded-md border border-neon-cyan/30 bg-neon-cyan/10 px-2 py-1.5 text-sm font-semibold text-neon-cyan hover:bg-neon-cyan/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neon-cyan sm:px-3"
+            >
+              ↺ {t("resetLab", lang)}
+            </button>
+          )
+        ) : null}
       </div>
-      <div ref={scroller} className="flex-1 overflow-auto px-3 py-3 space-y-0.5 leading-relaxed">
+      <div ref={scroller} className="terminal-window__scroll flex-1 px-3 py-3 space-y-0.5 leading-relaxed">
         {term.lines.map((l, i) => (
           <div key={i} className={cn("whitespace-pre-wrap break-all", color(l))}>
             {l.text}
           </div>
         ))}
         <form
+          key="terminal-command-line"
           onSubmit={(e) => {
             e.preventDefault();
             submit(buf);
           }}
-          className="flex items-center gap-2"
+          className="terminal-window__command flex min-w-0 items-center gap-2 leading-relaxed"
         >
-          <span className="text-ember-400 shrink-0">{prompt(term)}</span>
+          <span className="min-w-0 max-w-[55%] shrink truncate text-cyan-400" title={prompt(term)}>{prompt(term)}</span>
+          {!inputFocused && !buf && (
+            <span className="inline-block h-[1.1em] w-[0.55em] shrink-0 bg-cyan-400 cursor-blink" aria-hidden="true" />
+          )}
           <input
             ref={input}
+            type="text"
             value={buf}
             autoFocus
+            autoComplete="off"
             spellCheck={false}
             autoCapitalize="off"
             autoCorrect="off"
-            placeholder={t("typeCommand", lang)}
+            aria-label={t("typeCommand", lang)}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
             onChange={(e) => setBuf(e.target.value)}
             onPaste={() => {
               pasteRef.current = true;
@@ -133,7 +190,7 @@ export default function TerminalView({
                 }
               } else if (e.key.length === 1) sound.key();
             }}
-            className="flex-1 bg-transparent outline-none text-zinc-100 placeholder:text-zinc-600 caret-ember-400"
+            className="min-w-0 flex-1 bg-transparent p-0 font-mono text-sm leading-relaxed text-zinc-100 outline-none caret-cyan-400"
           />
         </form>
       </div>

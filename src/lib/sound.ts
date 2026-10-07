@@ -1,11 +1,15 @@
-const KEY = "hackforge.muted.v1";
+const KEY = "gamehack.muted.v1";
+const LEGACY_KEY = "hackforge.muted.v1";
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let muted = false;
 
 try {
-  muted = localStorage.getItem(KEY) === "1";
+  const savedPreference = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
+  muted = savedPreference === "1";
+  if (savedPreference !== null && localStorage.getItem(KEY) === null) localStorage.setItem(KEY, savedPreference);
+  localStorage.removeItem(LEGACY_KEY);
 } catch {
   /* ignore */
 }
