@@ -2893,7 +2893,7 @@ body {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.025);
   color: #c4c4cb;
-  font-size: 10px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   font-weight: 650;
   line-height: 1;
@@ -2901,7 +2901,7 @@ body {
 }
 .player-quick-stats__item b {
   color: #92929a;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.025em;
 }
@@ -3774,7 +3774,7 @@ button.player-quick-stats__item:hover {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.player-dashboard__leader-xp small { color: #69889e; font-size: 0.63rem; }
+.player-dashboard__leader-xp small { color: #69889e; font-size: 0.75rem; }
 .player-dashboard__standing {
   min-height: 83px;
   display: flex;
@@ -3935,7 +3935,7 @@ button.player-quick-stats__item:hover {
   box-shadow: 0 0 6px color-mix(in srgb, var(--route-color, #4ceeff) 42%, transparent);
 }
 .player-dashboard__map-route-nodes i.is-in-progress { border-color: var(--route-color, #4ceeff); }
-.player-dashboard__map-route-nodes b { color: #83838b; font-size: 0.58rem; font-weight: 650; }
+.player-dashboard__map-route-nodes b { color: #83838b; font-size: 0.72rem; font-weight: 650; }
 .player-dashboard__map-route-icon {
   width: 27px;
   height: 27px;
@@ -3954,7 +3954,7 @@ button.player-quick-stats__item:hover {
   border-radius: 5px;
   background: #111617;
   color: #83f4ff;
-  font-size: 0.58rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.05em;
 }
@@ -4127,7 +4127,7 @@ button.player-quick-stats__item:hover {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(16, 20, 20, 0.96);
 }
-.player-dashboard__map-dialog-header .player-dashboard__eyebrow { font-size: 0.62rem; }
+.player-dashboard__map-dialog-header .player-dashboard__eyebrow { font-size: 0.75rem; }
 .player-dashboard__map-dialog-header h2 { margin-top: 0; font-size: 0.88rem; }
 .player-dashboard__icon-button {
   width: 36px;
@@ -4220,7 +4220,7 @@ button.player-quick-stats__item:hover {
   background: #121617;
   color: #75c8e8;
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.11em;
   transform: translateX(-50%);
@@ -4302,7 +4302,7 @@ button.player-quick-stats__item:hover {
   border-radius: 50%;
   color: #66b8e3;
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.72rem;
   font-weight: 800;
 }
 .badge-certificate__action {
@@ -4440,7 +4440,7 @@ button.player-quick-stats__item:hover {
 .educator-dashboard__hero-mark span {
   color: #858b91;
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.12em;
 }
@@ -4499,7 +4499,7 @@ button.player-quick-stats__item:hover {
   background: #1bb5b8;
   color: white;
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
 }
 .educator-scope {
   min-width: 184px;
@@ -4681,7 +4681,7 @@ button.player-quick-stats__item:hover {
 .educator-mvp__name strong { overflow: hidden; color: #e8e8eb; font-size: 0.77rem; text-overflow: ellipsis; white-space: nowrap; }
 .educator-mvp__name small { overflow: hidden; color: #85858e; font-size: 0.65rem; text-overflow: ellipsis; white-space: nowrap; }
 .educator-mvp__xp { flex: 0 0 auto; color: #68bdff; font-family: var(--font-mono); font-size: 0.77rem; font-weight: 750; white-space: nowrap; }
-.educator-mvp__xp small { color: #6189a9; font-size: 0.62rem; }
+.educator-mvp__xp small { color: #6189a9; font-size: 0.75rem; }
 .educator-link-button {
   min-height: 35px;
   display: flex;
@@ -4773,7 +4773,7 @@ button.player-quick-stats__item:hover {
   text-align: left;
 }
 .educator-table thead { position: sticky; top: 0; z-index: 1; background: #17171a; }
-.educator-table th { padding: 10px 11px; border-bottom: 1px solid rgba(255, 255, 255, 0.085); color: #8b8b94; font-size: 0.62rem; font-weight: 780; letter-spacing: 0.07em; white-space: nowrap; }
+.educator-table th { padding: 10px 11px; border-bottom: 1px solid rgba(255, 255, 255, 0.085); color: #8b8b94; font-size: 0.75rem; font-weight: 780; letter-spacing: 0.07em; white-space: nowrap; }
 .educator-table td { padding: 9px 11px; border-bottom: 1px solid rgba(255, 255, 255, 0.045); white-space: nowrap; }
 .educator-table tbody tr:last-child td { border-bottom: 0; }
 .educator-table tbody tr:hover { background: rgba(255, 255, 255, 0.025); }
@@ -4782,7 +4782,7 @@ button.player-quick-stats__item:hover {
 .educator-table__player { display: flex; align-items: center; gap: 8px; }
 .educator-table__player > span { display: grid; gap: 2px; }
 .educator-table__player strong { color: #e9e9ec; font-size: 0.74rem; }
-.educator-table__player small { color: #777780; font-size: 0.62rem; }
+.educator-table__player small { color: #777780; font-size: 0.75rem; }
 .educator-table__actions { display: flex; gap: 5px; }
 .educator-table__actions button,
 .educator-table__details {
@@ -4792,7 +4792,7 @@ button.player-quick-stats__item:hover {
   border-radius: 7px;
   background: rgba(34, 211, 238, 0.045);
   color: #8de4ec;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 730;
 }
 .educator-table__actions button:hover,
@@ -4872,14 +4872,14 @@ button.player-quick-stats__item:hover {
 .educator-team-card__members { flex: 0 0 auto; color: #79dce6; font-family: var(--font-mono); font-size: 0.66rem; white-space: nowrap; }
 .educator-team-card__metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin: 13px 0; }
 .educator-team-card__metrics span { min-width: 0; display: grid; gap: 3px; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.055); border-radius: 8px; background: rgba(255, 255, 255, 0.02); }
-.educator-team-card__metrics small { overflow: hidden; color: #82828b; font-size: 0.61rem; text-overflow: ellipsis; white-space: nowrap; }
+.educator-team-card__metrics small { overflow: hidden; color: #82828b; font-size: 0.75rem; text-overflow: ellipsis; white-space: nowrap; }
 .educator-team-card__metrics strong { color: #e6e6e9; font-family: var(--font-mono); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
-.educator-team-card__roster-label { margin-bottom: 6px; color: #898991; font-family: var(--font-mono); font-size: 0.61rem; font-weight: 800; letter-spacing: 0.12em; }
+.educator-team-card__roster-label { margin-bottom: 6px; color: #898991; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.12em; }
 .educator-team-card__roster { display: grid; gap: 4px; }
 .educator-team-member { min-width: 0; display: flex; align-items: center; gap: 8px; padding: 5px 3px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
 .educator-team-member > span:nth-child(2) { min-width: 0; display: grid; gap: 2px; }
 .educator-team-member strong { overflow: hidden; color: #d9d9dd; font-size: 0.7rem; text-overflow: ellipsis; white-space: nowrap; }
-.educator-team-member small { color: #82828b; font-size: 0.62rem; }
+.educator-team-member small { color: #82828b; font-size: 0.75rem; }
 .educator-team-member button { width: 27px; height: 27px; display: grid; flex: 0 0 auto; place-items: center; border: 1px solid transparent; border-radius: 7px; color: #777780; }
 .educator-team-member button:hover { border-color: rgba(248, 113, 113, 0.2); background: rgba(248, 113, 113, 0.06); color: #fca5a5; }
 .educator-team-card__assign { display: flex; gap: 7px; margin-top: 10px; }
@@ -4920,7 +4920,7 @@ button.player-quick-stats__item:hover {
 .educator-command-detail__player small { color: #898991; font-size: 0.65rem; }
 .educator-command-detail__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 11px; }
 .educator-command-detail__grid > span { min-width: 0; display: grid; gap: 4px; padding: 9px; border: 1px solid rgba(255, 255, 255, 0.055); border-radius: 9px; background: rgba(255, 255, 255, 0.018); }
-.educator-command-detail__grid small { color: #85858e; font-size: 0.63rem; }
+.educator-command-detail__grid small { color: #85858e; font-size: 0.75rem; }
 .educator-command-detail__grid strong { overflow-wrap: anywhere; color: #dfdfe2; font-size: 0.71rem; font-weight: 680; }
 .educator-command-detail__grid code { color: #8eeaf2; font-family: var(--font-mono); font-size: 0.68rem; }
 .educator-command-detail__grid strong.is-success { color: #79e2a2; }
@@ -4951,7 +4951,7 @@ button.player-quick-stats__item:hover {
 .player-team-panel__option p { display: -webkit-box; overflow: hidden; margin-top: 3px; color: #8c8c95; font-size: 0.68rem; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .player-team-panel__members { display: flex; align-items: center; padding-left: 7px; }
 .player-team-panel__members > span { margin-left: -7px; border: 2px solid #151518; border-radius: 50%; }
-.player-team-panel__members small { margin-left: 5px; color: #92929a; font-size: 0.64rem; }
+.player-team-panel__members small { margin-left: 5px; color: #92929a; font-size: 0.75rem; }
 .player-team-panel__pending { border-color: rgba(81, 202, 255, 0.17); background: rgba(81, 202, 255, 0.035); }
 .player-team-panel__pending-icon { width: 34px; height: 34px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 9px; background: rgba(81, 202, 255, 0.08); color: #6ccdff; }
 .player-team-panel__pending strong { color: #ececef; font-size: 0.77rem; }
@@ -5059,7 +5059,7 @@ button.player-quick-stats__item:hover {
   color: #68e5f2;
   box-shadow: 0 0 24px rgba(34, 211, 238, 0.08), inset 0 1px rgba(255, 255, 255, 0.06);
 }
-.player-constellation__header .player-dashboard__eyebrow { color: #65d8e5; font-size: 0.61rem; }
+.player-constellation__header .player-dashboard__eyebrow { color: #65d8e5; font-size: 0.75rem; }
 .player-constellation__header h2 {
   margin-top: 2px;
   color: #f0f8fa;
@@ -5081,7 +5081,7 @@ button.player-quick-stats__item:hover {
   flex-wrap: wrap;
   color: #a4b2b7;
   font-family: var(--font-mono);
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   letter-spacing: 0.025em;
 }
 .player-constellation__online-count,
@@ -5146,7 +5146,7 @@ button.player-quick-stats__item:hover {
   min-width: 16px;
   color: #6e7f85;
   font-family: var(--font-mono);
-  font-size: 0.59rem;
+  font-size: 0.72rem;
   text-align: center;
 }
 .player-constellation__filter:hover,
@@ -5178,7 +5178,7 @@ button.player-quick-stats__item:hover {
   padding: 6px 8px 8px;
   color: #79dce9;
   font-family: var(--font-mono);
-  font-size: 0.59rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -5198,7 +5198,7 @@ button.player-quick-stats__item:hover {
 }
 .player-constellation__interest-option:hover,
 .player-constellation__interest-option.is-selected { background: rgba(34, 211, 238, 0.1); color: #9cf1f5; }
-.player-constellation__interest-option small { color: #71848a; font-family: var(--font-mono); font-size: 0.62rem; }
+.player-constellation__interest-option small { color: #71848a; font-family: var(--font-mono); font-size: 0.75rem; }
 .player-constellation__rank-update {
   min-height: 27px;
   max-width: min(330px, 45%);
@@ -5208,7 +5208,7 @@ button.player-quick-stats__item:hover {
   gap: 7px;
   color: #718187;
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   text-align: right;
 }
 .player-constellation__rank-update.is-shaking {
@@ -5321,15 +5321,15 @@ button.player-quick-stats__item:hover {
   gap: 6px;
   color: #79edff;
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.085em;
 }
 .player-constellation__bubble.is-path .player-constellation__bubble-heading { color: #77dbe5; }
 .player-constellation__bubble-heading span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.player-constellation__bubble-heading time { margin-left: auto; color: #727b7e; font-size: 0.52rem; font-weight: 500; letter-spacing: 0; white-space: nowrap; }
+.player-constellation__bubble-heading time { margin-left: auto; color: #727b7e; font-size: 0.68rem; font-weight: 500; letter-spacing: 0; white-space: nowrap; }
 .player-constellation__bubble > strong { display: block; overflow: hidden; margin-top: 5px; color: #eef0f1; font-size: 0.69rem; font-weight: 730; text-overflow: ellipsis; white-space: nowrap; }
-.player-constellation__bubble > p { display: -webkit-box; overflow: hidden; margin-top: 2px; color: #a2a8aa; font-size: 0.61rem; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.player-constellation__bubble > p { display: -webkit-box; overflow: hidden; margin-top: 2px; color: #a2a8aa; font-size: 0.75rem; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 @keyframes constellation-bubble-in { from { opacity: 0; transform: translateY(-7px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .player-constellation__idle-bubble {
   position: absolute;
@@ -5359,8 +5359,8 @@ button.player-quick-stats__item:hover {
   color: #65d7e2;
   box-shadow: 0 0 0 5px rgba(48, 160, 178, 0.06);
 }
-.player-constellation__idle-bubble strong { display: block; color: #a9dfe3; font-family: var(--font-mono); font-size: 0.57rem; letter-spacing: 0.09em; }
-.player-constellation__idle-bubble small { display: block; margin-top: 3px; color: #809095; font-size: 0.6rem; line-height: 1.35; }
+.player-constellation__idle-bubble strong { display: block; color: #a9dfe3; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.09em; }
+.player-constellation__idle-bubble small { display: block; margin-top: 3px; color: #809095; font-size: 0.75rem; line-height: 1.35; }
 .player-constellation__node {
   position: absolute;
   z-index: 5;
@@ -5413,7 +5413,7 @@ button.player-quick-stats__item:hover {
   background: rgba(17, 23, 24, 0.95);
   color: #6fc9ef;
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.72rem;
   font-weight: 800;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.38);
 }
@@ -5462,7 +5462,7 @@ button.player-quick-stats__item:hover {
   border-radius: 999px;
   background: rgba(8, 13, 16, 0.88);
   color: #e0e8e9;
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.28;
   text-overflow: ellipsis;
@@ -5476,7 +5476,7 @@ button.player-quick-stats__item:hover {
   gap: 5px;
   color: #7e9298;
   font-family: var(--font-mono);
-  font-size: 0.53rem;
+  font-size: 0.72rem;
   line-height: 1.25;
   white-space: nowrap;
 }
@@ -5497,7 +5497,7 @@ button.player-quick-stats__item:hover {
   border-radius: 7px;
   background: rgba(7, 15, 17, 0.97);
   font-family: var(--font-mono);
-  font-size: 0.63rem;
+  font-size: 0.75rem;
   font-weight: 850;
   box-shadow: 0 3px 11px rgba(0, 0, 0, 0.45);
 }
@@ -5530,7 +5530,7 @@ button.player-quick-stats__item:hover {
   justify-content: space-between;
   color: rgba(121, 156, 161, 0.55);
   font-family: var(--font-mono);
-  font-size: 0.54rem;
+  font-size: 0.72rem;
   letter-spacing: 0.08em;
   pointer-events: none;
 }
@@ -5541,7 +5541,7 @@ button.player-quick-stats__item:hover {
   gap: 5px;
   padding: 5px 10px 7px;
   color: #647a80;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
 }
 .player-constellation__scroll-hint svg:first-child { transform: rotate(180deg); }
 .player-constellation__objectives {
@@ -5558,7 +5558,7 @@ button.player-quick-stats__item:hover {
   gap: 10px;
   margin-bottom: 9px;
 }
-.player-constellation__objectives-heading .player-dashboard__eyebrow { color: #71ccd4; font-size: 0.55rem; }
+.player-constellation__objectives-heading .player-dashboard__eyebrow { color: #71ccd4; font-size: 0.72rem; }
 .player-constellation__objectives-heading h3 { margin-top: 2px; color: #e3eaeb; font-size: 0.82rem; font-weight: 730; }
 .player-constellation__objective-count {
   min-width: 26px;
@@ -5569,7 +5569,7 @@ button.player-quick-stats__item:hover {
   border-radius: 7px;
   color: #8adce3;
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.75rem;
 }
 .player-constellation__objective-strip {
   display: flex;
@@ -5609,16 +5609,16 @@ button.player-quick-stats__item:hover {
   display: -webkit-box;
   overflow: hidden;
   color: #bec9cb;
-  font-size: 0.63rem;
+  font-size: 0.75rem;
   font-weight: 560;
   line-height: 1.35;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 .player-constellation__objective-copy > div { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
-.player-constellation__objective-copy strong { overflow: hidden; color: #8eaaae; font-size: 0.57rem; font-weight: 690; text-overflow: ellipsis; white-space: nowrap; }
-.player-constellation__objective-copy > div span { flex: 0 0 auto; color: #78bcd4; font-family: var(--font-mono); font-size: 0.52rem; }
-.player-constellation__objective-card time { align-self: flex-start; flex: 0 0 auto; padding-top: 2px; color: #62767b; font-family: var(--font-mono); font-size: 0.51rem; }
+.player-constellation__objective-copy strong { overflow: hidden; color: #8eaaae; font-size: 0.72rem; font-weight: 690; text-overflow: ellipsis; white-space: nowrap; }
+.player-constellation__objective-copy > div span { flex: 0 0 auto; color: #78bcd4; font-family: var(--font-mono); font-size: 0.68rem; }
+.player-constellation__objective-card time { align-self: flex-start; flex: 0 0 auto; padding-top: 2px; color: #62767b; font-family: var(--font-mono); font-size: 0.68rem; }
 .player-constellation__objective-empty { min-height: 48px; display: flex; align-items: center; gap: 9px; color: #7f9297; font-size: 0.68rem; }
 .player-constellation__objective-empty .player-constellation__objective-mark { border-color: rgba(82, 191, 207, 0.2); background: rgba(34, 211, 238, 0.055); color: #6bbfcc; }
 
@@ -5627,17 +5627,17 @@ button.player-quick-stats__item:hover {
   .player-constellation__title-icon { width: 37px; height: 37px; border-radius: 11px; }
   .player-constellation__header h2 { font-size: 1rem; }
   .player-constellation__header p { max-width: 260px; font-size: 0.66rem; }
-  .player-constellation__header-status { gap: 5px; font-size: 0.57rem; }
+  .player-constellation__header-status { gap: 5px; font-size: 0.72rem; }
   .player-constellation__online-count,
   .player-constellation__player-count { min-height: 24px; padding: 0 7px; }
   .player-constellation__toolbar { align-items: flex-start; flex-direction: column; padding: 8px 12px; }
   .player-constellation__filters { gap: 5px; }
-  .player-constellation__filter { min-height: 29px; padding: 0 7px; font-size: 0.63rem; }
-  .player-constellation__rank-update { min-height: 20px; max-width: 100%; align-self: flex-end; font-size: 0.56rem; }
+  .player-constellation__filter { min-height: 29px; padding: 0 7px; font-size: 0.75rem; }
+  .player-constellation__rank-update { min-height: 20px; max-width: 100%; align-self: flex-end; font-size: 0.72rem; }
   .player-constellation__stage { height: 430px; min-width: 1040px; }
   .player-constellation__bubbles { inset: 12px 12px auto; gap: 10px; }
   .player-constellation__bubble { width: 34%; min-height: 70px; padding: 8px; }
-  .player-constellation__bubble > p { font-size: 0.57rem; }
+  .player-constellation__bubble > p { font-size: 0.72rem; }
   .player-constellation__idle-bubble { width: 310px; max-width: 38%; }
   .player-constellation__scroll-hint { display: flex; }
   .player-constellation__objectives { padding: 12px 12px 14px; }
@@ -5648,12 +5648,12 @@ button.player-quick-stats__item:hover {
   .player-constellation__title-group { gap: 8px; }
   .player-constellation__title-icon { width: 32px; height: 32px; }
   .player-constellation__header-status { flex-direction: column; align-items: flex-end; }
-  .player-constellation__header .player-dashboard__eyebrow { font-size: 0.53rem; }
+  .player-constellation__header .player-dashboard__eyebrow { font-size: 0.72rem; }
   .player-constellation__header p { max-width: 210px; }
   .player-constellation__filter svg { display: none; }
   .player-constellation__interest-toggle svg { display: block; }
   .player-constellation__filter small { min-width: 12px; }
-  .player-constellation__rank-update { font-size: 0.53rem; }
+  .player-constellation__rank-update { font-size: 0.72rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .player-constellation__link,
@@ -5718,7 +5718,7 @@ button.player-quick-stats__item:hover {
   margin-bottom: 13px;
   color: #70eef0;
   font-family: var(--font-mono);
-  font-size: 0.56rem;
+  font-size: 0.72rem;
   font-weight: 750;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -5732,7 +5732,7 @@ button.player-quick-stats__item:hover {
   animation: dashboard-status-pulse 2.2s ease-in-out infinite;
 }
 @keyframes dashboard-status-pulse { 50% { opacity: 0.48; box-shadow: 0 0 2px rgba(124, 233, 164, 0.35); } }
-.player-dashboard__hero-copy .player-dashboard__eyebrow { color: #6efcff; font-size: 0.64rem; text-transform: uppercase; }
+.player-dashboard__hero-copy .player-dashboard__eyebrow { color: #6efcff; font-size: 0.75rem; text-transform: uppercase; }
 .player-dashboard__hero h1 {
   margin-top: 5px;
   font-size: clamp(1.7rem, 2.5vw, 2.46rem);
@@ -5775,8 +5775,8 @@ button.player-quick-stats__item:hover {
   color: #81f4ff;
 }
 .player-dashboard__hero-route > span:last-child { min-width: 0; display: grid; gap: 2px; }
-.player-dashboard__hero-route small { color: #958a8b; font-family: var(--font-mono); font-size: 0.56rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-.player-dashboard__hero-route strong { overflow: hidden; color: #dae8e7; font-size: 0.62rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.player-dashboard__hero-route small { color: #958a8b; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.player-dashboard__hero-route strong { overflow: hidden; color: #dae8e7; font-size: 0.75rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .player-dashboard__transmission {
   position: relative;
   min-width: 0;
@@ -5816,7 +5816,7 @@ button.player-quick-stats__item:hover {
   justify-content: space-between;
   color: #82e7f1;
   font-family: var(--font-mono);
-  font-size: 0.54rem;
+  font-size: 0.72rem;
   font-weight: 780;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -5834,12 +5834,12 @@ button.player-quick-stats__item:hover {
   border-radius: 5px;
   background: rgba(31, 185, 117, 0.08);
   color: #7de6a8;
-  font-size: 0.49rem;
+  font-size: 0.68rem;
 }
 .player-dashboard__transmission-copy { display: grid; gap: 4px; padding: 8px 0; }
 .player-dashboard__transmission-copy p {
   color: #c7e1e4;
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   line-height: 1.42;
   text-shadow: 0 0 10px rgba(104, 211, 226, 0.13);
 }
@@ -5853,8 +5853,8 @@ button.player-quick-stats__item:hover {
   color: #82d8e2;
 }
 .player-dashboard__transmission-focus > span:nth-child(2) { min-width: 0; flex: 1; display: grid; gap: 2px; }
-.player-dashboard__transmission-focus small { color: #779196; font-family: var(--font-mono); font-size: 0.47rem; font-weight: 700; letter-spacing: 0.09em; }
-.player-dashboard__transmission-focus strong { overflow: hidden; color: #e1f1f2; font-size: 0.61rem; font-weight: 690; text-overflow: ellipsis; white-space: nowrap; }
+.player-dashboard__transmission-focus small { color: #779196; font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; }
+.player-dashboard__transmission-focus strong { overflow: hidden; color: #e1f1f2; font-size: 0.75rem; font-weight: 690; text-overflow: ellipsis; white-space: nowrap; }
 .player-dashboard__transmission-arrow { width: 24px; height: 24px; display: grid; flex: 0 0 auto; place-items: center; border: 1px solid rgba(101, 212, 226, 0.22); border-radius: 7px; background: rgba(64, 188, 205, 0.08); }
 .player-dashboard__hero-eye {
   position: relative;
@@ -5888,12 +5888,12 @@ button.player-quick-stats__item:hover {
   gap: 6px;
   color: #8bbac4;
   font-family: var(--font-mono);
-  font-size: 0.48rem;
+  font-size: 0.68rem;
   font-weight: 720;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
-.player-dashboard__eye-caption strong { display: inline-flex; align-items: center; gap: 5px; color: #8ce3e9; font-size: 0.46rem; }
+.player-dashboard__eye-caption strong { display: inline-flex; align-items: center; gap: 5px; color: #8ce3e9; font-size: 0.68rem; }
 .player-dashboard__eye-caption strong i { width: 5px; height: 5px; border-radius: 50%; background: #62e5a2; box-shadow: 0 0 7px rgba(98, 229, 162, 0.7); }
 .player-dashboard__hero-player { display: grid; place-items: center; align-content: center; }
 .player-dashboard__hero-avatar-ring { display: grid; place-items: center; padding: 9px; border: 1px solid rgba(104, 249, 255, 0.28); border-radius: 50%; background: radial-gradient(circle, rgba(68, 255, 252, 0.1), rgba(10, 14, 18, 0.35)); box-shadow: 0 0 24px rgba(42, 172, 206, 0.2), inset 0 0 18px rgba(42, 172, 206, 0.1); }
@@ -5923,7 +5923,7 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
 }
 .player-dashboard__hero-level > .rounded-full { border: 1px solid rgba(124, 223, 239, 0.33); }
 .player-dashboard__hero-level-copy { gap: 1px; }
-.player-dashboard__hero-level-copy > span { color: #a7bdc4; font-family: var(--font-mono); font-size: 0.58rem; }
+.player-dashboard__hero-level-copy > span { color: #a7bdc4; font-family: var(--font-mono); font-size: 0.72rem; }
 .player-dashboard__hero-level-copy strong { color: #8de8ff; font-size: 0.8rem; }
 .player-dashboard__hero-progress { height: 4px; margin-top: 3px; background: rgba(255, 255, 255, 0.1); }
 .player-dashboard__hero-progress span { background: linear-gradient(90deg, #48fffa, #9ae1ff); }
@@ -5985,21 +5985,21 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
 .player-constellation--compact .player-constellation__title-group { gap: 8px; }
 .player-constellation--compact .player-constellation__title-icon { width: 31px; height: 31px; border-radius: 9px; }
 .player-constellation--compact .player-constellation__title-icon svg { width: 16px; height: 16px; }
-.player-constellation--compact .player-constellation__header .player-dashboard__eyebrow { font-size: 0.56rem; text-transform: uppercase; }
+.player-constellation--compact .player-constellation__header .player-dashboard__eyebrow { font-size: 0.72rem; text-transform: uppercase; }
 .player-constellation--compact .player-constellation__header h2 { font-size: 0.78rem; }
 .player-constellation--compact .player-constellation__header p { display: none; }
-.player-constellation--compact .player-constellation__header-status { gap: 4px; font-size: 0.54rem; }
+.player-constellation--compact .player-constellation__header-status { gap: 4px; font-size: 0.72rem; }
 .player-constellation--compact .player-constellation__online-count,
 .player-constellation--compact .player-constellation__player-count { min-height: 20px; gap: 4px; padding: 0 6px; }
 .player-constellation--compact .player-constellation__online-count i { width: 5px; height: 5px; }
 .player-constellation--compact .player-constellation__toolbar { min-height: 36px; padding: 5px 9px; }
 .player-constellation--compact .player-constellation__filters { gap: 3px; }
-.player-constellation--compact .player-constellation__filter { min-height: 24px; gap: 4px; padding: 0 5px; border-radius: 6px; font-size: 0.58rem; }
+.player-constellation--compact .player-constellation__filter { min-height: 24px; gap: 4px; padding: 0 5px; border-radius: 6px; font-size: 0.72rem; }
 .player-constellation--compact .player-constellation__filter svg { width: 11px; height: 11px; }
-.player-constellation--compact .player-constellation__filter small { min-width: 11px; font-size: 0.53rem; }
+.player-constellation--compact .player-constellation__filter small { min-width: 11px; font-size: 0.72rem; }
 .player-constellation--compact .player-constellation__interest-toggle { max-width: 112px; }
 .player-constellation--compact .player-constellation__rank-update { display: none; }
-.player-constellation--compact .player-constellation__rank-update.is-shaking { display: inline-flex; align-self: flex-end; max-width: 100%; min-height: 18px; font-size: 0.54rem; }
+.player-constellation--compact .player-constellation__rank-update.is-shaking { display: inline-flex; align-self: flex-end; max-width: 100%; min-height: 18px; font-size: 0.72rem; }
 .player-constellation--compact .player-constellation__interest-menu { max-height: 200px; }
 .player-constellation--compact .player-constellation__viewport { min-height: 0; display: flex; overflow: hidden; }
 .player-constellation--compact .player-constellation__stage { width: 100%; min-width: 0; height: 100%; min-height: 0; flex: 1; }
@@ -6007,46 +6007,46 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
 .player-constellation--compact .player-constellation__bubbles { inset: 7px 7px auto; gap: 6px; }
 .player-constellation--compact .player-constellation__bubble { width: 48%; min-height: 48px; padding: 5px 6px; border-radius: 8px 8px 8px 3px; }
 .player-constellation--compact .player-constellation__bubble.is-path { border-radius: 8px 8px 3px 8px; }
-.player-constellation--compact .player-constellation__bubble-heading { gap: 3px; font-size: 0.52rem; letter-spacing: 0.04em; }
+.player-constellation--compact .player-constellation__bubble-heading { gap: 3px; font-size: 0.68rem; letter-spacing: 0.04em; }
 .player-constellation--compact .player-constellation__bubble-heading svg { width: 10px; height: 10px; }
 .player-constellation--compact .player-constellation__bubble-heading time { display: none; }
-.player-constellation--compact .player-constellation__bubble > strong { margin-top: 3px; font-size: 0.58rem; }
-.player-constellation--compact .player-constellation__bubble > p { margin-top: 1px; font-size: 0.54rem; line-height: 1.25; -webkit-line-clamp: 1; }
+.player-constellation--compact .player-constellation__bubble > strong { margin-top: 3px; font-size: 0.72rem; }
+.player-constellation--compact .player-constellation__bubble > p { margin-top: 1px; font-size: 0.72rem; line-height: 1.25; -webkit-line-clamp: 1; }
 .player-constellation--compact .player-constellation__bubble::after { bottom: -5px; left: 12px; width: 8px; height: 8px; }
 .player-constellation--compact .player-constellation__bubble.is-path::after { right: 12px; left: auto; }
 .player-constellation--compact .player-constellation__idle-bubble { top: 8px; width: 64%; min-height: 44px; gap: 7px; padding: 5px 8px; }
 .player-constellation--compact .player-constellation__idle-orbit { width: 25px; height: 25px; }
-.player-constellation--compact .player-constellation__idle-bubble strong { font-size: 0.53rem; }
-.player-constellation--compact .player-constellation__idle-bubble small { margin-top: 1px; font-size: 0.54rem; line-height: 1.2; }
+.player-constellation--compact .player-constellation__idle-bubble strong { font-size: 0.72rem; }
+.player-constellation--compact .player-constellation__idle-bubble small { margin-top: 1px; font-size: 0.72rem; line-height: 1.2; }
 .player-constellation--compact .player-constellation__node { width: 90px; height: 74px; }
 .player-constellation--compact .player-constellation__node-content { gap: 0; }
-.player-constellation--compact .player-constellation__node-rank { top: 0; right: 4px; min-width: 25px; height: 15px; padding: 0 3px; font-size: 0.52rem; }
+.player-constellation--compact .player-constellation__node-rank { top: 0; right: 4px; min-width: 25px; height: 15px; padding: 0 3px; font-size: 0.68rem; }
 .player-constellation--compact .player-constellation__avatar-orbit { width: 39px; height: 39px; border-width: 1px; box-shadow: 0 0 0 3px rgba(70, 177, 190, 0.08), 0 0 14px rgba(75, 217, 230, 0.13); }
 .player-constellation--compact .player-constellation__avatar { border-width: 1px; }
 .player-constellation--compact .player-constellation__node-pulse { inset: -4px; }
 .player-constellation--compact .player-constellation__status-dot { right: 0; bottom: 0; width: 8px; height: 8px; border-width: 1px; }
-.player-constellation--compact .player-constellation__node-name { max-width: 88px; margin-top: 2px; padding: 1px 4px; font-size: 0.57rem; }
-.player-constellation--compact .player-constellation__node-meta { gap: 3px; font-size: 0.52rem; }
-.player-constellation--compact .player-constellation__rank-delta { top: 20px; right: 0; min-width: 21px; height: 17px; padding: 0 3px; font-size: 0.55rem; }
-.player-constellation--compact .player-constellation__rank-delta b { font-size: 0.59rem; }
+.player-constellation--compact .player-constellation__node-name { max-width: 88px; margin-top: 2px; padding: 1px 4px; font-size: 0.72rem; }
+.player-constellation--compact .player-constellation__node-meta { gap: 3px; font-size: 0.68rem; }
+.player-constellation--compact .player-constellation__rank-delta { top: 20px; right: 0; min-width: 21px; height: 17px; padding: 0 3px; font-size: 0.72rem; }
+.player-constellation--compact .player-constellation__rank-delta b { font-size: 0.72rem; }
 .player-constellation--compact .player-constellation__stage-coordinates,
 .player-constellation--compact .player-constellation__scroll-hint { display: none; }
-.player-constellation--compact .player-constellation__empty-state { top: 65%; font-size: 0.62rem; }
+.player-constellation--compact .player-constellation__empty-state { top: 65%; font-size: 0.75rem; }
 .player-constellation--compact .player-constellation__objectives { padding: 7px 9px 8px; }
 .player-constellation--compact .player-constellation__objectives-heading { gap: 6px; margin-bottom: 4px; }
-.player-constellation--compact .player-constellation__objectives-heading .player-dashboard__eyebrow { font-size: 0.52rem; text-transform: uppercase; }
+.player-constellation--compact .player-constellation__objectives-heading .player-dashboard__eyebrow { font-size: 0.68rem; text-transform: uppercase; }
 .player-constellation--compact .player-constellation__objectives-heading h3 { margin-top: 1px; font-size: 0.65rem; }
 .player-constellation--compact .player-constellation__objective-count { display: none; }
 .player-constellation--compact .player-constellation__objective-strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; overflow: hidden; padding: 0; }
 .player-constellation--compact .player-constellation__objective-card { min-width: 0; max-width: none; min-height: 37px; gap: 5px; padding: 4px 5px; border-radius: 7px; }
 .player-constellation--compact .player-constellation__objective-mark { width: 20px; height: 20px; border-radius: 5px; }
 .player-constellation--compact .player-constellation__objective-mark svg { width: 12px; height: 12px; }
-.player-constellation--compact .player-constellation__objective-copy > p { font-size: 0.54rem; line-height: 1.15; -webkit-line-clamp: 1; }
+.player-constellation--compact .player-constellation__objective-copy > p { font-size: 0.72rem; line-height: 1.15; -webkit-line-clamp: 1; }
 .player-constellation--compact .player-constellation__objective-copy > div { gap: 4px; margin-top: 2px; }
-.player-constellation--compact .player-constellation__objective-copy strong { font-size: 0.52rem; }
-.player-constellation--compact .player-constellation__objective-copy > div span { font-size: 0.5rem; }
+.player-constellation--compact .player-constellation__objective-copy strong { font-size: 0.68rem; }
+.player-constellation--compact .player-constellation__objective-copy > div span { font-size: 0.68rem; }
 .player-constellation--compact .player-constellation__objective-card time { display: none; }
-.player-constellation--compact .player-constellation__objective-empty { min-height: 27px; gap: 6px; font-size: 0.57rem; }
+.player-constellation--compact .player-constellation__objective-empty { min-height: 27px; gap: 6px; font-size: 0.72rem; }
 .player-constellation--compact .player-constellation__objective-empty .player-constellation__objective-mark { width: 21px; height: 21px; }
 
 @media (max-width: 1279px) {
@@ -6068,13 +6068,13 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
     border-radius: 18px;
   }
   .player-dashboard__hero-copy { padding-right: 26px; }
-  .player-dashboard__hero-status { margin-bottom: 9px; font-size: 0.49rem; }
+  .player-dashboard__hero-status { margin-bottom: 9px; font-size: 0.68rem; }
   .player-dashboard__hero h1 { font-size: clamp(1.65rem, 7vw, 2.15rem); }
   .player-dashboard__hero-copy > p { max-width: 290px; font-size: 0.73rem; }
   .player-dashboard__hero-route { margin-top: 10px; }
   .player-dashboard__hero-eye { right: -38px; bottom: 83px; width: 205px; height: 128px; opacity: 0.24; }
   .player-dashboard__transmission { min-height: 138px; padding: 11px 12px; }
-  .player-dashboard__transmission-copy p { font-size: 0.61rem; }
+  .player-dashboard__transmission-copy p { font-size: 0.75rem; }
   .player-dashboard__hero-level { position: relative; top: auto; right: auto; width: min(100%, 230px); margin-top: 1px; }
   .player-dashboard__rank-cube { width: 47px; height: 47px; }
   .player-dashboard__rank-cube > i { transform: translateZ(23px); }
@@ -6087,14 +6087,14 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
   .player-dashboard__hero-eye { right: -65px; bottom: 100px; opacity: 0.15; }
   .player-dashboard__hero-route { max-width: 98%; }
   .player-constellation--compact .player-constellation__header-status { display: none; }
-  .player-constellation--compact .player-constellation__filter { min-height: 23px; padding-inline: 4px; font-size: 0.55rem; }
+  .player-constellation--compact .player-constellation__filter { min-height: 23px; padding-inline: 4px; font-size: 0.72rem; }
   .player-constellation--compact .player-constellation__interest-toggle { max-width: 96px; }
 }
 .player-constellation--compact.player-constellation--top10 .player-constellation__node { width: 64px; height: 68px; }
 .player-constellation--compact.player-constellation--top10 .player-constellation__avatar-orbit { width: 35px; height: 35px; }
-.player-constellation--compact.player-constellation--top10 .player-constellation__node-rank { right: 0; min-width: 22px; height: 14px; font-size: 0.49rem; }
-.player-constellation--compact.player-constellation--top10 .player-constellation__node-name { max-width: 62px; padding-inline: 3px; font-size: 0.53rem; }
-.player-constellation--compact.player-constellation--top10 .player-constellation__node-meta { gap: 2px; font-size: 0.47rem; }
+.player-constellation--compact.player-constellation--top10 .player-constellation__node-rank { right: 0; min-width: 22px; height: 14px; font-size: 0.68rem; }
+.player-constellation--compact.player-constellation--top10 .player-constellation__node-name { max-width: 62px; padding-inline: 3px; font-size: 0.72rem; }
+.player-constellation--compact.player-constellation--top10 .player-constellation__node-meta { gap: 2px; font-size: 0.68rem; }
 
 /* Compact dashboard activity and support cards. */
 .player-dashboard__feed-ticker {
@@ -6148,7 +6148,7 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
   overflow: hidden;
   color: #77939a;
   font-family: var(--font-mono);
-  font-size: 0.52rem;
+  font-size: 0.68rem;
   font-weight: 750;
   letter-spacing: 0.11em;
   text-overflow: ellipsis;
@@ -6222,7 +6222,7 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
   flex: 0 0 auto;
   color: #738b90;
   font-family: var(--font-mono);
-  font-size: 0.57rem;
+  font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
 }
 .player-dashboard .live-feed__ticker-empty {
@@ -6266,19 +6266,19 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
 .player-dashboard__badges .player-dashboard__badge-medallion svg { width: 19px; height: 19px; }
 .player-dashboard__badges .player-dashboard__badge-copy { gap: 1px; }
 .player-dashboard__badges .player-dashboard__badge-copy strong { font-size: 0.72rem; }
-.player-dashboard__badges .player-dashboard__badge-copy small { font-size: 0.61rem; -webkit-line-clamp: 1; }
+.player-dashboard__badges .player-dashboard__badge-copy small { font-size: 0.75rem; -webkit-line-clamp: 1; }
 .player-dashboard__badges .player-dashboard__badge-count { min-width: 26px; height: 26px; border-radius: 7px; font-size: 0.7rem; }
 .player-dashboard__badges .player-dashboard__badge-empty { gap: 8px; padding: 9px; border-radius: 10px; }
 .player-dashboard__badges .player-dashboard__badge-empty-icon { width: 32px; height: 32px; border-radius: 9px; }
 .player-dashboard__badges .player-dashboard__badge-empty-icon svg { width: 19px; height: 19px; }
 .player-dashboard__badges .player-dashboard__badge-empty strong { font-size: 0.74rem; }
-.player-dashboard__badges .player-dashboard__badge-empty p { font-size: 0.64rem; }
+.player-dashboard__badges .player-dashboard__badge-empty p { font-size: 0.75rem; }
 .player-dashboard__support-grid .player-team-panel { padding: 13px; }
 .player-dashboard__support-grid .player-team-panel__header { gap: 8px; margin-bottom: 8px; }
 .player-dashboard__support-grid .player-team-panel__header h2 { font-size: 0.88rem; }
 .player-dashboard__support-grid .player-team-panel__icon { width: 31px; height: 31px; border-radius: 8px; }
 .player-dashboard__support-grid .player-team-panel__icon svg { width: 17px; height: 17px; }
-.player-dashboard__support-grid .player-team-panel__count { font-size: 0.62rem; }
+.player-dashboard__support-grid .player-team-panel__count { font-size: 0.75rem; }
 .player-dashboard__support-grid .player-team-panel__options { max-height: 133px; overflow: auto; padding-right: 2px; scrollbar-color: #414148 transparent; }
 .player-dashboard__support-grid .player-team-panel__current,
 .player-dashboard__support-grid .player-team-panel__pending,
@@ -6286,10 +6286,10 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
 .player-dashboard__support-grid .player-team-panel__team-mark { width: 31px; height: 31px; border-radius: 8px; }
 .player-dashboard__support-grid .player-team-panel__current h3 { font-size: 0.75rem; }
 .player-dashboard__support-grid .player-team-panel__current p,
-.player-dashboard__support-grid .player-team-panel__option p { font-size: 0.61rem; -webkit-line-clamp: 1; }
+.player-dashboard__support-grid .player-team-panel__option p { font-size: 0.75rem; -webkit-line-clamp: 1; }
 .player-dashboard__support-grid .player-team-panel__members { transform: scale(0.88); transform-origin: right center; }
 .player-dashboard__support-grid .player-team-panel__apply,
-.player-dashboard__support-grid .player-team-panel__withdraw { min-height: 29px; padding: 5px 7px; font-size: 0.6rem; }
+.player-dashboard__support-grid .player-team-panel__withdraw { min-height: 29px; padding: 5px 7px; font-size: 0.75rem; }
 .player-dashboard__support-grid .player-team-panel__empty { padding: 9px; }
 .player-dashboard__support-grid .player-team-panel__empty p { font-size: 0.66rem; }
 .player-dashboard__support-feed { grid-column: 1 / -1; }
@@ -6355,7 +6355,7 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
   flex: 0 0 auto;
   color: #828d92;
   font-family: var(--font-mono);
-  font-size: 0.57rem;
+  font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
 }
 .player-dashboard .live-feed__empty {
@@ -6379,14 +6379,14 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
   .player-dashboard__feed-ticker-label { gap: 6px; }
   .player-dashboard__feed-ticker-label > span { width: 26px; height: 26px; border-radius: 7px; }
   .player-dashboard__feed-ticker-label > span svg { width: 14px; height: 14px; }
-  .player-dashboard__feed-ticker-label small { font-size: 0.45rem; letter-spacing: 0.07em; }
-  .player-dashboard__feed-ticker-label strong { font-size: 0.58rem; }
+  .player-dashboard__feed-ticker-label small { font-size: 0.68rem; letter-spacing: 0.07em; }
+  .player-dashboard__feed-ticker-label strong { font-size: 0.72rem; }
   .player-dashboard .live-feed__ticker-track { min-height: 34px; gap: 5px; }
-  .player-dashboard .live-feed__ticker-item { min-height: 30px; gap: 5px; padding: 4px 6px; font-size: 0.61rem; }
-  .player-dashboard .live-feed__ticker-item > strong { max-width: 83px; font-size: 0.61rem; }
+  .player-dashboard .live-feed__ticker-item { min-height: 30px; gap: 5px; padding: 4px 6px; font-size: 0.75rem; }
+  .player-dashboard .live-feed__ticker-item > strong { max-width: 83px; font-size: 0.75rem; }
   .player-dashboard .live-feed__ticker-item > span:nth-of-type(2) { max-width: 130px; }
   .player-dashboard .live-feed__ticker-icon { width: 19px; height: 19px; }
-  .player-dashboard .live-feed__ticker-item time { font-size: 0.51rem; }
+  .player-dashboard .live-feed__ticker-item time { font-size: 0.68rem; }
   .player-dashboard .live-feed__list { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {

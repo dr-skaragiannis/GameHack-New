@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { ContentWidth, User } from "../lib/db";
 import { sound } from "../lib/sound";
+import { UI_SCALE_OPTIONS } from "../lib/uiScale";
 import { t, uppercaseLabel, type Lang } from "../i18n";
 import { cn } from "../utils/cn";
 import Icon from "./Icon";
@@ -32,17 +33,21 @@ export default function SettingsView({
   user,
   lang,
   theme,
+  uiScale,
   onToggleTheme,
   onLang,
   onWidth,
+  onZoom,
   onOpenProfile,
 }: {
   user: User;
   lang: Lang;
   theme: "cyan" | "warm";
+  uiScale: number;
   onToggleTheme: () => void;
   onLang: (next: Lang) => void;
   onWidth: (next: ContentWidth) => void;
+  onZoom: (next: number) => void;
   onOpenProfile: () => void;
 }) {
   const [muted, setMuted] = useState(sound.isMuted());
@@ -76,6 +81,26 @@ export default function SettingsView({
             <Icon name="palette" className="h-4 w-4" />
             {t(theme === "cyan" ? "switchToWarmTheme" : "switchToCyanTheme", lang)}
           </button>
+        </SettingCard>
+
+        <SettingCard icon="maximize" title={t("settingsDisplay", lang)}>
+          <div className="inline-flex rounded-lg border border-gamehack-border bg-gamehack-panel2 p-0.5" role="group" aria-label={t("settingsDisplay", lang)}>
+            {UI_SCALE_OPTIONS.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => onZoom(option)}
+                aria-pressed={uiScale === option}
+                className={cn(
+                  "h-8 rounded-md px-4 text-sm font-bold tracking-wide",
+                  uiScale === option ? "bg-cyan-600/90 text-white" : "text-iron-400 hover:text-zinc-200"
+                )}
+              >
+                {Math.round(option * 100)}%
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-iron-500">{t("uiZoomNote", lang)}</p>
         </SettingCard>
 
         <SettingCard icon="globe" title={t("settingsLanguage", lang)}>

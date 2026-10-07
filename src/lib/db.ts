@@ -39,6 +39,7 @@ export type User = {
   accepted: boolean;
   contentWidth?: ContentWidth;
   sidebarCollapsed?: boolean;
+  uiScale?: number;
   progress: Record<string, ModProgress>;
   metrics: Metrics;
   badges: string[];

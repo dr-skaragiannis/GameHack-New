@@ -250,6 +250,8 @@ export const UI: Dict = {
   settingsLanguage: { en: "Language", el: "Γλώσσα" },
   settingsLabWidth: { en: "Lab content width", el: "Πλάτος περιεχομένου lab" },
   settingsSound: { en: "Sound", el: "Ήχος" },
+  settingsDisplay: { en: "Display size", el: "Μέγεθος προβολής" },
+  uiZoomNote: { en: "Scales text and interface elements.", el: "Κλιμακώνει το κείμενο και τα στοιχεία διεπαφής." },
   settingsAccount: { en: "Account", el: "Λογαριασμός" },
   currentPalette: { en: "Current palette", el: "Τρέχουσα παλέτα" },
   paletteCyan: { en: "Cyan palette", el: "Κυανή παλέτα" },

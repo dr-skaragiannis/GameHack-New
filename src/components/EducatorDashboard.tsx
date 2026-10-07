@@ -418,8 +418,8 @@ export default function EducatorDashboard({
                   <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart margin={{ top: 14, right: 20, bottom: 8, left: 0 }}>
                       <CartesianGrid stroke="#29292f" strokeDasharray="3 3" />
-                      <XAxis type="number" dataKey="completion" name={t("completion", lang)} unit="%" domain={[0, 100]} stroke="#777780" tick={{ fill: "#909099", fontSize: 10 }} />
-                      <YAxis type="number" dataKey="xp" name="XP" stroke="#777780" tick={{ fill: "#909099", fontSize: 10 }} />
+                      <XAxis type="number" dataKey="completion" name={t("completion", lang)} unit="%" domain={[0, 100]} stroke="#777780" tick={{ fill: "#909099", fontSize: 11 }} />
+                      <YAxis type="number" dataKey="xp" name="XP" stroke="#777780" tick={{ fill: "#909099", fontSize: 11 }} />
                       <ZAxis type="number" dataKey="commands" range={[55, 420]} name={t("commandsPerPlayer", lang)} />
                       <Tooltip cursor={{ strokeDasharray: "3 3", stroke: "#5b5b65" }} contentStyle={TOOLTIP_STYLE} formatter={(value, name) => [value, name]} />
                       <Scatter name={t("player", lang)} data={scatterData} fill="var(--color-cyan-400)" fillOpacity={0.82} />
@@ -438,8 +438,8 @@ export default function EducatorDashboard({
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={xpBars} margin={{ top: 8, right: 8, bottom: 32, left: 0 }}>
                       <CartesianGrid stroke="#29292f" vertical={false} />
-                      <XAxis dataKey="name" stroke="#777780" tick={{ fill: "#a0a0a8", fontSize: 10 }} interval={0} angle={-18} textAnchor="end" height={48} />
-                      <YAxis stroke="#777780" tick={{ fill: "#909099", fontSize: 10 }} />
+                      <XAxis dataKey="name" stroke="#777780" tick={{ fill: "#a0a0a8", fontSize: 11 }} interval={0} angle={-18} textAnchor="end" height={48} />
+                      <YAxis stroke="#777780" tick={{ fill: "#909099", fontSize: 11 }} />
                       <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value) => [`${value} XP`, t("averageXp", lang)]} />
                       <Bar dataKey="xp" name="XP" fill="var(--color-cyan-400)" radius={[6, 6, 0, 0]} maxBarSize={42} />
                     </BarChart>
@@ -464,8 +464,8 @@ export default function EducatorDashboard({
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={teamStats} margin={{ top: 8, right: 12, bottom: 28, left: 0 }}>
                     <CartesianGrid stroke="#29292f" vertical={false} />
-                    <XAxis dataKey={(item: TeamAnalytics) => item.team.name} stroke="#777780" tick={{ fill: "#a0a0a8", fontSize: 10 }} interval={0} angle={-8} textAnchor="end" height={42} />
-                    <YAxis domain={[0, 100]} stroke="#777780" tick={{ fill: "#909099", fontSize: 10 }} unit="%" />
+                    <XAxis dataKey={(item: TeamAnalytics) => item.team.name} stroke="#777780" tick={{ fill: "#a0a0a8", fontSize: 11 }} interval={0} angle={-8} textAnchor="end" height={42} />
+                    <YAxis domain={[0, 100]} stroke="#777780" tick={{ fill: "#909099", fontSize: 11 }} unit="%" />
                     <Tooltip contentStyle={TOOLTIP_STYLE} />
                     <Legend />
                     <Bar dataKey="completion" name={t("completion", lang)} fill="#3ddc84" radius={[5, 5, 0, 0]} />
@@ -500,8 +500,8 @@ export default function EducatorDashboard({
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={playerRadarData} outerRadius="70%">
                     <PolarGrid stroke="#35353c" />
-                    <PolarAngleAxis dataKey="metric" tick={{ fill: "#b4b4bd", fontSize: 10 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "#777780", fontSize: 9 }} />
+                    <PolarAngleAxis dataKey="metric" tick={{ fill: "#b4b4bd", fontSize: 11 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "#777780", fontSize: 11 }} />
                     {comparedPlayers.map((player, index) => (
                       <Radar key={player.id} name={player.displayName} dataKey={player.id} stroke={CHART_COLORS[index % CHART_COLORS.length]} fill={CHART_COLORS[index % CHART_COLORS.length]} fillOpacity={0.11} strokeWidth={2} />
                     ))}
@@ -635,8 +635,8 @@ export default function EducatorDashboard({
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={teamStats} margin={{ top: 8, right: 12, bottom: 30, left: 0 }}>
                       <CartesianGrid stroke="#29292f" vertical={false} />
-                      <XAxis dataKey={(item: TeamAnalytics) => item.team.name} stroke="#777780" tick={{ fill: "#a0a0a8", fontSize: 10 }} interval={0} angle={-8} textAnchor="end" height={42} />
-                      <YAxis domain={[0, 100]} stroke="#777780" tick={{ fill: "#909099", fontSize: 10 }} unit="%" />
+                      <XAxis dataKey={(item: TeamAnalytics) => item.team.name} stroke="#777780" tick={{ fill: "#a0a0a8", fontSize: 11 }} interval={0} angle={-8} textAnchor="end" height={42} />
+                      <YAxis domain={[0, 100]} stroke="#777780" tick={{ fill: "#909099", fontSize: 11 }} unit="%" />
                       <Tooltip contentStyle={TOOLTIP_STYLE} /><Legend />
                       <Bar dataKey="completion" name={t("completion", lang)} fill="#3ddc84" radius={[5, 5, 0, 0]} />
                       <Bar dataKey="accuracy" name={t("accuracy", lang)} fill="#22d3ee" radius={[5, 5, 0, 0]} />
@@ -655,7 +655,7 @@ export default function EducatorDashboard({
                   {comparedTeams.length ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart data={teamRadarData} outerRadius="68%">
-                        <PolarGrid stroke="#35353c" /><PolarAngleAxis dataKey="metric" tick={{ fill: "#b4b4bd", fontSize: 10 }} /><PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "#777780", fontSize: 9 }} />
+                        <PolarGrid stroke="#35353c" /><PolarAngleAxis dataKey="metric" tick={{ fill: "#b4b4bd", fontSize: 11 }} /><PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "#777780", fontSize: 11 }} />
                         {comparedTeams.map((stat, index) => <Radar key={stat.team.id} name={stat.team.name} dataKey={stat.team.id} stroke={CHART_COLORS[index % CHART_COLORS.length]} fill={CHART_COLORS[index % CHART_COLORS.length]} fillOpacity={0.1} strokeWidth={2} />)}
                         <Tooltip contentStyle={TOOLTIP_STYLE} /><Legend />
                       </RadarChart>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CAMPAIGNS, LEARNING_PATHS, campaignById, moduleById } from "./data/lessons";
 import { t, uppercaseLabel, type Lang } from "./i18n";
 import * as db from "./lib/db";
+import { applyUiScale, normalizeUiScale, readStoredUiScale } from "./lib/uiScale";
 import { useAuth } from "./lib/useAuth";
 import { sound } from "./lib/sound";
 import { passesQuickQuiz } from "./lib/quizProgress";
@@ -156,6 +157,10 @@ export default function App() {
   }, [user?.id]);
 
   useEffect(() => db.subscribeDB(refresh), [refresh]);
+
+  useEffect(() => {
+    applyUiScale(user?.uiScale ?? readStoredUiScale());
+  }, [user?.id, user?.uiScale]);
 
   useEffect(() => {
     if (!accountMenuOpen) return;
@@ -810,10 +815,17 @@ export default function App() {
               user={db.userById(user.id)!}
               lang={lang}
               theme={theme}
+              uiScale={normalizeUiScale(user.uiScale ?? readStoredUiScale())}
               onToggleTheme={toggleTheme}
               onLang={setLang}
               onWidth={(w) => {
                 db.updateUser(user.id, { contentWidth: w });
+                refresh();
+              }}
+              onZoom={(scale) => {
+                const normalized = normalizeUiScale(scale);
+                applyUiScale(normalized);
+                db.updateUser(user.id, { uiScale: normalized });
                 refresh();
               }}
               onOpenProfile={() => {
