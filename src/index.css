@@ -5932,6 +5932,11 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
   .player-dashboard__hero-rank,
   .player-dashboard__hero-badges { flex: 1 1 100%; }
 }
+.player-dashboard__mvp-card,
+.player-dashboard__scoreboard-card { display: flex; flex-direction: column; height: 560px; }
+.player-dashboard__mvp-card .player-dashboard__leader-list,
+.player-dashboard__scoreboard-card .player-dashboard__scoreboard-list { flex: 1; min-height: 0; overflow-y: auto; align-content: start; padding-right: 2px; }
+.player-dashboard__scoreboard-card .player-dashboard__scoreboard-button { flex: 0 0 auto; margin-top: 10px; }
 .player-dashboard__hero-level {
   position: absolute;
   z-index: 4;

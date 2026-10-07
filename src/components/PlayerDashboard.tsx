@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LEARNING_PATHS } from "../data/lessons";
 import {
   accuracyScore,
@@ -190,6 +190,25 @@ function DashboardMapDialog({
   );
 }
 
+function LeaderRow({ player, rank, selfId, lang }: {
+  player: User;
+  rank: number;
+  selfId: string;
+  lang: Lang;
+}) {
+  return (
+    <div className={cn("player-dashboard__leader-row", rank === 1 && "is-mvp", player.id === selfId && "is-self")}>
+      <span className="player-dashboard__leader-rank">{rank === 1 ? <Icon name="crown" className="h-4 w-4" /> : `#${rank}`}</span>
+      <Avatar src={player.avatar} name={player.displayName} size={34} />
+      <span className="player-dashboard__leader-info">
+        <strong>{player.displayName}</strong>
+        <small>LVL {levelFromXp(player.metrics.xp).level}{player.id === selfId ? `, ${lang === "en" ? "You" : "Εσύ"}` : ""}</small>
+      </span>
+      <span className="player-dashboard__leader-xp">{player.metrics.xp.toLocaleString()} <small>XP</small></span>
+    </div>
+  );
+}
+
 export default function PlayerDashboard({
   user,
   lang,
@@ -211,7 +230,15 @@ export default function PlayerDashboard({
   const completedModules = allMods.filter((module) => user.progress[module.id]?.completed).length;
   const scoreboard = overallScoreboard();
   const myStanding = scoreboard.find((entry) => entry.user.id === user.id);
-  const mvpEntries = scoreboard.slice(0, 3);
+  const mvpEntries = scoreboard.slice(0, 10);
+  const scoreboardListRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const list = scoreboardListRef.current;
+    const selfRow = list?.querySelector<HTMLElement>(".player-dashboard__leader-row.is-self");
+    if (list && selfRow) {
+      list.scrollTop = Math.max(0, selfRow.offsetTop - list.clientHeight / 2 + selfRow.clientHeight / 2);
+    }
+  }, [user.id]);
 
   const savedCampaign = LEARNING_PATHS.find((campaign) => campaign.id === user.activeCampaignId);
   const savedModule = savedCampaign ? nextUnlockedModule(savedCampaign, user, true) : null;
@@ -409,15 +436,7 @@ export default function PlayerDashboard({
               </div>
               <div className="player-dashboard__leader-list">
                 {mvpEntries.map(({ user: player, rank }) => (
-                  <div key={player.id} className={cn("player-dashboard__leader-row", rank === 1 && "is-mvp", player.id === user.id && "is-self")}>
-                    <span className="player-dashboard__leader-rank">{rank === 1 ? <Icon name="crown" className="h-4 w-4" /> : `#${rank}`}</span>
-                    <Avatar src={player.avatar} name={player.displayName} size={34} />
-                    <span className="player-dashboard__leader-info">
-                      <strong>{player.displayName}</strong>
-                      <small>LVL {levelFromXp(player.metrics.xp).level}{player.id === user.id ? `, ${lang === "en" ? "You" : "Εσύ"}` : ""}</small>
-                    </span>
-                    <span className="player-dashboard__leader-xp">{player.metrics.xp.toLocaleString()} <small>XP</small></span>
-                  </div>
+                  <LeaderRow key={player.id} player={player} rank={rank} selfId={user.id} lang={lang} />
                 ))}
                 {mvpEntries.length === 0 && <p className="player-dashboard__empty">{lang === "en" ? "No players on the leaderboard yet." : "Δεν υπάρχουν ακόμη παίκτες στην κατάταξη."}</p>}
               </div>
@@ -427,24 +446,15 @@ export default function PlayerDashboard({
               <div className="player-dashboard__section-heading">
                 <div>
                   <div className="player-dashboard__eyebrow">{uppercaseLabel(t("position", lang), lang)}</div>
-                  <h2 id="dashboard-scoreboard-title">{t("scoreboard", lang)}</h2>
+                  <h2 id="dashboard-scoreboard-title">{t("overallScoreboard", lang)}</h2>
                 </div>
                 <span className="player-dashboard__scoreboard-icon"><Icon name="chart" className="h-5 w-5" /></span>
               </div>
-              <div className="player-dashboard__standing">
-                <span className="player-dashboard__rank-cube" aria-hidden="true">
-                  <i>#{myStanding?.rank ?? "—"}</i>
-                  <b>#{myStanding?.rank ?? "—"}</b>
-                  <em><Icon name="crown" className="h-4 w-4" /></em>
-                </span>
-                <span className="player-dashboard__standing-copy">
-                  <strong>#{myStanding?.rank ?? "—"}</strong>
-                  <small>{t("position", lang)} / {scoreboard.length}</small>
-                </span>
-              </div>
-              <div className="player-dashboard__scoreboard-xp">
-                <span>{lang === "en" ? "Your total XP" : "Τα συνολικά XP σου"}</span>
-                <strong>{user.metrics.xp.toLocaleString()} <small>XP</small></strong>
+              <div ref={scoreboardListRef} className="player-dashboard__leader-list player-dashboard__scoreboard-list">
+                {scoreboard.map(({ user: player, rank }) => (
+                  <LeaderRow key={player.id} player={player} rank={rank} selfId={user.id} lang={lang} />
+                ))}
+                {scoreboard.length === 0 && <p className="player-dashboard__empty">{lang === "en" ? "No players on the leaderboard yet." : "Δεν υπάρχουν ακόμη παίκτες στην κατάταξη."}</p>}
               </div>
               <button type="button" className="player-dashboard__scoreboard-button dashboard-action" onClick={onOpenScoreboard}>
                 <span>{t("viewFullScoreboard", lang)}</span><Icon name="chevron" className="h-4 w-4" />
