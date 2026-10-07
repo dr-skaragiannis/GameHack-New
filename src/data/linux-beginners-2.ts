@@ -119,8 +119,8 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       section(
         bi("/etc/hosts: a local name table", "/etc/hosts: τοπικός πίνακας ονομάτων"),
         bi(
-          "The file /etc/hosts stores static name-to-address entries for one machine. A line contains an address followed by one or more names, for example 10.10.10.30 docs.gamehack.lab. This mapping affects name resolution on the local machine; it does not publish a record to DNS and it does not change another user's computer.",
-          "Το αρχείο /etc/hosts αποθηκεύει στατικές αντιστοιχίσεις ονομάτων και διευθύνσεων για έναν υπολογιστή. Μια γραμμή περιέχει πρώτα τη διεύθυνση και έπειτα ένα ή περισσότερα ονόματα, για παράδειγμα 10.10.10.30 docs.gamehack.lab. Η αντιστοίχιση επηρεάζει την επίλυση ονομάτων μόνο στον συγκεκριμένο υπολογιστή, δεν δημοσιεύει εγγραφή DNS ούτε αλλάζει τον υπολογιστή άλλου χρήστη.\n\nΗ nano /etc/hosts ανοίγει το αρχείο στον εικονικό προβολέα κειμένου του εργαστηρίου, ενώ η cat το εμφανίζει στο τερματικό. Για να προσθέσεις με ασφάλεια ένα δοκιμαστικό alias μέσα στο VFS, μπορείς να χρησιμοποιήσεις echo \"10.10.10.30 docs.gamehack.lab\" >> /etc/hosts και μετά να επιβεβαιώσεις τη γραμμή με grep. Το παράδειγμα δεν δρομολογεί επισκέπτες σε πραγματικό server.",
+          "The file /etc/hosts stores static name-to-address entries for one machine. A line contains an address followed by one or more names, for example 10.10.10.30 docs.gamehack.lab. This mapping affects name resolution on the local machine; it does not publish a record to DNS.",
+          "Το αρχείο /etc/hosts αποθηκεύει στατικές αντιστοιχίσεις ονομάτων και διευθύνσεων για έναν υπολογιστή. Μια γραμμή περιέχει πρώτα τη διεύθυνση και έπειτα ένα ή περισσότερα ονόματα, για παράδειγμα 10.10.10.30 docs.gamehack.lab. Η αντιστοίχιση επηρεάζει την επίλυση ονομάτων μόνο στον συγκεκριμένο υπολογιστή, δεν δημοσιεύει εγγραφή DNS.\n\nΗ nano /etc/hosts ανοίγει το αρχείο στον εικονικό προβολέα κειμένου του εργαστηρίου, ενώ η cat το εμφανίζει στο τερματικό. Για να προσθέσεις με ασφάλεια ένα δοκιμαστικό alias μέσα στο VFS, μπορείς να χρησιμοποιήσεις echo \"10.10.10.30 docs.gamehack.lab\" >> /etc/hosts και μετά να επιβεβαιώσεις τη γραμμή με grep.",
         ),
         "nano /etc/hosts",
         ["127.0.0.1 localhost", "10.10.10.8 gamehack.lab www.gamehack.lab"],
@@ -164,7 +164,7 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
         ),
         bi(
           "Why: Static settings help you understand the interface, while DHCP demonstrates how a machine receives a lease automatically. How: make the temporary changes only to eth0 in this lab, bring the link up again, and request DHCP. The final address is supplied by the simulator; no host adapter or outside network is touched.",
-          "Γιατί: Οι στατικές ρυθμίσεις βοηθούν να καταλάβεις τη διεπαφή, ενώ το DHCP δείχνει πώς ένας υπολογιστής παίρνει αυτόματα ένα lease. Πώς: κάνε τις προσωρινές αλλαγές μόνο στην εικονική eth0, ενεργοποίησε ξανά τη σύνδεση και ζήτησε DHCP. Η τελική διεύθυνση δίνεται από τον προσομοιωτή, δεν επηρεάζεται πραγματικός προσαρμογέας ούτε εξωτερικό δίκτυο.",
+          "Γιατί: Οι στατικές ρυθμίσεις βοηθούν να καταλάβεις τη διεπαφή, ενώ το DHCP δείχνει πώς ένας υπολογιστής παίρνει αυτόματα ένα lease. Πώς: κάνε τις προσωρινές αλλαγές μόνο στην εικονική eth0, ενεργοποίησε ξανά τη σύνδεση και ζήτησε DHCP. Η τελική διεύθυνση δίνεται από τον προσομοιωτή.",
         ),
         (term) => term.flags.has("ip-set") && term.flags.has("mac-spoof") && term.flags.has("if-up") && term.flags.has("dhclient"),
       ),
@@ -193,7 +193,7 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
         ),
         bi(
           "Why: resolv.conf selects a resolver, whereas hosts is a local static mapping; they solve related but different name-resolution problems. How: use > only for the resolver file you intend to replace, use >> to preserve existing hosts entries, then read both files to verify. These writes stay in your persistent VFS and do not affect anybody else's machine.",
-          "Γιατί: το resolv.conf επιλέγει resolver, ενώ το hosts κρατά τοπικές στατικές αντιστοιχίσεις, τα δύο αρχεία εξυπηρετούν διαφορετικές ανάγκες επίλυσης ονομάτων. Πώς: χρησιμοποίησε > μόνο στο αρχείο resolver που θέλεις να αντικαταστήσεις, >> για να διατηρήσεις τις υπάρχουσες εγγραφές hosts και διάβασε και τα δύο αρχεία για επαλήθευση. Οι αλλαγές μένουν στο προσωπικό VFS και δεν επηρεάζουν κανέναν άλλο υπολογιστή.",
+          "Γιατί: το resolv.conf επιλέγει resolver, ενώ το hosts κρατά τοπικές στατικές αντιστοιχίσεις, τα δύο αρχεία εξυπηρετούν διαφορετικές ανάγκες επίλυσης ονομάτων. Πώς: χρησιμοποίησε > μόνο στο αρχείο resolver που θέλεις να αντικαταστήσεις, >> για να διατηρήσεις τις υπάρχουσες εγγραφές hosts και διάβασε και τα δύο αρχεία για επαλήθευση. Οι αλλαγές μένουν στο προσωπικό VFS.",
         ),
         (term) => term.flags.has("dns-set") && usedCmd(term, />>\s*\/etc\/hosts/) && usedCmd(term, /grep\s+docs\.gamehack\.lab/),
       ),
@@ -336,7 +336,7 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
         bi("ps\nps aux\nps aux | grep training-worker", "ps\nps aux\nps aux | grep training-worker"),
         bi(
           "Why: A PID identifies one process instance, while a name can be reused by several programs. How: compare the user, PID, resource columns, and full command in ps aux, then use grep to narrow the output. These are fictional rows provided for practice.",
-          "Γιατί: Το PID χαρακτηρίζει μία συγκεκριμένη διεργασία, ενώ το ίδιο όνομα μπορεί να χρησιμοποιείται από περισσότερα προγράμματα. Πώς: σύγκρινε χρήστη, PID, στήλες πόρων και πλήρη εντολή στην ps aux και έπειτα περιόρισε την έξοδο με grep. Οι εγγραφές είναι εικονικές και προορίζονται μόνο για εξάσκηση.",
+          "Γιατί: Το PID χαρακτηρίζει μία συγκεκριμένη διεργασία, ενώ το ίδιο όνομα μπορεί να χρησιμοποιείται από περισσότερα προγράμματα. Πώς: σύγκρινε χρήστη, PID, στήλες πόρων και πλήρη εντολή στην ps aux και έπειτα περιόρισε την έξοδο με grep. Οι εγγραφές είναι εικονικές.",
         ),
         (term) => term.flags.has("ps-aux") && term.flags.has("ps-grep"),
       ),
@@ -459,7 +459,7 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
         bi("export applies to child processes, not future logins", "Το export αφορά child processes, όχι μελλοντικές συνδέσεις"),
         bi(
           "export HISTSIZE marks the shell variable for inheritance by commands started from this shell. You can verify the exported value with env | grep HISTSIZE. The change remains part of the current shell session; export alone does not make a setting permanent across logout, restart, or a new login.",
-          "Η εντολή export HISTSIZE επιτρέπει στις εντολές που ξεκινούν από αυτό το shell να κληρονομήσουν τη μεταβλητή. Μπορείς να επαληθεύσεις την τιμή με env | grep HISTSIZE. Η αλλαγή ισχύει στην τρέχουσα συνεδρία, το export από μόνο του δεν διατηρεί τη ρύθμιση μετά την αποσύνδεση, την επανεκκίνηση ή μια νέα σύνδεση.\n\nΓια ρύθμιση που φορτώνεται σε μελλοντικά διαδραστικά shells, οι διαχειριστές συχνά προσθέτουν μια προσεκτικά ελεγμένη γραμμή στο ~/.bashrc. Στο εργαστήριο μπορείς να δεις αυτή την ιδέα με echo 'export LAB_MODE=training' >> /root/.bashrc και cat /root/.bashrc, η γραμμή μένει στο VFS, αλλά δεν αλλάζει πραγματικό αρχείο ρυθμίσεων.",
+          "Η εντολή export HISTSIZE επιτρέπει στις εντολές που ξεκινούν από αυτό το shell να κληρονομήσουν τη μεταβλητή. Μπορείς να επαληθεύσεις την τιμή με env | grep HISTSIZE. Η αλλαγή ισχύει στην τρέχουσα συνεδρία, το export από μόνο του δεν διατηρεί τη ρύθμιση μετά την αποσύνδεση, την επανεκκίνηση ή μια νέα σύνδεση.\n\nΓια ρύθμιση που φορτώνεται σε μελλοντικά διαδραστικά shells, οι διαχειριστές συχνά προσθέτουν μια προσεκτικά ελεγμένη γραμμή στο ~/.bashrc. Στο εργαστήριο μπορείς να δεις αυτή την ιδέα με echo 'export LAB_MODE=training' >> /root/.bashrc και cat /root/.bashrc, η γραμμή μένει στο VFS.",
         ),
         "export HISTSIZE",
         ["HISTSIZE=0 exported for this virtual shell."],
@@ -552,7 +552,7 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
           "Read the saved HISTSIZE file, compare it with the current value, and restore the original setting in the shell. Verify the result with env.",
           "Διάβασε το αποθηκευμένο αρχείο HISTSIZE, σύγκρινέ το με την τρέχουσα τιμή και επανάφερε την αρχική ρύθμιση στο shell. Επιβεβαίωσε το αποτέλεσμα με env.",
         ),
-        success: bi("You changed and restored a setting without touching the host shell.", "Άλλαξες και επανέφερες μια ρύθμιση χωρίς να πειράξεις το shell του υπολογιστή σου."),
+        success: bi("You changed and restored a setting.", "Άλλαξες και επανέφερες μια ρύθμιση."),
         check: (term) => term.filesRead.some((path) => path.includes("histsize-before-change.txt")) && usedCmd(term, /HISTSIZE=1000/) && usedCmd(term, /env/),
       },
       {

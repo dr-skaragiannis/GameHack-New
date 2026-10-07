@@ -148,7 +148,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
         "make-executable",
         bi(
           "Grant the virtual first_script permission to execute. This changes the file’s mode only; no host file is touched.",
-          "Δώσε στο εικονικό first_script δικαίωμα εκτέλεσης. Αλλάζει μόνο το mode του αρχείου και δεν αγγίζει το πραγματικό σύστημα.",
+          "Δώσε στο εικονικό first_script δικαίωμα εκτέλεσης. Αλλάζει μόνο το mode του αρχείου.",
         ),
         bi("chmod +x first_script", "chmod +x first_script"),
         bi(
@@ -234,7 +234,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
         ),
         success: bi(
           "The Bash lesson is complete; your scripts and their permissions remain in your virtual filesystem.",
-          "Το μάθημα Bash ολοκληρώθηκε, τα scripts και τα δικαιώματά τους παραμένουν στο εικονικό σύστημα αρχείων.",
+          "Το μάθημα Bash ολοκληρώθηκε.",
         ),
         check: (term) => submitCheck(term, "FLAG{linux_beginners_3_bash}"),
       },
@@ -406,8 +406,8 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
           "update-rc.d mysql defaults\nupdate-rc.d mysql disable\nupdate-rc.d mysql enable\nupdate-rc.d mysql remove\nupdate-rc.d mysql defaults\nreboot\nps aux | grep mysql",
         ),
         bi(
-          "defaults and enable arrange a future start; disable prevents it, while remove deletes the links rather than uninstalling MySQL. The simulated reboot applies the final enabled state to this player’s service record, and ps aux | grep mysql reads the matching virtual process without touching host processes.",
-          "Τα defaults και enable ρυθμίζουν μελλοντική εκκίνηση, το disable την αποτρέπει, ενώ το remove διαγράφει τους συνδέσμους χωρίς να απεγκαθιστά το MySQL. Η εικονική επανεκκίνηση εφαρμόζει την τελική κατάσταση στην υπηρεσία του παίκτη και το ps aux | grep mysql διαβάζει την εικονική διεργασία χωρίς να αγγίζει διεργασίες του host.",
+          "defaults and enable arrange a future start; disable prevents it, while remove deletes the links rather than uninstalling MySQL. The simulated reboot applies the final enabled state to this player’s service record, and ps aux | grep mysql reads the matching virtual process.",
+          "Τα defaults και enable ρυθμίζουν μελλοντική εκκίνηση, το disable την αποτρέπει, ενώ το remove διαγράφει τους συνδέσμους χωρίς να απεγκαθιστά το MySQL. Η εικονική επανεκκίνηση εφαρμόζει την τελική κατάσταση στην υπηρεσία του παίκτη και το ps aux | grep mysql διαβάζει την εικονική διεργασία.",
         ),
         (term) =>
           ["defaults", "disable", "enable", "remove"].every((action) => term.flags.has(`rc-mysql-${action}`)) &&
@@ -435,7 +435,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
         ),
         success: bi(
           "Cron and legacy boot configuration are understood; all changes remain local to your player state.",
-          "Κατανόησες το cron και την παλιά ρύθμιση εκκίνησης, όλες οι αλλαγές μένουν στην κατάσταση του παίκτη.",
+          "Κατανόησες το cron και την παλιά ρύθμιση εκκίνησης.",
         ),
         check: (term) => submitCheck(term, "FLAG{linux_beginners_3_cron}"),
       },
@@ -653,7 +653,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
         ),
         success: bi(
           "The service lesson is complete, and every page, state change, and transfer remained in the simulated player filesystem.",
-          "Το μάθημα υπηρεσιών ολοκληρώθηκε και κάθε σελίδα, αλλαγή κατάστασης και μεταφορά έμεινε στο εικονικό σύστημα αρχείων του παίκτη.",
+          "Το μάθημα υπηρεσιών ολοκληρώθηκε.",
         ),
         check: (term) => submitCheck(term, "FLAG{linux_beginners_3_services}"),
       },

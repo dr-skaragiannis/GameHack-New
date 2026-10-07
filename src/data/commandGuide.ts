@@ -273,7 +273,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "ifconfig", aliases: ["ifconfig"], title: both("Inspect network interfaces", "Έλεγχος διεπαφών δικτύου"),
     purpose: both("Review local IP, netmask, broadcast, MAC, and link state.", "Έλεγξε τοπική IP, netmask, broadcast, MAC και κατάσταση σύνδεσης."),
-    mechanics: both("ifconfig reports interface configuration. In this lab, eth0 and loopback are simulated; no real network adapter is changed.", "Το ifconfig εμφανίζει ρυθμίσεις διεπαφών. Εδώ τα eth0 και loopback είναι προσομοιωμένα, δεν αλλάζει πραγματικός adapter."),
+    mechanics: both("ifconfig reports interface configuration. In this lab, eth0 and loopback are simulated.", "Το ifconfig εμφανίζει ρυθμίσεις διεπαφών. Εδώ τα eth0 και loopback είναι προσομοιωμένα."),
     output: both("inet is an IPv4 address, netmask defines the subnet, broadcast is the subnet broadcast, and ether is a MAC address.", "Το inet είναι διεύθυνση IPv4, το netmask ορίζει το υποδίκτυο, το broadcast είναι η διεύθυνση εκπομπής του υποδικτύου και το ether είναι η διεύθυνση MAC."),
     syntax: "ifconfig [INTERFACE]", example: "ifconfig",
   },
@@ -421,7 +421,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     key: "update-rc.d", aliases: ["update-rc.d"], title: both("Configure boot services", "Ρύθμιση υπηρεσιών εκκίνησης"),
     purpose: both("Learn how a service can be enabled to start at boot.", "Μάθε πώς μια υπηρεσία ενεργοποιείται στην εκκίνηση."),
     mechanics: both("update-rc.d configures legacy SysV init links. defaults and enable create start links for the default multi-user runlevels; disable records that the service must not autostart; remove deletes the links without uninstalling the service. GameHack stores those links in the player's virtual /etc/rcN.d folders and changes no host boot configuration.", "Η update-rc.d ρυθμίζει παλιούς συνδέσμους SysV init. Τα defaults και enable δημιουργούν start links για τα προεπιλεγμένα multi-user runlevels, το disable δηλώνει ότι η υπηρεσία δεν πρέπει να ξεκινά αυτόματα και το remove διαγράφει τους links χωρίς απεγκατάσταση. Το GameHack αποθηκεύει τους συνδέσμους στους εικονικούς φακέλους /etc/rcN.d του παίκτη και δεν αλλάζει την εκκίνηση του host."),
-    output: both("The confirmation names the virtual service action. A simulated reboot applies enabled/disabled settings only to the player's service state; no real service or machine is restarted.", "Η επιβεβαίωση αναφέρει την ενέργεια στην εικονική υπηρεσία. Το προσομοιωμένο reboot εφαρμόζει τη ρύθμιση μόνο στην κατάσταση του παίκτη, δεν επανεκκινείται πραγματική υπηρεσία ή μηχάνημα."),
+    output: both("The confirmation names the virtual service action. A simulated reboot applies enabled/disabled settings only to the player's service state.", "Η επιβεβαίωση αναφέρει την ενέργεια στην εικονική υπηρεσία. Το προσομοιωμένο reboot εφαρμόζει τη ρύθμιση μόνο στην κατάσταση του παίκτη."),
     syntax: "update-rc.d SERVICE defaults|enable|disable|remove", example: "update-rc.d mysql defaults",
   },
   {
@@ -449,7 +449,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     key: "ssh", aliases: ["ssh"], title: both("Open a secure shell session", "Άνοιγμα ασφαλούς shell"),
     purpose: both("Connect to a remote shell using the SSH protocol.", "Συνδέσου σε απομακρυσμένο shell με SSH."),
     mechanics: both("SSH encrypts the connection. The lab recognizes its named fake hosts and changes the simulated session only; for the ubuntu fixture, start the virtual ssh service first. The exit builtin restores the saved local prompt.", "Το SSH κρυπτογραφεί τη σύνδεση. Το lab αναγνωρίζει φανταστικούς hosts και αλλάζει μόνο την εικονική συνεδρία, για το ubuntu fixture ξεκίνα πρώτα την εικονική υπηρεσία ssh. Το exit επαναφέρει το αποθηκευμένο τοπικό prompt."),
-    output: both("A welcome banner means the simulator accepted the lab route. Connection errors mean the host or route is not configured in the VFS; no network session is opened.", "Το μήνυμα υποδοχής δηλώνει ότι ο προσομοιωτής αποδέχθηκε τη διαδρομή του εργαστηρίου. Το σφάλμα σύνδεσης δηλώνει ότι ο υπολογιστής ή η διαδρομή δεν υπάρχει στο εικονικό σύστημα αρχείων, δεν ανοίγει δικτυακή συνεδρία."),
+    output: both("A welcome banner means the simulator accepted the lab route. Connection errors mean the host or route is not configured in the VFS.", "Το μήνυμα υποδοχής δηλώνει ότι ο προσομοιωτής αποδέχθηκε τη διαδρομή του εργαστηρίου. Το σφάλμα σύνδεσης δηλώνει ότι ο υπολογιστής ή η διαδρομή δεν υπάρχει στο εικονικό σύστημα αρχείων."),
     syntax: "ssh USER@HOST", example: "ssh ignite@192.168.0.11", caution: both("Use SSH only for systems where you have authorization. All GameHack hosts are fictional.", "Χρησιμοποίησε SSH μόνο σε συστήματα με άδεια. Όλοι οι hosts του GameHack είναι φανταστικοί."),
   },
   {
@@ -476,7 +476,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "sudo", aliases: ["sudo"], title: both("Run a command with elevated privileges", "Εκτέλεση εντολής με αυξημένα δικαιώματα"),
     purpose: both("Understand delegated administrative access and why it must be limited.", "Κατανόησε delegated πρόσβαση διαχειριστή και γιατί πρέπει να περιορίζεται."),
-    mechanics: both("sudo -l lists configured grants. In this simulator, privilege demonstrations are mocked and never affect the host operating system.", "Το sudo -l εμφανίζει grants. Στον προσομοιωτή οι επιδείξεις προνομίων είναι εικονικές και δεν επηρεάζουν το λειτουργικό."),
+    mechanics: both("sudo -l lists configured grants. In this simulator, privilege demonstrations are mocked.", "Το sudo -l εμφανίζει grants. Στον προσομοιωτή οι επιδείξεις προνομίων είναι εικονικές."),
     output: both("A grant describes which command and user context are allowed. No grant or an error means the requested action was not authorized.", "Κάθε παραχώρηση περιγράφει ποια εντολή και σε ποιο πλαίσιο χρήστη επιτρέπεται. Αν δεν εμφανιστεί παραχώρηση ή προκύψει σφάλμα, η ενέργεια δεν εγκρίθηκε."),
     syntax: "sudo -l | sudo COMMAND", example: "sudo -l", caution: both("Never use privilege escalation on systems without written permission. These outcomes are simulated.", "Μην κάνεις privilege escalation σε συστήματα χωρίς γραπτή άδεια. Αυτά τα αποτελέσματα είναι εικονικά."),
   },
@@ -662,7 +662,7 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   {
     key: "ewfacquire", aliases: ["ewfacquire", "ftkimager"], title: both("Acquire a forensic image", "Απόκτηση forensic image"),
     purpose: both("Practice a read-only acquisition workflow and documentation.", "Εξασκήσου σε read-only απόκτηση και τεκμηρίωση."),
-    mechanics: both("Imagers create a sector-level copy and can record metadata and verification digests. This command only emits a sandbox receipt; it never accesses a physical device.", "Imager δημιουργεί sector-level αντίγραφο και metadata/digests. Η εντολή εμφανίζει sandbox receipt και δεν αγγίζει φυσική συσκευή."),
+    mechanics: both("Imagers create a sector-level copy and can record metadata and verification digests. This command only emits a sandbox receipt.", "Imager δημιουργεί sector-level αντίγραφο και metadata/digests. Η εντολή εμφανίζει sandbox receipt."),
     output: both("The receipt identifies a derived copy, verification state, and evidence ID. A real workflow also records source media identifiers and write-blocker state.", "Το receipt δείχνει αντίγραφο, verification και evidence ID. Πραγματική ροή καταγράφει source identifiers και write-blocker."),
     syntax: "ewfacquire SOURCE", example: "ewfacquire /cases/IR-2404/evidence/06-disk/usb.dd",
   },
@@ -1142,8 +1142,8 @@ function resultReading(
   }
   if (first === "apt-get" || first === "apt") {
     return lang === "en"
-      ? "The package-manager summary describes the requested simulated action. Read the package list and confirmation carefully; this local exercise makes no changes to your computer."
-      : "Η σύνοψη διαχειριστή πακέτων περιγράφει την εικονική ενέργεια. Διάβασε λίστα και επιβεβαίωση, η τοπική άσκηση δεν αλλάζει τον υπολογιστή σου.";
+      ? "The package-manager summary describes the requested simulated action. Read the package list and confirmation carefully to verify the requested action."
+      : "Η σύνοψη διαχειριστή πακέτων περιγράφει την εικονική ενέργεια. Διάβασε λίστα και επιβεβαίωση για να επαληθεύσεις την ενέργεια που ζητήθηκε.";
   }
   if (first === "date") {
     return lang === "en"
@@ -1197,13 +1197,13 @@ function resultReading(
   }
   if (first === "service") {
     return lang === "en"
-      ? "The service message reports a simulated state change. status tells you whether the named daemon is running; no real service on your computer was started or stopped."
-      : "Το μήνυμα υπηρεσίας αναφέρει εικονική αλλαγή κατάστασης. Το status δείχνει αν το daemon θεωρείται ενεργό, δεν ξεκίνησε ούτε σταμάτησε πραγματική υπηρεσία.";
+      ? "The service message reports a simulated state change. status tells you whether the named daemon is running."
+      : "Το μήνυμα υπηρεσίας αναφέρει εικονική αλλαγή κατάστασης. Το status δείχνει αν το daemon θεωρείται ενεργό.";
   }
   if (first === "ssh" || first === "ftp") {
     return lang === "en"
-      ? "This response comes from a fictional GameHack host inside the local virtual filesystem. A welcome/status banner means the simulator accepted the training step; no external server was contacted."
-      : "Η απόκριση προέρχεται από φανταστικό σύστημα GameHack μέσα στο εικονικό σύστημα αρχείων. Το μήνυμα υποδοχής ή κατάστασης δηλώνει αποδοχή του βήματος, δεν έγινε επικοινωνία με εξωτερικό διακομιστή.";
+      ? "This response comes from a fictional GameHack host inside the local virtual filesystem. A welcome/status banner means the simulator accepted the training step."
+      : "Η απόκριση προέρχεται από φανταστικό σύστημα GameHack μέσα στο εικονικό σύστημα αρχείων. Το μήνυμα υποδοχής ή κατάστασης δηλώνει αποδοχή του βήματος.";
   }
   if (first === "echo") {
     return lang === "en"

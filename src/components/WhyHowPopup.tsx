@@ -143,15 +143,6 @@ export default function WhyHowPopup({
               </div>
             </article>
           </div>
-
-          <div className="why-how-dialog__safety">
-            <Icon name="shield" className="h-4 w-4" />
-            <span>
-              {lang === "en"
-                ? "Everything shown here stays inside your fictional GameHack virtual filesystem."
-                : "Ό,τι εμφανίζεται εδώ μένει στο εικονικό σύστημα αρχείων του GameHack."}
-            </span>
-          </div>
         </div>
 
         <footer className="why-how-dialog__footer">

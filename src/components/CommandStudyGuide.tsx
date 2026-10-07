@@ -78,11 +78,6 @@ export default function CommandStudyGuide({
           );
         })}
       </div>
-
-      <footer className="command-study-guide__footer">
-        <Icon name="shield" className="h-4 w-4" />
-        {t("educationalNote", lang)}
-      </footer>
     </div>
   );
 }

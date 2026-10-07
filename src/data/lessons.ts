@@ -1144,8 +1144,8 @@ export const CAMPAIGNS: Campaign[] = ([
     title: { en: "Sudo_Run", el: "Sudo_Run" },
     subtitle: { en: "Linux for Beginners", el: "Linux για αρχάριους" },
     blurb: {
-      en: "Foundational Sudo_Run labs from pwd onward, followed by dedicated sequels for networking, processes, Bash automation and services. Everything runs in a safe, persistent virtual filesystem.",
-      el: "Βασικά labs Sudo_Run από το pwd και μετά, με ξεχωριστές συνέχειες για δίκτυα, διεργασίες, αυτοματοποίηση Bash και υπηρεσίες. Όλα εκτελούνται σε ασφαλές, μόνιμο εικονικό σύστημα αρχείων.",
+      en: "Foundational Sudo_Run labs from pwd onward, followed by dedicated sequels for networking, processes, Bash automation and services. Everything runs in a persistent virtual filesystem.",
+      el: "Βασικά labs Sudo_Run από το pwd και μετά, με ξεχωριστές συνέχειες για δίκτυα, διεργασίες, αυτοματοποίηση Bash και υπηρεσίες. Όλα εκτελούνται σε μόνιμο εικονικό σύστημα αρχείων.",
     },
     scenario: "sudorun",
     accent: "lime",
@@ -1162,8 +1162,8 @@ export const CAMPAIGNS: Campaign[] = ([
       el: "Δίκτυα, διεργασίες, προγραμματισμός και περιβάλλον shell",
     },
     blurb: {
-      en: "Read and configure fictional interfaces, resolve lab names, inspect and signal processes, schedule safe simulated jobs, and manage shell variables without touching the host system.",
-      el: "Έλεγξε εικονικές διεπαφές, επίλυσε ονόματα του εργαστηρίου, παρατήρησε διεργασίες, δοκίμασε προγραμματισμένες εργασίες και διαχειρίσου μεταβλητές shell χωρίς να επηρεάσεις το πραγματικό σύστημα.",
+      en: "Read and configure fictional interfaces, resolve lab names, inspect and signal processes, schedule simulated jobs, and manage shell variables.",
+      el: "Έλεγξε εικονικές διεπαφές, επίλυσε ονόματα του εργαστηρίου, παρατήρησε διεργασίες, δοκίμασε προγραμματισμένες εργασίες και διαχειρίσου μεταβλητές shell.",
     },
     scenario: "sudorun",
     accent: "cyan",
@@ -1178,8 +1178,8 @@ export const CAMPAIGNS: Campaign[] = ([
       el: "Bash scripting, cron, υπηρεσίες εκκίνησης, Apache, SSH και FTP",
     },
     blurb: {
-      en: "Continue the Linux series with readable Bash scripts, a fixture-only Nmap pipeline, recurring schedules, SysV boot links, and safe simulations of Apache, OpenSSH and FTP. Every file and service stays in the player’s persistent VFS.",
-      el: "Συνέχισε τη σειρά Linux με κατανοητά Bash scripts, εικονικό pipeline Nmap, επαναλαμβανόμενα προγράμματα, SysV συνδέσμους εκκίνησης και ασφαλείς προσομοιώσεις Apache, OpenSSH και FTP. Όλα τα αρχεία και οι υπηρεσίες μένουν στο μόνιμο VFS του παίκτη.",
+      en: "Continue the Linux series with readable Bash scripts, a fixture-only Nmap pipeline, recurring schedules, SysV boot links, and simulations of Apache, OpenSSH and FTP, with every file and service in the player’s persistent VFS.",
+      el: "Συνέχισε τη σειρά Linux με κατανοητά Bash scripts, εικονικό pipeline Nmap, επαναλαμβανόμενα προγράμματα, SysV συνδέσμους εκκίνησης και προσομοιώσεις Apache, OpenSSH και FTP, με όλα τα αρχεία και τις υπηρεσίες στο μόνιμο VFS του παίκτη.",
     },
     scenario: "sudorun",
     accent: "lime",

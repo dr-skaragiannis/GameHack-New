@@ -94,8 +94,8 @@ function taskWhyHow(task: Task, lang: Lang): string[] {
   } else {
     details.push(taskObjectiveContext(task, lang));
     details.push(lang === "en"
-      ? "The lab uses virtual evidence, so results stay inside this safe simulation."
-      : "Το εργαστήριο χρησιμοποιεί εικονικά τεκμήρια, οπότε τα αποτελέσματα μένουν στην ασφαλή προσομοίωση.");
+      ? "Compare the command output with the objective; matching lines are your evidence of success."
+      : "Σύγκρινε την έξοδο της εντολής με τον στόχο, οι γραμμές που ταιριάζουν είναι το τεκμήριο επιτυχίας.");
   }
   return details.filter(Boolean).slice(0, 4);
 }
