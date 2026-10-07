@@ -114,6 +114,39 @@ body {
     background-position: 200% center;
   }
 }
+@supports not (background-clip: text) {
+  .text-shine {
+    background: none;
+    color: #4ceeff;
+    animation: none;
+  }
+}
+.auth-title {
+  filter: drop-shadow(0 0 22px rgba(76, 238, 255, 0.35));
+}
+.auth-card {
+  background: linear-gradient(165deg, rgba(22, 24, 28, 0.92), rgba(12, 13, 15, 0.94));
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.85), 0 0 55px rgba(43, 245, 255, 0.07);
+}
+.auth-orb {
+  position: absolute;
+  z-index: 0;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  filter: blur(110px);
+  pointer-events: none;
+}
+.auth-orb--a {
+  top: -140px;
+  left: -120px;
+  background: radial-gradient(circle, rgba(43, 245, 255, 0.16), transparent 65%);
+}
+.auth-orb--b {
+  right: -140px;
+  bottom: -160px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.18), transparent 65%);
+}
 
 .card-hover {
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s, box-shadow 0.25s;

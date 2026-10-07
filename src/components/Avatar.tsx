@@ -59,6 +59,15 @@ export default function Avatar({
   );
 }
 
+export const AVATAR_CATEGORIES: { id: string; labelKey: string; icons: string[] }[] = [
+  { id: "cyberpunk", labelKey: "avatarCatCyberpunk", icons: ["cybereye", "cpu", "qubit", "atom", "radar", "terminal"] },
+  { id: "vampire", labelKey: "avatarCatVampire", icons: ["vampire", "skull", "bat", "ghost", "raven", "wolf"] },
+  { id: "nordic", labelKey: "avatarCatNordic", icons: ["rune", "hammer", "shield", "owl", "crown", "wolf"] },
+  { id: "fantasy", labelKey: "avatarCatFantasy", icons: ["dragon", "phoenix", "wyvern", "wand", "crown", "spark"] },
+  { id: "cute", labelKey: "avatarCatCute", icons: ["cat", "ghost", "owl", "spark", "bulb", "bug"] },
+  { id: "halloween", labelKey: "avatarCatHalloween", icons: ["pumpkin", "bat", "vampire", "skull", "ghost", "raven"] },
+];
+
 export const AVATAR_ICONS = [
   "skull",
   "terminal",

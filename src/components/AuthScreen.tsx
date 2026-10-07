@@ -176,7 +176,9 @@ export default function AuthScreen({
   };
 
   return (
-    <div className="gamehack-grid min-h-full flex items-center justify-center p-4 relative">
+    <div className="gamehack-grid min-h-full flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="auth-orb auth-orb--a" aria-hidden="true" />
+      <div className="auth-orb auth-orb--b" aria-hidden="true" />
       {onBack && (
         <button
           type="button"
@@ -197,15 +199,15 @@ export default function AuthScreen({
 
       <div className="relative z-10 w-full max-w-md enter">
         <div className="text-center mb-8">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-cyan-700 gamehack-glow mb-4 float">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-cyan-700 gamehack-glow mb-4 float ring-1 ring-cyan-300/50">
             <Icon name="terminal" className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-extrabold tracking-[0.2em] text-shine">{t("appName", lang)}</h1>
+          <h1 className="text-4xl font-extrabold tracking-[0.12em] text-shine auth-title">{t("appName", lang)}</h1>
           <p className="mt-2 text-iron-400 text-sm">{t("tagline", lang)}</p>
           <p className="mt-3 text-zinc-400 text-sm leading-relaxed">{t("heroLine", lang)}</p>
         </div>
 
-        <div className="glass rounded-2xl border border-gamehack-border p-6">
+        <div className="glass auth-card rounded-2xl border border-gamehack-border p-6 sm:p-7">
           {mode === "in" || mode === "up" ? (
             <div className="flex rounded-xl bg-gamehack-bg p-1 mb-5">
               {(["in", "up"] as const).map((option) => (
@@ -215,7 +217,7 @@ export default function AuthScreen({
                   onClick={() => switchMode(option)}
                   className={cn(
                     "flex-1 py-2 rounded-lg text-sm font-semibold transition",
-                    mode === option ? "bg-cyan-600 text-white" : "text-iron-400 hover:text-zinc-200"
+                    mode === option ? "bg-gradient-to-r from-cyan-600 to-cyan-500 text-white shadow-lg shadow-cyan-900/50" : "text-iron-400 hover:text-zinc-200"
                   )}
                 >
                   {option === "in" ? t("signIn", lang) : t("register", lang)}
@@ -281,7 +283,7 @@ export default function AuthScreen({
                 autoComplete="nickname"
                 maxLength={32}
                 required
-                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
+                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30"
               />
             )}
 
@@ -299,7 +301,7 @@ export default function AuthScreen({
                 }
                 autoComplete={mode === "in" ? "username" : "email"}
                 required
-                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
+                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30"
               />
             )}
 
@@ -330,7 +332,7 @@ export default function AuthScreen({
                 autoComplete={mode === "in" ? "current-password" : "new-password"}
                 minLength={mode === "in" ? undefined : 8}
                 required
-                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
+                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30"
               />
             )}
 
@@ -345,7 +347,7 @@ export default function AuthScreen({
                 autoComplete="new-password"
                 minLength={8}
                 required
-                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none focus:border-cyan-500"
+                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30"
               />
             )}
 
@@ -392,14 +394,15 @@ export default function AuthScreen({
           )}
 
           {mode === "in" && (
-            <div className="mt-5 pt-4 border-t border-gamehack-line text-sm text-iron-500 space-y-1">
-              <div className="uppercase tracking-widest text-iron-400 mb-1">{uppercaseLabel(t("demoHint", lang), lang)}</div>
+            <div className="mt-5 rounded-xl border border-dashed border-cyan-500/30 bg-cyan-500/5 p-3 text-sm text-iron-500 space-y-1">
+              <div className="uppercase tracking-widest text-iron-400 text-xs mb-1">{uppercaseLabel(t("demoHint", lang), lang)}</div>
               <div>
-                player — <span className="text-zinc-400 font-mono">nova / demo</span>
+                player — <span className="text-zinc-300 font-mono font-semibold">nova / demo</span>
               </div>
             </div>
           )}
         </div>
+        <p className="mt-6 text-center text-xs leading-relaxed text-iron-500">{t("landingFooter", lang)}</p>
       </div>
     </div>
   );
