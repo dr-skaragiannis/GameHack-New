@@ -147,6 +147,101 @@ body {
   bottom: -160px;
   background: radial-gradient(circle, rgba(99, 102, 241, 0.18), transparent 65%);
 }
+.auth-header {
+  position: relative;
+  padding: 22px 18px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(43, 245, 255, 0.09), transparent 65%),
+    linear-gradient(170deg, rgba(15, 16, 19, 0.88), rgba(10, 10, 11, 0.82));
+  box-shadow: 0 20px 60px -30px rgba(0, 0, 0, 0.9);
+}
+.auth-header p {
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+}
+.badges-dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(84vh, 720px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(76, 238, 255, 0.28);
+  border-radius: 16px;
+  background: #0b0b0d;
+  box-shadow: 0 32px 100px rgba(0, 0, 0, 0.72), 0 0 40px rgba(43, 245, 255, 0.08);
+}
+.badges-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(16, 20, 20, 0.96);
+}
+.badges-dialog__header h2 { margin: 2px 0 0; font-size: 0.95rem; font-weight: 800; color: #f4f4f5; }
+.badges-dialog__grid {
+  display: grid;
+  gap: 8px;
+  overflow-y: auto;
+  padding: 12px 14px 14px;
+}
+.badges-dialog__item {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  background: linear-gradient(110deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.01));
+  color: #e6e6ea;
+  text-align: left;
+}
+button.badges-dialog__item { font: inherit; cursor: pointer; }
+button.badges-dialog__item:hover { border-color: rgba(76, 238, 255, 0.38); }
+.badges-dialog__item[data-tier="gold"] { border-color: rgba(79, 182, 255, 0.2); }
+.badges-dialog__item[data-tier="silver"] { border-color: rgba(201, 211, 224, 0.16); }
+.badges-dialog__medallion {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(43, 245, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(43, 245, 255, 0.08);
+  color: #99f4ff;
+}
+.badges-dialog__copy { min-width: 0; flex: 1; display: grid; gap: 1px; }
+.badges-dialog__copy strong { overflow: hidden; font-size: 0.82rem; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.badges-dialog__copy small { overflow: hidden; color: #8b8b95; font-size: 0.75rem; text-overflow: ellipsis; white-space: nowrap; }
+.badges-dialog__item.is-locked { opacity: 0.62; filter: saturate(0.25); border-style: dashed; }
+.badges-dialog__item.is-locked .badges-dialog__medallion { border-color: rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.03); color: #71717a; }
+.badges-dialog__lock {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  background: #17171a;
+  color: #a5a5ad;
+}
+.badges-dialog__state {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #71717a;
+}
 
 .card-hover {
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s, box-shadow 0.25s;
@@ -5971,10 +6066,12 @@ button.player-dashboard__transmission-focus:focus-visible { outline: 2px solid r
 .player-dashboard__hero-badges { flex: 1 1 220px; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid rgba(76, 238, 255, 0.14); border-radius: 12px; background: rgba(255, 255, 255, 0.02); }
 .player-dashboard__hero-badges-label { flex: 0 0 auto; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #8b8b95; white-space: nowrap; }
 .player-dashboard__hero-medallions { display: flex; align-items: center; gap: 6px; }
-.player-dashboard__hero-medallions button { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(43, 245, 255, 0.3); border-radius: 50%; background: rgba(43, 245, 255, 0.08); color: #99f4ff; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.2s; }
+.player-dashboard__hero-medallions button { width: 32px; height: 32px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid rgba(43, 245, 255, 0.3); border-radius: 50%; background: rgba(43, 245, 255, 0.08); color: #99f4ff; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.2s; }
 .player-dashboard__hero-medallions button:hover { border-color: rgba(43, 245, 255, 0.6); background: rgba(43, 245, 255, 0.16); transform: translateY(-1px); }
 .player-dashboard__hero-medallions button:focus-visible { outline: 2px solid rgba(104, 249, 255, 0.6); outline-offset: 2px; }
-.player-dashboard__hero-medallions-more { font-size: 0.75rem; font-weight: 800; color: #99f4ff; }
+button.player-dashboard__hero-medallions-more { min-width: 32px; height: 32px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0 10px; border: 1px dashed rgba(43, 245, 255, 0.4); border-radius: 999px; background: rgba(43, 245, 255, 0.05); color: #99f4ff; font: inherit; font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+button.player-dashboard__hero-medallions-more:hover { border-color: rgba(43, 245, 255, 0.7); background: rgba(43, 245, 255, 0.12); }
+button.player-dashboard__hero-medallions-more:focus-visible { outline: 2px solid rgba(104, 249, 255, 0.6); outline-offset: 2px; }
 .player-dashboard__hero-badges-empty { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #71717a; }
 @media (max-width: 760px) {
   .player-dashboard__hero-rank,

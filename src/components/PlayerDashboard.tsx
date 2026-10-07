@@ -209,6 +209,101 @@ function LeaderRow({ player, rank, selfId, lang }: {
   );
 }
 
+function BadgesDialog({
+  user,
+  lang,
+  onBadge,
+  onClose,
+}: {
+  user: User;
+  lang: Lang;
+  onBadge: (badgeId: string) => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  const entries = Object.entries(BADGES).sort(([a], [b]) => {
+    const rankA = user.badges.includes(a) ? 0 : 1;
+    const rankB = user.badges.includes(b) ? 0 : 1;
+    return rankA - rankB;
+  });
+
+  return (
+    <div
+      className="dashboard-modal-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section className="badges-dialog dashboard-modal-surface" role="dialog" aria-modal="true" aria-labelledby="badges-dialog-title">
+        <header className="badges-dialog__header">
+          <div>
+            <div className="player-dashboard__eyebrow">{uppercaseLabel(t("earnedBadges", lang), lang)}</div>
+            <h2 id="badges-dialog-title">{t("allBadges", lang)} ({user.badges.length}/{entries.length})</h2>
+          </div>
+          <button
+            type="button"
+            className="player-dashboard__icon-button dashboard-action"
+            onClick={onClose}
+            aria-label={t("close", lang)}
+            title={t("close", lang)}
+          >
+            <Icon name="close" className="h-4 w-4" />
+          </button>
+        </header>
+        <div className="badges-dialog__grid">
+          {entries.map(([id, badge]) => {
+            const earned = user.badges.includes(id);
+            if (!earned) {
+              return (
+                <div key={id} className="badges-dialog__item is-locked" title={`${badge.name} — ${badge.desc}`}>
+                  <span className="badges-dialog__medallion">
+                    <Icon name={badge.icon} className="h-5 w-5" />
+                    <i className="badges-dialog__lock"><Icon name="lock" className="h-3 w-3" /></i>
+                  </span>
+                  <span className="badges-dialog__copy">
+                    <strong>{badge.name}</strong>
+                    <small>{badge.desc}</small>
+                  </span>
+                  <span className="badges-dialog__state">{t("locked", lang)}</span>
+                </div>
+              );
+            }
+            return (
+              <button
+                key={id}
+                type="button"
+                data-tier={badge.tier}
+                className="badges-dialog__item dashboard-action"
+                title={`${badge.name} — ${badge.desc}`}
+                aria-label={`${badge.name}. ${badge.desc}`}
+                onClick={() => {
+                  onBadge(id);
+                  onClose();
+                }}
+              >
+                <span className="badges-dialog__medallion"><Icon name={badge.icon} className="h-5 w-5" /></span>
+                <span className="badges-dialog__copy">
+                  <strong>{badge.name}</strong>
+                  <small>{badge.desc}</small>
+                </span>
+                <Icon name="chevron" className="h-4 w-4" />
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function PlayerDashboard({
   user,
   lang,
@@ -225,6 +320,7 @@ export default function PlayerDashboard({
   onBadge: (badgeId: string) => void;
 }) {
   const [mapExpanded, setMapExpanded] = useState(false);
+  const [badgesOpen, setBadgesOpen] = useState(false);
   const lv = levelFromXp(user.metrics.xp);
   const allMods = LEARNING_PATHS.flatMap((campaign) => campaign.modules);
   const completedModules = allMods.filter((module) => user.progress[module.id]?.completed).length;
@@ -329,7 +425,7 @@ export default function PlayerDashboard({
             <span className="player-dashboard__hero-badges-label">{t("badges", lang)} ({user.badges.length})</span>
             {user.badges.length ? (
               <span className="player-dashboard__hero-medallions">
-                {user.badges.slice(0, 6).map((id) => {
+                {user.badges.slice(0, 5).map((id) => {
                   const badge = BADGES[id];
                   if (!badge) return null;
                   return (
@@ -345,14 +441,29 @@ export default function PlayerDashboard({
                     </button>
                   );
                 })}
-                {user.badges.length > 6 && (
-                  <span className="player-dashboard__hero-medallions-more">+{user.badges.length - 6}</span>
-                )}
+                <button
+                  type="button"
+                  className="player-dashboard__hero-medallions-more"
+                  title={t("allBadges", lang)}
+                  aria-label={`${t("badgesMore", lang)}, ${t("allBadges", lang)}`}
+                  onClick={() => setBadgesOpen(true)}
+                >
+                  {user.badges.length > 5 ? `+${user.badges.length - 5}` : <Icon name="plus" className="h-4 w-4" />}
+                </button>
               </span>
             ) : (
               <span className="player-dashboard__hero-badges-empty">
                 <Icon name="medal" className="h-4 w-4" />
                 {t("noBadgesYet", lang)}
+                <button
+                  type="button"
+                  className="player-dashboard__hero-medallions-more"
+                  title={t("allBadges", lang)}
+                  aria-label={`${t("badgesMore", lang)}, ${t("allBadges", lang)}`}
+                  onClick={() => setBadgesOpen(true)}
+                >
+                  {t("badgesMore", lang)}
+                </button>
               </span>
             )}
           </div>
@@ -529,6 +640,15 @@ export default function PlayerDashboard({
           selectedCampaignId={selectedMapCampaign}
           onOpen={onOpen}
           onClose={() => setMapExpanded(false)}
+        />
+      )}
+
+      {badgesOpen && (
+        <BadgesDialog
+          user={user}
+          lang={lang}
+          onBadge={onBadge}
+          onClose={() => setBadgesOpen(false)}
         />
       )}
     </div>

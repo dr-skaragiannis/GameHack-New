@@ -183,7 +183,7 @@ export default function AuthScreen({
         <button
           type="button"
           onClick={onBack}
-          className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 text-sm font-semibold text-iron-400 hover:text-cyan-400 border border-gamehack-border rounded-lg px-3 py-1.5"
+          className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 text-sm font-semibold text-iron-400 hover:text-cyan-400 border border-gamehack-border bg-black/50 backdrop-blur rounded-lg px-3 py-1.5"
         >
           <Icon name="chevron" className="h-4 w-4 rotate-180" />
           {t("backToHome", lang)}
@@ -192,13 +192,13 @@ export default function AuthScreen({
       <button
         type="button"
         onClick={() => setLang(lang === "en" ? "el" : "en")}
-        className="absolute top-4 right-4 z-10 text-sm font-bold tracking-widest text-iron-400 hover:text-cyan-400 border border-gamehack-border rounded-lg px-3 py-1.5"
+        className="absolute top-4 right-4 z-10 text-sm font-bold tracking-widest text-iron-400 hover:text-cyan-400 border border-gamehack-border bg-black/50 backdrop-blur rounded-lg px-3 py-1.5"
       >
         {t("langLabel", lang)}
       </button>
 
       <div className="relative z-10 w-full max-w-md enter">
-        <div className="text-center mb-8">
+        <div className="auth-header text-center mb-8">
           <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-cyan-700 gamehack-glow mb-4 float ring-1 ring-cyan-300/50">
             <Icon name="terminal" className="w-8 h-8 text-white" />
           </div>
@@ -357,7 +357,7 @@ export default function AuthScreen({
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-500 py-2.5 font-bold text-white shimmer-hover disabled:cursor-wait disabled:opacity-60"
+              className="w-full rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-500 py-2.5 font-bold text-white shimmer-hover shadow-lg shadow-cyan-900/40 transition hover:brightness-110 disabled:cursor-wait disabled:opacity-60 disabled:hover:brightness-100"
             >
               {busy
                 ? t("working", lang)
