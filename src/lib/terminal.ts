@@ -1050,7 +1050,7 @@ lo: flags=73<UP,LOOPBACK,RUNNING> mtu 65536
         break;
       }
       case "nmap": {
-        const target = pos.find((p) => /[0-9]|lab/.test(p)) || pos[0];
+        const target = pos.find((p) => /\d+\.\d+\.\d+\.\d+|lab/i.test(p)) || pos.find((p) => /[0-9]/.test(p)) || pos[0];
         if (!target) {
           print("nmap: specify a target, e.g. nmap 10.10.10.0/24", "err");
           break;
@@ -1082,6 +1082,8 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
         if (h.ip === "10.10.10.5") t.flags.add("nmap-raven");
         if (h.ip === "10.10.10.8") t.flags.add("nmap-web");
         if (h.ip === "10.10.10.12") t.flags.add("nmap-ssh");
+        const authMethods = /ssh-auth-methods/.test(input) && h.ip === "10.10.10.12";
+        if (authMethods) t.flags.add("ssh-auth-methods");
         const lines = [
           `Starting Nmap 7.94 ( simulated )`,
           `Nmap scan report for ${h.hostname} (${h.ip})`,
@@ -1093,6 +1095,9 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
               `${String(p.port).padEnd(5)}/${p.proto} ${p.state.padEnd(8)} ${p.service.padEnd(10)} ${svc ? p.version : ""}`.trimEnd()
           ),
           `Nmap done: 1 IP address (1 host up) scanned`,
+          authMethods
+            ? ["| ssh-auth-methods:", "|   Supported authentication methods:", "|     publickey", "|_    password", "Lab note: password is enabled on ssh.lab so the hardening lesson has a weak starting policy. This script does not query any other host."].join("\n")
+            : "",
         ].filter(Boolean);
         print(lines.join("\n"));
         break;
@@ -1156,6 +1161,16 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
       }
       case "ssh": {
         t.flags.add("ssh");
+        if (/(^|\s)-L\b/.test(input)) {
+          t.flags.add("ssh-forward");
+          if (/10\.10\.10\.12|ssh\.lab/.test(input)) {
+            print("Local forward recorded in the simulation. No socket was opened and no internal service was reached.\nHardening note: disable forwarding with AllowTcpForwarding no unless it is required.");
+            break;
+          }
+          print("ssh: local forward is only simulated for ssh.lab (10.10.10.12).", "err");
+          t.lastExit = 1;
+          break;
+        }
         const dest = pos.find((p) => p.includes("@") || p.includes(".")) || pos[0] || "";
         const key = rest.includes("-i") || /id_/.test(input);
         if (/ignite@|192\.168\.0\.11/.test(dest) || /ignite@/.test(input)) {
@@ -1332,6 +1347,12 @@ Table: users
       case "hashcat":
         print("Hash cracking is simulated here. Use hydra against lab SSH for the password module.");
         break;
+      case "ssh-keygen": {
+        t.flags.add("ssh-keygen");
+        if (/ed25519/.test(input)) t.flags.add("ssh-keygen-ed25519");
+        print("Generating public/private ed25519 key pair (simulated).\nThe private key stays inside this sandbox and is not a usable credential.\nYour identification has been saved in the lab record.\nYour public key has been saved in the lab record.\nThe key fingerprint is SHA256:lab-only-not-a-real-key");
+        break;
+      }
       case "scp":
         t.flags.add("scp");
         print("scp: simulated transfer complete.");

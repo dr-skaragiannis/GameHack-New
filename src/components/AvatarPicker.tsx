@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import Avatar, { AVATAR_CATEGORIES, AVATAR_COLORS } from "./Avatar";
+import { AVATAR_COLOR } from "../lib/avatarCatalog";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
 import { t, uppercaseLabel, type Lang } from "../i18n";
@@ -63,9 +64,9 @@ export default function AvatarPicker({
   onClose: () => void;
 }) {
   const isUploaded = value.startsWith("data:") || value.startsWith("http");
-  const parts = (value || "ic:skull:#06b6d4").split(":");
+  const parts = (value || `ic:skull:${AVATAR_COLOR}`).split(":");
   const [iconName, setIconName] = useState(parts[1] || "skull");
-  const [iconColor, setIconColor] = useState(parts[2] || "#06b6d4");
+  const [iconColor, setIconColor] = useState(parts[2] || AVATAR_COLOR);
   const [category, setCategory] = useState(
     () => AVATAR_CATEGORIES.find((c) => c.icons.includes(parts[1]))?.id ?? AVATAR_CATEGORIES[0].id,
   );
@@ -107,11 +108,14 @@ export default function AvatarPicker({
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-lg rounded-2xl border border-gamehack-border bg-gamehack-panel p-5 scale-in"
+        className="max-h-[min(92vh,760px)] w-full max-w-xl overflow-y-auto rounded-2xl border border-gamehack-border bg-gamehack-panel p-5 scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-zinc-100">{t("chooseAvatar", lang)}</h3>
+          <div>
+            <h3 className="font-semibold text-zinc-100">{t("chooseAvatar", lang)}</h3>
+            <p className="mt-0.5 text-xs text-iron-400">{t("avatarGlyphStyle", lang)}</p>
+          </div>
           <button type="button" onClick={onClose} className="text-iron-400 hover:text-white">
             <Icon name="close" className="w-5 h-5" />
           </button>
@@ -181,20 +185,21 @@ export default function AvatarPicker({
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
+        <div className="grid grid-cols-5 gap-2">
           {activeIcons.map((ic) => (
             <button
               key={ic}
               type="button"
               onClick={() => pickIcon(ic)}
               title={ic}
+              aria-pressed={!isUploaded && iconName === ic}
               className={cn(
                 "aspect-square rounded-xl grid place-items-center border transition",
-                !isUploaded && iconName === ic ? "border-cyan-500 bg-cyan-500/15" : "border-gamehack-border hover:border-cyan-500/40",
+                !isUploaded && iconName === ic ? "border-orange-400 bg-orange-500/15" : "border-gamehack-border hover:border-orange-400/50",
               )}
               style={{ color: iconColor }}
             >
-              <Icon name={ic} className="w-6 h-6" />
+              <Icon name={ic} variant="glyph" className="h-7 w-7" />
             </button>
           ))}
         </div>

@@ -88,12 +88,48 @@ try {
   assert.ok(linuxPart3, "Linux for Beginners #3 should be registered as a learning path");
   assert.equal(learningPath.pathNumber, 3);
   assert.equal(linuxPart3.pathNumber, 4);
-  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.pathNumber), [1, 2, 3, 4, 5, 6, 7]);
+  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.pathNumber), [1, 2, 3, 4, 5, 6, 7, 8]);
   assert.deepEqual(learningPath.modules.map((module) => module.id), ["sr-net", "sr-proc", "sr-env"]);
   assert.deepEqual(linuxPart3.modules.map((module) => module.id), ["sr-bash", "sr-cron", "sr-svc"]);
   assert.equal(lessons.campaignById("wirewalk")?.pathNumber, 5);
   assert.equal(lessons.campaignById("raven")?.pathNumber, 6);
   assert.equal(lessons.campaignById("dfir-fieldwork")?.pathNumber, 7);
+  const sshService = lessons.campaignById("ssh-service");
+  assert.ok(sshService, "SSH service testing should be registered as a learning path");
+  assert.equal(sshService.pathNumber, 8);
+  assert.deepEqual(sshService.modules.map((module) => module.id), ["ssh-svc-recon", "ssh-svc-auth", "ssh-svc-creds", "ssh-svc-harden", "ssh-svc-lab"]);
+  assert.equal(sshService.title.el, "Ελεγχος ασφάλειας υπηρεσίας SSH");
+  const sshLabels = [
+    sshService.title.el,
+    sshService.subtitle.el,
+    ...sshService.modules.flatMap((module) => [
+      module.title.el,
+      module.subtitle.el,
+      module.badge.el,
+      ...module.theory.map((section) => section.heading.el),
+    ]),
+  ];
+  for (const label of sshLabels) {
+    assert.doesNotMatch(label, /[ΆΈΉΊΌΎΏΪΫ]/, `Greek label should not put a tonos on a capital: ${label}`);
+  }
+  for (const section of sshService.modules.flatMap((module) => module.theory)) {
+    for (const language of ["en", "el"]) {
+      const paragraphs = section.body[language].split(/\n\s*\n/).filter((paragraph) => paragraph.trim());
+      assert.ok(paragraphs.length >= 2, `${section.heading.en} should have two ${language} paragraphs`);
+    }
+  }
+  const sshLab = playerTerminal.createPlayerTerminal();
+  playerTerminal.activateTerminalForModule(sshLab, "ssh-svc-auth", "lab");
+  const authScan = terminal.runCommand(sshLab, "nmap --script ssh-auth-methods -p 22 10.10.10.12").map((line) => line.text).join("\n");
+  assert.match(authScan, /publickey/);
+  assert.match(authScan, /password/);
+  assert.ok(sshLab.flags.has("ssh-auth-methods"));
+  terminal.runCommand(sshLab, "ssh-keygen -t ed25519");
+  assert.ok(sshLab.flags.has("ssh-keygen-ed25519"));
+  const forward = terminal.runCommand(sshLab, "ssh -L 8080:127.0.0.1:8080 labuser@10.10.10.12").map((line) => line.text).join("\n");
+  assert.match(forward, /No socket was opened/);
+  assert.ok(sshLab.flags.has("ssh-forward"));
+  assert.equal(sshLab.sshReturn, null, "a recorded forward must not open a remote session");
   const allPathModuleIds = lessons.LEARNING_PATHS.flatMap((path) => path.modules.map((module) => module.id));
   assert.equal(new Set(allPathModuleIds).size, allPathModuleIds.length, "reused modules should appear in exactly one learning path");
   assert.equal(lessons.campaignById("sudorun")?.modules.length, 7, "the existing path should retain its other modules without duplicates");

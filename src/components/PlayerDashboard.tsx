@@ -30,6 +30,7 @@ function nextUnlockedModule(campaign: (typeof LEARNING_PATHS)[number], user: Use
 }
 
 function campaignIcon(campaign: (typeof LEARNING_PATHS)[number]) {
+  if (campaign.id === "ssh-service") return "lock";
   if (campaign.scenario === "raven") return "crown";
   if (campaign.scenario === "ssh") return "key";
   if (campaign.scenario === "dfir") return "shield";
@@ -472,7 +473,7 @@ export default function PlayerDashboard({
 
       <section className="player-dashboard__feed-ticker" aria-label={t("liveFeed", lang)}>
         <div className="player-dashboard__feed-ticker-label">
-          <span><i /><Icon name="wifi" className="h-4 w-4" /></span>
+          <span className="ui-live-icon"><i /><Icon name="wifi" className="h-4 w-4" /></span>
           <div>
             <small>{uppercaseLabel(t("liveFeed", lang), lang)}</small>
             <strong>{t("networkActivity", lang)}</strong>
@@ -629,7 +630,7 @@ export default function PlayerDashboard({
             </div>
             <span className="player-dashboard__activity-pulse"><i /></span>
           </div>
-          <div className="player-dashboard__activity-list"><LiveFeed compact playersOnly lang={lang} /></div>
+          <div className="player-dashboard__activity-list"><LiveFeed playersOnly lang={lang} /></div>
         </section>
       </div>
 

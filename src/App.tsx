@@ -572,7 +572,7 @@ export default function App() {
         )}
       >
         <div className={cn("relative flex h-16 items-center border-b border-gamehack-border", collapsed ? "justify-center px-2" : "gap-2.5 px-4 pr-8")}>
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-700 shadow-lg shadow-cyan-900/40">
+          <div className="ui-live-icon grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-700 shadow-lg shadow-cyan-900/40">
             <Icon name="cybereye" className="h-5 w-5 text-white" />
           </div>
           {!collapsed && (
@@ -628,7 +628,7 @@ export default function App() {
                         collapsed && "justify-center px-0"
                       )}
                     >
-                      <span className="relative">
+                      <span className="ui-live-icon relative">
                         <Icon name={n.icon} className="w-5 h-5" />
                         {!n.quietBadge && !!n.badge && n.badge > 0 && (
                           <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-cyan-500" />

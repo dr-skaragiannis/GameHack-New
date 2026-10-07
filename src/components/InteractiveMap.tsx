@@ -321,11 +321,13 @@ function CampaignUniverse({
         : campaign.scenario === "sudorun" ? "sudorun"
           : campaign.scenario === "dfir" ? "dfir" : "gamehack";
   const campaignIcon = (campaign: Campaign) =>
-    campaign.scenario === "raven" ? "crown"
+    campaign.id === "ssh-service" ? "lock"
+      : campaign.scenario === "raven" ? "crown"
       : campaign.scenario === "ssh" ? "key"
         : campaign.scenario === "dfir" ? "shield" : "terminal";
   const campaignKicker = (campaign: Campaign) =>
-    campaign.scenario === "sudorun" ? "LINUX FOR BEGINNERS"
+    campaign.id === "ssh-service" ? (lang === "el" ? "Ελεγχος υπηρεσίας SSH" : "SSH SERVICE LAB")
+      : campaign.scenario === "sudorun" ? "LINUX FOR BEGINNERS"
       : campaign.scenario === "raven" ? "CTF CAMPAIGN"
         : campaign.scenario === "ssh" ? "SSH CAMPAIGN"
           : campaign.scenario === "dfir" ? "INCIDENT RESPONSE" : "FOUNDATION CAMPAIGN";

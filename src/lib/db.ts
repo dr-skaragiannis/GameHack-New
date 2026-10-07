@@ -1,4 +1,5 @@
 import type { Lang } from "../i18n";
+import { AVATAR_COLORS, AVATAR_ICONS } from "./avatarCatalog";
 
 export type Role = "player" | "educator";
 export type ContentWidth = "centered" | "wide" | "full";
@@ -354,25 +355,8 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-const DEFAULT_ICON_KEYS = [
-  "skull",
-  "terminal",
-  "ghost",
-  "dragon",
-  "bug",
-  "shield",
-  "radar",
-  "wolf",
-  "owl",
-  "raven",
-  "phoenix",
-  "atom",
-  "cpu",
-  "qubit",
-  "cybereye",
-  "wyvern",
-];
-const DEFAULT_ICON_HEXES = ["#06b6d4", "#22d3ee", "#3ddc84", "#a78bfa", "#fcd34d", "#f472b6", "#38bdf8"];
+const DEFAULT_ICON_KEYS = AVATAR_ICONS;
+const DEFAULT_ICON_HEXES = AVATAR_COLORS;
 
 export function randomIconAvatar(seed = Math.random()): string {
   const k = DEFAULT_ICON_KEYS[Math.floor(seed * 997) % DEFAULT_ICON_KEYS.length];
@@ -499,7 +483,7 @@ function seed(): DB {
     password: "teach123",
     role: "educator",
     displayName: "Dr. Mara Vance",
-    avatar: "ic:owl:#a78bfa",
+    avatar: "ic:owl:#f97316",
     bio: "Lead cybersecurity instructor. Here to help you build practical skills.",
     interests: ["Red Team", "Networking", "Forensics"],
     hobbies: ["Reading", "Chess"],

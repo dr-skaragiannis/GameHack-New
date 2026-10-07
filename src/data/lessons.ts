@@ -4,6 +4,7 @@ import { SUDO_RUN_ALL } from "./sudorun-lessons";
 import { DFIR_MODULES } from "./dfir-lessons";
 import { LINUX_BEGINNERS_2_MODULES } from "./linux-beginners-2";
 import { LINUX_BEGINNERS_3_MODULES } from "./linux-beginners-3";
+import { SSH_SERVICE_MODULES } from "./ssh-service-lessons";
 
 export type Bi = { en: string; el: string };
 
@@ -1198,6 +1199,19 @@ export const CAMPAIGNS: Campaign[] = ([
     accent: "cyan",
     modules: DFIR_MODULES,
   },
+  {
+    id: "ssh-service",
+    pathNumber: 8,
+    title: { en: "SSH Service Security Testing", el: "Ελεγχος ασφάλειας υπηρεσίας SSH" },
+    subtitle: { en: "From the banner to hardening, inside the fictional lab", el: "Από το banner ως τη σκλήρυνση, μέσα στο φανταστικό εργαστήριο" },
+    blurb: {
+      en: "Five labs for the SSH service: banner, authentication methods, a lab-only credential check, keys and forwarding, and an isolated practice loop. Every command stays in the sandbox.",
+      el: "Πέντε εργαστήρια για την υπηρεσία SSH: banner, μέθοδοι ταυτοποίησης, έλεγχος διαπιστευτηρίων μόνο του lab, κλειδιά και προώθηση, και απομονωμένος κύκλος εξάσκησης. Κάθε εντολή μένει στο sandbox.",
+    },
+    scenario: "lab",
+    accent: "cyan",
+    modules: SSH_SERVICE_MODULES,
+  },
 ] as Campaign[]).sort((a, b) => a.pathNumber - b.pathNumber);
 
 export const LEARNING_PATHS = [...CAMPAIGNS];
@@ -1209,7 +1223,8 @@ export function moduleById(id: string): Module | undefined {
     SUDO_RUN_ALL.find((module) => module.id === id) ||
     LINUX_BEGINNERS_2_MODULES.find((module) => module.id === id) ||
     LINUX_BEGINNERS_3_MODULES.find((module) => module.id === id) ||
-    DFIR_MODULES.find((module) => module.id === id)
+    DFIR_MODULES.find((module) => module.id === id) ||
+    SSH_SERVICE_MODULES.find((module) => module.id === id)
   );
 }
 

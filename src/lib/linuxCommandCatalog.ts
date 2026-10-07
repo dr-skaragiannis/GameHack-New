@@ -104,6 +104,7 @@ export const COMMON_LINUX_COMMANDS: LinuxCommandInfo[] = [
   { name: "sort", category: "Text", summary: "Sort lines from a virtual file or pipeline.", synopsis: "sort [OPTIONS] [FILE...]", example: "sort /etc/passwd" },
   { name: "systemctl", category: "Processes & services", summary: "Inspect or change a simulated system service.", synopsis: "systemctl status|start|stop|restart UNIT", example: "systemctl status ssh.service" },
   { name: "ssh", category: "Network", summary: "Connect to a fictional lab host using simulated credentials.", synopsis: "ssh [OPTIONS] USER@HOST", example: "ssh labuser@10.10.10.12" },
+  { name: "ssh-keygen", category: "Network", summary: "Record a simulated ed25519 key pair inside the sandbox. No usable private key is created.", synopsis: "ssh-keygen -t ed25519", example: "ssh-keygen -t ed25519" },
   { name: "stat", category: "Files", summary: "Show metadata for a virtual file or directory.", synopsis: "stat FILE...", example: "stat /etc/hosts" },
   { name: "strings", category: "Files & forensics", summary: "Extract printable text from a virtual evidence file.", synopsis: "strings [OPTIONS] FILE...", example: "strings /var/log/syslog" },
   { name: "sudo", category: "Users & permissions", summary: "Run a simulated permitted command with elevated privileges.", synopsis: "sudo [OPTIONS] COMMAND", example: "sudo -l" },

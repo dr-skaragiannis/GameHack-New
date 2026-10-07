@@ -4062,6 +4062,9 @@ button.player-quick-stats__item:hover {
 .player-dashboard__map-route:nth-child(3) { --route-color: #52e2f3; }
 .player-dashboard__map-route:nth-child(4) { --route-color: #c4c4ce; }
 .player-dashboard__map-route:nth-child(5) { --route-color: #b8a0ff; }
+.player-dashboard__map-route:nth-child(6) { --route-color: #f0b45a; }
+.player-dashboard__map-route:nth-child(7) { --route-color: #7dcea0; }
+.player-dashboard__map-route:nth-child(8) { --route-color: #f97316; }
 .player-dashboard__map-route-nodes {
   display: flex;
   align-items: center;
@@ -4160,6 +4163,7 @@ button.player-quick-stats__item:hover {
 .player-dashboard__badge-card[data-tier="bronze"] .player-dashboard__badge-medallion { color: #66cde7; }
 .player-dashboard__badge-card[data-tier="silver"] .player-dashboard__badge-medallion { color: #d3dbe7; }
 .player-dashboard__badge-card:hover .player-dashboard__badge-medallion {
+  animation: none;
   transform: rotate(-8deg) scale(1.08);
   box-shadow: 0 0 20px rgba(78, 194, 255, 0.16);
 }
@@ -6352,7 +6356,10 @@ button.player-dashboard__hero-medallions-more:focus-visible { outline: 2px solid
   min-height: 38px;
   align-items: center;
   gap: 8px;
-  animation-duration: 38s;
+  animation-name: marquee;
+  animation-duration: 28s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 .player-dashboard .live-feed__ticker-item {
   min-width: 0;
@@ -7791,6 +7798,169 @@ html[data-theme="warm"] .landing {
 }
 .landing-footer p { margin: 0; color: var(--landing-muted); font-size: 0.85rem; }
 .landing-footer__tag { font-size: 0.75rem !important; letter-spacing: 0.06em; }
+
+@keyframes ui-icon-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.06); }
+}
+@keyframes ui-icon-glow {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 0 7px rgba(94, 234, 212, 0.55)); }
+}
+@keyframes feed-card-in {
+  from { opacity: 0; transform: translateX(22px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes feed-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.ui-live-icon,
+.player-dashboard__hero-route-icon,
+.player-dashboard__path-icon,
+.player-dashboard__map-route-icon,
+.player-dashboard__mvp-crown,
+.player-dashboard__scoreboard-icon,
+.player-dashboard__badge-medallion,
+.player-dashboard__feed-ticker-label > span,
+.landing-brand__mark,
+.landing-features__icon,
+.educator-stat__icon,
+.educator-card__header-icon,
+.educator-dashboard__hero-mark,
+.map-campaign-card__icon,
+.map-node-button {
+  animation: ui-icon-breathe 3.8s ease-in-out infinite;
+}
+.ui-live-icon svg,
+.player-dashboard__hero-route-icon svg,
+.player-dashboard__path-icon svg,
+.player-dashboard__map-route-icon svg,
+.player-dashboard__mvp-crown svg,
+.player-dashboard__scoreboard-icon svg,
+.landing-brand__mark svg,
+.map-campaign-card__icon svg,
+.map-node.is-current .map-node-button svg {
+  animation: ui-icon-glow 2.8s ease-in-out infinite;
+}
+.player-dashboard__map-route:nth-child(2n) .player-dashboard__map-route-icon { animation-delay: 0.45s; }
+.player-dashboard__map-route:nth-child(3n) .player-dashboard__map-route-icon { animation-delay: 0.9s; }
+.player-dashboard__badge-card:nth-child(2n) .player-dashboard__badge-medallion { animation-delay: 0.35s; }
+.player-dashboard__badge-card:nth-child(3n) .player-dashboard__badge-medallion { animation-delay: 0.7s; }
+nav .ui-live-icon:nth-child(2n) { animation-delay: 0.4s; }
+
+.live-feed__carousel {
+  display: grid;
+  gap: 8px;
+  min-height: 92px;
+}
+.live-feed__slide {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(125, 211, 232, 0.18);
+  border-radius: 12px;
+  background:
+    linear-gradient(110deg, rgba(34, 211, 238, 0.08), transparent 42%),
+    rgba(255, 255, 255, 0.025);
+  animation: feed-card-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.live-feed__slide .live-feed__event-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.live-feed__slide .live-feed__event-copy strong {
+  color: #e7f7f8;
+  font-size: 0.78rem;
+}
+.live-feed__slide .live-feed__event-copy p {
+  margin: 0;
+  overflow: hidden;
+  color: #c5d4d6;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.live-feed__slide time {
+  color: #8ea3a7;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+.live-feed__carousel-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.live-feed__carousel-bar > span:first-child {
+  height: 3px;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.live-feed__carousel-bar > span:first-child::after {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #67e8f9;
+  transform-origin: left center;
+  animation: feed-progress 4.2s linear;
+  content: "";
+}
+.live-feed__carousel-bar > span.is-paused::after { animation-play-state: paused; }
+.live-feed__carousel-bar button,
+.live-feed__carousel-count {
+  border: 0;
+  background: transparent;
+  color: #9fb4b8;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.live-feed__carousel-bar button { cursor: pointer; }
+.live-feed__carousel-bar button:hover { color: #e7f7f8; }
+.player-dashboard .live-feed__ticker-icon {
+  animation: ui-icon-breathe 2.6s ease-in-out infinite;
+}
+.educator-live-dot {
+  animation: dashboard-status-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-live-icon,
+  .ui-live-icon svg,
+  .player-dashboard__hero-route-icon,
+  .player-dashboard__hero-route-icon svg,
+  .player-dashboard__path-icon,
+  .player-dashboard__path-icon svg,
+  .player-dashboard__map-route-icon,
+  .player-dashboard__map-route-icon svg,
+  .player-dashboard__mvp-crown,
+  .player-dashboard__mvp-crown svg,
+  .player-dashboard__scoreboard-icon,
+  .player-dashboard__scoreboard-icon svg,
+  .player-dashboard__badge-medallion,
+  .player-dashboard__feed-ticker-label > span,
+  .landing-brand__mark,
+  .landing-brand__mark svg,
+  .landing-features__icon,
+  .educator-stat__icon,
+  .educator-card__header-icon,
+  .educator-dashboard__hero-mark,
+  .map-campaign-card__icon,
+  .map-campaign-card__icon svg,
+  .map-node-button,
+  .map-node.is-current .map-node-button svg,
+  .player-dashboard .live-feed__ticker-icon,
+  .live-feed__slide,
+  .live-feed__carousel-bar > span:first-child::after,
+  .educator-live-dot {
+    animation: none;
+  }
+}
 @media (max-width: 960px) {
   .landing-hero { grid-template-columns: minmax(0, 1fr); padding: 44px 0 40px; }
   .landing-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -1,4 +1,45 @@
-type Props = { name: string; className?: string; size?: number };
+import { createElement, type ReactNode } from "react";
+import { AVATAR_GLYPHS } from "../lib/avatarGlyphs";
+
+type Props = { name: string; className?: string; size?: number; variant?: "line" | "glyph" };
+
+const SVG_ATTR: Record<string, string> = {
+  "fill-rule": "fillRule",
+  "stroke-width": "strokeWidth",
+  "stroke-linecap": "strokeLinecap",
+  "stroke-linejoin": "strokeLinejoin",
+};
+
+function glyphMarkup(glyph: string): string {
+  if (glyph.includes("<")) return glyph;
+  return glyph
+    .split("||")
+    .map((d) => `<path fill-rule="evenodd" d="${d}"/>`)
+    .join("");
+}
+
+const glyphCache = new Map<string, ReactNode>();
+
+function svgToReact(node: Element, key: number | string): ReactNode {
+  const props: Record<string, string | number> = { key };
+  for (const attr of node.attributes) props[SVG_ATTR[attr.name] ?? attr.name] = attr.value;
+  const children = [...node.children].map((child, index) => svgToReact(child, `${key}-${index}`));
+  return createElement(node.tagName, props, children.length ? children : undefined);
+}
+
+function glyphChildren(markup: string): ReactNode {
+  const cached = glyphCache.get(markup);
+  if (cached) return cached;
+  if (typeof DOMParser === "undefined") return null;
+  const doc = new DOMParser().parseFromString(
+    `<svg xmlns="http://www.w3.org/2000/svg">${markup}</svg>`,
+    "image/svg+xml",
+  );
+  if (doc.querySelector("parsererror")) return null;
+  const nodes = [...doc.documentElement.children].map((child, index) => svgToReact(child, index));
+  glyphCache.set(markup, nodes);
+  return nodes;
+}
 
 const paths: Record<string, string> = {
   terminal:
@@ -111,9 +152,32 @@ export const MODULE_ICON: Record<string, string> = {
   "dfir-memory": "cpu",
   "dfir-container": "layers",
   "dfir-passwords": "key",
+  "ssh-svc-recon": "radar",
+  "ssh-svc-auth": "lock",
+  "ssh-svc-creds": "key",
+  "ssh-svc-harden": "shield",
+  "ssh-svc-lab": "layers",
 };
 
-export default function Icon({ name, className = "w-5 h-5", size }: Props) {
+export default function Icon({ name, className = "w-5 h-5", size, variant = "line" }: Props) {
+  if (variant === "glyph") {
+    const glyph = AVATAR_GLYPHS[name];
+    const children = glyph ? glyphChildren(glyphMarkup(glyph)) : null;
+    if (children) {
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          className={className}
+          width={size}
+          height={size}
+          aria-hidden
+        >
+          {children}
+        </svg>
+      );
+    }
+  }
   const d = paths[name] || paths.spark;
   return (
     <svg

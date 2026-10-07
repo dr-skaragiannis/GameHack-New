@@ -1,15 +1,18 @@
 import Icon from "./Icon";
+import { AVATAR_CATEGORIES, AVATAR_COLOR, AVATAR_COLORS, AVATAR_ICONS } from "../lib/avatarCatalog";
 import { cn } from "../utils/cn";
 
 const ICON_FALLBACK = "skull";
 
+export { AVATAR_CATEGORIES, AVATAR_COLORS, AVATAR_ICONS };
+
 export function parseAvatar(src: string): { kind: "icon"; name: string; color: string } | { kind: "img"; url: string } {
   if (src?.startsWith("ic:")) {
     const parts = src.split(":");
-    return { kind: "icon", name: parts[1] || ICON_FALLBACK, color: parts[2] || "#06b6d4" };
+    return { kind: "icon", name: parts[1] || ICON_FALLBACK, color: parts[2] || AVATAR_COLOR };
   }
   if (src?.startsWith("data:") || src?.startsWith("http")) return { kind: "img", url: src };
-  return { kind: "icon", name: ICON_FALLBACK, color: "#06b6d4" };
+  return { kind: "icon", name: ICON_FALLBACK, color: AVATAR_COLOR };
 }
 
 export default function Avatar({
@@ -49,12 +52,18 @@ export default function Avatar({
 
   return (
     <div
-      className={cn("rounded-full grid place-items-center ring-1 ring-white/10 shrink-0", className)}
-      style={{ width: size, height: size, background: `${a.color}22`, color: a.color }}
+      className={cn("rounded-full grid place-items-center ring-1 ring-white/15 shrink-0", className)}
+      style={{
+        width: size,
+        height: size,
+        background: `radial-gradient(circle at 34% 28%, ${a.color}66, ${a.color}1c 70%)`,
+        color: a.color,
+        boxShadow: `inset 0 0 0 1.5px ${a.color}80`,
+      }}
       title={name}
     >
       {src ? (
-        <Icon name={a.name} className="w-[58%] h-[58%]" />
+        <Icon name={a.name} variant="glyph" className="w-[64%] h-[64%]" />
       ) : (
         <span className="font-bold tracking-wide" style={{ fontSize: Math.max(14, Math.round(size * 0.32)) }}>{initials}</span>
       )}
@@ -62,36 +71,4 @@ export default function Avatar({
   );
 }
 
-export const AVATAR_CATEGORIES: { id: string; labelKey: string; icons: string[] }[] = [
-  { id: "cyberpunk", labelKey: "avatarCatCyberpunk", icons: ["cybereye", "cpu", "qubit", "atom", "radar", "terminal"] },
-  { id: "vampire", labelKey: "avatarCatVampire", icons: ["vampire", "skull", "bat", "ghost", "raven", "wolf"] },
-  { id: "nordic", labelKey: "avatarCatNordic", icons: ["rune", "hammer", "shield", "owl", "crown", "wolf"] },
-  { id: "fantasy", labelKey: "avatarCatFantasy", icons: ["dragon", "phoenix", "wyvern", "wand", "crown", "spark"] },
-  { id: "cute", labelKey: "avatarCatCute", icons: ["cat", "ghost", "owl", "spark", "bulb", "bug"] },
-  { id: "halloween", labelKey: "avatarCatHalloween", icons: ["pumpkin", "bat", "vampire", "skull", "ghost", "raven"] },
-];
 
-export const AVATAR_ICONS = [
-  "skull",
-  "terminal",
-  "ghost",
-  "dragon",
-  "bug",
-  "shield",
-  "radar",
-  "wolf",
-  "owl",
-  "raven",
-  "phoenix",
-  "atom",
-  "cpu",
-  "qubit",
-  "cybereye",
-  "wyvern",
-  "crown",
-  "hammer",
-  "target",
-  "spark",
-];
-
-export const AVATAR_COLORS = ["#06b6d4", "#22d3ee", "#3ddc84", "#a78bfa", "#fcd34d", "#f472b6", "#38bdf8", "#fb7185"];
