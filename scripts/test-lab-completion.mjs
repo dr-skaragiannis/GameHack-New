@@ -241,7 +241,33 @@ try {
     }
   }
 
-  console.log(`Lab completion checks passed: an authored lab with no quiz completes directly, a quiz-backed lab still routes through its quiz, the prompt only shows on a finished lab, both languages are labelled, a revealed hint renders in the reader's language, and ${tabMounts} lab mounts across all ${lessons.LEARNING_PATHS.length} learning paths show Lab then Theory with no Study guide.`);
+  // ── "Try in terminal" survived the Study guide's removal ─────────────────
+  // The Study guide tab was the only thing that could prefill the terminal. The
+  // command reference now lives in the Theory deep dives, so the button lives
+  // there too; without it commandSuggestion could never be set again.
+  const tryView = mount({
+    module: lessons.LEARNING_PATHS[0].modules[0], campaignId: lessons.LEARNING_PATHS[0].id,
+    lang: "en", initialTab: "theory", done: [], hasQuiz: true, hasAssessment: true,
+  });
+  const tryButtons = [...tryView.container.querySelectorAll("button")]
+    .filter((b) => b.textContent.includes("Try in terminal"));
+  assert.ok(tryButtons.length > 0, "the Theory deep dives should still offer Try in terminal");
+  const example = tryButtons[0].getAttribute("aria-label").replace(/^Try in terminal: /, "");
+  assert.ok(example.trim(), "the button should name the command it will run");
+  act(() => { tryButtons[0].dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })); });
+  assert.equal(
+    tryView.container.querySelector(".module-topbar__tab.is-active")?.textContent.trim(),
+    "Lab",
+    "Try in terminal should switch to the Lab tab",
+  );
+  assert.equal(
+    tryView.container.querySelector("textarea, input[type=text]")?.value,
+    example,
+    "Try in terminal should prefill the terminal with the example",
+  );
+  unmount(tryView);
+
+  console.log(`Lab completion checks passed: an authored lab with no quiz completes directly, a quiz-backed lab still routes through its quiz, the prompt only shows on a finished lab, both languages are labelled, a revealed hint renders in the reader's language, ${tabMounts} lab mounts across all ${lessons.LEARNING_PATHS.length} learning paths show Lab then Theory with no Study guide, and Try in terminal still prefills the terminal from the Theory deep dives.`);
 } finally {
   await server.close();
 }

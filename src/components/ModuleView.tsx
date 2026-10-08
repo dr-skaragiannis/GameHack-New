@@ -388,6 +388,27 @@ export default function ModuleView({
                           <code className="mt-1 block whitespace-pre-wrap break-words text-sm text-zinc-200">{item.guide.syntax}</code>
                         </div>
                       )}
+                      {item.guide?.example && (
+                        <div className="mt-3 rounded-lg border border-gamehack-border bg-black/40 p-3">
+                          <div className="text-sm text-iron-400">{t("commandExample", lang)}</div>
+                          <code className="mt-1 block whitespace-pre-wrap break-words text-sm text-zinc-200">{item.guide.example}</code>
+                          <button
+                            type="button"
+                            aria-label={`${t("tryInTerminal", lang)}: ${item.guide.example}`}
+                            onClick={() => {
+                              const example = item.guide?.example;
+                              if (!example) return;
+                              setCommandSuggestion(example);
+                              setTab("lab");
+                              sound.popup();
+                            }}
+                            className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 px-2.5 py-1.5 text-xs font-semibold text-cyan-200 transition-colors hover:border-cyan-400 hover:bg-cyan-500/10"
+                          >
+                            <Icon name="terminal" className="h-3.5 w-3.5" />
+                            {t("tryInTerminal", lang)}
+                          </button>
+                        </div>
+                      )}
                     </article>
                   ))}
                 </div>

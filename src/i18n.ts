@@ -76,6 +76,7 @@ export const UI: Dict = {
   commandOutput: { en: "Reading the output", el: "Ερμηνεία εξόδου" },
   commandBoundary: { en: "Boundary", el: "Όριο" },
   commandExample: { en: "Example", el: "Παράδειγμα" },
+  tryInTerminal: { en: "Try in terminal", el: "Δοκίμασέ την στο τερματικό" },
   commandSyntax: { en: "Syntax", el: "Σύνταξη" },
   lab: { en: "Lab", el: "Εργαστήριο" },
   objectives: { en: "Objectives", el: "Στόχοι" },
