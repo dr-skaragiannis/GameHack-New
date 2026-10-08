@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   accuracyScore,
   BADGES,
+  extractOwnArchive,
   fidelityScore,
   HOBBIES_POOL,
   INTERESTS_POOL,
@@ -9,6 +10,7 @@ import {
   updateUser,
   type User,
 } from "../lib/db";
+import { downloadJsonFile } from "../lib/courseExport";
 import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import Avatar from "./Avatar";
 import AvatarPicker from "./AvatarPicker";
@@ -47,6 +49,9 @@ export default function ProfileView({
   const [recoveryError, setRecoveryError] = useState("");
   const [recoveryNotice, setRecoveryNotice] = useState("");
   const [recoveryBusy, setRecoveryBusy] = useState(false);
+  const [issueNewKey, setIssueNewKey] = useState(false);
+  const [dataNotice, setDataNotice] = useState("");
+  const [dataBusy, setDataBusy] = useState(false);
   const canManageAuth = mine && user.role === "player" && user.id.toLowerCase().endsWith("@ionio.gr");
 
   useEffect(() => {
@@ -136,6 +141,23 @@ export default function ProfileView({
       setRecoveryError(t("authServerUnavailable", lang));
     } finally {
       setRecoveryBusy(false);
+    }
+  };
+
+  const downloadMyData = () => {
+    setDataNotice("");
+    setDataBusy(true);
+    try {
+      const built = extractOwnArchive(user.id, issueNewKey);
+      if (!built) return;
+      downloadJsonFile(`gamehack-account-${user.username}.json`, `${JSON.stringify(built.archive, null, 2)}\n`);
+      setDataNotice(
+        issueNewKey && built.recoveryKey
+          ? `${t("downloadMyDataSaved", lang)} ${t("recoveryKeyIssued", lang)}`
+          : t("downloadMyDataSaved", lang),
+      );
+    } finally {
+      setDataBusy(false);
     }
   };
 
@@ -286,6 +308,37 @@ export default function ProfileView({
               {recoveryBusy ? t("working", lang) : t("downloadRecoveryKey", lang)}
             </button>
           </div>
+        </section>
+      )}
+
+      {mine && (
+        <section className="glass rounded-2xl border border-gamehack-border p-6 space-y-4" aria-labelledby="data-backup-title">
+          <h2 id="data-backup-title" className="text-lg font-semibold text-zinc-100">{t("dataBackup", lang)}</h2>
+          <p className="text-sm leading-relaxed text-iron-400">{t("dataBackupHint", lang)}</p>
+
+          <label className="flex items-start gap-3 rounded-xl border border-gamehack-border bg-black/20 p-4">
+            <input
+              type="checkbox"
+              checked={issueNewKey}
+              onChange={(event) => setIssueNewKey(event.target.checked)}
+              className="mt-0.5 h-4 w-4 accent-cyan-400"
+            />
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-zinc-200">{t("issueNewRecoveryKey", lang)}</span>
+              <span className="mt-1 block text-sm leading-relaxed text-iron-400">{t("issueNewRecoveryKeyWarning", lang)}</span>
+            </span>
+          </label>
+
+          {dataNotice && <p role="status" className="text-sm text-neon-green">{dataNotice}</p>}
+          <button
+            type="button"
+            onClick={downloadMyData}
+            disabled={dataBusy}
+            className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 hover:bg-cyan-500/20 disabled:cursor-wait disabled:opacity-60"
+          >
+            <Icon name="download" className="h-4 w-4" />
+            {dataBusy ? t("working", lang) : t("downloadMyData", lang)}
+          </button>
         </section>
       )}
 

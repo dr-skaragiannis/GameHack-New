@@ -49,7 +49,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-function recoveryKey(): string {
+/** A fresh 43-character recovery key. Exported so a self-service data download
+ *  can mint one on request; the plaintext is never stored, only its hash. */
+export function recoveryKey(): string {
   const bytes = randomBytes(32);
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);

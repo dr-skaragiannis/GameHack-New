@@ -1,8 +1,19 @@
 import type { Lang } from "../i18n";
 import { AVATAR_COLORS, AVATAR_ICONS } from "./avatarCatalog";
 import { hashPassword, isScryptHash, verifyPassword } from "./passwordHash";
-import { buildPlayerArchive, hashRecoveryKey, passwordHashForImport, type PlayerArchive } from "./playerArchive";
+import {
+  buildPlayerArchive,
+  entryFromUser,
+  hashRecoveryKey,
+  passwordHashForImport,
+  PLAYER_ARCHIVE_FORMAT,
+  PLAYER_ARCHIVE_VERSION,
+  recoveryKey,
+  type PlayerArchive,
+  type RecoveryKeyFileRecord,
+} from "./playerArchive";
 import { emptyOverlay, type AuthoredModule, type ContentOverlay } from "./contentAuthoring";
+import { buildCourseExport, type CourseExport } from "./courseExport";
 
 export type Role = "player" | "educator";
 export type ContentWidth = "centered" | "wide" | "full";
@@ -1435,6 +1446,56 @@ export function extractPlayerArchive(): PlayerArchive {
   });
   saveDB();
   return built.archive;
+}
+
+/**
+ * A self-service backup of one account.
+ *
+ * The plaintext recovery key is never stored anywhere — only its hash — so an
+ * export cannot contain the key the user already has. Passing
+ * `issueNewRecoveryKey` mints a replacement, persists its hash and embeds the
+ * plaintext in the file; the previous key stops working, which is why the UI
+ * leaves this off by default and warns before turning it on.
+ */
+export function extractOwnArchive(
+  userId: string,
+  issueNewRecoveryKey = false,
+): { archive: PlayerArchive; recoveryKey: string | null } | null {
+  const db = getDB();
+  upgradePasswordHashes(db);
+  const user = db.users.find((candidate) => candidate.id === userId);
+  if (!user) return null;
+
+  let recoveryKeyPlaintext: string | null = null;
+  let recoveryKeyFile: RecoveryKeyFileRecord | null = null;
+  if (issueNewRecoveryKey) {
+    recoveryKeyPlaintext = recoveryKey();
+    user.recoveryKeyHash = hashRecoveryKey(recoveryKeyPlaintext);
+    recoveryKeyFile = {
+      format: "gamehack-recovery-key",
+      version: 1,
+      email: user.username,
+      recoveryKey: recoveryKeyPlaintext,
+    };
+    saveDB();
+  }
+
+  const archive: PlayerArchive = {
+    format: PLAYER_ARCHIVE_FORMAT,
+    version: PLAYER_ARCHIVE_VERSION,
+    exportedAt: new Date().toISOString(),
+    passwordStorage: "scrypt",
+    recoveryKeyStorage: "sha256",
+    players: [entryFromUser(user, recoveryKeyFile)],
+  };
+  return { archive, recoveryKey: recoveryKeyPlaintext };
+}
+
+/** The full effective course catalogue — built-in paths merged with authored
+ *  edits — as plain JSON. Objective tests are closures, so they are marked
+ *  rather than silently dropped. */
+export function exportCourseCatalog(overlay?: ContentOverlay): CourseExport {
+  return buildCourseExport(overlay ?? getDB().contentOverlay);
 }
 
 export async function importPlayerArchive(archive: PlayerArchive, currentUserId?: string): Promise<number> {

@@ -19,6 +19,7 @@
     "test:demo": "node scripts/test-demo-accounts.mjs",
     "test:auth": "node scripts/test-auth.mjs",
     "test:whyhow": "node scripts/test-whyhow.mjs",
+    "test:export": "node scripts/test-data-export.mjs",
     "preview": "npm start",
     "start": "node server/index.mjs"
   },

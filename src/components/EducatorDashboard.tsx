@@ -5,6 +5,7 @@ import {
   assignPlayerToTeam,
   commandExecutions,
   createTeam,
+  exportCourseCatalog,
   extractPlayerArchive,
   importPlayerArchive,
   fidelityScore,
@@ -23,6 +24,7 @@ import { type ContentOverlay } from "../lib/contentAuthoring";
 import { getContentOverlay, saveContentOverlay } from "../lib/db";
 import ContentEditor from "./ContentEditor";
 import { parsePlayerArchive, type PlayerArchive } from "../lib/playerArchive";
+import { courseExportFilename, downloadJsonFile, serialiseCourseExport } from "../lib/courseExport";
 import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import Avatar from "./Avatar";
 import LiveFeed from "./LiveFeed";
@@ -250,6 +252,7 @@ export default function EducatorDashboard({
   const [teamFeedback, setTeamFeedback] = useState("");
   const [assignTargets, setAssignTargets] = useState<Record<string, string>>({});
   const [archiveMessage, setArchiveMessage] = useState("");
+  const [courseMessage, setCourseMessage] = useState("");
   const [pendingArchive, setPendingArchive] = useState<PlayerArchive | null>(null);
   const archiveInput = useRef<HTMLInputElement>(null);
 
@@ -503,6 +506,22 @@ export default function EducatorDashboard({
                   });
                 }}
               />
+            </div>
+          </section>
+          <section className="educator-card educator-archive">
+            <div>
+              <div className="educator-eyebrow">{uppercaseLabel(t("learningPathsExport", lang), lang)}</div>
+              <h2>{t("learningPathsExport", lang)}</h2>
+              <p>{t("learningPathsExportHint", lang)}</p>
+              {courseMessage && <p className="educator-archive__status">{courseMessage}</p>}
+            </div>
+            <div className="educator-archive__actions">
+              <button type="button" className="educator-lab-map dashboard-action" onClick={() => {
+                downloadJsonFile(courseExportFilename(), serialiseCourseExport(exportCourseCatalog(getContentOverlay())));
+                setCourseMessage(t("learningPathsSaved", lang));
+              }}>
+                <Icon name="download" className="h-4 w-4" />{t("learningPathsExport", lang)}
+              </button>
             </div>
           </section>
           <section className="educator-stat-grid" aria-label={t("playerStatistics", lang)}>
