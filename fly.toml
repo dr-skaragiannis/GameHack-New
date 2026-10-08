@@ -1,0 +1,45 @@
+# Fly.io config. Create the volume once, before the first deploy:
+#   fly launch --no-deploy        # adopts this file and creates the app
+#   fly volumes create gamehack_accounts --size 1 --region ams
+#   fly deploy
+#
+# A Fly volume is attached to one machine in one region, so this app must stay
+# at a single process. Scaling out would give each instance its own separate
+# account store and split the credentials across them.
+app = "gamehack"
+primary_region = "ams"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  AUTH_DATA_FILE = "/var/data/accounts.json"
+
+[mounts]
+  source = "gamehack_accounts"
+  destination = "/var/data"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.checks]
+    [http_service.checks.health]
+      grace_period = "15s"
+      interval = "30s"
+      timeout = "5s"
+      protocol = "http"
+      port = 3000
+      method = "GET"
+      path = "/api/health"
+
+# AUTH_SESSION_SECRET must be set as a Fly secret, not here:
+#   fly secrets set AUTH_SESSION_SECRET="$(openssl rand -hex 32)"
+#   fly secrets set APP_ORIGIN="https://gamehack.fly.dev"
+
+[[vm]]
+  memory = "512mb"
+  processes = 1

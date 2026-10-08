@@ -20,6 +20,7 @@
     "test:auth": "node scripts/test-auth.mjs",
     "test:whyhow": "node scripts/test-whyhow.mjs",
     "test:export": "node scripts/test-data-export.mjs",
+    "test:persistence": "node scripts/test-persistence.mjs",
     "preview": "npm start",
     "start": "node server/index.mjs"
   },

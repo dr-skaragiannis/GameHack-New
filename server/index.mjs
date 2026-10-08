@@ -517,9 +517,49 @@ async function serveStatic(req, res, pathname) {
   }
 }
 
+/**
+ * Whether the account store can actually be written. A read-only or missing
+ * mount means every registration and key rotation is silently lost on restart,
+ * which is the failure this endpoint exists to make visible.
+ */
+async function probePersistence() {
+  const directory = path.dirname(dataFile);
+  let writable = false;
+  try {
+    await fs.mkdir(directory, { recursive: true });
+    const probe = path.join(directory, `.write-probe-${process.pid}`);
+    await fs.writeFile(probe, "ok", { encoding: "utf8" });
+    await fs.rm(probe, { force: true });
+    writable = true;
+  } catch {
+    writable = false;
+  }
+  let persisted = false;
+  try {
+    persisted = (await fs.stat(dataFile)).isFile();
+  } catch {
+    persisted = false;
+  }
+  return { path: dataFile, directory, writable, persisted, accounts: store.accounts.length };
+}
+
+async function handleHealth(req, res) {
+  if (req.method !== "GET" && req.method !== "HEAD") return sendJson(res, 405, { error: "methodNotAllowed" });
+  const persistence = await probePersistence();
+  // The service is up even when the store cannot be written, so report 200 and
+  // let the operator read the flags; a 503 here would only page about a warning.
+  return sendJson(res, 200, {
+    ok: true,
+    persistence,
+    email: mailReady(),
+    stableSessions: Boolean(process.env.AUTH_SESSION_SECRET),
+  });
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", "http://localhost");
+    if (url.pathname === "/api/health") return await handleHealth(req, res);
     if (url.pathname.startsWith("/api/auth/")) return await handleAuth(req, res, url.pathname);
     return await serveStatic(req, res, url.pathname);
   } catch (error) {
@@ -546,6 +586,22 @@ async function upgradePlaintextPasswords() {
 }
 
 await upgradePlaintextPasswords();
+
+// Credentials and recovery keys live only in this file. Report where it is, and
+// shout when it is empty or unwritable, before announcing that the service is
+// up — an operator reading the boot log should hit the diagnosis first, and
+// nothing that watches for "listening" should race the warnings.
+const persistence = await probePersistence();
+console.log(`Account store: ${persistence.path} (${persistence.accounts} account(s), writable: ${persistence.writable}, file present: ${persistence.persisted})`);
+if (!persistence.writable) {
+  console.warn(`The account store directory ${persistence.directory} is not writable. Registrations, password changes and recovery keys will be lost on restart. Mount persistent storage there or set AUTH_DATA_FILE to a durable path.`);
+}
+if (persistence.accounts === 0) {
+  console.warn(`No accounts were found at ${persistence.path}. If this service was deployed before, the previous store was not attached — every registered account and recovery key from it is gone. Mount persistent storage at ${persistence.directory} (see README "Production deployment") so accounts survive a redeploy.`);
+}
+if (!process.env.AUTH_DATA_FILE && persistence.directory.startsWith(rootDir)) {
+  console.warn(`AUTH_DATA_FILE is not set, so the store defaults to ${persistence.path} inside the application directory. In a container that path is part of the image layer and is discarded on every deploy. Set AUTH_DATA_FILE to a mounted volume.`);
+}
 
 server.listen(port, process.env.HOST || "0.0.0.0", () => {
   console.log(`GameHack server listening on ${port}`);
