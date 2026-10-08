@@ -18,6 +18,7 @@ import {
   type CommandExplanation,
 } from "../data/commandGuide";
 import { findLinuxCommand } from "../lib/linuxCommandCatalog";
+import { theoryBlocksForCommand } from "../data/commandTheory";
 import CommandStudyGuide from "./CommandStudyGuide";
 import CommandResultPopup from "./CommandResultPopup";
 import DfirVisual from "./DfirVisual";
@@ -135,31 +136,6 @@ function fieldGuideForTask(task: Task, lang: Lang): { why: string; how: string[]
   const output = lesson?.output[lang].trim() || "";
   const verify = output && !overlapsCopy(output, [...kept, ...how]) ? output : "";
   return { why: why || bi(task.explain, lang), how, verify };
-}
-
-function commandTheoryParagraphs(item: StudyItem, lang: Lang): string[] {
-  if (item.guide) {
-    return [item.guide.purpose[lang], item.guide.mechanics[lang], item.guide.output[lang]];
-  }
-  const catalog = findLinuxCommand(firstCommandName(item.cmd));
-  if (catalog) {
-    return lang === "en"
-      ? [catalog.summary, `Syntax: ${catalog.synopsis}.`, `Example: ${catalog.example}.`]
-      : [
-          bi(item.desc, lang),
-          `Η εντολή ${catalog.name} λειτουργεί με τη σύνταξη ${catalog.synopsis}.`,
-          `Παράδειγμα: ${catalog.example}. Έλεγξε αν η έξοδος ταιριάζει με τον στόχο του εργαστηρίου.`,
-        ];
-  }
-  return [
-    bi(item.desc, lang),
-    lang === "en"
-      ? "Use this shell shortcut to complete or inspect the current input; it does not run a command by itself."
-      : "Χρησιμοποίησε αυτή τη συντόμευση του shell για συμπλήρωση ή έλεγχο της εισόδου, δεν εκτελεί μόνη της εντολή.",
-    lang === "en"
-      ? "Confirm the resulting command or candidate path before pressing Enter."
-      : "Έλεγξε την εντολή ή τη διαδρομή που προέκυψε πριν πατήσεις Enter.",
-  ];
 }
 
 export default function ModuleView({
@@ -385,9 +361,12 @@ export default function ModuleView({
                           <code className="mt-1 block whitespace-pre-wrap break-words text-sm text-cyan-200">{item.cmd}</code>
                         </div>
                       </div>
-                      <div className="mt-3 space-y-2">
-                        {commandTheoryParagraphs(item, lang).map((paragraph, paragraphIndex) => (
-                          <p key={paragraphIndex} className="text-sm text-zinc-300 leading-relaxed">{paragraph}</p>
+                      <div className="mt-3 space-y-3">
+                        {theoryBlocksForCommand(item.cmd, item.guide).map((block, paragraphIndex) => (
+                          <p key={paragraphIndex} className="text-sm text-zinc-300 leading-relaxed">
+                            <span className="mb-1 block text-xs font-medium text-iron-400">{t(block.labelKey, lang)}</span>
+                            {block.text[lang]}
+                          </p>
                         ))}
                       </div>
                       {item.guide?.syntax && (
@@ -395,9 +374,6 @@ export default function ModuleView({
                           <div className="text-sm text-iron-400">{t("commandSyntax", lang)}</div>
                           <code className="mt-1 block whitespace-pre-wrap break-words text-sm text-zinc-200">{item.guide.syntax}</code>
                         </div>
-                      )}
-                      {item.guide?.caution && (
-                        <p className="mt-3 text-sm text-cyan-200/90 leading-relaxed">{item.guide.caution[lang]}</p>
                       )}
                     </article>
                   ))}

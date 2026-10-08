@@ -20,6 +20,13 @@ try {
   const db = await server.ssrLoadModule("/src/lib/db.ts");
   db.resetAll();
   const educator = db.allEducators()[0];
+  assert.match(educator.passwordHash, /^scrypt\$[0-9a-f]{32}\$[0-9a-f]{128}$/i, "local passwords must be stored as salted scrypt hashes");
+  assert.equal(db.login("educator", "teach123").ok, true, "the seeded educator can still sign in after hashing");
+  assert.equal(db.login("nova", "demo").ok, true, "seeded players can still sign in after hashing");
+  assert.equal(db.login("nova", "wrong-password").ok, false);
+  db.logout();
+  const storedPasswords = JSON.parse(values.get("gamehack.platform.v1"));
+  assert.ok(storedPasswords.users.every((user) => !("password" in user) && (!user.passwordHash || user.passwordHash.startsWith("scrypt$"))));
   const seededTeams = db.teamsForEducator(educator.id);
   assert.equal(seededTeams.length, 2, "the demo cohort should have two research teams");
 
@@ -101,6 +108,21 @@ try {
   assert.ok(migrated.teams.some((team) => team.name === "Packet Ops"), "the legacy demo-team name should be rebranded");
   assert.ok(values.has("gamehack.platform.v1"), "the migrated database should be saved under the GameHack key");
   assert.ok(!values.has("hackforge.platform.v1"), "the legacy storage key should be retired after migration");
+
+  const archive = db.extractPlayerArchive();
+  const archiveText = JSON.stringify(archive);
+  assert.equal(archive.format, "gamehack-players");
+  assert.ok(archive.players.length >= 4);
+  assert.equal(archiveText.includes("teach123"), false);
+  assert.equal(archiveText.includes("\"demo\""), false);
+  assert.ok(archive.players.every((player) => !player.password && (!player.passwordHash || player.passwordHash.startsWith("scrypt$"))));
+  const nova = archive.players.find((player) => player.username === "nova");
+  assert.equal(nova.recoveryKeyFile.format, "gamehack-recovery-key");
+  assert.match(nova.recoveryKeyFile.recoveryKey, /^[A-Za-z0-9_-]{43}$/);
+  const university = archive.players.find((player) => player.id === "analyst@ionio.gr");
+  assert.equal(university.recoveryKeyFile, null, "a university recovery key must not be invented locally");
+  const secondArchive = db.extractPlayerArchive();
+  assert.equal(secondArchive.players.find((player) => player.username === "nova").recoveryKeyFile, null);
   console.log("Educator analytics and GameHack storage-migration checks passed: teams, applications, approvals, audit masking, and saved path continuity.");
 } finally {
   await server.close();

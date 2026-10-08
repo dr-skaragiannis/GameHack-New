@@ -9,10 +9,12 @@ export default function OverallScoreboardPopup({
   viewerId,
   lang,
   onClose,
+  onProfile,
 }: {
   viewerId: string;
   lang: Lang;
   onClose: () => void;
+  onProfile: (playerId: string) => void;
 }) {
   const entries = overallScoreboard();
   const totalModules = LEARNING_PATHS.reduce((total, campaign) => total + campaign.modules.length, 0);
@@ -99,11 +101,11 @@ export default function OverallScoreboardPopup({
                     >
                       <td className="px-4 py-2.5 font-mono font-bold text-cyan-400">#{rank}</td>
                       <td className="px-4 py-2.5">
-                        <div className="flex items-center gap-2.5">
+                        <button type="button" className="scoreboard-player" onClick={() => onProfile(user.id)} aria-label={`${t("openProfile", lang)}: ${user.displayName}`}>
                           <Avatar src={user.avatar} name={user.displayName} size={28} />
                           <span className="font-medium text-zinc-100">{user.displayName}</span>
                           {ownRow && <span className="text-xs text-cyan-300">{lang === "en" ? "You" : "Εσύ"}</span>}
-                        </div>
+                        </button>
                       </td>
                       <td className="px-4 py-2.5 text-zinc-300">{levelFromXp(user.metrics.xp).level}</td>
                       <td className="px-4 py-2.5 text-right font-semibold text-cyan-300">{user.metrics.xp}</td>

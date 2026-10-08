@@ -10,7 +10,7 @@ import { cn } from "./utils/cn";
 import AuthScreen from "./components/AuthScreen";
 import HomePage from "./components/HomePage";
 import PlayerDashboard from "./components/PlayerDashboard";
-import EducatorDashboard from "./components/EducatorDashboard";
+import EducatorDashboard, { EducatorLabCatalog } from "./components/EducatorDashboard";
 import InteractiveMap from "./components/InteractiveMap";
 import ModuleView from "./components/ModuleView";
 import ProfileView from "./components/ProfileView";
@@ -141,6 +141,7 @@ export default function App() {
   const [badgeId, setBadgeId] = useState<string | null>(null);
   const [quizFor, setQuizFor] = useState<string | null>(null);
   const [scoreboardOpen, setScoreboardOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [loggedOutView, setLoggedOutView] = useState<{ name: "home" } | { name: "auth"; mode: "in" | "up" }>({ name: "home" });
   const [landingLang, setLandingLang] = useState<Lang>("en");
@@ -241,6 +242,27 @@ export default function App() {
   const unread = db.inboxFor(user.id).filter((m) => !m.read).length;
   const openTickets = db.ticketsFor(user).filter((x) => x.status === "open").length;
 
+  const openProfile = (id: string) => {
+    setProfileId(id);
+    setScoreboardOpen(false);
+    go("profile");
+  };
+
+  const askLogout = () => {
+    setAccountMenuOpen(false);
+    setMobile(false);
+    setLogoutConfirmOpen(true);
+  };
+
+  useEffect(() => {
+    if (!logoutConfirmOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLogoutConfirmOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [logoutConfirmOpen]);
+
   const go = (v: View) => {
     sound.nav();
     setView(v);
@@ -264,7 +286,7 @@ export default function App() {
     const modules = [...selectedCampaign.modules].sort((a, b) => a.order - b.order);
     const firstAvailable = modules.find((module, index) =>
       !user.progress[module.id]?.completed &&
-      (index === 0 || !!user.progress[modules[index - 1].id]?.completed)
+      (user.role === "educator" || index === 0 || !!user.progress[modules[index - 1].id]?.completed)
     );
     const selectedModule = firstAvailable || modules[0];
     if (selectedModule) openModule(cid, selectedModule.id, "theory");
@@ -516,7 +538,7 @@ export default function App() {
               <button
                 type="button"
                 role="menuitem"
-                onClick={logout}
+                onClick={askLogout}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-200"
               >
                 <Icon name="logout" className="h-4 w-4" />
@@ -562,18 +584,18 @@ export default function App() {
     <div
       className="gamehack-grid min-h-full flex"
       data-sidebar={collapsed ? "collapsed" : "open"}
-      style={{ ["--app-sidebar-width" as string]: collapsed ? "72px" : "15rem" }}
+      style={{ ["--app-sidebar-width" as string]: collapsed ? "52px" : "15rem" }}
     >
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-30 flex flex-col border-r border-gamehack-border bg-gamehack-panel/95 backdrop-blur-md transition-all lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:self-start",
-          collapsed ? "w-[72px]" : "w-60",
+          collapsed ? "w-[52px]" : "w-60",
           mobile ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        <div className={cn("relative flex h-16 items-center border-b border-gamehack-border", collapsed ? "justify-center px-2" : "gap-2.5 px-4 pr-8")}>
-          <div className="ui-live-icon grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-700 shadow-lg shadow-cyan-900/40">
-            <Icon name="cybereye" className="h-5 w-5 text-white" />
+        <div className={cn("relative flex items-center border-b border-gamehack-border", collapsed ? "h-12 justify-center px-1" : "h-16 gap-2.5 px-4 pr-8")}>
+          <div className={cn("sidebar-brand ui-live-icon grid shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-700 shadow-lg shadow-cyan-900/40", collapsed ? "h-8 w-8" : "h-10 w-10")}>
+            <Icon name="cybereye" className={cn("text-white", collapsed ? "h-4 w-4" : "h-5 w-5")} />
           </div>
           {!collapsed && (
             <div className="min-w-0">
@@ -601,7 +623,7 @@ export default function App() {
             </svg>
           </button>
         </div>
-        <nav className="min-h-0 flex-1 overflow-y-auto p-2">
+        <nav className={cn("sidebar-nav min-h-0 flex-1 overflow-y-auto", collapsed ? "p-1" : "p-2")}>
           {sidebarSections.map((section) => {
             const items = nav.filter((n) => n.show && section.ids.includes(n.id));
             if (!items.length) return null;
@@ -621,7 +643,8 @@ export default function App() {
                       title={n.label}
                       aria-current={view === n.id ? "page" : undefined}
                       className={cn(
-                        "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition",
+                        "w-full flex items-center gap-3 rounded-xl text-sm transition",
+                        collapsed ? "justify-center px-0 py-1.5" : "px-3 py-2.5",
                         view === n.id
                           ? "bg-cyan-600/20 font-semibold text-cyan-300"
                           : "text-iron-400 hover:bg-white/5 hover:text-zinc-200",
@@ -629,7 +652,7 @@ export default function App() {
                       )}
                     >
                       <span className="ui-live-icon relative">
-                        <Icon name={n.icon} className="w-5 h-5" />
+                        <Icon name={n.icon} className={collapsed ? "h-4 w-4" : "h-5 w-5"} />
                         {!n.quietBadge && !!n.badge && n.badge > 0 && (
                           <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-cyan-500" />
                         )}
@@ -683,10 +706,10 @@ export default function App() {
           )}
           <button
             type="button"
-            onClick={logout}
-            className={cn("w-full flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-iron-400 hover:text-rose-300", collapsed && "justify-center")}
+            onClick={askLogout}
+            className={cn("w-full flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-iron-400 hover:text-rose-300", collapsed && "justify-center px-0")}
           >
-            <Icon name="logout" className="h-4 w-4" />
+            <Icon name="logout" className={collapsed ? "h-3.5 w-3.5" : "h-4 w-4"} />
             {!collapsed && t("logout", lang)}
           </button>
         </div>
@@ -712,12 +735,18 @@ export default function App() {
               onCampaign={openCampaign}
               onOpenScoreboard={() => setScoreboardOpen(true)}
               onBadge={setBadgeId}
+              onProfile={openProfile}
             />
           )}
           {view === "dashboard" && user.role === "educator" && (
             <EducatorDashboard
               user={db.userById(user.id)!}
               lang={lang}
+              onOpenLab={openModule}
+              onShowMap={(id) => {
+                setCampaignId(id);
+                go("map");
+              }}
               onProfile={(id) => {
                 setProfileId(id);
                 go("profile");
@@ -728,6 +757,11 @@ export default function App() {
             <EducatorDashboard
               user={db.userById(user.id)!}
               lang={lang}
+              onOpenLab={openModule}
+              onShowMap={(id) => {
+                setCampaignId(id);
+                go("map");
+              }}
               onProfile={(id) => {
                 setProfileId(id);
                 go("profile");
@@ -735,9 +769,26 @@ export default function App() {
             />
           )}
           {view === "map" && (
-            <InteractiveMap lang={lang} user={db.userById(user.id)!} onOpen={openModule} selectedCampaignId={campaignId} />
+            <InteractiveMap lang={lang} user={db.userById(user.id)!} onOpen={openModule} onProfile={openProfile} selectedCampaignId={campaignId} />
           )}
-          {view === "campaigns" && (
+          {view === "campaigns" && user.role === "educator" && (
+            <div className="space-y-6">
+              <div>
+                <div className="text-sm uppercase tracking-[0.25em] text-cyan-400">{uppercaseLabel(t("campaigns", lang), lang)}</div>
+                <h1 className="text-3xl font-bold mt-1">{t("allLabs", lang)}</h1>
+                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-iron-400">{t("educatorLabsHint", lang)}</p>
+              </div>
+              <EducatorLabCatalog
+                lang={lang}
+                onOpen={openModule}
+                onShowMap={(id) => {
+                  setCampaignId(id);
+                  go("map");
+                }}
+              />
+            </div>
+          )}
+          {view === "campaigns" && user.role !== "educator" && (
             <div className="space-y-6">
               <div>
                 <div className="text-sm uppercase tracking-[0.25em] text-cyan-400">{uppercaseLabel(t("campaigns", lang), lang)}</div>
@@ -865,11 +916,30 @@ export default function App() {
         </main>
       </div>
 
+      {logoutConfirmOpen && (
+        <div
+          className="dashboard-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setLogoutConfirmOpen(false);
+          }}
+        >
+          <section className="confirm-dialog dashboard-modal-surface" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title">
+            <h2 id="logout-confirm-title">{t("logoutConfirmTitle", lang)}</h2>
+            <p>{t("logoutConfirmBody", lang)}</p>
+            <div className="confirm-dialog__actions">
+              <button type="button" className="dashboard-action" onClick={() => setLogoutConfirmOpen(false)}>{t("cancel", lang)}</button>
+              <button type="button" className="dashboard-action confirm-dialog__danger" onClick={() => { setLogoutConfirmOpen(false); logout(); }}>{t("logout", lang)}</button>
+            </div>
+          </section>
+        </div>
+      )}
       {scoreboardOpen && (
         <OverallScoreboardPopup
           viewerId={user.id}
           lang={lang}
           onClose={() => setScoreboardOpen(false)}
+          onProfile={openProfile}
         />
       )}
       {badgeId && <BadgeModal badgeId={badgeId} lang={lang} onClose={() => setBadgeId(null)} />}

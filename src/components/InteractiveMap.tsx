@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { CAMPAIGNS, LEARNING_PATHS, type Campaign, type Module } from "../data/lessons";
 import {
   allPlayers,
@@ -21,9 +21,39 @@ function orderedModules(campaign: Campaign) {
   return [...campaign.modules].sort((a, b) => a.order - b.order);
 }
 
-function progressState(module: Module, index: number, ordered: Module[], progress: User["progress"]) {
+type MapView = { x: number; y: number; scale: number };
+type MapFocus = { campaignId: string; moduleId?: string; token: number };
+
+const MAP_MIN_SCALE = 0.34;
+const MAP_MAX_SCALE = 2.4;
+
+function clampMapScale(scale: number) {
+  if (!Number.isFinite(scale)) return 1;
+  return Math.min(MAP_MAX_SCALE, Math.max(MAP_MIN_SCALE, scale));
+}
+
+function clampMapView(view: MapView, viewport: HTMLElement, width: number, height: number): MapView {
+  const scale = clampMapScale(view.scale);
+  if (viewport.clientWidth < 8 || viewport.clientHeight < 8) return { ...view, scale };
+  const scaledW = width * scale;
+  const scaledH = height * scale;
+  const pad = 64;
+  const fitsX = scaledW + pad * 2 <= viewport.clientWidth;
+  const fitsY = scaledH + pad * 2 <= viewport.clientHeight;
+  const minX = fitsX ? (viewport.clientWidth - scaledW) / 2 : viewport.clientWidth - scaledW - pad;
+  const maxX = fitsX ? minX : pad;
+  const minY = fitsY ? (viewport.clientHeight - scaledH) / 2 : viewport.clientHeight - scaledH - pad;
+  const maxY = fitsY ? minY : pad;
+  return {
+    scale,
+    x: Math.min(maxX, Math.max(minX, view.x)),
+    y: Math.min(maxY, Math.max(minY, view.y)),
+  };
+}
+
+function progressState(module: Module, index: number, ordered: Module[], progress: User["progress"], unlockAll = false) {
   const saved = progress[module.id];
-  const unlocked = index === 0 || !!progress[ordered[index - 1].id]?.completed;
+  const unlocked = unlockAll || index === 0 || !!progress[ordered[index - 1].id]?.completed;
   if (saved?.completed) return "done" as const;
   if (saved?.done.length) return "progress" as const;
   if (unlocked) return "open" as const;
@@ -74,12 +104,14 @@ export default function InteractiveMap({
   lang,
   user,
   onOpen,
+  onProfile,
   embedded = false,
   selectedCampaignId,
 }: {
   lang: Lang;
   user: User;
   onOpen: (campaignId: string, moduleId: string) => void;
+  onProfile: (playerId: string) => void;
   embedded?: boolean;
   selectedCampaignId?: string;
 }) {
@@ -93,6 +125,7 @@ export default function InteractiveMap({
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(LEARNING_PATHS.map((campaign) => [campaign.id, false]))
   );
+  const [focusTarget, setFocusTarget] = useState<MapFocus | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeDB(() => setRevision((value) => value + 1));
@@ -121,11 +154,7 @@ export default function InteractiveMap({
 
   useEffect(() => {
     if (!selectedCampaignId || embedded) return;
-    window.requestAnimationFrame(() => {
-      document
-        .getElementById(`map-campaign-card-${selectedCampaignId}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-    });
+    setFocusTarget({ campaignId: selectedCampaignId, token: Date.now() });
   }, [embedded, selectedCampaignId]);
 
   const liveViewer = userById(user.id) || user;
@@ -151,11 +180,7 @@ export default function InteractiveMap({
     setFocusedPlayerId(playerId);
     setCollapsed((value) => ({ ...value, [location.campaignId]: false }));
     setPlayerMenuOpen(false);
-    window.setTimeout(() => {
-      document
-        .getElementById(`map-node-${location.campaignId}-${location.moduleId}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
-    }, 80);
+    setFocusTarget({ campaignId: location.campaignId, moduleId: location.moduleId, token: Date.now() });
   };
 
   const toggleCampaign = (campaignId: string) => {
@@ -212,26 +237,32 @@ export default function InteractiveMap({
                     const campaign = CAMPAIGNS.find((item) => item.id === entry.campaignId)!;
                     const module = campaign.modules.find((item) => item.id === entry.moduleId)!;
                     return (
-                      <button
+                      <div
                         key={entry.player.id}
-                        type="button"
                         className={cn("map-player-row", focusedPlayerId === entry.player.id && "is-focused")}
-                        onClick={() => choosePlayer(entry.player.id, entry)}
                       >
-                        <span className={cn("map-player-avatar-wrap", entry.online ? "is-online" : "is-offline")}>
+                        <button
+                          type="button"
+                          className={cn("map-player-avatar-wrap", entry.online ? "is-online" : "is-offline")}
+                          aria-label={`${t("openProfile", lang)}: ${entry.player.displayName}`}
+                          title={`${t("openProfile", lang)}: ${entry.player.displayName}`}
+                          onClick={() => onProfile(entry.player.id)}
+                        >
                           <Avatar src={entry.player.avatar} name={entry.player.displayName} size={34} />
                           <span className={cn("map-status-dot", entry.online ? "is-online" : "is-offline")} />
-                        </span>
-                        <span className="map-player-row__details">
-                          <span className="map-player-row__name">{entry.player.displayName}</span>
-                          <span className="map-player-row__location">
-                            {bi(campaign.title, lang)}, {bi(module.title, lang)}
+                        </button>
+                        <button type="button" className="map-player-row__open" onClick={() => choosePlayer(entry.player.id, entry)}>
+                          <span className="map-player-row__details">
+                            <span className="map-player-row__name">{entry.player.displayName}</span>
+                            <span className="map-player-row__location">
+                              {bi(campaign.title, lang)}, {bi(module.title, lang)}
+                            </span>
                           </span>
-                        </span>
-                        <span className={cn("map-presence-label", entry.online ? "is-online" : "is-offline")}>
-                          {uppercaseLabel(entry.online ? t("online", lang) : t("offline", lang), lang)}
-                        </span>
-                      </button>
+                          <span className={cn("map-presence-label", entry.online ? "is-online" : "is-offline")}>
+                            {uppercaseLabel(entry.online ? t("online", lang) : t("offline", lang), lang)}
+                          </span>
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -249,8 +280,10 @@ export default function InteractiveMap({
         collapsed={collapsed}
         focusedPlayerId={focusedPlayerId}
         selectedCampaignId={selectedCampaignId}
+        focusTarget={focusTarget}
         onToggle={toggleCampaign}
         onOpen={onOpen}
+        onProfile={onProfile}
       />
 
       <footer className="map-legend">
@@ -258,7 +291,8 @@ export default function InteractiveMap({
         <span><i className="map-status-dot is-offline" />{t("offline", lang)}</span>
         <span><i className="map-legend-node is-complete"><Icon name="check" className="h-3 w-3" /></i>{t("completed", lang)}</span>
         <span><i className="map-legend-node is-locked"><Icon name="lock" className="h-3 w-3" /></i>{t("locked", lang)}</span>
-        <span className="map-scroll-hint"><Icon name="share" className="h-3 w-3" />{t("mapScrollHint", lang)}</span>
+        {liveViewer.role === "educator" && <span>{t("educatorLabsOpen", lang)}</span>}
+        <span id="map-pan-zoom-hint" className="map-scroll-hint"><Icon name="maximize" className="h-3 w-3" />{t("mapScrollHint", lang)}</span>
       </footer>
     </section>
   );
@@ -272,8 +306,10 @@ function CampaignUniverse({
   collapsed,
   focusedPlayerId,
   selectedCampaignId,
+  focusTarget,
   onToggle,
   onOpen,
+  onProfile,
 }: {
   campaigns: Campaign[];
   locations: { player: User; campaignId: string; moduleId: string; online: boolean }[];
@@ -282,8 +318,10 @@ function CampaignUniverse({
   collapsed: Record<string, boolean>;
   focusedPlayerId: string | null;
   selectedCampaignId?: string;
+  focusTarget: MapFocus | null;
   onToggle: (campaignId: string) => void;
   onOpen: (campaignId: string, moduleId: string) => void;
+  onProfile: (playerId: string) => void;
 }) {
   const cardCenterX = 184;
   const cardRight = 352;
@@ -303,7 +341,7 @@ function CampaignUniverse({
       x: firstNodeX + index * nodeSpacing,
       y: layoutY,
       module,
-      state: progressState(module, index, ordered, viewer.progress),
+      state: progressState(module, index, ordered, viewer.progress, viewer.role === "educator"),
     }));
     return {
       campaign,
@@ -332,9 +370,210 @@ function CampaignUniverse({
         : campaign.scenario === "ssh" ? "SSH CAMPAIGN"
           : campaign.scenario === "dfir" ? "INCIDENT RESPONSE" : "FOUNDATION CAMPAIGN";
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const universeRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<MapView>({ x: 24, y: 16, scale: 1 });
+  const sizeRef = useRef({ width, height });
+  sizeRef.current = { width, height };
+  const [view, setView] = useState<MapView>(viewRef.current);
+  const [panning, setPanning] = useState(false);
+  const dragRef = useRef<{ pointerId: number; x: number; y: number; originX: number; originY: number; moved: boolean } | null>(null);
+  const stopDragRef = useRef<(() => void) | null>(null);
+  const suppressClickRef = useRef(false);
+  const applyViewRef = useRef<(next: MapView) => void>(() => {});
+
+  applyViewRef.current = (next) => {
+    const viewport = scrollRef.current;
+    const clamped = viewport
+      ? clampMapView(next, viewport, sizeRef.current.width, sizeRef.current.height)
+      : { ...next, scale: clampMapScale(next.scale) };
+    viewRef.current = clamped;
+    if (universeRef.current) {
+      universeRef.current.style.transform = `translate3d(${clamped.x}px, ${clamped.y}px, 0) scale(${clamped.scale})`;
+    }
+    setView(clamped);
+  };
+
+  useEffect(() => {
+    const viewport = scrollRef.current;
+    if (!viewport) return;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const current = viewRef.current;
+      let deltaX = event.deltaX;
+      let deltaY = event.deltaY;
+      if (event.deltaMode === 1) {
+        deltaX *= 16;
+        deltaY *= 16;
+      } else if (event.deltaMode === 2) {
+        deltaX *= viewport.clientWidth;
+        deltaY *= viewport.clientHeight;
+      }
+      if (event.shiftKey && !event.ctrlKey) {
+        applyViewRef.current({ ...current, x: current.x - deltaY, y: current.y - deltaX });
+        return;
+      }
+      if (!event.ctrlKey && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+        applyViewRef.current({ ...current, x: current.x - deltaX, y: current.y - deltaY });
+        return;
+      }
+      const rect = viewport.getBoundingClientRect();
+      const px = event.clientX - rect.left;
+      const py = event.clientY - rect.top;
+      const nextScale = clampMapScale(current.scale * Math.exp(-deltaY * 0.0016));
+      const worldX = (px - current.x) / current.scale;
+      const worldY = (py - current.y) / current.scale;
+      applyViewRef.current({
+        scale: nextScale,
+        x: px - worldX * nextScale,
+        y: py - worldY * nextScale,
+      });
+    };
+    viewport.addEventListener("wheel", onWheel, { passive: false });
+    const observer = new ResizeObserver(() => applyViewRef.current(viewRef.current));
+    observer.observe(viewport);
+    applyViewRef.current(viewRef.current);
+    return () => {
+      viewport.removeEventListener("wheel", onWheel);
+      observer.disconnect();
+      document.body.classList.remove("is-map-panning");
+      stopDragRef.current?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!focusTarget) return;
+    const campaignIndex = campaigns.findIndex((campaign) => campaign.id === focusTarget.campaignId);
+    if (campaignIndex < 0) return;
+    const ordered = orderedModules(campaigns[campaignIndex]);
+    const moduleIndex = focusTarget.moduleId
+      ? ordered.findIndex((module) => module.id === focusTarget.moduleId)
+      : -1;
+    const x = moduleIndex >= 0 ? firstNodeX + moduleIndex * nodeSpacing : cardCenterX;
+    const y = topPadding + (campaignIndex + 0.5) * rowHeight;
+    const frame = window.requestAnimationFrame(() => {
+      const viewport = scrollRef.current;
+      if (!viewport) return;
+      const scale = viewRef.current.scale || 1;
+      applyViewRef.current({
+        scale,
+        x: viewport.clientWidth / 2 - x * scale,
+        y: viewport.clientHeight / 2 - y * scale,
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [campaigns, cardCenterX, firstNodeX, focusTarget, nodeSpacing, rowHeight, topPadding]);
+
+  const zoomAtCenter = (factor: number) => {
+    const viewport = scrollRef.current;
+    const current = viewRef.current;
+    const nextScale = clampMapScale(current.scale * factor);
+    if (!viewport) {
+      applyViewRef.current({ ...current, scale: nextScale });
+      return;
+    }
+    const px = viewport.clientWidth / 2;
+    const py = viewport.clientHeight / 2;
+    const worldX = (px - current.x) / current.scale;
+    const worldY = (py - current.y) / current.scale;
+    applyViewRef.current({
+      scale: nextScale,
+      x: px - worldX * nextScale,
+      y: py - worldY * nextScale,
+    });
+  };
+
+  const resetView = () => applyViewRef.current({ x: 24, y: 16, scale: 1 });
+
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 && event.button !== 1) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest(".map-zoom-controls")) return;
+    if (dragRef.current) return;
+    if (event.button === 1) event.preventDefault();
+    const drag = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      originX: viewRef.current.x,
+      originY: viewRef.current.y,
+      moved: false,
+    };
+    dragRef.current = drag;
+    const onMove = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== drag.pointerId) return;
+      const dx = moveEvent.clientX - drag.x;
+      const dy = moveEvent.clientY - drag.y;
+      if (!drag.moved) {
+        if (Math.hypot(dx, dy) < 5) return;
+        drag.moved = true;
+        setPanning(true);
+        document.body.classList.add("is-map-panning");
+      }
+      applyViewRef.current({ ...viewRef.current, x: drag.originX + dx, y: drag.originY + dy });
+    };
+    const stop = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      if (stopDragRef.current === stop) stopDragRef.current = null;
+    };
+    const onUp = (upEvent: PointerEvent) => {
+      if (upEvent.pointerId !== drag.pointerId) return;
+      stop();
+      if (drag.moved) {
+        suppressClickRef.current = true;
+        window.setTimeout(() => {
+          suppressClickRef.current = false;
+        }, 90);
+      }
+      if (dragRef.current?.pointerId === drag.pointerId) dragRef.current = null;
+      setPanning(false);
+      document.body.classList.remove("is-map-panning");
+    };
+    stopDragRef.current = stop;
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  };
+
+  const onClickCapture = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!suppressClickRef.current) return;
+    suppressClickRef.current = false;
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = event.shiftKey ? 180 : 90;
+    const current = viewRef.current;
+    if (event.key === "ArrowLeft") applyViewRef.current({ ...current, x: current.x + step });
+    else if (event.key === "ArrowRight") applyViewRef.current({ ...current, x: current.x - step });
+    else if (event.key === "ArrowUp") applyViewRef.current({ ...current, y: current.y + step });
+    else if (event.key === "ArrowDown") applyViewRef.current({ ...current, y: current.y - step });
+    else if (event.key === "+" || event.key === "=") zoomAtCenter(1.16);
+    else if (event.key === "-" || event.key === "_") zoomAtCenter(1 / 1.16);
+    else if (event.key === "0") resetView();
+    else return;
+    event.preventDefault();
+  };
+
   return (
-    <div className="map-universe-scroll" aria-label={t("mapCampaigns", lang)}>
-      <div className="map-universe" style={{ width, height }}>
+    <div
+      ref={scrollRef}
+      className={cn("map-universe-scroll", panning && "is-panning")}
+      aria-label={t("mapCampaigns", lang)}
+      aria-describedby="map-pan-zoom-hint"
+      tabIndex={0}
+      onPointerDown={onPointerDown}
+      onClickCapture={onClickCapture}
+      onKeyDown={onKeyDown}
+    >
+      <div
+        ref={universeRef}
+        className="map-universe"
+        style={{ width, height, transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})` }}
+      >
         <div className="map-universe-stars" />
         {lanes.map(({ campaign, campaignIndex, y }) => (
           <div
@@ -457,8 +696,9 @@ function CampaignUniverse({
                             key={entry.player.id}
                             type="button"
                             className={cn("map-player-pin", entry.online ? "is-online" : "is-offline", entry.player.id === viewer.id && "is-self", entry.player.id === focusedPlayerId && "is-focused")}
-                            title={`${entry.player.displayName}, ${uppercaseLabel(entry.online ? t("online", lang) : t("offline", lang), lang)}, ${bi(module.title, lang)}`}
-                            onClick={() => onOpen(campaign.id, module.id)}
+                            title={`${t("openProfile", lang)}: ${entry.player.displayName}`}
+                            aria-label={`${t("openProfile", lang)}: ${entry.player.displayName}`}
+                            onClick={() => onProfile(entry.player.id)}
                           >
                             <span className="map-pin-avatar"><Avatar src={entry.player.avatar} name={entry.player.displayName} size={22} /><i className={cn("map-status-dot", entry.online ? "is-online" : "is-offline")} /></span>
                             <span className="map-pin-name">{entry.player.displayName.split(" ")[0]}</span>
@@ -480,6 +720,11 @@ function CampaignUniverse({
             </div>
           );
         })}
+      </div>
+      <div className="map-zoom-controls">
+        <button type="button" onClick={() => zoomAtCenter(1 / 1.2)} aria-label={t("mapZoomOut", lang)}>−</button>
+        <button type="button" className="map-zoom-controls__level" onClick={resetView} aria-label={t("mapZoomReset", lang)} title={t("mapZoomReset", lang)}>{Math.round(view.scale * 100)}%</button>
+        <button type="button" onClick={() => zoomAtCenter(1.2)} aria-label={t("mapZoomIn", lang)}>+</button>
       </div>
     </div>
   );

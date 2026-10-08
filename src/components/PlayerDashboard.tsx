@@ -124,12 +124,14 @@ function DashboardMapDialog({
   lang,
   selectedCampaignId,
   onOpen,
+  onProfile,
   onClose,
 }: {
   user: User;
   lang: Lang;
   selectedCampaignId: string;
   onOpen: (campaignId: string, moduleId: string) => void;
+  onProfile: (playerId: string) => void;
   onClose: () => void;
 }) {
   const [isMinimizing, setIsMinimizing] = useState(false);
@@ -183,6 +185,7 @@ function DashboardMapDialog({
             user={user}
             lang={lang}
             onOpen={onOpen}
+            onProfile={onProfile}
             selectedCampaignId={selectedCampaignId}
           />
         </div>
@@ -191,14 +194,15 @@ function DashboardMapDialog({
   );
 }
 
-function LeaderRow({ player, rank, selfId, lang }: {
+function LeaderRow({ player, rank, selfId, lang, onProfile }: {
   player: User;
   rank: number;
   selfId: string;
   lang: Lang;
+  onProfile: (playerId: string) => void;
 }) {
   return (
-    <div className={cn("player-dashboard__leader-row", rank === 1 && "is-mvp", player.id === selfId && "is-self")}>
+    <button type="button" className={cn("player-dashboard__leader-row", rank === 1 && "is-mvp", player.id === selfId && "is-self")} onClick={() => onProfile(player.id)} aria-label={`${t("openProfile", lang)}: ${player.displayName}`}>
       <span className="player-dashboard__leader-rank">{rank === 1 ? <Icon name="crown" className="h-4 w-4" /> : `#${rank}`}</span>
       <Avatar src={player.avatar} name={player.displayName} size={34} />
       <span className="player-dashboard__leader-info">
@@ -206,7 +210,7 @@ function LeaderRow({ player, rank, selfId, lang }: {
         <small>LVL {levelFromXp(player.metrics.xp).level}{player.id === selfId ? `, ${lang === "en" ? "You" : "Εσύ"}` : ""}</small>
       </span>
       <span className="player-dashboard__leader-xp">{player.metrics.xp.toLocaleString()} <small>XP</small></span>
-    </div>
+    </button>
   );
 }
 
@@ -312,6 +316,7 @@ export default function PlayerDashboard({
   onCampaign,
   onOpenScoreboard,
   onBadge,
+  onProfile,
 }: {
   user: User;
   lang: Lang;
@@ -319,6 +324,7 @@ export default function PlayerDashboard({
   onCampaign: (campaignId: string) => void;
   onOpenScoreboard: () => void;
   onBadge: (badgeId: string) => void;
+  onProfile: (playerId: string) => void;
 }) {
   const [mapExpanded, setMapExpanded] = useState(false);
   const [badgesOpen, setBadgesOpen] = useState(false);
@@ -538,7 +544,7 @@ export default function PlayerDashboard({
               </div>
               <div className="player-dashboard__leader-list">
                 {mvpEntries.map(({ user: player, rank }) => (
-                  <LeaderRow key={player.id} player={player} rank={rank} selfId={user.id} lang={lang} />
+                  <LeaderRow key={player.id} player={player} rank={rank} selfId={user.id} lang={lang} onProfile={onProfile} />
                 ))}
                 {mvpEntries.length === 0 && <p className="player-dashboard__empty">{lang === "en" ? "No players on the leaderboard yet." : "Δεν υπάρχουν ακόμη παίκτες στην κατάταξη."}</p>}
               </div>
@@ -554,7 +560,7 @@ export default function PlayerDashboard({
               </div>
               <div ref={scoreboardListRef} className="player-dashboard__leader-list player-dashboard__scoreboard-list">
                 {scoreboard.map(({ user: player, rank }) => (
-                  <LeaderRow key={player.id} player={player} rank={rank} selfId={user.id} lang={lang} />
+                  <LeaderRow key={player.id} player={player} rank={rank} selfId={user.id} lang={lang} onProfile={onProfile} />
                 ))}
                 {scoreboard.length === 0 && <p className="player-dashboard__empty">{lang === "en" ? "No players on the leaderboard yet." : "Δεν υπάρχουν ακόμη παίκτες στην κατάταξη."}</p>}
               </div>
@@ -570,7 +576,7 @@ export default function PlayerDashboard({
             currentCampaignId={currentCampaign.id}
             onExpand={openMap}
           />
-          <PlayerConstellation user={user} lang={lang} compact />
+          <PlayerConstellation user={user} lang={lang} compact onProfile={onProfile} />
         </aside>
       </div>
 
@@ -620,7 +626,7 @@ export default function PlayerDashboard({
           )}
         </section>
 
-        <PlayerTeamPanel user={user} lang={lang} />
+        <PlayerTeamPanel user={user} lang={lang} onProfile={onProfile} />
 
         <section className="player-dashboard__card player-dashboard__activity player-dashboard__support-feed" aria-labelledby="player-activity-title">
           <div className="player-dashboard__section-heading">
@@ -640,6 +646,7 @@ export default function PlayerDashboard({
           lang={lang}
           selectedCampaignId={selectedMapCampaign}
           onOpen={onOpen}
+          onProfile={onProfile}
           onClose={() => setMapExpanded(false)}
         />
       )}

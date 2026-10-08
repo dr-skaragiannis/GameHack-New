@@ -92,7 +92,7 @@ function objectiveLabel(event: FeedEvent, lang: Lang) {
   return objective ? bi(objective.instruction, lang) : event.text;
 }
 
-export default function PlayerConstellation({ user, lang, compact = false }: { user: User; lang: Lang; compact?: boolean }) {
+export default function PlayerConstellation({ user, lang, compact = false, onProfile }: { user: User; lang: Lang; compact?: boolean; onProfile?: (playerId: string) => void }) {
   const [revision, setRevision] = useState(0);
   const [filter, setFilter] = useState<PlayerFilter>("all");
   const [interestFilter, setInterestFilter] = useState<string | null>(null);
@@ -391,13 +391,14 @@ export default function PlayerConstellation({ user, lang, compact = false }: { u
               ? `Rank ${player.rank}, ${player.user.displayName}, level ${level}, ${status}`
               : `Θέση ${player.rank}, ${player.user.displayName}, επίπεδο ${level}, ${status}`;
             return (
-              <div
+              <button
                 key={player.user.id}
-                role="img"
-                aria-label={accessibleName}
-                title={`${accessibleName}, ${player.user.metrics.xp.toLocaleString()} XP${player.user.interests.length ? `, ${player.user.interests.join(", ")}` : ""}`}
+                type="button"
+                aria-label={`${t("openProfile", lang)}: ${accessibleName}`}
+                title={`${t("openProfile", lang)}: ${accessibleName}`}
                 className={cn("player-constellation__node", player.online && "is-online", player.user.id === user.id && "is-self")}
                 style={{ left: `${player.x}%`, top: `${player.y}%` }}
+                onClick={() => onProfile?.(player.user.id)}
               >
                 <div key={`${player.user.id}-${delta?.token || "stable"}`} className={cn("player-constellation__node-content", delta && "is-rank-shaking")}>
                   <span className="player-constellation__node-rank">#{String(player.rank).padStart(2, "0")}</span>
@@ -414,7 +415,7 @@ export default function PlayerConstellation({ user, lang, compact = false }: { u
                     </span>
                   )}
                 </div>
-              </div>
+              </button>
             );
           })}
 

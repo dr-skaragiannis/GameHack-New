@@ -12,7 +12,7 @@ import { t, uppercaseLabel, type Lang } from "../i18n";
 import Avatar from "./Avatar";
 import Icon from "./Icon";
 
-export default function PlayerTeamPanel({ user, lang }: { user: User; lang: Lang }) {
+export default function PlayerTeamPanel({ user, lang, onProfile }: { user: User; lang: Lang; onProfile?: (playerId: string) => void }) {
   const [feedback, setFeedback] = useState("");
   const teams = allTeams();
   const team = teamForPlayer(user.id);
@@ -58,9 +58,9 @@ export default function PlayerTeamPanel({ user, lang }: { user: User; lang: Lang
           </div>
           <div className="player-team-panel__members" aria-label={t("teamMembers", lang)}>
             {currentMembers.slice(0, 5).map((member) => (
-              <span key={member.id} title={member.displayName}>
+              <button key={member.id} type="button" className="player-team-panel__avatar" title={`${t("openProfile", lang)}: ${member.displayName}`} aria-label={`${t("openProfile", lang)}: ${member.displayName}`} onClick={() => onProfile?.(member.id)}>
                 <Avatar src={member.avatar} name={member.displayName} size={28} />
-              </span>
+              </button>
             ))}
             {currentMembers.length > 5 && <small>+{currentMembers.length - 5}</small>}
           </div>

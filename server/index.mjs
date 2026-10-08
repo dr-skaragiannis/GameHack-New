@@ -59,6 +59,10 @@ try {
   }
 }
 
+function isScryptPasswordHash(value) {
+  return typeof value === "string" && /^scrypt\$[0-9a-f]{32}\$[0-9a-f]{128}$/i.test(value);
+}
+
 async function saveStore() {
   const contents = JSON.stringify(store, null, 2);
   saveQueue = saveQueue.catch(() => {}).then(async () => {
@@ -524,6 +528,24 @@ const server = http.createServer(async (req, res) => {
     else res.destroy();
   }
 });
+
+async function upgradePlaintextPasswords() {
+  let changed = false;
+  for (const account of store.accounts) {
+    if (typeof account.password === "string" && account.password) {
+      account.passwordHash = await hashPassword(account.password);
+      delete account.password;
+      changed = true;
+    }
+    if (account.password) delete account.password;
+    if (account.passwordHash && !isScryptPasswordHash(account.passwordHash)) {
+      console.warn(`Account ${account.email} has a password hash that is not scrypt. It was left unchanged so an existing login is not destroyed.`);
+    }
+  }
+  if (changed) await saveStore();
+}
+
+await upgradePlaintextPasswords();
 
 server.listen(port, process.env.HOST || "0.0.0.0", () => {
   console.log(`GameHack server listening on ${port}`);

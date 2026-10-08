@@ -109,8 +109,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "Where am I? (pwd, ls, cd, cat)", el: "Πού βρίσκομαι;" },
         body: {
-          en: "The filesystem is a tree that starts at the root /. pwd prints your current location. ls lists a folder; ls -a also reveals hidden files (names starting with a dot). cd folder moves in, cd .. goes up, and cat file prints a file's contents.",
-          el: "Το σύστημα αρχείων είναι ένα δέντρο με ρίζα το /. Η εντολή pwd εμφανίζει τη θέση στην οποία βρίσκεσαι. Η εντολή ls εμφανίζει τα περιεχόμενα ενός φακέλου, το ls -a αποκαλύπτει και τα κρυφά αρχεία. Το cd μετακινεί σε φάκελο, το cd .. ανεβαίνει ένα επίπεδο, και το cat εμφανίζει το περιεχόμενο ενός αρχείου.",
+          en: "The filesystem is a tree that starts at the root /. Each command in this module answers one question.\n\npwd prints the absolute path of the working directory. Relative names such as welcome.txt are resolved from there. A successful pwd only displays a path. It does not move you.\n\nls lists names in that directory. ls -a includes names that start with a dot, which is where configuration and keys are often kept. ls -l adds the mode, owner, and size. Read those columns before you change a file.\n\ncd PATH moves the working directory. cd .. moves to the parent, and cd ~ returns home. A successful cd is silent, so run pwd if you need proof.\n\ncat FILE prints a text file. The lines are data, not commands to type back. help lists the commands this sandbox actually implements.",
+          el: "Το σύστημα αρχείων είναι ένα δέντρο με ρίζα το /. Κάθε εντολή αυτού του μαθήματος απαντά σε μία ερώτηση.\n\nΗ pwd τυπώνει την απόλυτη διαδρομή του φακέλου εργασίας. Σχετικά ονόματα, όπως το welcome.txt, ερμηνεύονται από εκεί. Μια επιτυχημένη pwd μόνο εμφανίζει διαδρομή. Δεν σε μετακινεί.\n\nΗ ls εμφανίζει ονόματα σε εκείνον τον φάκελο. Το ls -a περιλαμβάνει ονόματα που αρχίζουν με τελεία, εκεί που συχνά κρατούνται ρυθμίσεις και κλειδιά. Το ls -l προσθέτει mode, ιδιοκτήτη και μέγεθος. Διάβασε αυτές τις στήλες πριν αλλάξεις αρχείο.\n\nΤο cd PATH μετακινεί τον φάκελο εργασίας. Το cd .. πηγαίνει στον γονέα, και το cd ~ γυρίζει στο home. Ένα επιτυχημένο cd είναι σιωπηλό, οπότε τρέξε pwd αν χρειάζεσαι απόδειξη.\n\nΤο cat FILE τυπώνει ένα αρχείο κειμένου. Οι γραμμές είναι δεδομένα, όχι εντολές για να τις ξαναγράψεις. Το help εμφανίζει τις εντολές που υλοποιεί πραγματικά αυτό το sandbox.",
         },
         tip: {
           en: "Hidden files are a favorite place to stash secrets and config — always check with ls -a.",
@@ -220,8 +220,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "find and grep", el: "find και grep" },
         body: {
-          en: "find /home -name '*.txt' walks a tree looking for names. grep PATTERN file searches inside a file. Together they are how you hunt secrets, configs and leftovers on a box.",
-          el: "Η εντολή find διασχίζει το δέντρο. Η εντολή grep ψάχνει μέσα σε αρχεία. Με τα δύο μαζί εντοπίζεις μυστικά και ρυθμίσεις.",
+          en: "find and grep answer different questions, so do not treat them as the same search.\n\nfind /home -name '*.txt' starts at /home and keeps paths whose filename matches the pattern. The quotes stop the shell from expanding the star before find sees it. The result is a list of paths, not file contents.\n\ngrep enumerate notes.txt keeps lines inside that file which contain the word. If you put a pipe in front, grep filters another command's output instead of opening a file. The source is not modified.\n\ncat /etc/passwd prints the local account list in this simulation: name, numeric id, home, and shell. It is an inventory of the fictional host, not a password file. Password hashes, when a system stores them, live elsewhere and are not the point of this command.",
+          el: "Οι find και grep απαντούν σε διαφορετικές ερωτήσεις, οπότε μην τις αντιμετωπίζεις ως την ίδια αναζήτηση.\n\nΗ find /home -name '*.txt' ξεκινά από το /home και κρατά διαδρομές των οποίων το όνομα ταιριάζει στο μοτίβο. Τα εισαγωγικά εμποδίζουν το shell να αναπτύξει το αστεράκι πριν το δει η find. Το αποτέλεσμα είναι λίστα διαδρομών, όχι περιεχόμενα αρχείων.\n\nΗ grep enumerate notes.txt κρατά γραμμές μέσα σε εκείνο το αρχείο που περιέχουν τη λέξη. Αν βάλεις pipe μπροστά, η grep φιλτράρει την έξοδο άλλης εντολής αντί να ανοίξει αρχείο. Η πηγή δεν τροποποιείται.\n\nΤο cat /etc/passwd τυπώνει τη λίστα τοπικών λογαριασμών σε αυτή την προσομοίωση: όνομα, αριθμητικό id, home και shell. Είναι απογραφή του φανταστικού host, όχι αρχείο κωδικών. Τα hashes κωδικών, όταν ένα σύστημα τα αποθηκεύει, ζουν αλλού και δεν είναι ο σκοπός αυτής της εντολής.",
         },
         tip: {
           en: "On a real engagement, start with find and grep before you install anything new.",
@@ -230,8 +230,8 @@ export const MODULES: Module[] = [
       },
     ],
     cheats: [
-      { cmd: "find PATH -name GLOB", desc: { en: "search by name", el: "αναζήτηση με όνομα" } },
-      { cmd: "grep PAT FILE", desc: { en: "search file contents", el: "αναζήτηση περιεχομένου" } },
+      { cmd: "find /home -name '*.txt'", desc: { en: "search by name", el: "αναζήτηση με όνομα" } },
+      { cmd: "grep enumerate notes.txt", desc: { en: "search file contents", el: "αναζήτηση περιεχομένου" } },
       { cmd: "cat /etc/passwd", desc: { en: "list local users", el: "λίστα χρηστών" } },
     ],
     tasks: [
@@ -301,8 +301,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "sudo and the principle of least privilege", el: "sudo και ελάχιστο προνόμιο" },
         body: {
-          en: "sudo lets a user run a command as root. sudo -l lists what YOU are allowed to run. On a pentest, sudo -l is one of the first privilege-escalation checks — misconfigured sudo is a classic path to root. Never run sudo on a system you do not own.",
-          el: "Το sudo εκτελεί εντολές ως root. Το sudo -l εμφανίζει τι ΕΠΙΤΡΕΠΕΤΑΙ σε σένα. Σε έλεγχο διείσδυσης (pentest) είναι από τους πρώτους ελέγχους ανύψωσης προνομίων.",
+          en: "sudo runs a command with a delegated privilege, often root. sudo -l does not run that command. It lists what this account is allowed to run, and as whom.\n\nRead each grant as a configuration finding. A grant for a program that can edit files or start another program is too broad. The defensive fix is to remove the grant, not to collect more of them. id shows the numeric user and the groups that may explain a grant. Never run sudo on a system you do not administer. In this lab the answer is simulated.",
+          el: "Το sudo τρέχει μια εντολή με παραχωρημένο προνόμιο, συχνά root. Το sudo -l δεν τρέχει εκείνη την εντολή. Εμφανίζει τι επιτρέπεται να τρέξει αυτός ο λογαριασμός, και ως ποιον.\n\nΔιάβασε κάθε παραχώρηση ως εύρημα ρύθμισης. Παραχώρηση για πρόγραμμα που μπορεί να επεξεργαστεί αρχεία ή να ξεκινήσει άλλο πρόγραμμα είναι πολύ πλατιά. Η αμυντική διόρθωση είναι να αφαιρέσεις την παραχώρηση, όχι να μαζέψεις κι άλλες. Το id δείχνει τον αριθμητικό χρήστη και τις ομάδες που μπορεί να εξηγούν μια παραχώρηση. Μην τρέχεις sudo σε σύστημα που δεν διαχειρίζεσαι. Σε αυτό το εργαστήριο η απάντηση είναι εικονική.",
         },
       },
     ],
@@ -362,8 +362,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "Your address on the wire", el: "Η διεύθυνσή σου στο δίκτυο" },
         body: {
-          en: "ip addr (or ifconfig) shows your interfaces. In this lab you are 10.10.10.2/24 — a private training net. Hosts you will attack later live in 10.10.10.0/24. Ping proves a host is up (if ICMP is allowed).",
-          el: "Το ip addr δείχνει τις διεπαφές. Εδώ είσαι 10.10.10.2/24. Οι στόχοι ζουν στο 10.10.10.0/24.",
+          en: "ip addr, or the older ifconfig, prints the simulator's virtual interfaces. inet is the IPv4 address, and /24 is the subnet prefix. In this lab that address is 10.10.10.2/24. The other fictional hosts live in the same training subnet. Nothing in the output changes a real adapter.\n\nping 10.10.10.5 sends a simulated ICMP echo to raven.lab. Replies mean the simulator considers that host reachable. A real network can block ICMP and still be online, so a missing reply is not proof that a host is down.\n\ncat /etc/hosts prints the lab's name-to-address map. Use the names when a later command asks for a host, and still confirm the address. The file is local data, not a live DNS answer.",
+          el: "Το ip addr, ή το παλαιότερο ifconfig, τυπώνει τις εικονικές διεπαφές του προσομοιωτή. Το inet είναι η διεύθυνση IPv4, και το /24 το πρόθεμα του υποδικτύου. Σε αυτό το εργαστήριο η διεύθυνση είναι 10.10.10.2/24. Οι άλλοι φανταστικοί hosts ζουν στο ίδιο εκπαιδευτικό υποδίκτυο. Τίποτα στην έξοδο δεν αλλάζει πραγματικό προσαρμογέα.\n\nΤο ping 10.10.10.5 στέλνει εικονικό ICMP echo προς το raven.lab. Οι απαντήσεις σημαίνουν ότι ο προσομοιωτής θεωρεί προσβάσιμο εκείνον τον host. Ένα πραγματικό δίκτυο μπορεί να μπλοκάρει το ICMP και να είναι ακόμη σε λειτουργία, οπότε μια απούσα απάντηση δεν αποδεικνύει ότι ο host είναι κάτω.\n\nΤο cat /etc/hosts τυπώνει τον χάρτη ονομάτων του εργαστηρίου. Χρησιμοποίησε τα ονόματα όταν μια επόμενη εντολή ζητά host, και πάλι επιβεβαίωσε τη διεύθυνση. Το αρχείο είναι τοπικά δεδομένα, όχι ζωντανή απάντηση DNS.",
         },
       },
       {
@@ -376,7 +376,7 @@ export const MODULES: Module[] = [
     ],
     cheats: [
       { cmd: "ip addr", desc: { en: "show interfaces", el: "εμφάνιση διεπαφών" } },
-      { cmd: "ping HOST", desc: { en: "icmp echo", el: "icmp echo" } },
+      { cmd: "ping 10.10.10.5", desc: { en: "icmp echo to raven.lab", el: "icmp echo προς το raven.lab" } },
       { cmd: "cat /etc/hosts", desc: { en: "local DNS names", el: "τοπικά ονόματα" } },
     ],
     tasks: [
@@ -437,8 +437,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "Network sweeps with nmap", el: "Σαρώσεις με nmap" },
         body: {
-          en: "nmap 10.10.10.0/24 asks every address in the /24 if it is up. On a /24 that is 256 hosts. Use this to build your target list before you port-scan a single machine.",
-          el: "Η εντολή nmap 10.10.10.0/24 ελέγχει κάθε διεύθυνση αν είναι ενεργή. Χτίσε λίστα στόχων πριν σαρώσεις θύρες.",
+          en: "nmap 10.10.10.0/24 asks the simulator which fictional hosts in the lab subnet answer. The report names four: raven.lab, web.lab, ssh.lab, and db.lab. It does not walk your physical LAN, and a /24 here is not an invitation to scan 256 real addresses.\n\nnmap 10.10.10.5 then asks about one of those hosts. Without -sV the rows are port, state, and service name. Host is up means the simulator answered. Write the hostname next to the address before you move on, and confirm the same names in tools/targets.txt.",
+          el: "Η nmap 10.10.10.0/24 ρωτά τον προσομοιωτή ποιοι φανταστικοί hosts του υποδικτύου απαντούν. Η αναφορά ονομάζει τέσσερις: raven.lab, web.lab, ssh.lab και db.lab. Δεν διασχίζει το φυσικό σου LAN, και ένα /24 εδώ δεν είναι πρόσκληση να σαρώσεις 256 πραγματικές διευθύνσεις.\n\nΗ nmap 10.10.10.5 ρωτά μετά για έναν από εκείνους τους hosts. Χωρίς -sV οι γραμμές είναι θύρα, κατάσταση και όνομα υπηρεσίας. Το Host is up σημαίνει ότι απάντησε ο προσομοιωτής. Γράψε το hostname δίπλα στη διεύθυνση πριν προχωρήσεις, και επιβεβαίωσε τα ίδια ονόματα στο tools/targets.txt.",
         },
         tip: {
           en: "Never sweep a network that is not in your written scope.",
@@ -455,7 +455,7 @@ export const MODULES: Module[] = [
         id: "sweep",
         instruction: { en: "Sweep the lab subnet: nmap 10.10.10.0/24", el: "Σάρωσε: nmap 10.10.10.0/24" },
         hint: { en: "nmap 10.10.10.0/24", el: "nmap 10.10.10.0/24" },
-        explain: { en: "WHY: You cannot hack a host you have not found.", el: "ΓΙΑΤΙ: Δεν μπορείς να ελέγξεις σύστημα που δεν έχεις βρει." },
+        explain: { en: "WHY: An assessment starts from the hosts that actually answer, not from a guessed address. HOW: nmap 10.10.10.0/24 prints the four fictional lab hosts and does not leave the sandbox.", el: "ΓΙΑΤΙ: Ένας έλεγχος ξεκινά από τους hosts που απαντούν πραγματικά, όχι από μια μαντεμένη διεύθυνση. ΠΩΣ: Η nmap 10.10.10.0/24 τυπώνει τους τέσσερις φανταστικούς hosts και δεν φεύγει από το sandbox." },
         check: (t) => t.flags.has("nmap-sweep") || usedCmd(t, /nmap\s+.*10\.10\.10\.0\/24/),
       },
       {
@@ -494,14 +494,14 @@ export const MODULES: Module[] = [
       {
         heading: { en: "Why versions matter", el: "Γιατί μετράνε οι εκδόσεις" },
         body: {
-          en: "An open port is a door. The version behind it tells you which key might fit. nmap -sV probes services for banners (OpenSSH 8.4, Apache 2.4, …). You then research known weaknesses — in scope, in a lab, never in the wild without permission.",
-          el: "Μια ανοιχτή θύρα είναι πόρτα. Η έκδοση λέει ποιο κλειδί ίσως ταιριάζει. Το nmap -sV διαβάζει banners.",
+          en: "nmap -sV 10.10.10.5 adds a version column to the port report for raven.lab. -sV means the simulator includes the banner it has stored for that fictional service, such as an OpenSSH or HTTP version string. Compare that exact string with a trusted advisory list. A version is a clue, not permission to try an exploit.\n\ncurl http://10.10.10.8/ requests the canned page for web.lab and prints the HTML body. Read the title and links as what the page claims. curl http://10.10.10.5/ does the same for raven.lab. Neither command leaves the sandbox, and neither proves that a real site is vulnerable.",
+          el: "Η nmap -sV 10.10.10.5 προσθέτει στήλη έκδοσης στην αναφορά θυρών για το raven.lab. Το -sV σημαίνει ότι ο προσομοιωτής περιλαμβάνει το banner που έχει αποθηκευμένο για εκείνη τη φανταστική υπηρεσία, όπως μια συμβολοσειρά OpenSSH ή HTTP. Σύγκρινε ακριβώς αυτή τη συμβολοσειρά με αξιόπιστη λίστα συμβουλών. Μια έκδοση είναι ένδειξη, όχι άδεια να δοκιμάσεις exploit.\n\nΗ curl http://10.10.10.8/ ζητά την έτοιμη σελίδα του web.lab και τυπώνει το σώμα HTML. Διάβασε τον τίτλο και τους συνδέσμους ως αυτό που δηλώνει η σελίδα. Η curl http://10.10.10.5/ κάνει το ίδιο για το raven.lab. Καμία από τις δύο εντολές δεν φεύγει από το sandbox, και καμία δεν αποδεικνύει ότι ένας πραγματικός ιστότοπος είναι ευάλωτος.",
         },
       },
     ],
     cheats: [
-      { cmd: "nmap -sV HOST", desc: { en: "service version detection", el: "ανίχνευση έκδοσης" } },
-      { cmd: "curl http://HOST/", desc: { en: "grab a web banner", el: "web banner" } },
+      { cmd: "nmap -sV 10.10.10.5", desc: { en: "service version detection", el: "ανίχνευση έκδοσης" } },
+      { cmd: "curl http://10.10.10.8/", desc: { en: "read the lab web page", el: "ανάγνωση της σελίδας του lab" } },
     ],
     tasks: [
       {
@@ -547,8 +547,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "What brute force is — and is not", el: "Τι είναι (και δεν είναι) το brute force" },
         body: {
-          en: "A dictionary attack tries likely passwords from a list. It is noisy, slow, and illegal against systems you do not own. We simulate hydra against ssh.lab so you understand the pattern: service + username + wordlist. Defenders rate-limit, lock accounts, and require keys for a reason.",
-          el: "Μια επίθεση λεξικού δοκιμάζει πιθανούς κωδικούς. Είναι θορυβώδης και παράνομη εκτός εξουσιοδότησης. Εδώ είναι προσομοίωση.",
+          en: "A dictionary check tries likely passwords from a list against one account. It is noisy, and without written permission it is a crime in most places. This module uses only the fictional account labuser on ssh.lab and the tiny training file tools/wordlist.txt.\n\nRead the command as three parts. -l labuser names one account, not a list of users. -P tools/wordlist.txt names the sandbox wordlist. ssh://10.10.10.12 says the service and the fictional host. cat tools/wordlist.txt shows that the list is a training file before you run the check. A password row is a finding about that lab account. The durable fix is to disable password authentication after keys work, add lockout, and alert on repeated failures.",
+          el: "Ένας έλεγχος λεξικού δοκιμάζει πιθανούς κωδικούς από λίστα σε έναν λογαριασμό. Είναι θορυβώδης και, χωρίς γραπτή άδεια, είναι έγκλημα στις περισσότερες χώρες. Αυτό το μάθημα χρησιμοποιεί μόνο τον φανταστικό λογαριασμό labuser στο ssh.lab και το μικρό αρχείο εκπαίδευσης tools/wordlist.txt.\n\nΔιάβασε την εντολή ως τρία μέρη. Το -l labuser ονομάζει έναν λογαριασμό, όχι λίστα χρηστών. Το -P tools/wordlist.txt ονομάζει το λεξικό του sandbox. Το ssh://10.10.10.12 λέει την υπηρεσία και τον φανταστικό host. Το cat tools/wordlist.txt δείχνει ότι η λίστα είναι αρχείο εκπαίδευσης πριν τρέξεις τον έλεγχο. Μια γραμμή κωδικού είναι εύρημα για εκείνον τον λογαριασμό του lab. Η μόνιμη διόρθωση είναι να απενεργοποιηθεί η ταυτοποίηση με κωδικό αφού δουλέψουν τα κλειδιά, να μπει κλείδωμα, και να υπάρχει ειδοποίηση στις επανειλημμένες αποτυχίες.",
         },
         tip: {
           en: "Real takeaway: disable password SSH, use keys, enable 2FA, and alert on hydra-like traffic.",
@@ -557,7 +557,7 @@ export const MODULES: Module[] = [
       },
     ],
     cheats: [
-      { cmd: "hydra -l USER -P FILE ssh://HOST", desc: { en: "dictionary SSH (sim)", el: "λεξικό SSH (sim)" } },
+      { cmd: "hydra -l labuser -P tools/wordlist.txt ssh://10.10.10.12", desc: { en: "lab-only credential check", el: "έλεγχος μόνο για το lab" } },
       { cmd: "cat tools/wordlist.txt", desc: { en: "training wordlist", el: "λεξικό εκπαίδευσης" } },
     ],
     tasks: [
@@ -565,19 +565,19 @@ export const MODULES: Module[] = [
         id: "wordlist",
         instruction: { en: "Read tools/wordlist.txt so you know the dictionary.", el: "Διάβασε tools/wordlist.txt." },
         hint: { en: "cat tools/wordlist.txt", el: "cat ~/tools/wordlist.txt" },
-        explain: { en: "WHY: Know your ammo.", el: "ΓΙΑΤΙ: Γνώριζε το λεξικό σου πριν το χρησιμοποιήσεις." },
+        explain: { en: "WHY: You need to see that the wordlist is a small training file, not a list of real passwords. HOW: cat displays tools/wordlist.txt inside the virtual filesystem.", el: "ΓΙΑΤΙ: Πρέπει να δεις ότι το λεξικό είναι μικρό αρχείο εκπαίδευσης και όχι λίστα πραγματικών κωδικών. ΠΩΣ: Το cat εμφανίζει το tools/wordlist.txt στο εικονικό σύστημα αρχείων." },
         check: (t) => t.flags.has("read-wordlist"),
       },
       {
         id: "hydra",
         instruction: {
-          en: "Spray ssh.lab: hydra -l labuser -P tools/wordlist.txt ssh://10.10.10.12",
+          en: "Check the lab account: hydra -l labuser -P tools/wordlist.txt ssh://10.10.10.12",
           el: "hydra -l labuser -P tools/wordlist.txt ssh://10.10.10.12",
         },
         hint: { en: "hydra -l labuser -P tools/wordlist.txt ssh://10.10.10.12", el: "hydra -l labuser -P tools/wordlist.txt ssh://10.10.10.12" },
         explain: {
-          en: "WHY: See how fast a weak password falls in a lab. HOW: hydra with -l user and -P wordlist.",
-          el: "ΓΙΑΤΙ: Δες πόσο γρήγορα πέφτει αδύναμος κωδικός στο lab.",
+          en: "WHY: If the check succeeds immediately, the lab account has a weak password and password authentication should be closed. HOW: -l names labuser, -P names the training wordlist, and the target must stay ssh.lab.",
+          el: "ΓΙΑΤΙ: Αν ο έλεγχος πετύχει αμέσως, ο λογαριασμός του εργαστηρίου έχει αδύναμο κωδικό και πρέπει να κλείσει η ταυτοποίηση με κωδικό. ΠΩΣ: Το -l ονομάζει τον labuser, το -P το λεξικό εκπαίδευσης, και ο στόχος μένει το ssh.lab.",
         },
         check: (t) => t.flags.has("hydra-win") || t.flags.has("hydra"),
       },
@@ -610,14 +610,14 @@ export const MODULES: Module[] = [
       {
         heading: { en: "The idea, not a weapon", el: "Η ιδέα, όχι όπλο" },
         body: {
-          en: "SQL injection happens when untrusted input is concatenated into a query. Classic test: a single quote that breaks syntax. In this lab, curl a simulated login with an id= parameter. We do not teach bypassing real WAF/production DBs. Defenders: use parameterised queries, ORMs, and least-privilege DB users.",
-          el: "Το SQLi συμβαίνει όταν μη έμπιστη είσοδος μπαίνει σε ερώτημα. Υπερασπιστές: parameterized queries.",
+          en: "SQL injection happens when an application copies untrusted input into a query string. The defence is to keep data and the query separate: parameterised queries, and a database account that cannot read more than that application needs.\n\ncurl http://10.10.10.8/login.php?id=1 fetches the fictional login and gives you a clean baseline. Read the page before you compare it with anything else. sqlmap -u names that same lab URL. The simulator returns a canned finding and does not send a request to a real application. The point of the tool card is to recognise how loud an automated check is, and why a defender notices it, not to build a query.",
+          el: "Το SQL injection συμβαίνει όταν μια εφαρμογή αντιγράφει μη έμπιστη είσοδο μέσα σε συμβολοσειρά ερωτήματος. Η άμυνα είναι να μείνουν χωριστά τα δεδομένα και το ερώτημα: παραμετροποιημένα ερωτήματα, και λογαριασμός βάσης που δεν διαβάζει περισσότερα από όσα χρειάζεται η εφαρμογή.\n\nΗ curl http://10.10.10.8/login.php?id=1 φέρνει τη φανταστική σελίδα σύνδεσης και σου δίνει καθαρή βάση σύγκρισης. Διάβασε τη σελίδα πριν τη συγκρίνεις με οτιδήποτε άλλο. Το sqlmap -u ονομάζει το ίδιο URL του εργαστηρίου. Ο προσομοιωτής επιστρέφει έτοιμο εύρημα και δεν στέλνει αίτημα σε πραγματική εφαρμογή. Ο σκοπός της κάρτας του εργαλείου είναι να αναγνωρίσεις πόσο θορυβώδης είναι ένας αυτοματοποιημένος έλεγχος, και γιατί τον βλέπει ο αμυνόμενος, όχι να φτιάξεις ερώτημα.",
         },
       },
     ],
     cheats: [
       { cmd: "curl 'http://10.10.10.8/login.php?id=1'", desc: { en: "normal request", el: "κανονικό αίτημα" } },
-      { cmd: "sqlmap -u URL", desc: { en: "automated detection (sim)", el: "αυτόματη ανίχνευση (sim)" } },
+      { cmd: "sqlmap -u http://10.10.10.8/login.php?id=1", desc: { en: "canned lab detection", el: "έτοιμη ανίχνευση του lab" } },
     ],
     tasks: [
       {
@@ -663,8 +663,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "From user to root", el: "Από χρήστη σε root" },
         body: {
-          en: "Privilege escalation is what you do after a foothold: look for sudo rights, SUID binaries, writable cron, kernel bugs. In this lab, sudo -l reveals that find can run as root — a well-known GTFOBins path. Understanding it makes you a better defender (remove those rights).",
-          el: "Η ανύψωση προνομίων γίνεται μετά το foothold: sudo, SUID, cron. Εδώ το find επιτρέπεται ως root.",
+          en: "After a lab session exists, the next defensive question is whether that account can do more than it should. sudo -l lists the simulated grants. In this module the grant says find may run as root.\n\nRead that as a configuration mistake. find is a search tool, and a root grant for it is broader than a search needs to be, because a powerful program running as root can change the host. The lab command sudo find / -name flag.txt is the sandbox demonstration of that grant. It does not change your computer. The fix on a system you administer is to remove the grant.",
+          el: "Αφού υπάρχει μια συνεδρία του εργαστηρίου, η επόμενη αμυντική ερώτηση είναι αν εκείνος ο λογαριασμός μπορεί να κάνει περισσότερα από όσα πρέπει. Το sudo -l εμφανίζει τις εικονικές παραχωρήσεις. Σε αυτό το μάθημα η παραχώρηση λέει ότι η find μπορεί να τρέξει ως root.\n\nΔιάβασέ το ως λάθος ρύθμισης. Η find είναι εργαλείο αναζήτησης, και μια παραχώρηση root για αυτήν είναι πλατύτερη από όσο χρειάζεται μια αναζήτηση, γιατί ένα ισχυρό πρόγραμμα που τρέχει ως root μπορεί να αλλάξει τον host. Η εντολή του εργαστηρίου sudo find / -name flag.txt είναι η επίδειξη εκείνης της παραχώρησης μέσα στο sandbox. Δεν αλλάζει τον υπολογιστή σου. Η διόρθωση σε σύστημα που διαχειρίζεσαι είναι να αφαιρέσεις την παραχώρηση.",
         },
       },
     ],
@@ -717,8 +717,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "Boot2root methodology", el: "Μεθοδολογία boot2root" },
         body: {
-          en: "A boot2root machine is a legal playground: recon → foothold → enumerate → privesc → flags. Raven is inspired by classic CTF boxes. Stay inside the lab.",
-          el: "Ένα boot2root είναι νόμιμο πεδίο: recon → foothold → enumerate → privesc → flags.",
+          en: "Raven is a fictional box inside this sandbox. The loop is identify the service, read what it claims, then decide the hardening control. Stay on 10.10.10.5.\n\nnmap -sV 10.10.10.5 asks for the stored banners. Expect SSH and HTTP in the service column, plus a version string when -sV is present. Write the banner down before you request the page.\n\ncurl http://10.10.10.5/ prints the canned HTML. The heading names the CMS. That name is a clue about which files to look for later. It is not a vulnerability by itself. A /24 sweep, if you run one, only lists the other fictional lab hosts.",
+          el: "Ο Raven είναι φανταστικό μηχάνημα μέσα σε αυτό το sandbox. Ο κύκλος είναι να αναγνωρίσεις την υπηρεσία, να διαβάσεις τι δηλώνει, και μετά να διαλέξεις τον έλεγχο σκλήρυνσης. Μείνε στο 10.10.10.5.\n\nΗ nmap -sV 10.10.10.5 ζητά τα αποθηκευμένα banners. Περίμενε SSH και HTTP στη στήλη υπηρεσίας, και συμβολοσειρά έκδοσης όταν υπάρχει το -sV. Κράτησε το banner πριν ζητήσεις τη σελίδα.\n\nΗ curl http://10.10.10.5/ τυπώνει το έτοιμο HTML. Η επικεφαλίδα ονομάζει το CMS. Αυτό το όνομα είναι ένδειξη για το ποια αρχεία θα αναζητήσεις αργότερα. Δεν είναι από μόνο του ευπάθεια. Μια σάρωση /24, αν την τρέξεις, εμφανίζει μόνο τους άλλους φανταστικούς hosts του εργαστηρίου.",
         },
       },
     ],
@@ -771,13 +771,13 @@ export const MODULES: Module[] = [
       {
         heading: { en: "Password reuse is a gift", el: "Η επαναχρησιμοποίηση κωδικών είναι δώρο" },
         body: {
-          en: "CTF boxes often hide the password in a wordlist or a CMS config. Here, hydra + the lab wordlist against raven SSH yields nevermore. Then grab user.txt.",
-          el: "Στα CTF ο κωδικός βρίσκεται συχνά στο λεξικό (wordlist). Εδώ το hydra δίνει nevermore.",
+          en: "The finding on raven.lab is a weak password for one fictional account. hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5 checks that one name against the training list. -l is not a spray across many accounts. The simulator prints the stored lab answer and does not try the list anywhere else.\n\nssh raven@10.10.10.5 then opens the fictional session so you can see that a valid password is enough. user.txt is the training flag in that home directory. The defensive reading is the same as on ssh.lab: do not leave password authentication on, and do not reuse a password that appears in a short list.",
+          el: "Το εύρημα στο raven.lab είναι ένας αδύναμος κωδικός για έναν φανταστικό λογαριασμό. Η hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5 ελέγχει εκείνο το ένα όνομα στο λεξικό εκπαίδευσης. Το -l δεν είναι ψεκασμός σε πολλούς λογαριασμούς. Ο προσομοιωτής τυπώνει την αποθηκευμένη απάντηση του lab και δεν δοκιμάζει τη λίστα πουθενά αλλού.\n\nΤο ssh raven@10.10.10.5 ανοίγει μετά τη φανταστική συνεδρία, ώστε να δεις ότι ένας έγκυρος κωδικός αρκεί. Το user.txt είναι το εκπαιδευτικό flag σε εκείνον τον προσωπικό φάκελο. Η αμυντική ανάγνωση είναι η ίδια με το ssh.lab: μην αφήνεις ενεργή την ταυτοποίηση με κωδικό, και μην επαναχρησιμοποιείς κωδικό που εμφανίζεται σε σύντομη λίστα.",
         },
       },
     ],
     cheats: [
-      { cmd: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5", desc: { en: "spray raven ssh", el: "spray raven ssh" } },
+      { cmd: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5", desc: { en: "lab check for one raven account", el: "έλεγχος ενός λογαριασμού raven" } },
       { cmd: "ssh raven@10.10.10.5", desc: { en: "open a session", el: "άνοιξε συνεδρία" } },
     ],
     tasks: [
@@ -785,7 +785,7 @@ export const MODULES: Module[] = [
         id: "hydra-r",
         instruction: { en: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5", el: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5" },
         hint: { en: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5", el: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5" },
-        explain: { en: "WHY: Weak passwords still exist. HOW: hydra.", el: "ΓΙΑΤΙ: Οι αδύναμοι κωδικοί υπάρχουν ακόμα." },
+        explain: { en: "WHY: A password that sits in the training list is already a finding. HOW: -l names the one account raven, -P names the sandbox wordlist, and the host must stay 10.10.10.5.", el: "ΓΙΑΤΙ: Κωδικός που κάθεται στο λεξικό εκπαίδευσης είναι ήδη εύρημα. ΠΩΣ: Το -l ονομάζει τον έναν λογαριασμό raven, το -P το λεξικό του sandbox, και ο host μένει το 10.10.10.5." },
         check: (t) => t.flags.has("hydra-raven") || t.flags.has("hydra"),
       },
       {
@@ -825,8 +825,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "Post-foothold loot", el: "Λάφυρα μετά το foothold" },
         body: {
-          en: "Once you have a shell, read configs. /var/www/html/config.php and /var/backups/cms.sql are realistic leftovers. They are how real breaches cascade.",
-          el: "Με shell, διάβασε configs. Τα leftovers είναι ο τρόπος που επεκτείνονται οι παραβιάσεις.",
+          en: "A valid lab session can read files the account is allowed to read. cat /var/www/html/config.php prints the fictional CMS configuration. Look for a database password stored next to the application, which is a common operational mistake.\n\ncat /var/backups/cms.sql prints a simulated SQL dump. A backup is a second copy of the same data, often with weaker permissions than the live database. The training flag in that file is there so you can see why backups need the same access control as the original.\n\nNeither cat sends data off the machine. The defensive control is to keep secrets out of web directories and to restrict who can read backup files.",
+          el: "Μια έγκυρη συνεδρία του εργαστηρίου μπορεί να διαβάσει αρχεία που ο λογαριασμός επιτρέπεται να διαβάσει. Το cat /var/www/html/config.php τυπώνει τη φανταστική ρύθμιση του CMS. Ψάξε για κωδικό βάσης αποθηκευμένο δίπλα στην εφαρμογή, που είναι συνηθισμένο λειτουργικό λάθος.\n\nΤο cat /var/backups/cms.sql τυπώνει ένα εικονικό SQL dump. Ένα αντίγραφο ασφαλείας είναι δεύτερο αντίγραφο των ίδιων δεδομένων, συχνά με ασθενέστερα δικαιώματα από τη ζωντανή βάση. Το εκπαιδευτικό flag σε εκείνο το αρχείο υπάρχει για να δεις γιατί τα αντίγραφα χρειάζονται τον ίδιο έλεγχο πρόσβασης με το πρωτότυπο.\n\nΚανένα cat δεν στέλνει δεδομένα έξω από το μηχάνημα. Ο αμυντικός έλεγχος είναι να μείνουν τα μυστικά έξω από καταλόγους web και να περιοριστεί ποιος μπορεί να διαβάσει αρχεία αντιγράφων.",
         },
       },
     ],
@@ -879,8 +879,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "Writable scripts run by root", el: "Εγγράψιμα script που τρέχει ο root" },
         body: {
-          en: "If root runs a script that world-writable users can edit, they can insert a payload. Here, nano /usr/local/bin/backup.sh then sudo that script. Defenders: lock down permissions, don't run user-writable jobs as root.",
-          el: "Αν ο root τρέχει εγγράψιμο script, κάποιος μπορεί να βάλει payload. Υπερασπιστές: κλειδώστε δικαιώματα.",
+          en: "The finding is a root-owned job whose script an ordinary account can change. cat /usr/local/bin/backup.sh prints the fictional script so you can see who would run it and what it is supposed to do. Read it before you touch it.\n\nnano /usr/local/bin/backup.sh opens the simulator's editor notice. It records that the lab file was opened. It does not apply a payload, and keyboard editing is not implemented. sudo /usr/local/bin/backup.sh then runs that simulated job with the lab's root grant.\n\nThe control is specific. Do not let root execute a script that another account can write. Fix the mode, or stop scheduling that file as root. This sandbox does not change a real cron table.",
+          el: "Το εύρημα είναι μια εργασία του root της οποίας το script μπορεί να αλλάξει ένας απλός λογαριασμός. Το cat /usr/local/bin/backup.sh τυπώνει το φανταστικό script ώστε να δεις ποιος θα το έτρεχε και τι υποτίθεται ότι κάνει. Διάβασέ το πριν το αγγίξεις.\n\nΤο nano /usr/local/bin/backup.sh ανοίγει την ειδοποίηση editor του προσομοιωτή. Καταγράφει ότι το αρχείο του lab άνοιξε. Δεν εφαρμόζει payload, και η επεξεργασία με πλήκτρα δεν υλοποιείται. Το sudo /usr/local/bin/backup.sh τρέχει μετά εκείνη την εικονική εργασία με την παραχώρηση root του εργαστηρίου.\n\nΟ έλεγχος είναι συγκεκριμένος. Μην αφήνεις τον root να εκτελεί script που μπορεί να γράψει άλλος λογαριασμός. Διόρθωσε το mode, ή σταμάτα να προγραμματίζεις εκείνο το αρχείο ως root. Αυτό το sandbox δεν αλλάζει πραγματικό πίνακα cron.",
         },
       },
     ],
@@ -941,8 +941,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "Keys beat passwords", el: "Τα κλειδιά νικούν τους κωδικούς" },
         body: {
-          en: "SSH public-key auth uses a private key (id_ed25519) kept at 600 permissions. ~/.ssh/config maps Host aliases. ssh -i file user@host selects a key. Never share private keys — in this lab they are fake.",
-          el: "Η πιστοποίηση με κλειδί SSH χρησιμοποιεί ιδιωτικό κλειδί. Ποτέ μην μοιράζεσαι ιδιωτικά κλειδιά.",
+          en: "Public-key login trusts a private key that stays on the client. ls -la ~/.ssh lists the simulated identity files, including names that start with a dot. The mode column should show 600 on a private key: owner read and write, nothing for anyone else.\n\ncat ~/.ssh/config prints Host aliases. A short name such as jump stands for a user, a hostname, and sometimes a key file, so you do not retype the whole route. ssh jump uses that alias and opens the fictional bastion session.\n\nssh -i selects a named key file when the alias does not. The keys in this lab are fixtures. Do not copy a private key out of the sandbox, and do not treat a readable key as harmless.",
+          el: "Η σύνδεση με δημόσιο κλειδί εμπιστεύεται ένα ιδιωτικό κλειδί που μένει στον client. Το ls -la ~/.ssh εμφανίζει τα εικονικά αρχεία ταυτότητας, μαζί με ονόματα που αρχίζουν με τελεία. Η στήλη mode πρέπει να δείχνει 600 σε ιδιωτικό κλειδί: ανάγνωση και εγγραφή για τον ιδιοκτήτη, τίποτα για κανέναν άλλον.\n\nΤο cat ~/.ssh/config τυπώνει τα alias Host. Ένα σύντομο όνομα όπως jump σημαίνει χρήστη, hostname και μερικές φορές αρχείο κλειδιού, ώστε να μην ξαναγράφεις όλη τη διαδρομή. Το ssh jump χρησιμοποιεί εκείνο το alias και ανοίγει τη φανταστική συνεδρία του bastion.\n\nΤο ssh -i διαλέγει ένα ονομασμένο αρχείο κλειδιού όταν το alias δεν το κάνει. Τα κλειδιά σε αυτό το εργαστήριο είναι fixtures. Μην αντιγράφεις ιδιωτικό κλειδί έξω από το sandbox, και μην αντιμετωπίζεις ένα αναγνώσιμο κλειδί ως ακίνδυνο.",
         },
       },
     ],
@@ -1003,8 +1003,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "Jump hosts", el: "Jump hosts" },
         body: {
-          en: "Internal boxes often accept SSH only from a bastion. ssh -J jump dev@10.10.20.14 (ProxyJump) chains the sessions. This is how real corporate networks are segmented — and how attackers pivot, which is why bastions need MFA, monitoring, and no outbound-any.",
-          el: "Τα εσωτερικά μηχανήματα δέχονται SSH μόνο από bastion. Το ProxyJump αλυσιδώνει συνεδρίες.",
+          en: "Some fictional hosts accept SSH only from the bastion, not from the first lab prompt. ssh -J jump dev@10.10.20.14 says that in one line. -J names the jump host. The destination after it is dev@10.10.20.14, still an address on the lab map.\n\nThe simulator chains the two fictional sessions and changes the prompt. It does not open a network path on your computer. ssh -i id_dev dev@10.10.20.14 is the same destination with an explicit key file, used when the alias is not enough.\n\nThe defensive point of a bastion is that it is the only door. It still needs its own strong authentication, logs, and no broad permission to reach every internal host.",
+          el: "Κάποιοι φανταστικοί hosts δέχονται SSH μόνο από το bastion, όχι από το πρώτο prompt του εργαστηρίου. Το ssh -J jump dev@10.10.20.14 το λέει σε μία γραμμή. Το -J ονομάζει τον jump host. Ο προορισμός μετά από αυτό είναι dev@10.10.20.14, ακόμη διεύθυνση στον χάρτη του lab.\n\nΟ προσομοιωτής ενώνει τις δύο φανταστικές συνεδρίες και αλλάζει το prompt. Δεν ανοίγει διαδρομή δικτύου στον υπολογιστή σου. Το ssh -i id_dev dev@10.10.20.14 είναι ο ίδιος προορισμός με ρητό αρχείο κλειδιού, όταν το alias δεν αρκεί.\n\nΤο αμυντικό νόημα ενός bastion είναι ότι είναι η μόνη πόρτα. Χρειάζεται ακόμη τη δική του ισχυρή ταυτοποίηση, αρχεία καταγραφής, και όχι πλατιά άδεια να φτάνει κάθε εσωτερικό host.",
         },
       },
     ],
@@ -1050,8 +1050,8 @@ export const MODULES: Module[] = [
       {
         heading: { en: "Segmentation", el: "Τμηματοποίηση" },
         body: {
-          en: "db-int.lab (10.10.20.30) is not reachable from kali — only from dev. That is network segmentation. After hopping to dev, ssh to the DB. Local port forwards (ssh -L) would do the same in production. Monitor east-west SSH.",
-          el: "Το db-int δεν φαίνεται από kali — μόνο από dev. Αυτό είναι segmentation.",
+          en: "db-int.lab at 10.10.20.30 does not answer from the first lab prompt. It answers only after the fictional session is on dev. That is the segmentation this module is about.\n\nssh -J jump dev@10.10.20.14 gets you to that intermediate host inside the simulator. ssh db-int, or ssh 10.10.20.30, then uses the alias or the address from that context. A welcome banner means the lab route was accepted. No socket is opened on your computer.\n\nA local forward is the same idea in production: an authenticated session can reach a service that was not directly exposed. This module does not build that tunnel. The control, on a host you administer, is AllowTcpForwarding no unless a named task needs it, plus logs for SSH between internal hosts.",
+          el: "Το db-int.lab στο 10.10.20.30 δεν απαντά από το πρώτο prompt του εργαστηρίου. Απαντά μόνο αφού η φανταστική συνεδρία είναι στο dev. Αυτή είναι η τμηματοποίηση για την οποία μιλά το μάθημα.\n\nΤο ssh -J jump dev@10.10.20.14 σε πάει σε εκείνον τον ενδιάμεσο host μέσα στον προσομοιωτή. Το ssh db-int, ή το ssh 10.10.20.30, χρησιμοποιεί μετά το alias ή τη διεύθυνση από εκείνο το πλαίσιο. Μήνυμα υποδοχής σημαίνει ότι η διαδρομή του lab έγινε δεκτή. Δεν ανοίγει socket στον υπολογιστή σου.\n\nΜια τοπική προώθηση είναι η ίδια ιδέα σε παραγωγή: μια ταυτοποιημένη συνεδρία μπορεί να φτάσει υπηρεσία που δεν ήταν άμεσα εκτεθειμένη. Αυτό το μάθημα δεν φτιάχνει εκείνο το τούνελ. Ο έλεγχος, σε host που διαχειρίζεσαι, είναι AllowTcpForwarding no εκτός αν μια συγκεκριμένη εργασία το χρειάζεται, μαζί με αρχεία καταγραφής για SSH ανάμεσα σε εσωτερικούς hosts.",
         },
       },
     ],
@@ -1142,11 +1142,11 @@ export const CAMPAIGNS: Campaign[] = ([
   {
     id: "sudorun",
     pathNumber: 2,
-    title: { en: "Sudo_Run", el: "Sudo_Run" },
-    subtitle: { en: "Linux for Beginners", el: "Linux για αρχάριους" },
+    title: { en: "Linux for Beginners #1", el: "Linux για αρχάριους #1" },
+    subtitle: { en: "The terminal, files, text, packages and permissions", el: "Τερματικό, αρχεία, κείμενο, πακέτα και δικαιώματα" },
     blurb: {
-      en: "Foundational Sudo_Run labs from pwd onward, followed by dedicated sequels for networking, processes, Bash automation and services. Everything runs in a persistent virtual filesystem.",
-      el: "Βασικά labs Sudo_Run από το pwd και μετά, με ξεχωριστές συνέχειες για δίκτυα, διεργασίες, αυτοματοποίηση Bash και υπηρεσίες. Όλα εκτελούνται σε μόνιμο εικονικό σύστημα αρχείων.",
+      en: "The first Linux beginners course: why the shell exists, how to read a prompt, and the everyday commands for files, text, packages and permissions. Every example stays in the sandbox. Networking, processes and Bash continue in #2 and #3.",
+      el: "Το πρώτο μάθημα Linux για αρχάριους: γιατί υπάρχει το shell, πώς διαβάζεται ένα prompt, και οι καθημερινές εντολές για αρχεία, κείμενο, πακέτα και δικαιώματα. Κάθε παράδειγμα μένει στο sandbox. Δίκτυα, διεργασίες και Bash συνεχίζουν στα #2 και #3.",
     },
     scenario: "sudorun",
     accent: "lime",
@@ -1205,8 +1205,8 @@ export const CAMPAIGNS: Campaign[] = ([
     title: { en: "SSH Service Security Testing", el: "Ελεγχος ασφάλειας υπηρεσίας SSH" },
     subtitle: { en: "From the banner to hardening, inside the fictional lab", el: "Από το banner ως τη σκλήρυνση, μέσα στο φανταστικό εργαστήριο" },
     blurb: {
-      en: "Five labs for the SSH service: banner, authentication methods, a lab-only credential check, keys and forwarding, and an isolated practice loop. Every command stays in the sandbox.",
-      el: "Πέντε εργαστήρια για την υπηρεσία SSH: banner, μέθοδοι ταυτοποίησης, έλεγχος διαπιστευτηρίων μόνο του lab, κλειδιά και προώθηση, και απομονωμένος κύκλος εξάσκησης. Κάθε εντολή μένει στο sandbox.",
+      en: "Five labs for the SSH service: banner, authentication methods, a lab-only credential check, keys and forwarding, and an isolated practice loop. Impacts of a valid session are named so you can harden against them. Every command stays in the sandbox.",
+      el: "Πέντε εργαστήρια για την υπηρεσία SSH: banner, μέθοδοι ταυτοποίησης, έλεγχος διαπιστευτηρίων μόνο του lab, κλειδιά και προώθηση, και απομονωμένος κύκλος εξάσκησης. Οι συνέπειες μιας έγκυρης συνεδρίας ονομάζονται, για να σκληρύνεις εναντίον τους. Κάθε εντολή μένει στο sandbox.",
     },
     scenario: "lab",
     accent: "cyan",

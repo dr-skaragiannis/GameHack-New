@@ -314,9 +314,9 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   },
   {
     key: "nmap", aliases: ["nmap"], title: both("Inventory authorized lab hosts", "Απογραφή εξουσιοδοτημένων hosts"),
-    purpose: both("Learn how host and service discovery results are read.", "Μάθε να διαβάζεις αποτελέσματα ανακάλυψης hosts και υπηρεσιών."),
-    mechanics: both("The GameHack nmap command returns canned results for lab-only targets. -sn/-sP is host discovery; -sV asks for service versions in a real scan.", "Η εντολή nmap του GameHack δίνει προκαθορισμένα αποτελέσματα μόνο για το εργαστήριο. Οι επιλογές -sn/-sP εκτελούν ανακάλυψη συστημάτων (host discovery), ενώ η -sV ζητά εκδόσεις υπηρεσιών σε πραγματική σάρωση."),
-    output: both("Host is up marks a simulated response. PORT/STATE/SERVICE rows describe simulated services; they are not live internet findings.", "Το Host is up δείχνει εικονική απάντηση. Οι γραμμές PORT/STATE/SERVICE περιγράφουν εικονικές υπηρεσίες, όχι ευρήματα live internet."),
+    purpose: both("Learn how to read a host or service report before you change anything.", "Μάθε να διαβάζεις αναφορά host ή υπηρεσίας πριν αλλάξεις οτιδήποτε."),
+    mechanics: both("GameHack returns a canned report for lab addresses only. A single address lists that host's fictional ports. A /24 asks which of the four lab hosts answer. -sV adds the version column. --script ssh-auth-methods answers only for 10.10.10.12 and prints publickey and password as the weak starting policy.", "Το GameHack επιστρέφει έτοιμη αναφορά μόνο για διευθύνσεις του εργαστηρίου. Μια μοναδική διεύθυνση εμφανίζει τις φανταστικές θύρες εκείνου του host. Ένα /24 ρωτά ποιοι από τους τέσσερις hosts απαντούν. Το -sV προσθέτει τη στήλη έκδοσης. Το --script ssh-auth-methods απαντά μόνο για το 10.10.10.12 και τυπώνει publickey και password ως την αδύναμη αρχική πολιτική."),
+    output: both("Host is up means the simulator answered. PORT, STATE, and SERVICE describe the fictional services. A version string is a clue to look up in an advisory list, not a licence to attack. The report is not a live internet finding.", "Το Host is up σημαίνει ότι απάντησε ο προσομοιωτής. Τα PORT, STATE και SERVICE περιγράφουν τις φανταστικές υπηρεσίες. Μια συμβολοσειρά έκδοσης είναι ένδειξη για αναζήτηση σε λίστα συμβουλών, όχι άδεια επίθεσης. Η αναφορά δεν είναι εύρημα ζωντανού διαδικτύου."),
     syntax: "nmap [OPTIONS] TARGET", example: "nmap -sV 10.10.10.5", caution: both("Scanning without permission can be illegal and disruptive. This command never sends packets outside the sandbox.", "Η σάρωση χωρίς άδεια μπορεί να είναι παράνομη και να προκαλέσει προβλήματα. Η εντολή δεν στέλνει πακέτα εκτός sandbox."),
   },
   {
@@ -450,7 +450,28 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     purpose: both("Connect to a remote shell using the SSH protocol.", "Συνδέσου σε απομακρυσμένο shell με SSH."),
     mechanics: both("SSH encrypts the connection. The lab recognizes its named fake hosts and changes the simulated session only; for the ubuntu fixture, start the virtual ssh service first. The exit builtin restores the saved local prompt.", "Το SSH κρυπτογραφεί τη σύνδεση. Το lab αναγνωρίζει φανταστικούς hosts και αλλάζει μόνο την εικονική συνεδρία, για το ubuntu fixture ξεκίνα πρώτα την εικονική υπηρεσία ssh. Το exit επαναφέρει το αποθηκευμένο τοπικό prompt."),
     output: both("A welcome banner means the simulator accepted the lab route. Connection errors mean the host or route is not configured in the VFS.", "Το μήνυμα υποδοχής δηλώνει ότι ο προσομοιωτής αποδέχθηκε τη διαδρομή του εργαστηρίου. Το σφάλμα σύνδεσης δηλώνει ότι ο υπολογιστής ή η διαδρομή δεν υπάρχει στο εικονικό σύστημα αρχείων."),
-    syntax: "ssh USER@HOST", example: "ssh ignite@192.168.0.11", caution: both("Use SSH only for systems where you have authorization. All GameHack hosts are fictional.", "Χρησιμοποίησε SSH μόνο σε συστήματα με άδεια. Όλοι οι hosts του GameHack είναι φανταστικοί."),
+    syntax: "ssh [OPTIONS] USER@HOST", example: "ssh labuser@10.10.10.12", caution: both("Use SSH only for systems where you have authorization. All GameHack hosts are fictional.", "Χρησιμοποίησε SSH μόνο σε συστήματα με άδεια. Όλοι οι hosts του GameHack είναι φανταστικοί."),
+  },
+  {
+    key: "ssh-keygen", aliases: ["ssh-keygen"], title: both("Record a simulated key pair", "Καταγραφή εικονικού ζεύγους κλειδιών"),
+    purpose: both("See how an administrator creates a key pair, without producing a usable private key.", "Δες πώς ένας διαχειριστής δημιουργεί ζεύγος κλειδιών, χωρίς να παραχθεί χρησιμοποιήσιμο ιδιωτικό κλειδί."),
+    mechanics: both("ssh-keygen -t ed25519 asks for the key type this lab uses. The simulator records the request and prints a lab fingerprint. It does not write a key file outside the sandbox, and it does not install the public key on a server.", "Η ssh-keygen -t ed25519 ζητά τον τύπο κλειδιού που χρησιμοποιεί το εργαστήριο. Ο προσομοιωτής καταγράφει το αίτημα και τυπώνει αποτύπωμα του lab. Δεν γράφει αρχείο κλειδιού έξω από το sandbox και δεν εγκαθιστά το δημόσιο κλειδί σε server."),
+    output: both("The fingerprint line is a marker that the command was accepted. It is not a credential. On a machine you administer, you would still set mode 600 and a long random passphrase before trusting the key.", "Η γραμμή αποτυπώματος είναι δείκτης ότι η εντολή έγινε δεκτή. Δεν είναι διαπιστευτήριο. Σε μηχάνημα που διαχειρίζεσαι, θα έβαζες ακόμη κατάσταση 600 και μακριά τυχαία συνθηματική φράση πριν εμπιστευτείς το κλειδί."),
+    syntax: "ssh-keygen -t ed25519", example: "ssh-keygen -t ed25519", caution: both("A copied private key is enough for access if it has no passphrase. This lab does not create one you can copy out.", "Ένα αντιγραμμένο ιδιωτικό κλειδί αρκεί για πρόσβαση αν δεν έχει συνθηματική φράση. Αυτό το εργαστήριο δεν δημιουργεί κλειδί που μπορείς να αντιγράψεις έξω."),
+  },
+  {
+    key: "printenv", aliases: ["printenv"], title: both("Print environment values", "Εμφάνιση τιμών περιβάλλοντος"),
+    purpose: both("Show exported environment variables, or one named value.", "Δείξε τις εξαγμένες μεταβλητές περιβάλλοντος, ή μία ονομασμένη τιμή."),
+    mechanics: both("printenv with no arguments lists exported variables. printenv NAME prints that one value. A shell variable that has not been exported does not appear.", "Το printenv χωρίς ορίσματα εμφανίζει τις εξαγμένες μεταβλητές. Το printenv NAME τυπώνει μόνο εκείνη την τιμή. Μια μεταβλητή του shell που δεν έχει γίνει export δεν εμφανίζεται."),
+    output: both("A blank result for one name means the variable is unset or not exported. The list is the current simulated session, not the host operating system.", "Κενό αποτέλεσμα για ένα όνομα σημαίνει ότι η μεταβλητή δεν έχει οριστεί ή δεν έχει εξαχθεί. Η λίστα είναι η τρέχουσα εικονική συνεδρία, όχι το λειτουργικό του host."),
+    syntax: "printenv [NAME]", example: "printenv HOME",
+  },
+  {
+    key: "sandbox-report", aliases: ["sandbox-report"], title: both("Read an isolated behavior report", "Ανάγνωση αναφοράς απομονωμένης συμπεριφοράς"),
+    purpose: both("Review a prepared behavior summary without executing a sample.", "Διάβασε έτοιμη σύνοψη συμπεριφοράς χωρίς να εκτελέσεις δείγμα."),
+    mechanics: both("The command names a fictional evidence path. GameHack prints the stored training report for that fixture. It does not launch the file.", "Η εντολή ονομάζει μια φανταστική διαδρομή τεκμηρίου. Το GameHack τυπώνει την αποθηκευμένη αναφορά εκπαίδευσης για εκείνο το fixture. Δεν εκκινεί το αρχείο."),
+    output: both("Treat each line as an observation from a controlled snapshot. A behavior note is a clue, not proof of intent or of what the file would do on another machine.", "Αντιμετώπισε κάθε γραμμή ως παρατήρηση από ελεγχόμενο στιγμιότυπο. Μια σημείωση συμπεριφοράς είναι ένδειξη, όχι απόδειξη πρόθεσης ούτε του τι θα έκανε το αρχείο σε άλλο μηχάνημα."),
+    syntax: "sandbox-report PATH", example: "sandbox-report 07-malware/sample.bin", caution: both("Do not run an unknown sample to confirm a report. The lab command is read-only.", "Μην εκτελείς άγνωστο δείγμα για να επιβεβαιώσεις μια αναφορά. Η εντολή του εργαστηρίου είναι μόνο ανάγνωση."),
   },
   {
     key: "exit", aliases: ["exit"], title: both("Return from the simulated remote shell", "Επιστροφή από το εικονικό απομακρυσμένο shell"),
@@ -482,9 +503,9 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   },
   {
     key: "hydra", aliases: ["hydra"], title: both("Credential testing (simulated)", "Έλεγχος διαπιστευτηρίων (προσομοίωση)"),
-    purpose: both("Understand how weak passwords can be tested in a deliberately vulnerable lab.", "Κατανόησε πώς ελέγχονται αδύναμοι κωδικοί σε σκόπιμα ευάλωτο lab."),
-    mechanics: both("This educational terminal only prints canned outcomes for designated fictional hosts. It does not send authentication attempts to a network.", "Το εκπαιδευτικό terminal εμφανίζει προκαθορισμένα αποτελέσματα για φανταστικούς hosts. Δεν στέλνει login attempts στο δίκτυο."),
-    output: both("A valid credential row is a lab answer. Defenders should prefer keys/MFA, rate limits, and alerts for repeated failures.", "Μια γραμμή έγκυρου διαπιστευτηρίου (valid credential) είναι η απάντηση της άσκησης. Άμυνα: κλειδιά/MFA, όρια ρυθμού (rate limits) και ειδοποιήσεις για επαναλαμβανόμενες αποτυχίες."),
+    purpose: both("See what a weak lab password looks like when a small training list is checked against one fictional account.", "Δες πώς φαίνεται ένας αδύναμος κωδικός του εργαστηρίου όταν ένα μικρό λεξικό εκπαίδευσης ελέγχεται σε έναν φανταστικό λογαριασμό."),
+    mechanics: both("-l names one account and -P names tools/wordlist.txt. The ssh:// target must be ssh.lab or raven.lab. Any other target is rejected. The terminal prints a stored answer. It does not send authentication attempts, and it does not accept a wordlist you supply from outside the sandbox.", "Το -l ονομάζει έναν λογαριασμό και το -P το tools/wordlist.txt. Ο στόχος ssh:// πρέπει να είναι το ssh.lab ή το raven.lab. Κάθε άλλος στόχος απορρίπτεται. Το τερματικό τυπώνει αποθηκευμένη απάντηση. Δεν στέλνει απόπειρες ταυτοποίησης και δεν δέχεται λεξικό που φέρνεις από έξω από το sandbox."),
+    output: both("A password row is a finding about that simulated account. It is not a technique to reuse. Close password authentication after keys work, add lockout, and alert on repeated failures.", "Μια γραμμή κωδικού είναι εύρημα για εκείνον τον εικονικό λογαριασμό. Δεν είναι τεχνική για αλλού. Κλείσε την ταυτοποίηση με κωδικό αφού δουλέψουν τα κλειδιά, βάλε κλείδωμα, και ειδοποιήσου για επανειλημμένες αποτυχίες."),
     syntax: "hydra ... (fictional lab target only)", example: "hydra -l labuser -P tools/wordlist.txt ssh://10.10.10.12", caution: both("Credential attacks against real accounts require explicit authorization. This implementation is a sandbox mock only.", "Οι επιθέσεις διαπιστευτηρίων σε πραγματικούς λογαριασμούς απαιτούν ρητή άδεια. Αυτή η υλοποίηση είναι μόνο προσομοίωση (sandbox)."),
   },
   {
@@ -552,9 +573,9 @@ export const COMMAND_GUIDE: CommandLesson[] = [
   },
   {
     key: "scp", aliases: ["scp"], title: both("Secure copy (simulated)", "Ασφαλής αντιγραφή (προσομοίωση)"),
-    purpose: both("Learn the shape of a secure remote file-copy command.", "Μάθε τη μορφή εντολής ασφαλούς απομακρυσμένης αντιγραφής αρχείου."),
-    mechanics: both("scp copies a source to a destination over SSH on real systems. GameHack reports a canned transfer and never contacts a remote host.", "Το scp αντιγράφει πηγή σε προορισμό μέσω SSH σε πραγματικά συστήματα. Το GameHack εμφανίζει εικονική μεταφορά."),
-    output: both("Transfer complete means only that the sandbox stub accepted the training command.", "Το μήνυμα Transfer complete δηλώνει μόνο ότι η προσομοίωση αποδέχθηκε την εκπαιδευτική εντολή."),
+    purpose: both("See that an authenticated SSH session can move a file as well as open a shell.", "Δες ότι μια ταυτοποιημένη συνεδρία SSH μπορεί να μετακινήσει αρχείο, όχι μόνο να ανοίξει shell."),
+    mechanics: both("The source path comes first. user@host:path is the fictional destination. GameHack reports a canned transfer and never contacts a remote host. The lab copy is a note, not a system account file.", "Η διαδρομή πηγής μπαίνει πρώτη. Το user@host:path είναι ο φανταστικός προορισμός. Το GameHack δηλώνει εικονική μεταφορά και δεν επικοινωνεί με απομακρυσμένο host. Η αντιγραφή του εργαστηρίου είναι μια σημείωση, όχι αρχείο λογαριασμού συστήματος."),
+    output: both("Transfer complete means the sandbox accepted the training command. It does not mean a file left your computer.", "Το Transfer complete σημαίνει ότι το sandbox δέχθηκε την εκπαιδευτική εντολή. Δεν σημαίνει ότι ένα αρχείο έφυγε από τον υπολογιστή σου."),
     syntax: "scp SOURCE USER@HOST:PATH", example: "scp report.txt operator@lab:/tmp/",
   },
   {

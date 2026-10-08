@@ -1,5 +1,7 @@
 import type { Lang } from "../i18n";
 import { AVATAR_COLORS, AVATAR_ICONS } from "./avatarCatalog";
+import { hashPassword, isScryptHash, verifyPassword } from "./passwordHash";
+import { buildPlayerArchive, hashRecoveryKey, passwordHashForImport, type PlayerArchive } from "./playerArchive";
 
 export type Role = "player" | "educator";
 export type ContentWidth = "centered" | "wide" | "full";
@@ -25,7 +27,8 @@ export type Metrics = {
 export type User = {
   id: string;
   username: string;
-  password: string;
+  passwordHash: string;
+  recoveryKeyHash?: string;
   role: Role;
   displayName: string;
   avatar: string;
@@ -266,11 +269,11 @@ export const BADGES: Record<string, Badge> = {
     blurb: "Mastery of SSH keys, hopping and tunnels across a segmented lab network.",
   },
   sudo_run: {
-    name: "Sudo_Run",
-    desc: "Finished Linux for Beginners",
+    name: "Linux for Beginners #1",
+    desc: "Finished Linux for Beginners #1",
     icon: "terminal",
     tier: "gold",
-    blurb: "Certifies the full Sudo_Run path: files, permissions, networks, processes, bash, cron and core Linux services in the GameHack sandbox.",
+    blurb: "Certifies Linux for Beginners #1: the shell, files, text, packages and permissions, practised in the GameHack sandbox.",
   },
   evidence_custodian: {
     name: "Evidence Custodian",
@@ -480,7 +483,7 @@ function seed(): DB {
   const edu: User = {
     id: uid(),
     username: "educator",
-    password: "teach123",
+    passwordHash: "teach123",
     role: "educator",
     displayName: "Dr. Mara Vance",
     avatar: "ic:owl:#f97316",
@@ -517,7 +520,7 @@ function seed(): DB {
     db.users.push({
       id: uid(),
       username: u,
-      password: "demo",
+      passwordHash: "demo",
       role: "player",
       displayName: dn,
       avatar: randomIconAvatar(u.length / 10 + 0.11),
@@ -618,6 +621,28 @@ function normalizeStoredDB(value: unknown): DB | null {
   };
 }
 
+type StoredUser = User & { password?: string };
+
+function upgradePasswordHashes(db: DB): boolean {
+  let changed = false;
+  for (const user of db.users as StoredUser[]) {
+    const legacy = typeof user.password === "string" ? user.password : "";
+    const current = typeof user.passwordHash === "string" ? user.passwordHash : legacy;
+    if (current && !isScryptHash(current)) {
+      user.passwordHash = hashPassword(current);
+      changed = true;
+    } else if (typeof user.passwordHash !== "string") {
+      user.passwordHash = "";
+      changed = true;
+    }
+    if ("password" in user) {
+      delete user.password;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 function migrateLegacyCampaignIds(db: DB): void {
   for (const user of db.users) {
     if (user.activeCampaignId === "forge") user.activeCampaignId = "gamehack";
@@ -665,6 +690,7 @@ export function getDB(): DB {
   }
   cache = seed();
   enrichDemoPresence(cache);
+  upgradePasswordHashes(cache);
   saveDB();
   return cache;
 }
@@ -695,7 +721,7 @@ export function establishAuthenticatedUser(email: string, nickname: string): Use
     user = {
       id: normalizedEmail,
       username: normalizedEmail,
-      password: "",
+      passwordHash: "",
       role: "player",
       displayName: normalizedNickname,
       avatar: randomIconAvatar(),
@@ -731,7 +757,7 @@ export function login(username: string, password: string): { ok: boolean; error?
   const u =
     db.users.find((user) => user.id.trim().toLowerCase() === identity) ||
     db.users.find((user) => user.username.trim().toLowerCase() === identity);
-  if (!u || u.password !== password) return { ok: false, error: "Invalid username or email, or password" };
+  if (!u || !verifyPassword(password, u.passwordHash)) return { ok: false, error: "Invalid username or email, or password" };
   db.sessionUserId = u.id;
   touchStreak(u);
   u.lastSeen = Date.now();
@@ -1113,6 +1139,73 @@ export function sendChat(aId: string, bId: string, text: string) {
 
 export function threadsFor(userId: string): ChatThread[] {
   return getDB().chats.filter((c) => c.members.includes(userId) && c.messages.length > 0);
+}
+
+export function extractPlayerArchive(): PlayerArchive {
+  const db = getDB();
+  upgradePasswordHashes(db);
+  const built = buildPlayerArchive(db.users);
+  db.users.forEach((user, index) => {
+    user.recoveryKeyHash = built.users[index]?.recoveryKeyHash;
+  });
+  saveDB();
+  return built.archive;
+}
+
+export async function importPlayerArchive(archive: PlayerArchive, currentUserId?: string): Promise<number> {
+  const db = getDB();
+  let imported = 0;
+  for (const entry of archive.players) {
+    const identity = entry.id.trim().toLowerCase();
+    const username = entry.username.trim().toLowerCase();
+    let user = db.users.find((item) => item.id.toLowerCase() === identity)
+      || db.users.find((item) => item.username.trim().toLowerCase() === username);
+    const passwordHash = await passwordHashForImport(entry);
+    const recoveryKeyHash = entry.recoveryKeyFile
+      ? hashRecoveryKey(entry.recoveryKeyFile.recoveryKey)
+      : entry.recoveryKeyHash || undefined;
+    const metrics = { ...freshMetrics(), ...entry.metrics, xp: Number(entry.metrics.xp) || 0 };
+    if (!user) {
+      user = {
+        id: entry.id,
+        username: entry.username,
+        passwordHash,
+        recoveryKeyHash,
+        role: entry.role,
+        displayName: entry.displayName,
+        avatar: entry.avatar,
+        bio: entry.bio,
+        interests: [...entry.interests],
+        hobbies: [...entry.hobbies],
+        createdAt: entry.createdAt,
+        teamId: entry.teamId,
+        lang: entry.lang,
+        accepted: true,
+        progress: structuredClone(entry.progress),
+        metrics,
+        badges: [...entry.badges],
+      };
+      db.users.push(user);
+    } else {
+      user.username = entry.username || user.username;
+      user.displayName = entry.displayName || user.displayName;
+      user.avatar = entry.avatar || user.avatar;
+      user.bio = entry.bio;
+      user.interests = [...entry.interests];
+      user.hobbies = [...entry.hobbies];
+      user.teamId = entry.teamId;
+      user.lang = entry.lang;
+      user.progress = structuredClone(entry.progress);
+      user.metrics = metrics;
+      user.badges = [...entry.badges];
+      if (passwordHash) user.passwordHash = passwordHash;
+      if (recoveryKeyHash) user.recoveryKeyHash = recoveryKeyHash;
+      if (user.id !== currentUserId) user.role = entry.role;
+    }
+    imported += 1;
+  }
+  saveDB();
+  return imported;
 }
 
 export function resetAll() {

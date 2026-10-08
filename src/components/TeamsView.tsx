@@ -98,7 +98,7 @@ export default function TeamsView({
         </div>
       ) : (
         <>
-          <PlayerTeamPanel user={user} lang={lang} />
+          <PlayerTeamPanel user={user} lang={lang} onProfile={onProfile} />
           {team && roster.length > 0 && (
             <section
               className="glass rounded-2xl border border-gamehack-border p-5"

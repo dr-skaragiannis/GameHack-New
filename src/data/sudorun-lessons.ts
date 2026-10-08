@@ -17,62 +17,67 @@ export const SUDO_RUN_MODULES: Module[] = [
     color: "from-lime-500 to-emerald-800",
     difficulty: 1,
     scenario: lab,
-    title: { en: "Sudo_Run — Why Linux?", el: "Sudo_Run — Γιατί Linux;" },
-    subtitle: { en: "Pentesting OS, pwd, whoami, cd, ls", el: "OS pentest, pwd, whoami, cd, ls" },
+    title: { en: "Why Linux, and the first commands", el: "Γιατί Linux, και οι πρώτες εντολές" },
+    subtitle: { en: "Prompt, pwd, whoami, cd, ls", el: "Prompt, pwd, whoami, cd, ls" },
     badge: { en: "Sudo Initiate", el: "Μύηση Sudo" },
     theory: [
       {
         heading: { en: "Why use Linux for pentesting?", el: "Γιατί Linux στο pentest;" },
         body: {
-          en: "Certain operating systems get tied to certain tasks. For penetration testing, Linux is the default map. Linux offers far higher control of the OS, and it is open source — which makes it transparent and easier to understand. Before you try to “hack” anything, you must know how it works; transparency is a huge plus. Because Linux is popular in the community, most pentesting tools and frameworks are built for it. Maintenance is easy (packages come from a repository) and it is very stable compared to traditional desktop OS like Windows. This campaign is Sudo_Run: Linux for Beginners, inside GameHack — a sandbox, never a live network you do not own.",
-          el: "Για pentest το Linux είναι ο κανόνας: ανοιχτό, διαφανές, σταθερό, με τα εργαλεία έτοιμα. Το Sudo_Run είναι το μάθημα αρχαρίων του GameHack — μόνο sandbox.",
+          en: "Linux is the usual workstation for security work because you can see how the system actually behaves. The kernel, the shell and the everyday utilities are open source, so a permission check or a package install is not a black box. Most security tools are written for this command line first, and a repository can keep a machine current without hunting installers by hand.\n\nNone of that makes Linux magically safe. It gives you the controls and the visibility to notice what is happening. This course is Linux for Beginners #1, inside GameHack. Practise here, or on a throwaway virtual machine you administer. A typo as root on a real disk is permanent: the command line has no recycle bin.",
+          el: "Το Linux είναι ο συνηθισμένος σταθμός εργασίας για δουλειά ασφάλειας, γιατί μπορείς να δεις πώς συμπεριφέρεται πραγματικά το σύστημα. Ο πυρήνας, το shell και οι καθημερινές εντολές είναι ανοιχτός κώδικας, οπότε ένας έλεγχος δικαιωμάτων ή μια εγκατάσταση πακέτου δεν είναι μαύρο κουτί. Τα περισσότερα εργαλεία ασφάλειας γράφονται πρώτα για αυτή τη γραμμή εντολών, και ένα αποθετήριο μπορεί να κρατά ένα μηχάνημα ενημερωμένο χωρίς να κυνηγάς εγκαταστάτες στο χέρι.\n\nΤίποτα από αυτά δεν κάνει το Linux μαγικά ασφαλές. Σου δίνει τους ελέγχους και την ορατότητα για να προσέξεις τι συμβαίνει. Αυτό το μάθημα είναι το Linux για αρχάριους #1, μέσα στο GameHack. Εξασκήσου εδώ, ή σε μια αναλώσιμη εικονική μηχανή που διαχειρίζεσαι. Ένα λάθος ως root σε πραγματικό δίσκο είναι μόνιμο: η γραμμή εντολών δεν έχει κάδο ανακύκλωσης.",
         },
       },
       {
         heading: { en: "The terminal", el: "Το τερματικό" },
         body: {
-          en: "Just like everyday Windows work (folders, copy, move), we do those operations on Linux — mostly in the terminal, the command-line interface. You type a command, press Enter, the shell runs it. You are root in this lab (administrator). That is a lot of power: stay inside GameHack.",
-          el: "Οι καθημερινές εργασίες γίνονται στο τερματικό. Εδώ είσαι root — μείνε μέσα στο GameHack.",
+          en: "The terminal is the program that reads a line, interprets it, and asks the operating system to do the work. In this lab the prompt looks like root@kali:~# . root is the account, kali is the machine name, and ~ is your home directory. The final # means you are root. A normal account would end in $ . If you see # and did not expect it, stop and read the next command before you press Enter.\n\nEverything after the prompt is what you typed. Every line under it, until the next prompt, is what the program printed. Nothing runs until Enter. Inside a file, a line that starts with # is a comment, not a command. The same character means two different things depending on whether it sits in the prompt or in a file.\n\nAngle brackets in a lesson, such as cp <source> <destination>, are placeholders. Replace them with a real path. Output in the screenshots is the shape of a Debian-style answer. Sizes and timestamps in your own session can differ. What matters is which field is which.",
+          el: "Το τερματικό είναι το πρόγραμμα που διαβάζει μια γραμμή, την ερμηνεύει, και ζητά από το λειτουργικό να κάνει τη δουλειά. Σε αυτό το εργαστήριο το prompt μοιάζει με root@kali:~# . Το root είναι ο λογαριασμός, το kali το όνομα του μηχανήματος, και το ~ ο προσωπικός σου φάκελος. Το τελικό # σημαίνει ότι είσαι root. Ένας απλός λογαριασμός θα τέλειωνε σε $ . Αν δεις # και δεν το περίμενες, σταμάτα και διάβασε την επόμενη εντολή πριν πατήσεις Enter.\n\nΌ,τι ακολουθεί το prompt είναι αυτό που πληκτρολόγησες. Κάθε γραμμή από κάτω, μέχρι το επόμενο prompt, είναι αυτό που τύπωσε το πρόγραμμα. Τίποτα δεν τρέχει πριν το Enter. Μέσα σε αρχείο, μια γραμμή που αρχίζει με # είναι σχόλιο, όχι εντολή. Ο ίδιος χαρακτήρας σημαίνει δύο διαφορετικά πράγματα, ανάλογα με το αν κάθεται στο prompt ή σε αρχείο.\n\nΟι γωνιακές αγκύλες σε ένα μάθημα, όπως cp <πηγή> <προορισμός>, είναι θέσεις που αντικαθιστάς. Βάλε μια πραγματική διαδρομή. Η έξοδος στα στιγμιότυπα έχει το σχήμα μιας απάντησης τύπου Debian. Μεγέθη και χρόνοι στη δική σου συνεδρία μπορεί να διαφέρουν. Αυτό που μετράει είναι ποιο πεδίο είναι ποιο.",
         },
       },
       {
         heading: { en: "pwd — where am I?", el: "pwd — πού είμαι;" },
         body: {
-          en: "Before you begin, know which directory you are in. pwd prints the working directory. In Sudo_Run you start in /root (the root user's home).",
-          el: "Η εντολή pwd, όταν εκτελείται, εμφανίζει τον φάκελο στον οποίο βρισκόμαστε αυτή τη στιγμή. Στο Sudo_Run ξεκινάς από το /root.",
+          en: "pwd answers where am I. It takes no arguments, prints one absolute path, and exits. The next command runs in that directory, and a file you create without a path is created there. In this lab you start in /root, which is the home of the root account. The prompt's ~ is shorthand for that home. cd ~ and cd /root are the same move while you are root. A normal account named student would see /home/student instead.\n\nThe output is a single undecorated line. That is deliberate: other programs can read it as easily as you can.",
+          el: "Η pwd απαντά στο πού είμαι. Δεν παίρνει ορίσματα, τυπώνει μία απόλυτη διαδρομή, και τελειώνει. Η επόμενη εντολή τρέχει σε εκείνον τον φάκελο, και ένα αρχείο που δημιουργείς χωρίς διαδρομή δημιουργείται εκεί. Σε αυτό το εργαστήριο ξεκινάς στο /root, που είναι το home του λογαριασμού root. Το ~ του prompt είναι συντομογραφία για εκείνο το home. Τα cd ~ και cd /root είναι η ίδια κίνηση όσο είσαι root. Ένας απλός λογαριασμός με όνομα student θα έβλεπε /home/student.\n\nΗ έξοδος είναι μία γραμμή χωρίς στολίδια. Αυτό είναι σκόπιμο: άλλα προγράμματα μπορούν να τη διαβάσουν τόσο εύκολα όσο εσύ.",
         },
         shots: [shot("pwd", ["/root"])],
       },
       {
         heading: { en: "whoami — who am I?", el: "whoami — ποιος είμαι;" },
         body: {
-          en: "whoami shows the logged-in user. Here you are root (the Windows equivalent of a full administrator).",
-          el: "Η εντολή whoami εμφανίζει τον συνδεδεμένο χρήστη. Εδώ είσαι root.",
+          en: "whoami answers who am I. Linux decides what a process may read, write or execute from that identity, not from which window you opened. Here the answer is root, the administrator account. Root is not stopped by ordinary permission checks, which is why the same command can be refused for a normal user and destructive for root.\n\nid prints the numbers the kernel actually uses: user id, primary group, and extra groups. User id 0 is always root. On Debian-family systems, ordinary human accounts usually start at 1000. A process running as uid=0 that has no reason to do so is a finding, not a convenience.",
+          el: "Η whoami απαντά στο ποιος είμαι. Το Linux αποφασίζει τι μπορεί να διαβάσει, να γράψει ή να εκτελέσει μια διεργασία από εκείνη την ταυτότητα, όχι από το ποιο παράθυρο άνοιξες. Εδώ η απάντηση είναι root, ο λογαριασμός διαχειριστή. Ο root δεν σταματά από τους συνηθισμένους ελέγχους δικαιωμάτων, γι' αυτό η ίδια εντολή μπορεί να απορριφθεί για απλό χρήστη και να είναι καταστροφική για τον root.\n\nΗ id τυπώνει τους αριθμούς που χρησιμοποιεί πραγματικά ο πυρήνας: user id, κύρια ομάδα, και επιπλέον ομάδες. Το user id 0 είναι πάντα ο root. Σε συστήματα οικογένειας Debian, οι απλοί ανθρώπινοι λογαριασμοί συνήθως αρχίζουν από το 1000. Μια διεργασία που τρέχει ως uid=0 χωρίς λόγο είναι εύρημα, όχι ευκολία.",
         },
-        shots: [shot("whoami", ["root"])],
+        shots: [shot("whoami", ["root"]), shot("id", ["uid=0(root) gid=0(root) groups=0(root)"])],
       },
       {
         heading: { en: "cd — change directory", el: "cd — αλλαγή φακέλου" },
         body: {
-          en: "cd moves you. Change into Desktop with: cd Desktop/",
-          el: "Η εντολή cd σε μετακινεί σε άλλο φάκελο. Δοκίμασε cd Desktop/",
+          en: "cd changes the working directory. A path that does not start with / is relative to where you are, so cd Desktop/ from /root lands in /root/Desktop. A path that starts with / is absolute and ignores your current place.\n\nThree shortcuts are worth memorising. cd .. goes to the parent. cd / goes to the root of the whole tree, not to /root. cd ~ goes home. A real shell also has cd - , which returns to the previous directory. This sandbox does not keep that history, so use pwd and an explicit path instead. On success the lab prints Changed directory to … . A real prompt would simply change the path before the # and stay silent. Silence there means success, not a frozen terminal.",
+          el: "Η cd αλλάζει τον τρέχοντα φάκελο. Μια διαδρομή που δεν αρχίζει με / είναι σχετική με το πού βρίσκεσαι, οπότε το cd Desktop/ από το /root σε πηγαίνει στο /root/Desktop. Μια διαδρομή που αρχίζει με / είναι απόλυτη και αγνοεί το πού στέκεσαι.\n\nΤρεις συντομεύσεις αξίζει να τις μάθεις. Το cd .. πάει στον γονέα. Το cd / πάει στη ρίζα ολόκληρου του δέντρου, όχι στο /root. Το cd ~ πάει στο home. Ένα πραγματικό shell έχει και cd - , που γυρίζει στον προηγούμενο φάκελο. Αυτό το sandbox δεν κρατά εκείνο το ιστορικό, οπότε χρησιμοποίησε pwd και ρητή διαδρομή. Σε επιτυχία το εργαστήριο τυπώνει Changed directory to … . Ένα πραγματικό prompt θα άλλαζε απλώς τη διαδρομή πριν το # και θα έμενε σιωπηλό. Η σιωπή εκεί σημαίνει επιτυχία, όχι κολλημένο τερματικό.",
         },
-        shots: [shot("cd Desktop/", ["root@kali:~/Desktop#"])],
+        shots: [shot("cd Desktop/", ["Changed directory to /root/Desktop"])],
       },
       {
         heading: { en: "ls — list contents", el: "ls — λίστα" },
         body: {
-          en: "ls lists a directory (like dir on Windows). Run it after you cd into Desktop.",
-          el: "Η εντολή ls λειτουργεί όπως η dir των Windows.",
+          en: "ls lists the names in the current directory. It does not enter a directory and it does not open a file. After cd Desktop/, a plain ls shows the visible names, such as CTF-notes.txt and todo.txt.\n\nls -l adds the details. The first character is the type: - for a file, d for a directory. The next nine characters are three groups of rwx, for the owner, the group, and everyone else. Then come the owner, the group, the size in bytes, and the name. ls -a also shows names that start with a dot, including . and .. . Those are not decorations: . is this directory and .. is its parent. ls -lah on a real machine adds human-readable sizes. This lab prints the byte count either way, so read the number as bytes.",
+          el: "Η ls απαριθμεί τα ονόματα στον τρέχοντα φάκελο. Δεν μπαίνει σε φάκελο και δεν ανοίγει αρχείο. Μετά το cd Desktop/, μια σκέτη ls δείχνει τα ορατά ονόματα, όπως CTF-notes.txt και todo.txt.\n\nΗ ls -l προσθέτει τις λεπτομέρειες. Ο πρώτος χαρακτήρας είναι ο τύπος: - για αρχείο, d για φάκελο. Οι επόμενοι εννέα χαρακτήρες είναι τρεις ομάδες rwx, για τον ιδιοκτήτη, την ομάδα, και όλους τους άλλους. Ακολουθούν ο ιδιοκτήτης, η ομάδα, το μέγεθος σε bytes, και το όνομα. Η ls -a δείχνει και ονόματα που αρχίζουν με τελεία, μαζί με . και .. . Δεν είναι στολίδια: το . είναι αυτός ο φάκελος και το .. ο γονέας του. Η ls -lah σε πραγματικό μηχάνημα προσθέτει μεγέθη αναγνώσιμα από άνθρωπο. Αυτό το εργαστήριο τυπώνει τον αριθμό των bytes έτσι κι αλλιώς, οπότε διάβασε τον αριθμό ως bytes.",
         },
-        shots: [shot("ls", ["CTF-notes.txt  todo.txt"])],
+        shots: [
+          shot("ls", ["CTF-notes.txt  todo.txt"]),
+          shot("ls -l", ["total 2", "-rw-r--r-- 1 root root   51 CTF-notes.txt", "-rw-r--r-- 1 root root   60 todo.txt"]),
+        ],
       },
     ],
     cheats: [
       { cmd: "pwd", desc: { en: "print working directory", el: "τρέχων φάκελος" } },
       { cmd: "whoami", desc: { en: "current user", el: "τρέχων χρήστης" } },
+      { cmd: "id", desc: { en: "numeric user and groups", el: "αριθμητικός χρήστης και ομάδες" } },
       { cmd: "cd Desktop/", desc: { en: "enter Desktop", el: "μπες στο Desktop" } },
-      { cmd: "ls", desc: { en: "list files", el: "λίστα αρχείων" } },
+      { cmd: "cd ..", desc: { en: "parent directory", el: "γονικός φάκελος" } },
+      { cmd: "ls -la", desc: { en: "long listing, including dot names", el: "αναλυτική λίστα, και με κρυφά ονόματα" } },
     ],
     tasks: [
       {
@@ -133,32 +138,32 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "help / --help", el: "help / --help" },
         body: {
-          en: "Nearly every command, application or utility on Linux has a dedicated help file. If you are stuck, -h / --help is your friend. Example: volatility --help (Volatility is a memory-forensics framework). In GameHack the same pattern applies to every tool.",
-          el: "Σχεδόν κάθε εντολή διαθέτει --help. Παράδειγμα: volatility --help.",
+          en: "When you do not remember a flag, ask the command. Most programs accept --help or the shorter -h and print a short summary of their own options to the terminal. That summary is written by the program, so it matches the version you actually have. volatility --help is the lab example. Read the flag names. Do not treat a help page as permission to run the tool against a machine you do not administer.\n\nIf --help is too short, the manual is the longer book. man ls opens the page for ls. The number in parentheses is the section: (1) is user commands, (5) is file formats, (8) is administration. The same word can exist in more than one section, which is why man 5 passwd and man passwd are not the same page on a real system. This lab prints a training page: name, synopsis, a one-line description, and a reminder that the command acts on the virtual filesystem only. man -k WORD searches those summaries, the way apropos does on a real machine.",
+          el: "Όταν δεν θυμάσαι μια επιλογή, ρώτα την εντολή. Τα περισσότερα προγράμματα δέχονται --help ή το συντομότερο -h και τυπώνουν μια σύντομη περίληψη των δικών τους επιλογών στο τερματικό. Την περίληψη τη γράφει το ίδιο το πρόγραμμα, οπότε ταιριάζει με την έκδοση που έχεις. Το volatility --help είναι το παράδειγμα του εργαστηρίου. Διάβασε τα ονόματα των επιλογών. Μην αντιμετωπίζεις μια σελίδα βοήθειας ως άδεια να τρέξεις το εργαλείο σε μηχάνημα που δεν διαχειρίζεσαι.\n\nΑν το --help είναι πολύ σύντομο, το εγχειρίδιο είναι το μακρύτερο βιβλίο. Το man ls ανοίγει τη σελίδα της ls. Ο αριθμός στις παρενθέσεις είναι η ενότητα: το (1) είναι εντολές χρήστη, το (5) μορφές αρχείων, το (8) διαχείριση. Η ίδια λέξη μπορεί να υπάρχει σε περισσότερες από μία ενότητες, γι' αυτό σε πραγματικό σύστημα τα man 5 passwd και man passwd δεν είναι η ίδια σελίδα. Αυτό το εργαστήριο τυπώνει μια εκπαιδευτική σελίδα: όνομα, σύνοψη, μία γραμμή περιγραφής, και υπενθύμιση ότι η εντολή ενεργεί μόνο στο εικονικό σύστημα αρχείων. Το man -k WORD ψάχνει εκείνες τις περιλήψεις, όπως το apropos σε πραγματικό μηχάνημα.",
         },
         shots: [shot("volatility --help", ["Volatility Foundation Volatility Framework", "-h, --help   show help message and exit", "Plugins: pslist, netscan, filescan (lab stub)"])],
       },
       {
         heading: { en: "man — manual pages", el: "man — εγχειρίδια" },
         body: {
-          en: "In addition to --help, most commands have a manual page: man COMMAND. man ls describes ls and its flags (-a, -l, …).",
-          el: "Η εντολή man ls περιγράφει την ls και τις επιλογές (flags).",
+          en: "man COMMAND is the command you type. On a real terminal, q leaves the page and /word searches inside it. This lab prints the page and returns to the prompt, so there is no pager to quit. The useful habit is the same: read NAME and SYNOPSIS before you invent flags. A synopsis in square brackets is optional. Words in capitals are placeholders you replace. A flag you did not see in the synopsis is a guess, and guesses on a destructive command are how people delete the wrong tree.",
+          el: "Το man COMMAND είναι η εντολή που πληκτρολογείς. Σε πραγματικό τερματικό, το q φεύγει από τη σελίδα και το /word ψάχνει μέσα της. Αυτό το εργαστήριο τυπώνει τη σελίδα και γυρίζει στο prompt, οπότε δεν υπάρχει pager για να κλείσεις. Η χρήσιμη συνήθεια είναι η ίδια: διάβασε NAME και SYNOPSIS πριν επινοήσεις επιλογές. Μια σύνοψη σε αγκύλες είναι προαιρετική. Οι λέξεις με κεφαλαία είναι θέσεις που αντικαθιστάς. Μια επιλογή που δεν είδες στη σύνοψη είναι εικασία, και οι εικασίες σε καταστροφική εντολή είναι ο τρόπος που σβήνει κανείς λάθος δέντρο.",
         },
-        shots: [shot("man ls", ["LS(1)  ls - list directory contents", "-a  do not ignore entries starting with .", "-l  use a long listing format"])],
+        shots: [shot("man ls", ["LS(1)                         GameHack USER COMMANDS                         LS(1)", "NAME", "       ls - List virtual directory contents.", "SYNOPSIS", "       ls [OPTIONS] [PATH...]"])],
       },
       {
         heading: { en: "locate — keyword search", el: "locate — αναζήτηση" },
         body: {
-          en: "locate KEYWORD searches a database of the filesystem. Drawbacks: it can dump too much, and the database is typically updated once a day — so brand-new files may be missing. Pipe through more to page: locate CTF | more",
-          el: "Η εντολή locate αναζητά σε μια βάση δεδομένων του συστήματος αρχείων. Συνήθης χρήση: locate CTF | more",
+          en: "locate KEYWORD searches names, not file contents. On a real machine it searches an index that is usually rebuilt once a day, so a file you just created can be missing until that index is refreshed. This lab does not use that stale index. It walks the virtual tree at the moment you ask, and the match is case-insensitive. locate CTF therefore finds names such as /root/Desktop/CTF-notes.txt.\n\nThe result can still be long. The pipe | sends the lines into another command instead of only onto the screen. locate CTF | more is the lab habit: produce the list, then page it. Nothing is written to disk between the two programs.",
+          el: "Το locate KEYWORD ψάχνει ονόματα, όχι περιεχόμενο αρχείων. Σε πραγματικό μηχάνημα ψάχνει ένα ευρετήριο που συνήθως ξαναχτίζεται μία φορά την ημέρα, οπότε ένα αρχείο που μόλις δημιούργησες μπορεί να λείπει μέχρι να ανανεωθεί το ευρετήριο. Αυτό το εργαστήριο δεν χρησιμοποιεί εκείνο το παλιό ευρετήριο. Περπατά το εικονικό δέντρο τη στιγμή που ρωτάς, και το ταίριασμα αγνοεί κεφαλαία και πεζά. Το locate CTF βρίσκει λοιπόν ονόματα όπως /root/Desktop/CTF-notes.txt.\n\nΤο αποτέλεσμα μπορεί και πάλι να είναι μακρύ. Το pipe | στέλνει τις γραμμές σε άλλη εντολή αντί να τις αφήνει μόνο στην οθόνη. Το locate CTF | more είναι η συνήθεια του εργαστηρίου: βγάλε τη λίστα, και μετά σελιδοποίησέ την. Τίποτα δεν γράφεται στον δίσκο ανάμεσα στα δύο προγράμματα.",
         },
         shots: [shot("locate CTF | more", ["/root/Desktop/CTF-notes.txt", "/opt/CTF/readme", "/usr/share/wordlists/CTF.txt"])],
       },
       {
         heading: { en: "Binaries, whereis, which", el: "Binaries, whereis, which" },
         body: {
-          en: "Files you can execute (like .exe on Windows) are binaries. They usually live in /usr/bin or /usr/sbin. ls, cd, cat, ps live there too. whereis NAME returns the binary path AND its man page. which NAME is stricter: only the binary on your PATH. Try both on git.",
-          el: "Τα εκτελέσιμα (binaries) βρίσκονται συνήθως στο /usr/bin. Η whereis εμφανίζει το εκτελέσιμο και τη σελίδα manual, η which μόνο το εκτελέσιμο στο PATH.",
+          en: "A command you type is either a file the shell can execute, or a built-in the shell handles itself. whereis git reports both the usual binary path and the manual page path. which git reports only the first executable it would run, by walking the directories in the PATH variable. In this lab that answer is /usr/bin/git. On a real machine, a name that is not installed prints nothing and a failing status. This lab always prints /usr/bin/<name> so you can practise reading the path. Do not treat that line as proof the program exists outside the exercise.\n\nThe current directory is deliberately not on PATH. If the shell says command not found for a script sitting in the folder you are in, name it explicitly, for example ./simple_bash.sh. That extra ./ is a safety measure: a file dropped into a shared folder cannot impersonate ls just by using the same name. A real shell's type command also says whether a name is a built-in, an alias, or a file. This lab does not implement type. Use which for the path, and remember that cd is a built-in, which is why which cd on a real machine is the wrong question.",
+          el: "Μια εντολή που πληκτρολογείς είναι είτε αρχείο που μπορεί να εκτελέσει το shell, είτε ενσωματωμένη εντολή που χειρίζεται το ίδιο το shell. Το whereis git αναφέρει και τη συνηθισμένη διαδρομή του binary και τη διαδρομή της σελίδας εγχειριδίου. Το which git αναφέρει μόνο το πρώτο εκτελέσιμο που θα έτρεχε, περπατώντας τους φακέλους της μεταβλητής PATH. Σε αυτό το εργαστήριο η απάντηση είναι /usr/bin/git. Σε πραγματικό μηχάνημα, ένα όνομα που δεν είναι εγκατεστημένο δεν τυπώνει τίποτα και επιστρέφει αποτυχία. Αυτό το εργαστήριο τυπώνει πάντα /usr/bin/<όνομα> ώστε να εξασκηθείς στο διάβασμα της διαδρομής. Μην αντιμετωπίζεις εκείνη τη γραμμή ως απόδειξη ότι το πρόγραμμα υπάρχει έξω από την άσκηση.\n\nΟ τρέχων φάκελος σκόπιμα δεν είναι στο PATH. Αν το shell πει command not found για ένα script που κάθεται στον φάκελο όπου βρίσκεσαι, ονόμασέ το ρητά, για παράδειγμα ./simple_bash.sh. Το επιπλέον ./ είναι μέτρο ασφαλείας: ένα αρχείο που έπεσε σε κοινό φάκελο δεν μπορεί να υποδυθεί την ls μόνο και μόνο επειδή έχει το ίδιο όνομα. Η εντολή type ενός πραγματικού shell λέει επίσης αν ένα όνομα είναι ενσωματωμένο, ψευδώνυμο, ή αρχείο. Αυτό το εργαστήριο δεν υλοποιεί την type. Χρησιμοποίησε which για τη διαδρομή, και θυμήσου ότι η cd είναι ενσωματωμένη, γι' αυτό η which cd σε πραγματικό μηχάνημα είναι η λάθος ερώτηση.",
         },
         shots: [
           shot("whereis git", ["git: /usr/bin/git /usr/share/man/man1/git.1"]),
@@ -192,7 +197,7 @@ export const SUDO_RUN_MODULES: Module[] = [
         id: "locate",
         instruction: { en: "locate CTF (optionally | more)", el: "locate CTF" },
         hint: { en: "locate CTF | more", el: "locate CTF | more" },
-        explain: { en: "locate walks a name index.", el: "Το locate ψάχνει ευρετήριο ονομάτων." },
+        explain: { en: "In this lab, locate walks the virtual tree now. A real locate uses a daily index.", el: "Εδώ το locate περπατά τώρα το εικονικό δέντρο. Ένα πραγματικό locate χρησιμοποιεί ημερήσιο ευρετήριο." },
         check: (t) => t.flags.has("locate") || t.flags.has("locate-ctf") || usedCmd(t, /locate\s+CTF/),
       },
       {
@@ -239,24 +244,24 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "grep a file", el: "grep σε αρχείο" },
         body: {
-          en: "grep searches for a keyword. Search for echo inside simple_bash.sh: grep -I \"echo\" simple_bash.sh  (from /root).",
-          el: "grep -I \"echo\" simple_bash.sh στο /root.",
+          en: "grep reads text and prints only the lines that match a pattern. The name comes from an old editor command: globally search a regular expression and print. From /root, grep -i \"echo\" simple_bash.sh finds the echo lines in the lab script. Lowercase -i makes the match ignore capitals. Without it, Echo and echo are different. -n prefixes each hit with its line number. The lab also accepts the older task line with a capital I. On a real system that capital I means something else, so prefer -i when you want case-insensitive search.\n\ngrep does not say which file a line came from unless you ask, and it does not change the file. It only prints.",
+          el: "Η grep διαβάζει κείμενο και τυπώνει μόνο τις γραμμές που ταιριάζουν σε ένα μοτίβο. Το όνομα έρχεται από μια παλιά εντολή επεξεργαστή: ψάξε καθολικά μια κανονική έκφραση και τύπωσε. Από το /root, το grep -i \"echo\" simple_bash.sh βρίσκει τις γραμμές echo στο script του εργαστηρίου. Το πεζό -i κάνει το ταίριασμα να αγνοεί τα κεφαλαία. Χωρίς αυτό, τα Echo και echo είναι διαφορετικά. Το -n βάζει μπροστά από κάθε εύρημα τον αριθμό γραμμής. Το εργαστήριο δέχεται και την παλαιότερη γραμμή άσκησης με κεφαλαίο I. Σε πραγματικό σύστημα εκείνο το κεφαλαίο I σημαίνει κάτι άλλο, οπότε προτίμησε -i όταν θέλεις αναζήτηση χωρίς διάκριση πεζών-κεφαλαίων.\n\nΗ grep δεν λέει από ποιο αρχείο ήρθε μια γραμμή αν δεν το ζητήσεις, και δεν αλλάζει το αρχείο. Μόνο τυπώνει.",
         },
-        shots: [shot('grep -I "echo" simple_bash.sh', ['echo "GameHack scanner starting"', 'echo "Sudo_Run lab — simulated only"', "# echo is here so grep can find it"])],
+        shots: [shot('grep -i "echo" simple_bash.sh', ['echo "GameHack scanner starting"', 'echo "Sudo_Run lab — simulated only"', "# echo is here so grep can find it"])],
       },
       {
         heading: { en: "Piping into grep", el: "Pipe στο grep" },
         body: {
-          en: "The most common use of grep is to filter another command. ifconfig dumps a lot; keep only inet lines: ifconfig | grep inet",
-          el: "Η εντολή ifconfig | grep inet κρατά μόνο τις γραμμές inet.",
+          en: "The usual use of grep is not to open a file at all. It filters the output of another command. ifconfig | grep inet keeps the address lines and drops the packet counters. In this lab those lines show the fictional address 10.10.10.2, a link-local IPv6 address, and 127.0.0.1, the loopback address every machine uses to talk to itself.\n\nThe vertical bar is a pipe. The program on the left writes to standard output. The program on the right reads that as standard input. They run together, and nothing is saved in between. grep -v inet does the opposite: it prints every line that does not contain the word. On a modern system, ip a is the preferred replacement for ifconfig. The filter idea is the same.",
+          el: "Η συνηθισμένη χρήση της grep δεν είναι να ανοίγει αρχείο. Φιλτράρει την έξοδο μιας άλλης εντολής. Το ifconfig | grep inet κρατά τις γραμμές διευθύνσεων και πετά τους μετρητές πακέτων. Σε αυτό το εργαστήριο εκείνες οι γραμμές δείχνουν την εικονική διεύθυνση 10.10.10.2, μια link-local διεύθυνση IPv6, και το 127.0.0.1, τη διεύθυνση loopback που κάθε μηχάνημα χρησιμοποιεί για να μιλήσει στον εαυτό του.\n\nΗ κάθετη γραμμή είναι pipe. Το πρόγραμμα αριστερά γράφει στην τυπική έξοδο. Το πρόγραμμα δεξιά τη διαβάζει ως τυπική είσοδο. Τρέχουν μαζί, και τίποτα δεν αποθηκεύεται ενδιάμεσα. Το grep -v inet κάνει το αντίθετο: τυπώνει κάθε γραμμή που δεν περιέχει τη λέξη. Σε σύγχρονο σύστημα, το ip a είναι η προτιμώμενη αντικατάσταση του ifconfig. Η ιδέα του φίλτρου είναι η ίδια.",
         },
         shots: [shot("ifconfig | grep inet", ["        inet 10.10.10.2  netmask 255.255.255.0  broadcast 10.10.10.255", "        inet6 fe80::a00:27ff:fe12:3456  prefixlen 64", "        inet 127.0.0.1  netmask 255.0.0.0"])],
       },
       {
         heading: { en: "find — the flexible hunter", el: "find — κυνηγός" },
         body: {
-          en: "find is the most powerful search: name, type, owner, size, mtime… find / -type f -name gamehack starts at / (root of the tree), looking for a regular file named gamehack. (In this lab the marker file is named gamehack.) Permission denied noise: append 2>&1 | grep -v \"Permission Denied\" to hide errors you cannot read.",
-          el: "Η εντολή find / -type f -name gamehack αναζητά το αρχείο, προαιρετικά με 2>&1 | grep -v \"Permission Denied\" για απόκρυψη σφαλμάτων.",
+          en: "find walks the tree live, which is why it can filter on more than a name. The shape is find <where to start> <what to keep>. find / -type f -name gamehack starts at the root of the tree and keeps regular files whose name is gamehack. In this lab that marker is /opt/labs/gamehack. -type d would keep directories instead. A real find also understands owner, size, and how recently a file changed. This lab honours the name and the starting path.\n\nOn a real system, a search of / as a normal user prints two kinds of lines on two channels. Matches go to standard output. Permission denied goes to standard error. 2>/dev/null throws the errors away. 2>&1 | grep -v \"Permission denied\" merges the errors into the normal output and then filters them. The first is cleaner, because it does not depend on the wording of the error. This lab's find does not emit those permission lines, because the exercise tree is readable. The challenge still asks you to type the redirection so you can read it before you need it.\n\nfind can also be told to run another command on each match. Do not do that until you have printed the list and checked every path. This lab stops at printing.",
+          el: "Η find περπατά το δέντρο ζωντανά, γι' αυτό μπορεί να φιλτράρει σε περισσότερα από ένα όνομα. Το σχήμα είναι find <από πού> <τι να κρατήσει>. Το find / -type f -name gamehack ξεκινά από τη ρίζα του δέντρου και κρατά κανονικά αρχεία που το όνομά τους είναι gamehack. Σε αυτό το εργαστήριο ο δείκτης είναι το /opt/labs/gamehack. Το -type d θα κρατούσε φακέλους. Μια πραγματική find καταλαβαίνει επίσης ιδιοκτήτη, μέγεθος, και πόσο πρόσφατα άλλαξε ένα αρχείο. Αυτό το εργαστήριο τιμά το όνομα και τη διαδρομή εκκίνησης.\n\nΣε πραγματικό σύστημα, μια αναζήτηση του / ως απλός χρήστης τυπώνει δύο είδη γραμμών σε δύο κανάλια. Τα ευρήματα πάνε στην τυπική έξοδο. Το Permission denied πάει στο τυπικό σφάλμα. Το 2>/dev/null πετά τα σφάλματα. Το 2>&1 | grep -v \"Permission denied\" ενώνει τα σφάλματα με την κανονική έξοδο και μετά τα φιλτράρει. Το πρώτο είναι καθαρότερο, γιατί δεν εξαρτάται από τη διατύπωση του σφάλματος. Η find αυτού του εργαστηρίου δεν βγάζει εκείνες τις γραμμές άρνησης, γιατί το δέντρο της άσκησης είναι αναγνώσιμο. Η πρόκληση σου ζητά και πάλι να πληκτρολογήσεις την ανακατεύθυνση, ώστε να την διαβάσεις πριν τη χρειαστείς.\n\nΗ find μπορεί επίσης να της ζητηθεί να τρέξει άλλη εντολή σε κάθε εύρημα. Μην το κάνεις πριν τυπώσεις τη λίστα και ελέγξεις κάθε διαδρομή. Αυτό το εργαστήριο σταματά στην εκτύπωση.",
         },
         shots: [
           shot("find / -type f -name gamehack", ["/opt/labs/gamehack"]),
@@ -265,15 +270,15 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
     ],
     cheats: [
-      { cmd: 'grep -I "echo" simple_bash.sh', desc: { en: "search a file", el: "αναζήτηση αρχείου" } },
+      { cmd: 'grep -i "echo" simple_bash.sh', desc: { en: "search a file, ignoring case", el: "αναζήτηση αρχείου, χωρίς διάκριση πεζών" } },
       { cmd: "ifconfig | grep inet", desc: { en: "filter command output", el: "φίλτρο εξόδου" } },
       { cmd: "find / -type f -name gamehack", desc: { en: "hunt by name", el: "κυνήγι ονόματος" } },
     ],
     tasks: [
       {
         id: "grep-file",
-        instruction: { en: 'grep for echo in simple_bash.sh', el: "grep echo στο simple_bash.sh" },
-        hint: { en: 'grep -I "echo" simple_bash.sh', el: 'grep echo simple_bash.sh' },
+        instruction: { en: 'grep -i "echo" simple_bash.sh', el: 'grep -i "echo" simple_bash.sh' },
+        hint: { en: 'grep -i "echo" simple_bash.sh', el: 'grep -i "echo" simple_bash.sh' },
         explain: { en: "grep PATTERN FILE", el: "grep PATTERN FILE" },
         check: (t) => t.flags.has("grep-echo") || usedCmd(t, /grep.*echo/),
       },
@@ -321,38 +326,38 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "cat", el: "cat" },
         body: {
-          en: "cat prints a file on the terminal. From /root: cat gamehack.txt  (the lab notes are stored in gamehack.txt).",
-          el: "Εκτέλεσε cat gamehack.txt από το /root.",
+          en: "cat prints a file exactly as it is stored. The name is short for concatenate, because several files are printed one after another. The everyday use is one file: cat gamehack.txt from /root. It does not number lines, page them, or change the file. That rawness is why it is useful, and why it is the wrong tool for a long log. For more than a screen, use less in the next lesson. cat -n numbers lines on a real system. This lab's cat prints the bytes and leaves numbering to nl.",
+          el: "Η cat τυπώνει ένα αρχείο ακριβώς όπως είναι αποθηκευμένο. Το όνομα είναι σύντμηση του concatenate, γιατί πολλά αρχεία τυπώνονται το ένα μετά το άλλο. Η καθημερινή χρήση είναι ένα αρχείο: cat gamehack.txt από το /root. Δεν αριθμεί γραμμές, δεν τις σελιδοποιεί, και δεν αλλάζει το αρχείο. Αυτή η ωμότητα είναι ο λόγος που είναι χρήσιμη, και ο λόγος που είναι το λάθος εργαλείο για ένα μακρύ αρχείο καταγραφής. Για περισσότερα από μία οθόνη, χρησιμοποίησε less στο επόμενο μάθημα. Το cat -n αριθμεί γραμμές σε πραγματικό σύστημα. Η cat αυτού του εργαστηρίου τυπώνει τα bytes και αφήνει την αρίθμηση στην nl.",
         },
         shots: [shot("cat gamehack.txt", ["Welcome to GameHack — Linux for Beginners (Sudo_Run).", "Keep notes here. Practice every command in the lab, not on the internet."])],
       },
       {
         heading: { en: "touch — create a file", el: "touch — νέο αρχείο" },
         body: {
-          en: "touch NAME creates an empty file. Create gamehack-2.txt",
-          el: "touch gamehack-2.txt",
+          en: "touch gamehack-2.txt creates an empty file when the name does not exist. The lab answers Created virtual file: gamehack-2.txt. On a real system the same command is silent, and its original job is to update the timestamp of a file that already exists. Build tools such as make decide whether to rebuild by comparing those timestamps, so touching a source file can force a rebuild. If the name is missing, the system creates it. That side effect is why beginners meet touch as a way to make an empty file.\n\nThe new file's mode, usually -rw-r--r--, was not something you typed. The system applied the umask, which you will meet in the permissions lesson. Several names can be given at once. Brace expansion such as {1..5} is done by the shell before touch sees the line, which is why the same trick works with other commands. This lab creates the names you type. It does not expand braces.",
+          el: "Το touch gamehack-2.txt δημιουργεί κενό αρχείο όταν το όνομα δεν υπάρχει. Το εργαστήριο απαντά Created virtual file: gamehack-2.txt. Σε πραγματικό σύστημα η ίδια εντολή είναι σιωπηλή, και η αρχική της δουλειά είναι να ενημερώνει τη χρονοσήμανση ενός αρχείου που ήδη υπάρχει. Εργαλεία χτισίματος όπως το make αποφασίζουν αν θα ξαναχτίσουν συγκρίνοντας εκείνες τις χρονοσημάνσεις, οπότε ένα άγγιγμα σε αρχείο πηγής μπορεί να αναγκάσει ξαναχτίσιμο. Αν το όνομα λείπει, το σύστημα το δημιουργεί. Αυτή η παρενέργεια είναι ο λόγος που οι αρχάριοι συναντούν την touch ως τρόπο να φτιάξουν κενό αρχείο.\n\nΗ λειτουργία του νέου αρχείου, συνήθως -rw-r--r--, δεν είναι κάτι που πληκτρολόγησες. Το σύστημα εφάρμοσε το umask, που θα συναντήσεις στο μάθημα δικαιωμάτων. Μπορούν να δοθούν πολλά ονόματα μαζί. Η επέκταση αγκυλών όπως {1..5} γίνεται από το shell πριν δει τη γραμμή η touch, γι' αυτό το ίδιο κόλπο δουλεύει και με άλλες εντολές. Αυτό το εργαστήριο δημιουργεί τα ονόματα που πληκτρολογείς. Δεν επεκτείνει αγκύλες.",
         },
-        shots: [shot("touch gamehack-2.txt", ["root@kali:~# ls", "gamehack.txt  gamehack-2.txt  simple_bash.sh  ..."])],
+        shots: [shot("touch gamehack-2.txt", ["Created virtual file: gamehack-2.txt"])],
       },
       {
         heading: { en: "mkdir", el: "mkdir" },
         body: {
-          en: "mkdir creates a directory. Create Documents/ignite (a shared folder for the simulated ignite team).",
-          el: "mkdir Documents/ignite",
+          en: "mkdir Documents/ignite creates one directory when the parent already exists and the name is free. The lab prints Created virtual directory: Documents/ignite. A real mkdir stays silent, and silence means success. In ls -l a directory starts with d. Its size is the bookkeeping record, not the total of the files inside it.\n\nmkdir -p builds missing parents and does not fail if the directory is already there. That is the form you want in a script. This lab prints Created directory tree: … for that form. Without -p, a missing parent is an error, not a hint to invent the path.",
+          el: "Το mkdir Documents/ignite δημιουργεί έναν φάκελο όταν ο γονέας υπάρχει ήδη και το όνομα είναι ελεύθερο. Το εργαστήριο τυπώνει Created virtual directory: Documents/ignite. Μια πραγματική mkdir μένει σιωπηλή, και η σιωπή σημαίνει επιτυχία. Στην ls -l ένας φάκελος αρχίζει με d. Το μέγεθός του είναι η εγγραφή λογιστικής, όχι το άθροισμα των αρχείων μέσα του.\n\nΤο mkdir -p χτίζει τους γονείς που λείπουν και δεν αποτυγχάνει αν ο φάκελος υπάρχει ήδη. Αυτή είναι η μορφή που θέλεις σε ένα script. Αυτό το εργαστήριο τυπώνει Created directory tree: … για εκείνη τη μορφή. Χωρίς -p, ένας γονέας που λείπει είναι σφάλμα, όχι υπόδειξη να επινοήσεις τη διαδρομή.",
         },
-        shots: [shot("mkdir Documents/ignite", [""])],
+        shots: [shot("mkdir Documents/ignite", ["Created virtual directory: Documents/ignite"])],
       },
       {
         heading: { en: "cp, mv, rm, rmdir", el: "cp, mv, rm, rmdir" },
         body: {
-          en: "cp SRC DEST copies. mv SRC DEST moves OR renames. rm FILE deletes a file. rmdir DIR removes an empty directory (use rm -r if it has contents). Walkthrough: cp gamehack-2.txt Documents/ignite   then   mv Documents/ignite/gamehack-2.txt /root/Documents/   then   rm /root/Documents/gamehack-2.txt   then   rmdir ignite_screenshots/",
-          el: "Η cp αντιγράφει, η mv μετακινεί ή μετονομάζει, η rm διαγράφει αρχείο και η rmdir αφαιρεί κενό φάκελο.",
+          en: "cp source destination copies. The source comes first. A trailing slash, or a destination that is already a directory, places the file inside it. cp gamehack-2.txt Documents/ignite leaves the original in place. This lab confirms the copy in a sentence. A real cp is silent, and it overwrites an existing destination without asking. -i asks first. -r is required to copy a directory, because a directory is a tree, not one file.\n\nmv uses the same source-then-destination order. On the same filesystem a move does not copy the bytes. It changes the name by which the file is reached. mv lab-notes.txt linux-notes.txt is therefore a rename, not a second file. This lab prints Moved … . A real mv is silent and will also overwrite without asking.\n\nrm removes a name. There is no recycle bin. Once the last name is gone, the space can be reused. The shell expands * before rm sees the line, so know your directory before you use a wildcard. rmdir removes a directory only when it is empty, and says so if it is not. rm -r is the recursive form, and it deletes the directory and everything inside it. Print a destructive line with echo in front of it first, read the expanded arguments, and only then remove the echo. Never aim a recursive delete at /.",
+          el: "Η cp πηγή προορισμός αντιγράφει. Η πηγή έρχεται πρώτη. Μια τελική κάθετος, ή ένας προορισμός που είναι ήδη φάκελος, βάζει το αρχείο μέσα του. Το cp gamehack-2.txt Documents/ignite αφήνει το πρωτότυπο στη θέση του. Αυτό το εργαστήριο επιβεβαιώνει την αντιγραφή με μια πρόταση. Μια πραγματική cp είναι σιωπηλή, και αντικαθιστά υπάρχοντα προορισμό χωρίς να ρωτήσει. Το -i ρωτά πρώτα. Το -r χρειάζεται για να αντιγράψεις φάκελο, γιατί ένας φάκελος είναι δέντρο, όχι ένα αρχείο.\n\nΗ mv χρησιμοποιεί την ίδια σειρά πηγή-μετά-προορισμός. Στο ίδιο σύστημα αρχείων μια μετακίνηση δεν αντιγράφει τα bytes. Αλλάζει το όνομα με το οποίο φτάνεις το αρχείο. Το mv lab-notes.txt linux-notes.txt είναι λοιπόν μετονομασία, όχι δεύτερο αρχείο. Αυτό το εργαστήριο τυπώνει Moved … . Μια πραγματική mv είναι σιωπηλή και επίσης αντικαθιστά χωρίς να ρωτήσει.\n\nΗ rm αφαιρεί ένα όνομα. Δεν υπάρχει κάδος ανακύκλωσης. Μόλις φύγει το τελευταίο όνομα, ο χώρος μπορεί να ξαναχρησιμοποιηθεί. Το shell επεκτείνει το * πριν δει τη γραμμή η rm, οπότε να ξέρεις τον φάκελό σου πριν χρησιμοποιήσεις μπαλαντέρ. Η rmdir αφαιρεί φάκελο μόνο όταν είναι άδειος, και το λέει αν δεν είναι. Η rm -r είναι η αναδρομική μορφή, και σβήνει τον φάκελο και ό,τι υπάρχει μέσα του. Τύπωσε πρώτα μια καταστροφική γραμμή με echo μπροστά, διάβασε τα επεκταμένα ορίσματα, και μόνο τότε βγάλε το echo. Ποτέ μην στοχεύσεις μια αναδρομική διαγραφή στο /.",
         },
         shots: [
-          shot("cp gamehack-2.txt Documents/ignite", [""]),
-          shot("rmdir ignite_screenshots/", [""]),
+          shot("cp gamehack-2.txt Documents/ignite", ["Copied gamehack-2.txt to Documents/ignite in the virtual filesystem."]),
+          shot("rmdir ignite_screenshots/", ["Removed empty virtual directory: ignite_screenshots/"]),
         ],
-        tip: { en: "rm -r deletes a directory AND its contents. Be careful even in a lab.", el: "Η εντολή rm -r διαγράφει φάκελο μαζί με το περιεχόμενό του." },
+        tip: { en: "The lab prints a confirmation. A real cp, mv or rm often prints nothing. Silence there means success, not safety.", el: "Το εργαστήριο τυπώνει επιβεβαίωση. Μια πραγματική cp, mv ή rm συχνά δεν τυπώνει τίποτα. Η σιωπή εκεί σημαίνει επιτυχία, όχι ασφάλεια." },
       },
     ],
     cheats: [
@@ -444,15 +449,15 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "Almost everything is a file", el: "Σχεδόν όλα είναι αρχεία" },
         body: {
-          en: "On Linux you live in text files — especially configuration. Learning to slice text is how you manage the OS. We use /etc/ettercap/etter.dns (a DNS-spoof config example from a lab tool called Ettercap). This is a FILE in the sandbox so you can practise. Using spoofing on a network you do not own is illegal.",
-          el: "Σχεδόν όλα είναι αρχεία κειμένου. Το etter.dns είναι παράδειγμα στο sandbox — όχι για δίκτυα που δεν σου ανήκουν.",
+          en: "On Linux, configuration, logs, and the tables that name users and hosts are plain text. Learning to read and slice text is how you manage the system. This lesson uses /etc/ettercap/etter.dns, a text fixture already in the sandbox. The same path with a capital E also exists, because Linux paths are case-sensitive and installs disagree. Read it as a file format. Do not use it to misdirect traffic. Doing that on a network you do not administer is illegal, and this lab does not perform it.\n\nA real shell can create a small text file with a here-document: everything between <<'EOF' and a line that says EOF becomes the file. The quotes stop the shell from expanding what is inside. You do not need that here. The fixture is already written, so the commands below have something realistic to slice.",
+          el: "Στο Linux, οι ρυθμίσεις, τα αρχεία καταγραφής, και οι πίνακες που ονομάζουν χρήστες και μηχανήματα είναι απλό κείμενο. Το να μάθεις να διαβάζεις και να κόβεις κείμενο είναι ο τρόπος που διαχειρίζεσαι το σύστημα. Αυτό το μάθημα χρησιμοποιεί το /etc/ettercap/etter.dns, ένα έτοιμο αρχείο κειμένου στο sandbox. Η ίδια διαδρομή με κεφαλαίο E υπάρχει επίσης, γιατί οι διαδρομές στο Linux ξεχωρίζουν πεζά και κεφαλαία και οι εγκαταστάσεις διαφωνούν. Διάβασέ το ως μορφή αρχείου. Μην το χρησιμοποιήσεις για να παραπλανήσεις κίνηση. Αυτό σε δίκτυο που δεν διαχειρίζεσαι είναι παράνομο, και αυτό το εργαστήριο δεν το εκτελεί.\n\nΈνα πραγματικό shell μπορεί να δημιουργήσει μικρό αρχείο κειμένου με here-document: ό,τι βρίσκεται ανάμεσα σε <<'EOF' και σε μια γραμμή που λέει EOF γίνεται το αρχείο. Τα εισαγωγικά σταματούν το shell από το να επεκτείνει ό,τι είναι μέσα. Δεν το χρειάζεσαι εδώ. Το αρχείο είναι ήδη γραμμένο, οπότε οι εντολές από κάτω έχουν κάτι ρεαλιστικό να κόψουν.",
         },
       },
       {
         heading: { en: "head & tail", el: "head & tail" },
         body: {
-          en: "head FILE shows the first 10 lines by default. tail FILE shows the last 10. Try both on /etc/ettercap/etter.dns (also at /etc/Ettercap/etter.dns).",
-          el: "Η head εμφανίζει τις πρώτες 10 γραμμές, η tail τις τελευταίες.",
+          en: "head FILE shows the first ten lines. That default is useful because a configuration file often starts with a comment that explains the format. tail FILE shows the last ten, which is where a log usually puts the newest event. head -n 3 FILE, or the older head -3 FILE, asks for a different count. This lab honours both forms, up to one hundred lines. The same file lives at /etc/ettercap/etter.dns and /etc/Ettercap/etter.dns.",
+          el: "Η head FILE δείχνει τις πρώτες δέκα γραμμές. Εκείνη η προεπιλογή είναι χρήσιμη γιατί ένα αρχείο ρυθμίσεων συχνά αρχίζει με σχόλιο που εξηγεί τη μορφή. Η tail FILE δείχνει τις τελευταίες δέκα, εκεί που ένα αρχείο καταγραφής συνήθως βάζει το νεότερο γεγονός. Το head -n 3 FILE, ή το παλαιότερο head -3 FILE, ζητά διαφορετικό πλήθος. Αυτό το εργαστήριο τιμά και τις δύο μορφές, μέχρι εκατό γραμμές. Το ίδιο αρχείο ζει στο /etc/ettercap/etter.dns και στο /etc/Ettercap/etter.dns.",
         },
         shots: [
           shot("head /etc/ettercap/etter.dns", ["# etter.dns — GameHack lab copy of a DNS spoof config (educational)", "# This file is a TEXT example. Never use spoofing outside a lab you own.", "microsoft.com A 10.10.10.8"]),
@@ -462,24 +467,24 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "nl — number lines", el: "nl — αρίθμηση" },
         body: {
-          en: "nl FILE prints the file with line numbers. nl /etc/ettercap/etter.dns",
-          el: "nl /etc/ettercap/etter.dns",
+          en: "nl FILE prints the file with a line number in front of each line. That is how you turn a vague 'near the top' into a place another person can find. cat -n does a similar job on a real system. In this lab, use nl. wc -l FILE, on a real machine, counts the lines instead of printing them. This lab does not implement wc. If you need the count, number the file and read the last number.",
+          el: "Η nl FILE τυπώνει το αρχείο με έναν αριθμό γραμμής μπροστά από κάθε γραμμή. Έτσι ένα αόριστο «κοντά στην αρχή» γίνεται σημείο που μπορεί να βρει και άλλος. Το cat -n κάνει παρόμοια δουλειά σε πραγματικό σύστημα. Σε αυτό το εργαστήριο, χρησιμοποίησε nl. Το wc -l FILE, σε πραγματικό μηχάνημα, μετρά τις γραμμές αντί να τις τυπώνει. Αυτό το εργαστήριο δεν υλοποιεί το wc. Αν χρειάζεσαι το πλήθος, αρίθμησε το αρχείο και διάβασε τον τελευταίο αριθμό.",
         },
         shots: [shot("nl /etc/ettercap/etter.dns", ["     1  # etter.dns — GameHack lab copy of a DNS spoof config (educational)"])],
       },
       {
         heading: { en: "sed — find & replace", el: "sed — εύρεση & αντικατάσταση" },
         body: {
-          en: "sed can search a pattern and act on it. s/WWW/www/g means substitute WWW with www, globally. Run: sed s/WWW/www/g gamehack.in",
-          el: "sed s/WWW/www/g gamehack.in",
+          en: "sed reads a stream and can substitute text as it prints. s/WWW/www/g means: find WWW, write www, and do it for every match on the line because of g. sed s/WWW/www/g gamehack.in prints the changed lines. It does not edit the file. A real sed changes the file only if you add an in-place option or redirect the output onto a new name. Check the printed result before you ever do that. A substitution that looks right on one line can rewrite a comment you meant to keep.",
+          el: "Η sed διαβάζει μια ροή και μπορεί να αντικαταστήσει κείμενο καθώς το τυπώνει. Το s/WWW/www/g σημαίνει: βρες WWW, γράψε www, και κάν' το για κάθε ταίριασμα στη γραμμή λόγω του g. Το sed s/WWW/www/g gamehack.in τυπώνει τις αλλαγμένες γραμμές. Δεν επεξεργάζεται το αρχείο. Μια πραγματική sed αλλάζει το αρχείο μόνο αν προσθέσεις επιλογή επιτόπιας αλλαγής ή ανακατευθύνεις την έξοδο σε νέο όνομα. Έλεγξε το τυπωμένο αποτέλεσμα πριν το κάνεις ποτέ. Μια αντικατάσταση που φαίνεται σωστή σε μία γραμμή μπορεί να ξαναγράψει ένα σχόλιο που ήθελες να κρατήσεις.",
         },
         shots: [shot("sed s/WWW/www/g gamehack.in", ["Visit www.gamehack.lab for the lab portal.", "www banners should be rewritten to www with sed.", "Linux training portal (simulated)."])],
       },
       {
         heading: { en: "more and less", el: "more και less" },
         body: {
-          en: "more FILE shows one page at a time (Enter to scroll). less FILE is similar and lets you search with /keyword (in a real terminal). Here they print the file so you can practise the commands. more /etc/ettercap/etter.dns   and   less /etc/ettercap/etter.dns",
-          el: "Τα more και less σελιδοποιούν την έξοδο. Στο εργαστήριο εμφανίζουν το αρχείο.",
+          en: "more FILE and less FILE are pagers. On a real terminal they show one screen and wait. Enter or space moves forward. In less, /keyword searches and q quits. less is the one to learn, because you can move backward as well as forward. This lab has no pager keystrokes. Both commands print the file and return to the prompt, so you can practise the names. When a real page is longer than the window, prefer less over cat.",
+          el: "Τα more FILE και less FILE είναι σελιδοποιητές. Σε πραγματικό τερματικό δείχνουν μία οθόνη και περιμένουν. Το Enter ή το space προχωρά. Στην less, το /keyword ψάχνει και το q βγαίνει. Η less είναι αυτή που αξίζει να μάθεις, γιατί μπορείς να κινηθείς και προς τα πίσω. Αυτό το εργαστήριο δεν έχει πλήκτρα σελιδοποιητή. Και οι δύο εντολές τυπώνουν το αρχείο και γυρίζουν στο prompt, ώστε να εξασκηθείς στα ονόματα. Όταν μια πραγματική σελίδα είναι μακρύτερη από το παράθυρο, προτίμησε την less από την cat.",
         },
         shots: [shot("more /etc/ettercap/etter.dns", ["# etter.dns — GameHack lab copy …", "(page 1 — Enter would continue on a TTY)"])],
       },

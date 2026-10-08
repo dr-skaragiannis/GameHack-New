@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   accuracyScore,
   allPlayers,
   assignPlayerToTeam,
   commandExecutions,
   createTeam,
+  extractPlayerArchive,
+  importPlayerArchive,
   fidelityScore,
   isOnline,
   levelFromXp,
@@ -17,10 +19,11 @@ import {
   type User,
 } from "../lib/db";
 import { LEARNING_PATHS } from "../data/lessons";
+import { parsePlayerArchive, type PlayerArchive } from "../lib/playerArchive";
 import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import Avatar from "./Avatar";
 import LiveFeed from "./LiveFeed";
-import Icon from "./Icon";
+import Icon, { MODULE_ICON } from "./Icon";
 import {
   Bar,
   BarChart,
@@ -40,7 +43,7 @@ import {
   ZAxis,
 } from "recharts";
 
-type EducatorTab = "overview" | "players" | "teams" | "commands";
+type EducatorTab = "overview" | "players" | "teams" | "commands" | "labs";
 type TeamAnalytics = {
   team: Team;
   members: User[];
@@ -117,6 +120,60 @@ function moduleName(campaignId: string, moduleId: string, lang: Lang) {
   return module ? bi(module.title, lang) : moduleId || "—";
 }
 
+export function EducatorLabCatalog({
+  lang,
+  onOpen,
+  onShowMap,
+}: {
+  lang: Lang;
+  onOpen: (campaignId: string, moduleId: string) => void;
+  onShowMap?: (campaignId: string) => void;
+}) {
+  return (
+    <div className="educator-lab-catalog">
+      {LEARNING_PATHS.map((campaign) => {
+        const modules = [...campaign.modules].sort((a, b) => a.order - b.order);
+        return (
+          <section key={campaign.id} className="educator-card educator-labs">
+            <header className="educator-card__header">
+              <div>
+                <div className="educator-eyebrow">{String(campaign.pathNumber).padStart(2, "0")}</div>
+                <h2>{bi(campaign.title, lang)}</h2>
+                <p>{bi(campaign.subtitle, lang)}</p>
+              </div>
+              {onShowMap && (
+                <button type="button" className="educator-lab-map dashboard-action" onClick={() => onShowMap(campaign.id)}>
+                  <Icon name="book" className="h-4 w-4" />
+                  {t("viewOnMap", lang)}
+                </button>
+              )}
+            </header>
+            <ul className="educator-lab-list">
+              {modules.map((module) => (
+                <li key={module.id}>
+                  <button
+                    type="button"
+                    className="educator-lab"
+                    onClick={() => onOpen(campaign.id, module.id)}
+                    aria-label={`${t("openLab", lang)}: ${bi(module.title, lang)}`}
+                  >
+                    <span className="educator-lab__icon"><Icon name={MODULE_ICON[module.id] || module.icon} className="h-4 w-4" /></span>
+                    <span className="educator-lab__copy">
+                      <strong>{module.order}. {bi(module.title, lang)}</strong>
+                      <small>{bi(module.subtitle, lang)}</small>
+                    </span>
+                    <Icon name="chevron" className="educator-lab__chevron h-4 w-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
 function MetricCard({
   label,
   value,
@@ -165,10 +222,14 @@ export default function EducatorDashboard({
   user,
   lang,
   onProfile,
+  onOpenLab,
+  onShowMap,
 }: {
   user: User;
   lang: Lang;
   onProfile: (id: string) => void;
+  onOpenLab: (campaignId: string, moduleId: string) => void;
+  onShowMap?: (campaignId: string) => void;
 }) {
   const [activeTab, setActiveTab] = useState<EducatorTab>("overview");
   const [teamFilter, setTeamFilter] = useState("all");
@@ -182,6 +243,9 @@ export default function EducatorDashboard({
   const [newTeamDescription, setNewTeamDescription] = useState("");
   const [teamFeedback, setTeamFeedback] = useState("");
   const [assignTargets, setAssignTargets] = useState<Record<string, string>>({});
+  const [archiveMessage, setArchiveMessage] = useState("");
+  const [pendingArchive, setPendingArchive] = useState<PlayerArchive | null>(null);
+  const archiveInput = useRef<HTMLInputElement>(null);
 
   const players = allPlayers();
   const scoreboard = overallScoreboard();
@@ -349,6 +413,7 @@ export default function EducatorDashboard({
     { id: "players", icon: "users", label: t("playerAnalytics", lang) },
     { id: "teams", icon: "shield", label: t("teamManagement", lang) },
     { id: "commands", icon: "terminal", label: t("commandActivity", lang) },
+    { id: "labs", icon: "layers", label: t("labsTab", lang) },
   ];
 
   return (
@@ -371,18 +436,68 @@ export default function EducatorDashboard({
             </button>
           ))}
         </nav>
-        <label className="educator-scope">
-          <span>{t("assignedTeam", lang)}</span>
-          <select value={teamFilter} onChange={(event) => { setTeamFilter(event.target.value); setSelectedPlayerIds(null); }}>
-            <option value="all">{t("allTeams", lang)}</option>
-            <option value="unassigned">{t("unassigned", lang)}</option>
-            {teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
-          </select>
-        </label>
+        {activeTab !== "labs" && (
+          <label className="educator-scope">
+            <span>{t("assignedTeam", lang)}</span>
+            <select value={teamFilter} onChange={(event) => { setTeamFilter(event.target.value); setSelectedPlayerIds(null); }}>
+              <option value="all">{t("allTeams", lang)}</option>
+              <option value="unassigned">{t("unassigned", lang)}</option>
+              {teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
+            </select>
+          </label>
+        )}
       </div>
 
       {activeTab === "overview" && (
         <div className="educator-dashboard__content">
+          <section className="educator-card educator-archive">
+            <div>
+              <div className="educator-eyebrow">{uppercaseLabel(t("playerArchive", lang), lang)}</div>
+              <h2>{t("extractPlayers", lang)}</h2>
+              <p>{t("playerArchiveHint", lang)}</p>
+              {archiveMessage && <p className="educator-archive__status">{archiveMessage}</p>}
+            </div>
+            <div className="educator-archive__actions">
+              <button type="button" className="educator-lab-map dashboard-action" onClick={() => {
+                const archive = extractPlayerArchive();
+                const blob = new Blob([`${JSON.stringify(archive, null, 2)}\n`], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const anchor = document.createElement("a");
+                anchor.href = url;
+                anchor.download = "gamehack-players.json";
+                anchor.style.display = "none";
+                document.body.appendChild(anchor);
+                anchor.click();
+                anchor.remove();
+                window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+                setArchiveMessage(t("playerArchiveSaved", lang));
+              }}>
+                <Icon name="download" className="h-4 w-4" />{t("extractPlayers", lang)}
+              </button>
+              <button type="button" className="educator-lab-map dashboard-action" onClick={() => archiveInput.current?.click()}>
+                <Icon name="folder" className="h-4 w-4" />{t("importPlayers", lang)}
+              </button>
+              <input
+                ref={archiveInput}
+                type="file"
+                accept="application/json,.json"
+                hidden
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (!file) return;
+                  void file.text().then((contents) => {
+                    const archive = parsePlayerArchive(contents);
+                    if (!archive) {
+                      setArchiveMessage(t("importPlayersInvalid", lang));
+                      return;
+                    }
+                    setPendingArchive(archive);
+                  });
+                }}
+              />
+            </div>
+          </section>
           <section className="educator-stat-grid" aria-label={t("playerStatistics", lang)}>
             <MetricCard label={t("totalPlayers", lang)} value={filteredPlayers.length} detail={`${onlineCount} ${t("activeNow", lang).toLowerCase()}`} icon="users" tone="cyan" />
             <MetricCard label={t("averageXp", lang)} value={avgXp.toLocaleString()} detail={t("overallScoreboard", lang)} icon="spark" tone="cyan" />
@@ -531,7 +646,7 @@ export default function EducatorDashboard({
                     return (
                       <tr key={player.id}>
                         <td className="educator-table__rank">#{totalRank ?? index + 1}</td>
-                        <td><div className="educator-table__player"><Avatar src={player.avatar} name={player.displayName} size={31} /><span><strong>{player.displayName}</strong><small>{isOnline(player) ? t("online", lang) : t("offline", lang)}</small></span></div></td>
+                        <td><button type="button" className="educator-table__player" onClick={() => onProfile(player.id)} aria-label={`${t("openProfile", lang)}: ${player.displayName}`}><Avatar src={player.avatar} name={player.displayName} size={31} /><span><strong>{player.displayName}</strong><small>{isOnline(player) ? t("online", lang) : t("offline", lang)}</small></span></button></td>
                         <td>{team?.name || t("unassigned", lang)}</td>
                         <td>{level}</td>
                         <td className="is-cyan">{player.metrics.xp.toLocaleString()}</td>
@@ -668,6 +783,13 @@ export default function EducatorDashboard({
         </div>
       )}
 
+      {activeTab === "labs" && (
+        <div className="educator-dashboard__content">
+          <p className="educator-labs__intro">{t("educatorLabsHint", lang)}</p>
+          <EducatorLabCatalog lang={lang} onOpen={onOpenLab} onShowMap={onShowMap} />
+        </div>
+      )}
+
       {activeTab === "commands" && (
         <div className="educator-dashboard__content">
           <section className="educator-stat-grid educator-stat-grid--compact">
@@ -736,6 +858,24 @@ export default function EducatorDashboard({
               <pre className="educator-command-detail__output">{selectedCommand.output || "(no output)"}</pre>
               {selectedCommand.outputTruncated && <p className="educator-command-log__footnote">{t("outputTruncated", lang)}</p>}
               <p className="educator-command-log__privacy">{t("redactedSecrets", lang)}</p>
+            </div>
+          </section>
+        </div>
+      )}
+      {pendingArchive && (
+        <div className="dashboard-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPendingArchive(null); }}>
+          <section className="confirm-dialog dashboard-modal-surface" role="dialog" aria-modal="true" aria-labelledby="import-players-title">
+            <div className="educator-eyebrow">{uppercaseLabel(t("playerArchive", lang), lang)}</div>
+            <h2 id="import-players-title">{t("importPlayers", lang)}</h2>
+            <p>{t("importPlayersConfirm", lang)} {pendingArchive.players.length}</p>
+            <div className="confirm-dialog__actions">
+              <button type="button" className="dashboard-action" onClick={() => setPendingArchive(null)}>{t("cancel", lang)}</button>
+              <button type="button" className="dashboard-action confirm-dialog__danger" onClick={() => {
+                void importPlayerArchive(pendingArchive, user.id).then((count) => {
+                  setPendingArchive(null);
+                  setArchiveMessage(`${t("importPlayersDone", lang)} ${count}`);
+                });
+              }}>{t("importPlayers", lang)}</button>
             </div>
           </section>
         </div>
