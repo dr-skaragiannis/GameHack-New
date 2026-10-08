@@ -252,6 +252,22 @@ try {
   const tryButtons = [...tryView.container.querySelectorAll("button")]
     .filter((b) => b.textContent.includes("Try in terminal"));
   assert.ok(tryButtons.length > 0, "the Theory deep dives should still offer Try in terminal");
+
+  // ── Reading order inside the Theory tab ──────────────────────────────────
+  // The command reference is a lookup aid, so it must sit below the prose that
+  // motivates it. Nothing else pins this, and a reorder here is invisible to
+  // every other assertion in this file.
+  const theoryHeadings = [...tryView.container.querySelectorAll("h2")];
+  const firstTheoryHeading = lessons.LEARNING_PATHS[0].modules[0].theory[0].heading.en;
+  const theoryIndex = theoryHeadings.findIndex((h) => h.textContent.trim() === firstTheoryHeading);
+  const deepDiveIndex = theoryHeadings.findIndex((h) => h.textContent.trim() === "Command deep dives");
+  assert.ok(theoryIndex >= 0, "the first theory section heading should render in the Theory tab");
+  assert.ok(deepDiveIndex >= 0, "the command deep dives heading should render in the Theory tab");
+  assert.ok(
+    deepDiveIndex > theoryIndex,
+    `the command deep dives must come after the theory sections (theory h2 #${theoryIndex}, deep dives h2 #${deepDiveIndex})`,
+  );
+
   const example = tryButtons[0].getAttribute("aria-label").replace(/^Try in terminal: /, "");
   assert.ok(example.trim(), "the button should name the command it will run");
   act(() => { tryButtons[0].dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })); });
@@ -267,7 +283,7 @@ try {
   );
   unmount(tryView);
 
-  console.log(`Lab completion checks passed: an authored lab with no quiz completes directly, a quiz-backed lab still routes through its quiz, the prompt only shows on a finished lab, both languages are labelled, a revealed hint renders in the reader's language, ${tabMounts} lab mounts across all ${lessons.LEARNING_PATHS.length} learning paths show Lab then Theory with no Study guide, and Try in terminal still prefills the terminal from the Theory deep dives.`);
+  console.log(`Lab completion checks passed: an authored lab with no quiz completes directly, a quiz-backed lab still routes through its quiz, the prompt only shows on a finished lab, both languages are labelled, a revealed hint renders in the reader's language, ${tabMounts} lab mounts across all ${lessons.LEARNING_PATHS.length} learning paths show Lab then Theory with no Study guide, the Theory tab renders its sections before the command deep dives, and Try in terminal still prefills the terminal from the Theory deep dives.`);
 } finally {
   await server.close();
 }

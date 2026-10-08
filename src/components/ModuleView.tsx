@@ -356,6 +356,34 @@ export default function ModuleView({
       <div className={contentWidthClass(activeContentWidth)}>
         {tab === "theory" && (
           <div className="space-y-6 enter">
+            {module.theory.map((s, i) => (
+              <section key={i} className="glass rounded-2xl border border-gamehack-border p-5">
+                <h2 className="text-lg font-semibold text-zinc-100 mb-2">{bi(s.heading, lang)}</h2>
+                <div className="space-y-3">
+                  {bi(s.body, lang).split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean).map((paragraph, paragraphIndex) => (
+                    <p key={paragraphIndex} className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">{paragraph}</p>
+                  ))}
+                </div>
+                {s.tip && (
+                  <p className="mt-3 text-sm text-neon-cyan/90 border-l-2 border-neon-cyan/40 pl-3">{bi(s.tip, lang)}</p>
+                )}
+                {s.shots?.map((sh, si) => (
+                  <div key={si} className="mt-4 rounded-xl border border-gamehack-border bg-black/70 overflow-hidden font-mono text-sm">
+                    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 text-sm text-iron-500">
+                      <span className="h-2 w-2 rounded-full bg-rose-500/80" />
+                      <span className="h-2 w-2 rounded-full bg-cyan-400/80" />
+                      <span className="h-2 w-2 rounded-full bg-neon-green/80" />
+                      <span className="ml-2 tracking-wider text-iron-400">screenshot, GameHack lab</span>
+                    </div>
+                    <pre className="px-3 py-3 text-zinc-200 whitespace-pre-wrap leading-relaxed">
+                      {sh.cmd && <span className="text-cyan-400">root@kali:~# {sh.cmd}{"\n"}</span>}
+                      {sh.lines.join("\n")}
+                    </pre>
+                  </div>
+                ))}
+                {s.visual && <DfirVisual visual={s.visual} lang={lang} />}
+              </section>
+            ))}
             {theoryCommands.length > 0 && (
               <section className="glass rounded-2xl border border-gamehack-border p-5">
                 <header className="mb-4">
@@ -414,34 +442,6 @@ export default function ModuleView({
                 </div>
               </section>
             )}
-            {module.theory.map((s, i) => (
-              <section key={i} className="glass rounded-2xl border border-gamehack-border p-5">
-                <h2 className="text-lg font-semibold text-zinc-100 mb-2">{bi(s.heading, lang)}</h2>
-                <div className="space-y-3">
-                  {bi(s.body, lang).split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean).map((paragraph, paragraphIndex) => (
-                    <p key={paragraphIndex} className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">{paragraph}</p>
-                  ))}
-                </div>
-                {s.tip && (
-                  <p className="mt-3 text-sm text-neon-cyan/90 border-l-2 border-neon-cyan/40 pl-3">{bi(s.tip, lang)}</p>
-                )}
-                {s.shots?.map((sh, si) => (
-                  <div key={si} className="mt-4 rounded-xl border border-gamehack-border bg-black/70 overflow-hidden font-mono text-sm">
-                    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 text-sm text-iron-500">
-                      <span className="h-2 w-2 rounded-full bg-rose-500/80" />
-                      <span className="h-2 w-2 rounded-full bg-cyan-400/80" />
-                      <span className="h-2 w-2 rounded-full bg-neon-green/80" />
-                      <span className="ml-2 tracking-wider text-iron-400">screenshot, GameHack lab</span>
-                    </div>
-                    <pre className="px-3 py-3 text-zinc-200 whitespace-pre-wrap leading-relaxed">
-                      {sh.cmd && <span className="text-cyan-400">root@kali:~# {sh.cmd}{"\n"}</span>}
-                      {sh.lines.join("\n")}
-                    </pre>
-                  </div>
-                ))}
-                {s.visual && <DfirVisual visual={s.visual} lang={lang} />}
-              </section>
-            ))}
             <button
               type="button"
               onClick={() => {
