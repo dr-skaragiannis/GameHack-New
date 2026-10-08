@@ -224,6 +224,14 @@ export const SUDO_RUN_MODULES: Module[] = [
         material: { en: "which searches $PATH while type asks the shell directly and also reports builtins and aliases. When a version surprises you, run both.", el: "Η which ψάχνει στο $PATH ενώ η type ρωτά απευθείας το shell και αναφέρει επίσης ενσωματωμένες εντολές και ψευδώνυμα. Όταν μια έκδοση σε ξαφνιάζει, τρέξε και τις δύο." },
         check: (t) => t.flags.has("which-git") || usedCmd(t, /which\s+git/),
       },
+      {
+        id: "type",
+        instruction: { en: "Ask the shell itself how it resolves a name: type ls", el: "Ρώτα το ίδιο το shell πώς επιλύει ένα όνομα: type ls" },
+        hint: { en: "type ls", el: "type ls" },
+        explain: { en: "Why: which only searches $PATH, so it cannot tell you that a name is really a shell builtin or an alias, and that distinction decides what actually runs. How: type asks the shell to report its own resolution for a name, so it answers for builtins, aliases and functions as well as for real files on disk. Reach for it when a command behaves unlike the binary you just inspected.", el: "Γιατί: η which ψάχνει μόνο στο $PATH, οπότε δεν μπορεί να σου πει ότι ένα όνομα είναι στην πραγματικότητα ενσωματωμένη εντολή του shell ή ψευδώνυμο, και αυτή η διάκριση κρίνει τι εκτελείται πραγματικά. Πώς: η type ζητά από το shell να αναφέρει τη δική του επίλυση για ένα όνομα, οπότε απαντά και για ενσωματωμένες εντολές, ψευδώνυμα και συναρτήσεις εκτός από πραγματικά αρχεία στον δίσκο. Χρησιμοποίησέ την όταν μια εντολή συμπεριφέρεται διαφορετικά από το binary που μόλις επιθεώρησες." },
+        material: { en: "Compare the three side by side: which git, whereis git and type git. They disagree precisely when a name is a builtin or an alias rather than a file.", el: "Σύγκρινε τις τρεις δίπλα-δίπλα: which git, whereis git και type git. Διαφωνούν ακριβώς όταν ένα όνομα είναι ενσωματωμένη εντολή ή ψευδώνυμο και όχι αρχείο." },
+        check: (t) => usedCmd(t, /^\s*type\s+\w+/),
+      },
     ],
     challenges: [
       {
@@ -446,6 +454,14 @@ export const SUDO_RUN_MODULES: Module[] = [
         explain: { en: "Why: refusing to delete a non-empty directory is a safety property rather than a limitation, and it makes this the one deletion you can run without checking twice. How: rmdir removes a directory only if it holds nothing. When the directory has contents it errors out and changes nothing, which is why a recursive rm is a deliberate decision rather than a convenience.", el: "Γιατί: η άρνηση διαγραφής ενός μη κενού καταλόγου είναι ιδιότητα ασφαλείας και όχι περιορισμός, και κάνει αυτή τη διαγραφή τη μία που μπορείς να τρέξεις χωρίς δεύτερο έλεγχο. Πώς: η rmdir αφαιρεί έναν κατάλογο μόνο αν δεν περιέχει τίποτα. Όταν ο κατάλογος έχει περιεχόμενο, εμφανίζει σφάλμα και δεν αλλάζει τίποτα, γι' αυτό μια αναδρομική rm είναι σκόπιμη απόφαση και όχι ευκολία." },
         material: { en: "rmdir -p removes a chain of empty directories and stops at the first one that still has contents.", el: "Η rmdir -p αφαιρεί μια αλυσίδα κενών καταλόγων και σταματά στον πρώτο που έχει ακόμα περιεχόμενο." },
         check: (t) => t.flags.has("rmdir") || usedCmd(t, /rmdir/),
+      },
+      {
+        id: "tree",
+        instruction: { en: "See the whole shape of /etc at once, two levels deep: tree -L 2 /etc", el: "Δες ολόκληρη τη δομή του /etc με μία ματιά, δύο επίπεδα βαθιά: tree -L 2 /etc" },
+        hint: { en: "tree -L 2 /etc", el: "tree -L 2 /etc" },
+        explain: { en: "Why: repeated ls calls show you one directory at a time, so the shape of a tree stays in your head, and that is exactly where it gets lost. How: tree walks a directory recursively and prints every entry indented under its parent, stopping N levels down when you pass -L N. The closing directory and file counts are a fast sanity check against what you expected to be there.", el: "Γιατί: οι επαναλαμβανόμενες ls σου δείχνουν έναν κατάλογο κάθε φορά, οπότε το σχήμα ενός δέντρου μένει στο μυαλό σου, και εκεί ακριβώς χάνεται. Πώς: η tree διασχίζει έναν κατάλογο αναδρομικά και εμφανίζει κάθε στοιχείο με εσοχή κάτω από τον γονέα του, σταματώντας N επίπεδα κάτω όταν περάσεις -L N. Τα καταληκτικά σύνολα καταλόγων και αρχείων είναι γρήγορος έλεγχος ορθότητας απέναντι σε ό,τι περίμενες να υπάρχει εκεί." },
+        material: { en: "Without -L, tree prints the entire subtree, which on a real host can be thousands of lines. Depth-limit first, widen later.", el: "Χωρίς -L, η tree εμφανίζει ολόκληρο το υποδέντρο, που σε πραγματικό host μπορεί να είναι χιλιάδες γραμμές. Περιόρισε πρώτα το βάθος και διεύρυνε μετά." },
+        check: (t) => usedCmd(t, /tree\s+-L/),
       },
     ],
     challenges: [
