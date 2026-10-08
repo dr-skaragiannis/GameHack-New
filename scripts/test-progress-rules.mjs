@@ -75,6 +75,33 @@ try {
   assert.equal(i18n.uppercaseLabel("ΐδιο", "el"), "ϊδιο", "Greek dialytika should remain when tonos is removed");
   assert.equal(i18n.uppercaseLabel("Continue learning", "en"), "Continue learning");
 
+  const activeBadges = Object.values(db.BADGES).filter((badge) => badge.category !== "legacy");
+  assert.ok(activeBadges.some((badge) => badge.category === "certification"));
+  assert.ok(activeBadges.some((badge) => badge.category === "achievement"));
+  assert.equal(db.PATH_CERTIFICATION["linux-part-01"], "cert-linux-01");
+  assert.equal(db.PATH_CERTIFICATION["ssh-port-22"], "cert-ssh-22");
+  assert.equal(db.BADGES.shell_initiate.category, "legacy");
+  assert.equal(db.BADGES["cert-linux-01"].category, "certification");
+  assert.equal(db.pathCompletedSwiftly(
+    [{ id: "a" }, { id: "b" }],
+    {
+      a: { completed: true, done: [], startedAt: 1_000, completedAt: 61_000 },
+      b: { completed: true, done: [], startedAt: 61_000, completedAt: 121_000 },
+    },
+  ), true);
+  assert.equal(db.pathCompletedSwiftly(
+    [{ id: "a" }],
+    { a: { completed: true, done: [], startedAt: 1_000, completedAt: 1_000 + 9 * 60 * 1000 } },
+  ), false);
+  assert.equal(db.pathCompletedCleanly(
+    [{ id: "a" }],
+    { a: { completed: true, done: [], startedAt: 1_000, hinted: true } },
+  ), false);
+  for (const label of ["badgeCategoryCertification", "badgeCategoryAchievement", "badgeCategoryLegacy"]) {
+    const stripped = i18n.uppercaseLabel(i18n.t(label, "el"), "el");
+    assert.equal(stripped, stripped.normalize("NFD").replace(/\u0301|\u0300|\u0342/g, "").normalize("NFC"));
+  }
+
   console.log("Progression, quiz thresholds, recovery-key file parsing, Greek navigation copy, and uppercase accent checks passed.");
 } finally {
   await server.close();

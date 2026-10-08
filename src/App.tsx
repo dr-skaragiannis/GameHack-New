@@ -48,30 +48,6 @@ function readThemePreference(): ThemeName {
   return theme;
 }
 
-const MODULE_BADGE: Record<string, string> = {
-  "linux-basics": "shell_initiate",
-  recon: "recon_scout",
-  scanning: "port_mapper",
-  bruteforce: "lockbreaker",
-  sqli: "query_bender",
-  privesc: "root",
-  "raven-root": "raven",
-  "ssh-tunnel": "ssh_walker",
-  "sr-intro": "shell_initiate",
-  "sr-perms": "sudo_run",
-  "sr-svc": "sudo_run",
-  "dfir-intake": "evidence_custodian",
-  "dfir-windows": "artifact_mapper",
-  "dfir-documents": "document_analyst",
-  "dfir-web": "web_correlator",
-  "dfir-network": "packet_analyst",
-  "dfir-disk": "disk_examiner",
-  "dfir-malware": "static_analyst",
-  "dfir-memory": "memory_analyst",
-  "dfir-container": "container_examiner",
-  "dfir-passwords": "hash_examiner",
-};
-
 type LearningTarget = { campaignId: string; moduleId: string };
 
 function continueLearningTarget(user: User): LearningTarget {
@@ -186,6 +162,30 @@ export default function App() {
   }, [accountMenuOpen]);
 
   useEffect(() => {
+    if (!user) return;
+    const saved = db.userById(user.id);
+    if (!saved) return;
+    const earned: string[] = [];
+    const grant = (id: string) => {
+      if (db.grantBadge(user.id, id)) earned.push(id);
+    };
+    for (const campaign of LEARNING_PATHS) {
+      if (!campaign.modules.every((module) => saved.progress[module.id]?.completed)) continue;
+      const cert = db.PATH_CERTIFICATION[campaign.id];
+      if (cert) grant(cert);
+    }
+    if (LEARNING_PATHS.every((campaign) => campaign.modules.every((module) => saved.progress[module.id]?.completed))) {
+      grant("cert-all");
+    }
+    if (!earned[0]) return;
+    const timer = window.setTimeout(() => {
+      sound.badge();
+      setBadgeId(earned[0]);
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [user?.id]);
+
+  useEffect(() => {
     if (!logoutConfirmOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setLogoutConfirmOpen(false);
@@ -297,7 +297,9 @@ export default function App() {
     const m = u.metrics;
     if (db.fidelityScore(m) >= 90 && m.commandsRun >= 10) maybeBadge("high_fidelity");
     if (m.commandsRun >= 10 && m.typoCount === 0) maybeBadge("flawless");
+    if (m.commandsRun >= 15 && db.accuracyScore(m) >= 90) maybeBadge("accurate");
     if (m.streakDays >= 3) maybeBadge("dedicated");
+    if (m.streakDays >= 7) maybeBadge("week_streak");
   };
 
   const maybeBadge = (id: string) => {
@@ -315,7 +317,15 @@ export default function App() {
     if (mp.done.includes(taskId)) return;
     const firstEver = Object.values(u.progress).every((p) => p.done.length === 0);
     db.updateUser(user.id, {
-      progress: { ...u.progress, [moduleId]: { ...mp, done: [...mp.done, taskId] } },
+      progress: {
+        ...u.progress,
+        [moduleId]: {
+          ...mp,
+          done: [...mp.done, taskId],
+          startedAt: mp.startedAt || Date.now(),
+          ...(hintUsed ? { hinted: true } : {}),
+        },
+      },
     });
     const objectiveModule = moduleById(moduleId);
     const objective = objectiveModule?.tasks.find((task) => task.id === taskId);
@@ -346,7 +356,10 @@ export default function App() {
     const mp = u.progress[moduleId] || { completed: false, done: [] };
     if (mp.completed) return;
 
-    const nextProgress = { ...u.progress, [moduleId]: { ...mp, completed: true } };
+    const nextProgress = {
+      ...u.progress,
+      [moduleId]: { ...mp, completed: true, completedAt: mp.completedAt || Date.now() },
+    };
     const currentCampaign = LEARNING_PATHS.find((item) => item.modules.some((module) => module.id === moduleId));
     db.updateUser(user.id, { progress: nextProgress });
 
@@ -357,15 +370,16 @@ export default function App() {
       moduleId,
       pathCompleted,
     });
-    const badge = MODULE_BADGE[moduleId];
-    if (badge) maybeBadge(badge);
-    if (
-      currentCampaign?.id === "dfir-fieldwork" &&
-      currentCampaign.modules.every((module) => nextProgress[module.id]?.completed)
-    ) {
-      maybeBadge("incident_reporter");
-    }
     awardMetricBadges();
+    if (pathCompleted && currentCampaign) {
+      const cert = db.PATH_CERTIFICATION[currentCampaign.id];
+      if (cert) maybeBadge(cert);
+      if (db.pathCompletedSwiftly(currentCampaign.modules, nextProgress)) maybeBadge("swift");
+      if (db.pathCompletedCleanly(currentCampaign.modules, nextProgress)) maybeBadge("clean_run");
+      if (LEARNING_PATHS.every((campaign) => campaign.modules.every((module) => nextProgress[module.id]?.completed))) {
+        maybeBadge("cert-all");
+      }
+    }
     db.saveDB();
     sound.moduleComplete();
     refresh();
@@ -852,7 +866,11 @@ export default function App() {
               }}
               onHint={() => {
                 const u = db.userById(user.id)!;
-                db.updateUser(user.id, { metrics: { ...u.metrics, hintsUsed: u.metrics.hintsUsed + 1 } });
+                const mp = u.progress[active.id] || { completed: false, done: [] };
+                db.updateUser(user.id, {
+                  metrics: { ...u.metrics, hintsUsed: u.metrics.hintsUsed + 1 },
+                  progress: { ...u.progress, [active.id]: { ...mp, hinted: true } },
+                });
               }}
               onStartQuiz={() => {
                 setQuizFor(active.id);
@@ -953,6 +971,7 @@ export default function App() {
           onDone={(score, total) => {
             const moduleId = quizFor;
             if (!moduleId || !passesQuickQuiz(score, total)) return;
+            if (score === total) maybeBadge("perfect_quiz");
 
             const currentCampaign = LEARNING_PATHS.find((item) => item.modules.some((module) => module.id === moduleId));
             const orderedModules = currentCampaign ? [...currentCampaign.modules].sort((a, b) => a.order - b.order) : [];

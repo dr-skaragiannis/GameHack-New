@@ -5,7 +5,13 @@ import { buildPlayerArchive, hashRecoveryKey, passwordHashForImport, type Player
 
 export type Role = "player" | "educator";
 export type ContentWidth = "centered" | "wide" | "full";
-export type ModProgress = { completed: boolean; done: string[] };
+export type ModProgress = {
+  completed: boolean;
+  done: string[];
+  startedAt?: number;
+  completedAt?: number;
+  hinted?: boolean;
+};
 
 // A revealed hint reduces that objective's base XP reward by this amount on completion.
 export const HINT_XP_PENALTY = 2;
@@ -175,183 +181,250 @@ export const HOBBIES_POOL = [
   "Robotics",
 ];
 
+export type BadgeCategory = "certification" | "achievement" | "legacy";
+export type BadgeCopy = { en: string; el: string };
 export type Badge = {
-  name: string;
-  desc: string;
+  name: BadgeCopy;
+  desc: BadgeCopy;
   icon: string;
   tier: "bronze" | "silver" | "gold";
-  blurb: string;
+  category: BadgeCategory;
+  blurb: BadgeCopy;
 };
 
+const badgeCopy = (en: string, el: string): BadgeCopy => ({ en, el });
+const legacyBadge = (nameEn: string, nameEl: string, icon: string, tier: Badge["tier"]): Badge => ({
+  name: badgeCopy(nameEn, nameEl),
+  desc: badgeCopy("Earlier lab badge", "Παλαιότερο παράσημο εργαστηρίου"),
+  icon,
+  tier,
+  category: "legacy",
+  blurb: badgeCopy(
+    "Kept from an earlier course. New certifications are awarded at the end of a learning path.",
+    "Κρατήθηκε από παλαιότερο κύκλο. Οι νέες πιστοποιήσεις δίνονται στο τέλος μιας διαδρομής μάθησης.",
+  ),
+});
+
+export const PATH_CERTIFICATION: Record<string, string> = {
+  "linux-part-01": "cert-linux-01",
+  "linux-part-02": "cert-linux-02",
+  "linux-part-03": "cert-linux-03",
+  "ssh-port-22": "cert-ssh-22",
+};
+
+export const SWIFT_MS_PER_MODULE = 8 * 60 * 1000;
+
+export function pathCompletedSwiftly(
+  modules: { id: string }[],
+  progress: Record<string, ModProgress>,
+  msPerModule = SWIFT_MS_PER_MODULE,
+): boolean {
+  if (!modules.length) return false;
+  let start = Infinity;
+  let end = 0;
+  for (const module of modules) {
+    const saved = progress[module.id];
+    if (!saved?.startedAt || !saved.completedAt || saved.completedAt < saved.startedAt) return false;
+    start = Math.min(start, saved.startedAt);
+    end = Math.max(end, saved.completedAt);
+  }
+  const elapsed = end - start;
+  return elapsed > 0 && elapsed <= modules.length * msPerModule;
+}
+
+export function pathCompletedCleanly(modules: { id: string }[], progress: Record<string, ModProgress>): boolean {
+  if (!modules.length) return false;
+  return modules.every((module) => {
+    const saved = progress[module.id];
+    return !!saved?.startedAt && saved.hinted !== true;
+  });
+}
+
 export const BADGES: Record<string, Badge> = {
+  "cert-linux-01": {
+    name: badgeCopy("Linux for Beginners, Part 1", "Linux για αρχάριους, μέρος 1"),
+    desc: badgeCopy("Finished learning path 01", "Ολοκλήρωσες τη διαδρομή 01"),
+    icon: "terminal",
+    tier: "gold",
+    category: "certification",
+    blurb: badgeCopy(
+      "Certifies the shell, files, text, packages and permissions. Awarded only when every lab in path 01 is complete.",
+      "Πιστοποιεί το shell, τα αρχεία, το κείμενο, τα πακέτα και τα δικαιώματα. Δίνεται μόνο όταν ολοκληρωθεί κάθε εργαστήριο της διαδρομής 01.",
+    ),
+  },
+  "cert-linux-02": {
+    name: badgeCopy("Linux for Beginners, Part 2", "Linux για αρχάριους, μέρος 2"),
+    desc: badgeCopy("Finished learning path 02", "Ολοκλήρωσες τη διαδρομή 02"),
+    icon: "wifi",
+    tier: "gold",
+    category: "certification",
+    blurb: badgeCopy(
+      "Certifies networks, processes and environment variables inside the sandbox. Awarded at the end of path 02, not after each lab.",
+      "Πιστοποιεί δίκτυα, διεργασίες και μεταβλητές περιβάλλοντος μέσα στο sandbox. Δίνεται στο τέλος της διαδρομής 02, όχι μετά από κάθε εργαστήριο.",
+    ),
+  },
+  "cert-linux-03": {
+    name: badgeCopy("Linux for Beginners, Part 3", "Linux για αρχάριους, μέρος 3"),
+    desc: badgeCopy("Finished learning path 03", "Ολοκλήρωσες τη διαδρομή 03"),
+    icon: "settings",
+    tier: "gold",
+    category: "certification",
+    blurb: badgeCopy(
+      "Certifies scripting, scheduling and the simulated services. Awarded when path 03 is complete.",
+      "Πιστοποιεί scripting, χρονοπρογραμματισμό και τις εικονικές υπηρεσίες. Δίνεται όταν ολοκληρωθεί η διαδρομή 03.",
+    ),
+  },
+  "cert-ssh-22": {
+    name: badgeCopy("SSH on Port 22", "SSH στη θύρα 22"),
+    desc: badgeCopy("Finished learning path 04", "Ολοκλήρωσες τη διαδρομή 04"),
+    icon: "lock",
+    tier: "gold",
+    category: "certification",
+    blurb: badgeCopy(
+      "Certifies reading the fictional SSH service and the controls that harden it. Attack procedures are not part of this certificate.",
+      "Πιστοποιεί την ανάγνωση της φανταστικής υπηρεσίας SSH και τους ελέγχους που τη σκληραίνουν. Οι διαδικασίες επίθεσης δεν είναι μέρος αυτού του πιστοποιητικού.",
+    ),
+  },
+  "cert-all": {
+    name: badgeCopy("Course Complete", "Ολοκλήρωση κύκλου"),
+    desc: badgeCopy("Finished every learning path", "Ολοκλήρωσες κάθε διαδρομή μάθησης"),
+    icon: "medal",
+    tier: "gold",
+    category: "certification",
+    blurb: badgeCopy(
+      "Awarded after all four numbered learning paths are complete.",
+      "Δίνεται αφού ολοκληρωθούν και οι τέσσερις αριθμημένες διαδρομές μάθησης.",
+    ),
+  },
   firstblood: {
-    name: "First Blood",
-    desc: "Completed your first objective",
+    name: badgeCopy("First Blood", "Πρώτο αίμα"),
+    desc: badgeCopy("Completed your first objective", "Ολοκλήρωσες τον πρώτο στόχο"),
     icon: "flag",
     tier: "bronze",
-    blurb: "Awarded for solving your very first hands-on objective in the lab — the first strike of many.",
+    category: "achievement",
+    blurb: badgeCopy(
+      "Awarded for solving your very first hands-on objective in the lab.",
+      "Δίνεται για την επίλυση του πρώτου πρακτικού στόχου στο εργαστήριο.",
+    ),
   },
-  shell_initiate: {
-    name: "Shell Initiate",
-    desc: "Finished Linux Foundations",
-    icon: "terminal",
+  swift: {
+    name: badgeCopy("Swift", "Ταχύς"),
+    desc: badgeCopy("Finished a path in under eight minutes per lab", "Ολοκλήρωσες διαδρομή σε λιγότερο από οκτώ λεπτά ανά εργαστήριο"),
+    icon: "activity",
+    tier: "silver",
+    category: "achievement",
+    blurb: badgeCopy(
+      "Measured from the first objective of a learning path to its last quiz. The whole path must finish inside eight minutes per lab.",
+      "Μετριέται από τον πρώτο στόχο μιας διαδρομής μέχρι το τελευταίο κουίζ. Ολόκληρη η διαδρομή πρέπει να κλείσει μέσα σε οκτώ λεπτά ανά εργαστήριο.",
+    ),
+  },
+  clean_run: {
+    name: badgeCopy("Independent", "Ανεξάρτητος"),
+    desc: badgeCopy("Finished a path without hints", "Ολοκλήρωσες διαδρομή χωρίς υποδείξεις"),
+    icon: "bulb",
+    tier: "silver",
+    category: "achievement",
+    blurb: badgeCopy(
+      "Every lab in a learning path was cleared without opening a hint.",
+      "Κάθε εργαστήριο μιας διαδρομής ολοκληρώθηκε χωρίς άνοιγμα υπόδειξης.",
+    ),
+  },
+  perfect_quiz: {
+    name: badgeCopy("Perfect Quiz", "Τέλειο κουίζ"),
+    desc: badgeCopy("Answered every quiz question correctly", "Απάντησες σωστά σε κάθε ερώτηση κουίζ"),
+    icon: "target",
     tier: "bronze",
-    blurb: "Certifies command of core Linux fundamentals: navigation, files, permissions and the shell.",
-  },
-  recon_scout: {
-    name: "Recon Scout",
-    desc: "Mastered reconnaissance",
-    icon: "radar",
-    tier: "silver",
-    blurb: "Recognises mastery of reconnaissance — host discovery, service enumeration and DNS intelligence.",
-  },
-  port_mapper: {
-    name: "Port Mapper",
-    desc: "Completed port scanning",
-    icon: "scan",
-    tier: "silver",
-    blurb: "Confirms proficiency in port scanning and service-version fingerprinting with nmap.",
-  },
-  lockbreaker: {
-    name: "Lock Breaker",
-    desc: "Cracked a password",
-    icon: "hammer",
-    tier: "silver",
-    blurb: "Earned by recovering credentials through brute-force and dictionary attacks against a live service.",
-  },
-  query_bender: {
-    name: "Query Bender",
-    desc: "Exploited SQL injection",
-    icon: "database",
-    tier: "gold",
-    blurb: "Demonstrates practical exploitation of SQL injection — from detection to data extraction.",
-  },
-  root: {
-    name: "Root Master",
-    desc: "Escalated to root",
-    icon: "crown",
-    tier: "gold",
-    blurb: "The pinnacle: full privilege escalation to root, achieving complete control of the target.",
-  },
-  raven: {
-    name: "Raven Rooted",
-    desc: "Owned the Raven box",
-    icon: "crown",
-    tier: "gold",
-    blurb: "Certifies a complete boot2root compromise of the Raven machine — all four flags captured.",
+    category: "achievement",
+    blurb: badgeCopy(
+      "A quick quiz passed with a perfect score.",
+      "Ένα σύντομο κουίζ πέρασε με τέλειο σκορ.",
+    ),
   },
   high_fidelity: {
-    name: "High Fidelity",
-    desc: "Kept fidelity above 90%",
+    name: badgeCopy("High Fidelity", "Υψηλή πιστότητα"),
+    desc: badgeCopy("Kept fidelity above 90%", "Κράτησες πιστότητα πάνω από 90%"),
     icon: "check",
     tier: "silver",
-    blurb: "Rewards genuine practice: over 90% of commands typed by hand rather than pasted.",
+    category: "achievement",
+    blurb: badgeCopy(
+      "Rewards genuine practice: over 90% of commands typed by hand rather than pasted, across at least 10 commands.",
+      "Επιβραβεύει πραγματική εξάσκηση: πάνω από 90% των εντολών πληκτρολογημένες, όχι επικολλημένες, σε τουλάχιστον 10 εντολές.",
+    ),
   },
   flawless: {
-    name: "Flawless Typist",
-    desc: "10 commands, zero typos",
-    icon: "bulb",
+    name: badgeCopy("Flawless Typist", "Άψογος πληκτρολόγος"),
+    desc: badgeCopy("10 commands, zero typos", "10 εντολές, κανένα τυπογραφικό"),
+    icon: "spark",
     tier: "bronze",
-    blurb: "Granted for precision at the keyboard — ten consecutive commands without a single typo.",
+    category: "achievement",
+    blurb: badgeCopy(
+      "Granted for precision at the keyboard: ten commands without a single typo.",
+      "Δίνεται για ακρίβεια στο πληκτρολόγιο: δέκα εντολές χωρίς κανένα τυπογραφικό.",
+    ),
+  },
+  accurate: {
+    name: badgeCopy("Sharp Operator", "Ακριβής χειριστής"),
+    desc: badgeCopy("90% accuracy across 15 commands", "90% ακρίβεια σε 15 εντολές"),
+    icon: "scan",
+    tier: "silver",
+    category: "achievement",
+    blurb: badgeCopy(
+      "Command accuracy stayed at 90% or higher after at least 15 commands.",
+      "Η ακρίβεια εντολών έμεινε στο 90% ή ψηλότερα μετά από τουλάχιστον 15 εντολές.",
+    ),
   },
   dedicated: {
-    name: "Dedicated",
-    desc: "3-day learning streak",
+    name: badgeCopy("Dedicated", "Αφοσιωμένος"),
+    desc: badgeCopy("3-day learning streak", "Σερί μάθησης 3 ημερών"),
     icon: "medal",
     tier: "silver",
-    blurb: "Honours consistency — returning to train three days in a row and keeping the streak alive.",
+    category: "achievement",
+    blurb: badgeCopy(
+      "Honours consistency: returning to train three days in a row.",
+      "Τιμά τη συνέπεια: επιστροφή για εξάσκηση τρεις ημέρες στη σειρά.",
+    ),
   },
-  ssh_walker: {
-    name: "Wirewalker",
-    desc: "Completed the SSH labyrinth",
-    icon: "key",
+  week_streak: {
+    name: badgeCopy("Week Streak", "Σερί εβδομάδας"),
+    desc: badgeCopy("7-day learning streak", "Σερί μάθησης 7 ημερών"),
+    icon: "crown",
     tier: "gold",
-    blurb: "Mastery of SSH keys, hopping and tunnels across a segmented lab network.",
+    category: "achievement",
+    blurb: badgeCopy(
+      "Awarded for training seven days in a row.",
+      "Δίνεται για εξάσκηση επτά ημέρες στη σειρά.",
+    ),
   },
-  sudo_run: {
-    name: "Linux for Beginners #1",
-    desc: "Finished Linux for Beginners #1",
+  shell_initiate: {
+    name: badgeCopy("Shell Initiate", "Μυημένος του shell"),
+    desc: badgeCopy("Earlier lab badge", "Παλαιότερο παράσημο εργαστηρίου"),
     icon: "terminal",
-    tier: "gold",
-    blurb: "Certifies Linux for Beginners #1: the shell, files, text, packages and permissions, practised in the GameHack sandbox.",
-  },
-  evidence_custodian: {
-    name: "Evidence Custodian",
-    desc: "Completed DFIR intake and integrity",
-    icon: "shield",
     tier: "bronze",
-    blurb: "Demonstrates evidence handling, provenance, hashes, file identification, and read-only analysis habits.",
+    category: "legacy",
+    blurb: badgeCopy(
+      "Kept from an earlier course. New certifications are awarded at the end of a learning path.",
+      "Κρατήθηκε από παλαιότερο κύκλο. Οι νέες πιστοποιήσεις δίνονται στο τέλος μιας διαδρομής μάθησης.",
+    ),
   },
-  artifact_mapper: {
-    name: "Artifact Mapper",
-    desc: "Correlated Windows artifacts",
-    icon: "settings",
-    tier: "silver",
-    blurb: "Correlated registry, shortcut, browser, and event-log artifacts into a defensible timeline.",
-  },
-  document_analyst: {
-    name: "Document Analyst",
-    desc: "Completed document and steganography triage",
-    icon: "file-text",
-    tier: "silver",
-    blurb: "Inspected office-container metadata, extracted macro indicators statically, and evaluated image/audio clues without executing content.",
-  },
-  web_correlator: {
-    name: "Web Correlator",
-    desc: "Correlated application and WAF logs",
-    icon: "globe",
-    tier: "silver",
-    blurb: "Correlated timestamps, web access events, server errors, and WAF rule identifiers while distinguishing evidence from attribution.",
-  },
-  packet_analyst: {
-    name: "Packet Analyst",
-    desc: "Completed network traffic analysis",
-    icon: "share",
-    tier: "silver",
-    blurb: "Reviewed protocol summaries, display-filtered packets, reconstructed a training stream, and preserved export provenance.",
-  },
-  disk_examiner: {
-    name: "Disk Examiner",
-    desc: "Completed disk image analysis",
-    icon: "hard-drive",
-    tier: "silver",
-    blurb: "Practiced read-only acquisition, integrity verification, filesystem enumeration, and cautious MFT timeline interpretation.",
-  },
-  static_analyst: {
-    name: "Static Analyst",
-    desc: "Completed safe malware triage",
-    icon: "bug",
-    tier: "gold",
-    blurb: "Triaged file type, hashes, printable strings, and isolated behavior notes without executing a sample.",
-  },
-  memory_analyst: {
-    name: "Memory Analyst",
-    desc: "Completed memory artifact analysis",
-    icon: "cpu",
-    tier: "gold",
-    blurb: "Correlated a memory profile, process tree, sockets, environment, and volatile user artifacts as a training investigation.",
-  },
-  container_examiner: {
-    name: "Container Examiner",
-    desc: "Completed container forensics",
-    icon: "layers",
-    tier: "silver",
-    blurb: "Reviewed container configuration, runtime differences, logs, and image history while accounting for immutable layers.",
-  },
-  hash_examiner: {
-    name: "Hash Examiner",
-    desc: "Completed password hash analysis",
-    icon: "key",
-    tier: "gold",
-    blurb: "Reviewed hash formats, candidate comparison, salts, adaptive password KDFs, authorization boundaries, and remediation.",
-  },
-  incident_reporter: {
-    name: "Incident Reporter",
-    desc: "Completed the DFIR fieldwork path",
-    icon: "file-text",
-    tier: "gold",
-    blurb: "Completed the ten-lab DFIR Fieldwork path and practiced reporting evidence with limitations and defensive recommendations.",
-  },
+  recon_scout: legacyBadge("Recon Scout", "Ανιχνευτής αναγνώρισης", "radar", "silver"),
+  port_mapper: legacyBadge("Port Mapper", "Χαρτογράφος θυρών", "scan", "silver"),
+  lockbreaker: legacyBadge("Lock Breaker", "Σπαστήρας κλειδαριών", "hammer", "silver"),
+  query_bender: legacyBadge("Query Bender", "Χειριστής ερωτημάτων", "database", "gold"),
+  root: legacyBadge("Root Master", "Κυρίαρχος root", "crown", "gold"),
+  raven: legacyBadge("Raven Rooted", "Κατάκτηση Raven", "raven", "gold"),
+  ssh_walker: legacyBadge("Wirewalker", "Περιπατητής καλωδίων", "key", "gold"),
+  sudo_run: legacyBadge("Linux for Beginners #1", "Linux για αρχάριους 1", "terminal", "gold"),
+  evidence_custodian: legacyBadge("Evidence Custodian", "Φύλακας τεκμηρίων", "shield", "bronze"),
+  artifact_mapper: legacyBadge("Artifact Mapper", "Χαρτογράφος ιχνών", "settings", "silver"),
+  document_analyst: legacyBadge("Document Analyst", "Αναλυτής εγγράφων", "file-text", "silver"),
+  web_correlator: legacyBadge("Web Correlator", "Συσχετιστής ιστού", "globe", "silver"),
+  packet_analyst: legacyBadge("Packet Analyst", "Αναλυτής πακέτων", "share", "silver"),
+  disk_examiner: legacyBadge("Disk Examiner", "Εξεταστής δίσκου", "hard-drive", "silver"),
+  static_analyst: legacyBadge("Static Analyst", "Στατικός αναλυτής", "bug", "gold"),
+  memory_analyst: legacyBadge("Memory Analyst", "Αναλυτής μνήμης", "cpu", "gold"),
+  container_examiner: legacyBadge("Container Examiner", "Εξεταστής container", "layers", "silver"),
+  hash_examiner: legacyBadge("Hash Examiner", "Εξεταστής κατακερματισμών", "key", "gold"),
+  incident_reporter: legacyBadge("Incident Reporter", "Συντάκτης αναφοράς", "file-text", "gold"),
 };
 
 function today(): string {
@@ -1061,7 +1134,7 @@ export function grantBadge(userId: string, badgeId: string): boolean {
   const u = db.users.find((x) => x.id === userId);
   if (!u || u.badges.includes(badgeId)) return false;
   u.badges.push(badgeId);
-  pushFeed(u, "badge", `${u.displayName} earned the "${BADGES[badgeId]?.name || badgeId}" badge`);
+  pushFeed(u, "badge", `${u.displayName} earned the "${BADGES[badgeId]?.name.en || badgeId}" badge`);
   saveDB();
   return true;
 }

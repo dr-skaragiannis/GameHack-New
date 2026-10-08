@@ -6,6 +6,8 @@ import {
   fidelityScore,
   levelFromXp,
   overallScoreboard,
+  type Badge,
+  type BadgeCategory,
   type User,
 } from "../lib/db";
 import { bi, t, uppercaseLabel, type Lang } from "../i18n";
@@ -16,6 +18,32 @@ import { cn } from "../utils/cn";
 import InteractiveMap from "./InteractiveMap";
 import PlayerTeamPanel from "./PlayerTeamPanel";
 import PlayerConstellation from "./PlayerConstellation";
+
+const BADGE_CATEGORY_RANK: Record<BadgeCategory, number> = { certification: 0, achievement: 1, legacy: 2 };
+
+function badgeCategoryLabel(category: BadgeCategory, lang: Lang) {
+  if (category === "certification") return t("badgeCategoryCertification", lang);
+  if (category === "achievement") return t("badgeCategoryAchievement", lang);
+  return t("badgeCategoryLegacy", lang);
+}
+
+function badgeName(badge: Badge, lang: Lang) {
+  return bi(badge.name, lang);
+}
+
+function badgeDesc(badge: Badge, lang: Lang) {
+  return bi(badge.desc, lang);
+}
+
+function visibleBadgeEntries(earnedIds: string[]) {
+  return Object.entries(BADGES)
+    .filter(([id, badge]) => badge.category !== "legacy" || earnedIds.includes(id))
+    .sort(([idA, badgeA], [idB, badgeB]) => {
+      const byCategory = BADGE_CATEGORY_RANK[badgeA.category] - BADGE_CATEGORY_RANK[badgeB.category];
+      if (byCategory) return byCategory;
+      return Number(!earnedIds.includes(idA)) - Number(!earnedIds.includes(idB));
+    });
+}
 
 function nextUnlockedModule(campaign: (typeof LEARNING_PATHS)[number], user: User, preferActive: boolean) {
   const ordered = [...campaign.modules].sort((a, b) => a.order - b.order);
@@ -233,11 +261,8 @@ function BadgesDialog({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  const entries = Object.entries(BADGES).sort(([a], [b]) => {
-    const rankA = user.badges.includes(a) ? 0 : 1;
-    const rankB = user.badges.includes(b) ? 0 : 1;
-    return rankA - rankB;
-  });
+  const entries = visibleBadgeEntries(user.badges);
+  let previousCategory: BadgeCategory | null = null;
 
   return (
     <div
@@ -266,41 +291,53 @@ function BadgesDialog({
         <div className="badges-dialog__grid">
           {entries.map(([id, badge]) => {
             const earned = user.badges.includes(id);
+            const showCategory = badge.category !== previousCategory;
+            previousCategory = badge.category;
+            const heading = showCategory ? (
+              <div key={`${badge.category}-heading`} className="badges-dialog__category">
+                {uppercaseLabel(badgeCategoryLabel(badge.category, lang), lang)}
+              </div>
+            ) : null;
             if (!earned) {
               return (
-                <div key={id} className="badges-dialog__item is-locked" title={`${badge.name} — ${badge.desc}`}>
-                  <span className="badges-dialog__medallion">
-                    <Icon name={badge.icon} className="h-5 w-5" />
-                    <i className="badges-dialog__lock"><Icon name="lock" className="h-3 w-3" /></i>
-                  </span>
-                  <span className="badges-dialog__copy">
-                    <strong>{badge.name}</strong>
-                    <small>{badge.desc}</small>
-                  </span>
-                  <span className="badges-dialog__state">{uppercaseLabel(t("locked", lang), lang)}</span>
+                <div key={id} className="badges-dialog__group">
+                  {heading}
+                  <div className="badges-dialog__item is-locked" title={`${badgeName(badge, lang)} — ${badgeDesc(badge, lang)}`}>
+                    <span className="badges-dialog__medallion">
+                      <Icon name={badge.icon} className="h-5 w-5" />
+                      <i className="badges-dialog__lock"><Icon name="lock" className="h-3 w-3" /></i>
+                    </span>
+                    <span className="badges-dialog__copy">
+                      <strong>{badgeName(badge, lang)}</strong>
+                      <small>{badgeDesc(badge, lang)}</small>
+                    </span>
+                    <span className="badges-dialog__state">{uppercaseLabel(t("locked", lang), lang)}</span>
+                  </div>
                 </div>
               );
             }
             return (
-              <button
-                key={id}
-                type="button"
-                data-tier={badge.tier}
-                className="badges-dialog__item dashboard-action"
-                title={`${badge.name} — ${badge.desc}`}
-                aria-label={`${badge.name}. ${badge.desc}`}
-                onClick={() => {
-                  onBadge(id);
-                  onClose();
-                }}
-              >
-                <span className="badges-dialog__medallion"><Icon name={badge.icon} className="h-5 w-5" /></span>
-                <span className="badges-dialog__copy">
-                  <strong>{badge.name}</strong>
-                  <small>{badge.desc}</small>
-                </span>
-                <Icon name="chevron" className="h-4 w-4" />
-              </button>
+              <div key={id} className="badges-dialog__group">
+                {heading}
+                <button
+                  type="button"
+                  data-tier={badge.tier}
+                  className="badges-dialog__item dashboard-action"
+                  title={`${badgeName(badge, lang)} — ${badgeDesc(badge, lang)}`}
+                  aria-label={`${badgeName(badge, lang)}. ${badgeDesc(badge, lang)}`}
+                  onClick={() => {
+                    onBadge(id);
+                    onClose();
+                  }}
+                >
+                  <span className="badges-dialog__medallion"><Icon name={badge.icon} className="h-5 w-5" /></span>
+                  <span className="badges-dialog__copy">
+                    <strong>{badgeName(badge, lang)}</strong>
+                    <small>{badgeDesc(badge, lang)}</small>
+                  </span>
+                  <Icon name="chevron" className="h-4 w-4" />
+                </button>
+              </div>
             );
           })}
         </div>
@@ -432,7 +469,7 @@ export default function PlayerDashboard({
             <span className="player-dashboard__hero-badges-label">{uppercaseLabel(t("badges", lang), lang)} ({user.badges.length})</span>
             {user.badges.length ? (
               <span className="player-dashboard__hero-medallions">
-                {user.badges.slice(0, 5).map((id) => {
+                {[...user.badges].sort((a, b) => BADGE_CATEGORY_RANK[BADGES[a]?.category || "legacy"] - BADGE_CATEGORY_RANK[BADGES[b]?.category || "legacy"]).slice(0, 5).map((id) => {
                   const badge = BADGES[id];
                   if (!badge) return null;
                   return (
@@ -440,8 +477,8 @@ export default function PlayerDashboard({
                       key={id}
                       type="button"
                       data-tier={badge.tier}
-                      title={`${badge.name} — ${badge.desc}`}
-                      aria-label={`${badge.name}. ${badge.desc}`}
+                      title={`${badgeName(badge, lang)} — ${badgeDesc(badge, lang)}`}
+                      aria-label={`${badgeName(badge, lang)}. ${badgeDesc(badge, lang)}`}
                       onClick={() => onBadge(id)}
                     >
                       <Icon name={badge.icon} className="h-4 w-4" />
@@ -591,27 +628,30 @@ export default function PlayerDashboard({
           </div>
           {user.badges.length ? (
             <div className="player-dashboard__badge-grid">
-              {user.badges.map((id, index) => {
-                const badge = BADGES[id];
-                if (!badge) return null;
+              {visibleBadgeEntries(user.badges).filter(([id]) => user.badges.includes(id)).map(([id, badge], index, earned) => {
+                const previous = index > 0 ? earned[index - 1][1].category : null;
                 return (
-                  <button
-                    key={id}
-                    type="button"
-                    className="player-dashboard__badge-card dashboard-action dashboard-stagger"
-                    data-tier={badge.tier}
-                    style={{ animationDelay: `${index * 45}ms` }}
-                    title={`${badge.name} — ${badge.desc}`}
-                    aria-label={`${badge.name}. ${badge.desc}. ${lang === "en" ? "Open certificate" : "Άνοιγμα πιστοποιητικού"}`}
-                    onClick={() => onBadge(id)}
-                  >
-                    <span className="player-dashboard__badge-medallion"><Icon name={badge.icon} className="h-6 w-6" /></span>
-                    <span className="player-dashboard__badge-copy">
-                      <strong>{badge.name}</strong>
-                      <small>{badge.desc}</small>
-                    </span>
-                    <Icon name="chevron" className="player-dashboard__badge-chevron h-4 w-4" />
-                  </button>
+                  <div key={id} className="badges-dialog__group">
+                    {badge.category !== previous ? (
+                      <div className="player-dashboard__badge-category">{uppercaseLabel(badgeCategoryLabel(badge.category, lang), lang)}</div>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="player-dashboard__badge-card dashboard-action dashboard-stagger"
+                      data-tier={badge.tier}
+                      style={{ animationDelay: `${index * 45}ms` }}
+                      title={`${badgeName(badge, lang)} — ${badgeDesc(badge, lang)}`}
+                      aria-label={`${badgeName(badge, lang)}. ${badgeDesc(badge, lang)}. ${lang === "en" ? "Open certificate" : "Άνοιγμα πιστοποιητικού"}`}
+                      onClick={() => onBadge(id)}
+                    >
+                      <span className="player-dashboard__badge-medallion"><Icon name={badge.icon} className="h-6 w-6" /></span>
+                      <span className="player-dashboard__badge-copy">
+                        <strong>{badgeName(badge, lang)}</strong>
+                        <small>{badgeDesc(badge, lang)}</small>
+                      </span>
+                      <Icon name="chevron" className="player-dashboard__badge-chevron h-4 w-4" />
+                    </button>
+                  </div>
                 );
               })}
             </div>

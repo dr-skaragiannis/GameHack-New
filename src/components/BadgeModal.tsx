@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { BADGES } from "../lib/db";
 import Icon from "./Icon";
-import { t, uppercaseLabel, type Lang } from "../i18n";
+import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 
 const TIER: Record<string, string> = {
   bronze: "from-cyan-700 to-cyan-500",
@@ -44,7 +44,9 @@ export default function BadgeModal({
   if (!badge) return null;
 
   const closeWithAnimation = () => setIsClosing(true);
-  const certificateTitle = lang === "en" ? "Certificate of achievement" : "Πιστοποιητικό διάκρισης";
+  const certificateTitle = badge.category === "certification"
+    ? t("badgeCategoryCertification", lang)
+    : (lang === "en" ? "Certificate of achievement" : "Πιστοποιητικό διάκρισης");
   return (
     <div
       className={`dashboard-modal-backdrop badge-certificate-backdrop${isClosing ? " is-closing" : ""}`}
@@ -73,10 +75,10 @@ export default function BadgeModal({
         </div>
 
         <div className="badge-certificate__issuer">GameHack, {uppercaseLabel(certificateTitle, lang)}</div>
-        <h2 id="badge-certificate-title">{badge.name}</h2>
-        <p className="badge-certificate__description">{badge.desc}</p>
+        <h2 id="badge-certificate-title">{bi(badge.name, lang)}</h2>
+        <p className="badge-certificate__description">{bi(badge.desc, lang)}</p>
         <div className="badge-certificate__divider"><span /><Icon name="spark" className="h-4 w-4" /><span /></div>
-        <p className="badge-certificate__blurb">{badge.blurb}</p>
+        <p className="badge-certificate__blurb">{bi(badge.blurb, lang)}</p>
         <div className="badge-certificate__signature">
           <span className="badge-certificate__signature-mark"><Icon name="shield" className="h-4 w-4" /></span>
           <span>

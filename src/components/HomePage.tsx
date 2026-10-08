@@ -135,7 +135,7 @@ export default function HomePage({
   onRegister: () => void;
 }) {
   const labCount = LEARNING_PATHS.reduce((total, campaign) => total + campaign.modules.length, 0);
-  const badgeCount = Object.keys(BADGES).length;
+  const badgeCount = Object.values(BADGES).filter((badge) => badge.category !== "legacy").length;
   const steps = [1, 2, 3, 4].map((n) => ({
     title: t(`landingStep${n}T`, lang),
     desc: t(`landingStep${n}D`, lang),

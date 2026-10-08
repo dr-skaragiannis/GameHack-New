@@ -9,7 +9,7 @@ import {
   updateUser,
   type User,
 } from "../lib/db";
-import { t, uppercaseLabel, type Lang } from "../i18n";
+import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import Avatar from "./Avatar";
 import AvatarPicker from "./AvatarPicker";
 import Icon from "./Icon";
@@ -388,17 +388,26 @@ export default function ProfileView({
       <div className="glass rounded-2xl border border-gamehack-border p-5">
         <div className="text-sm uppercase tracking-widest text-iron-400 mb-3">{uppercaseLabel(t("badges", lang), lang)}</div>
         <div className="grid sm:grid-cols-2 gap-3">
-          {user.badges.map((id) => {
+          {[...user.badges].sort((a, b) => {
+            const rank = (id: string) => BADGES[id]?.category === "certification" ? 0 : BADGES[id]?.category === "achievement" ? 1 : 2;
+            return rank(a) - rank(b);
+          }).map((id) => {
             const b = BADGES[id];
             if (!b) return null;
+            const categoryLabel = b.category === "certification"
+              ? t("badgeCategoryCertification", lang)
+              : b.category === "achievement"
+                ? t("badgeCategoryAchievement", lang)
+                : t("badgeCategoryLegacy", lang);
             const inner = (
               <>
                 <div className="h-10 w-10 shrink-0 rounded-lg bg-cyan-500/15 grid place-items-center text-cyan-400">
                   <Icon name={b.icon} className="w-5 h-5" />
                 </div>
                 <div className="min-w-0 text-left">
-                  <div className="font-semibold text-sm">{b.name}</div>
-                  <div className="text-sm text-iron-400">{b.desc}</div>
+                  <div className="text-[0.62rem] font-extrabold uppercase tracking-[0.12em] text-iron-500">{uppercaseLabel(categoryLabel, lang)}</div>
+                  <div className="font-semibold text-sm">{bi(b.name, lang)}</div>
+                  <div className="text-sm text-iron-400">{bi(b.desc, lang)}</div>
                 </div>
                 {onBadge && <Icon name="chevron" className="ml-auto h-4 w-4 shrink-0 self-center text-iron-500" />}
               </>
@@ -408,8 +417,8 @@ export default function ProfileView({
                 key={id}
                 type="button"
                 onClick={() => onBadge(id)}
-                title={`${b.name} — ${b.desc}`}
-                aria-label={`${b.name}. ${b.desc}`}
+                title={`${bi(b.name, lang)} — ${bi(b.desc, lang)}`}
+                aria-label={`${bi(b.name, lang)}. ${bi(b.desc, lang)}`}
                 className="flex items-center gap-3 rounded-xl border border-gamehack-border p-3 transition hover:border-cyan-500/50 hover:bg-cyan-500/5"
               >
                 {inner}
