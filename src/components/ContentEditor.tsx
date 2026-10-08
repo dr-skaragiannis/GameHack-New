@@ -14,6 +14,7 @@ import {
   type AuthoredPath,
   type AuthoredSection,
   type AuthoredTask,
+  type AuthoredIssue,
   type ContentOverlay,
 } from "../lib/contentAuthoring";
 import { t, type Lang } from "../i18n";
@@ -125,6 +126,12 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
 
   const issues = useMemo(() => overlayIssues(overlay), [overlay]);
   const issueFor = (id: string) => issues.find((entry) => entry.moduleId === id)?.issues || [];
+  const labName = (id: string) => {
+    const authored = overlay.modules[id];
+    return authored?.title[lang] || authored?.title.en || id;
+  };
+  const describeIssue = (issue: AuthoredIssue) =>
+    t(`issue_${issue.code}`, lang).replace("{n}", String("index" in issue ? issue.index + 1 : 0));
 
   const authoredPath = overlay.paths.find((path) => path.id === pathId) || null;
 
@@ -239,7 +246,11 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
         <div className="content-issues" role="status">
           <strong>{t("contentIssues", lang)}</strong>
           <ul>
-            {issues.flatMap((entry) => entry.issues.map((issue) => <li key={`${entry.moduleId}-${issue}`}>{entry.moduleId}: {issue}</li>))}
+            {issues.flatMap((entry) => entry.issues.map((issue) => (
+              <li key={`${entry.moduleId}-${issue.code}-${"index" in issue ? issue.index : ""}`}>
+                <strong>{labName(entry.moduleId)}:</strong> {describeIssue(issue)}
+              </li>
+            )))}
           </ul>
         </div>
       )}

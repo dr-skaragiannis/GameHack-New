@@ -17,13 +17,14 @@ const server = await createServer({
 });
 
 try {
-  const [lessons, authoring, terminal, playerTerminal, db, catalog] = await Promise.all([
+  const [lessons, authoring, terminal, playerTerminal, db, catalog, i18n] = await Promise.all([
     server.ssrLoadModule("/src/data/lessons.ts"),
     server.ssrLoadModule("/src/lib/contentAuthoring.ts"),
     server.ssrLoadModule("/src/lib/terminal.ts"),
     server.ssrLoadModule("/src/lib/playerTerminal.ts"),
     server.ssrLoadModule("/src/lib/db.ts"),
     server.ssrLoadModule("/src/lib/catalog.ts"),
+    server.ssrLoadModule("/src/i18n.ts"),
   ]);
 
   const freshTerm = () => {
@@ -207,12 +208,29 @@ try {
   const issues = authoring.overlayIssues({ modules: { [broken.id]: broken }, paths: [] });
   const flagged = issues.find((entry) => entry.moduleId === broken.id);
   assert.ok(flagged, "an unfinished lab is reported");
-  assert.ok(flagged.issues.some((issue) => issue.includes("no title")), "a missing title is reported");
-  assert.ok(flagged.issues.some((issue) => issue.includes("no theory")), "missing theory is reported");
-  assert.ok(flagged.issues.some((issue) => issue.includes("no instruction")), "a missing instruction is reported");
-  assert.ok(flagged.issues.some((issue) => issue.includes("no completion test")), "an objective with no test is reported");
-  assert.ok(flagged.issues.some((issue) => issue.includes("two final challenges")), "a lab needs two challenges");
-  assert.ok(flagged.issues.some((issue) => issue.includes("challenge 1 has no completion test")), "a challenge nobody can pass is reported");
+  const codes = flagged.issues.map((issue) => issue.code);
+  for (const expected of ["noTitle", "noTheory", "objectiveNoInstruction", "objectiveNoTest", "needsTwoChallenges"]) {
+    assert.ok(codes.includes(expected), `an unfinished lab reports "${expected}"`);
+  }
+  assert.ok(
+    flagged.issues.some((issue) => issue.code === "challengeNoTest" && issue.index === 0),
+    "a challenge nobody can pass is reported",
+  );
+
+  // Issues are codes, so every one of them must exist in both languages.
+  for (const code of new Set(codes)) {
+    for (const lang of ["en", "el"]) {
+      const text = i18n.t(`issue_${code}`, lang);
+      assert.notEqual(text, `issue_${code}`, `issue_${code} is translated into ${lang}`);
+      assert.ok(text.trim().length > 3, `issue_${code} has real ${lang} copy`);
+    }
+  }
+  assert.notEqual(i18n.t("issue_noTitle", "en"), i18n.t("issue_noTitle", "el"), "the two languages differ");
+  assert.equal(
+    i18n.t("issue_objectiveNoTest", "el").includes("{n}"),
+    true,
+    "the Greek string keeps the position placeholder",
+  );
   assert.deepEqual(
     authoring.overlayIssues({ modules: { [newLabA.id]: newLabA, [newLabB.id]: newLabB }, paths: [] }),
     [],

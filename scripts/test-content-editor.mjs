@@ -204,6 +204,38 @@ try {
   assert.deepEqual(overlay.paths, [], "the path is removed");
   assert.equal(overlay.modules[secondLab], undefined, "the path's labs are removed with it");
 
+  // ── The warnings are written in the educator's own language ───────────────
+  const broken = authoring.emptyModule(1);
+  broken.id = "lab-broken";
+  broken.tasks = [authoring.emptyTask()];
+  broken.theory = [];
+  broken.challenges = [authoring.emptyChallenge()];
+  const warningsFor = (lang) => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    act(() => {
+      root.render(React.createElement(ContentEditor, {
+        lang,
+        overlay: { modules: { "lab-broken": broken }, paths: [] },
+        onCommit: () => {},
+      }));
+    });
+    const banner = container.querySelector(".content-issues");
+    const text = banner ? banner.textContent : "";
+    act(() => { root.unmount(); });
+    container.remove();
+    return text;
+  };
+  const englishWarnings = warningsFor("en");
+  const greekWarnings = warningsFor("el");
+  assert.ok(englishWarnings.includes("Needs attention before this is teachable:"), "the banner is shown in English");
+  assert.ok(englishWarnings.includes("The lab has no title."), "the English warning is real prose, not a code");
+  assert.ok(greekWarnings.includes("Χρειάζεται προσοχή πριν διδαχτεί:"), "the banner is shown in Greek");
+  assert.ok(greekWarnings.includes("Το εργαστήριο δεν έχει τίτλο."), "the Greek warning is real prose, not a code");
+  assert.equal(greekWarnings.includes("The lab has no title."), false, "no English leaks into the Greek banner");
+  assert.match(greekWarnings, /Ο στόχος 1 δεν έχει έλεγχο ολοκλήρωσης/, "the Greek warning names the objective position");
+
   console.log("Content editor UI checks passed: creating a learning path, adding and writing a lab with XP and a completion test, reaching the player catalog, and deleting without leaving dangling references.");
 } finally {
   await server.close();

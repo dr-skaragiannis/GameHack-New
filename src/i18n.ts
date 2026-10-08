@@ -300,6 +300,45 @@ export const UI: Dict = {
     el: "Αυτό το εργαστήριο δεν έχει ακόμα κουίζ, οπότε ολοκληρώνεται μόλις τελειώσεις κάθε στόχο και τις δύο προκλήσεις.",
   },
   markLabComplete: { en: "Mark lab complete", el: "Ολοκλήρωση εργαστηρίου" },
+  issue_noTitle: { en: "The lab has no title.", el: "Το εργαστήριο δεν έχει τίτλο." },
+  issue_noTheory: { en: "The lab has no theory section.", el: "Το εργαστήριο δεν έχει ενότητα θεωρίας." },
+  issue_theoryNoHeading: {
+    en: "Theory section {n} has no heading.",
+    el: "Η ενότητα θεωρίας {n} δεν έχει επικεφαλίδα.",
+  },
+  issue_theoryNoBody: {
+    en: "Theory section {n} has no body text.",
+    el: "Η ενότητα θεωρίας {n} δεν έχει κείμενο.",
+  },
+  issue_noObjectives: { en: "The lab has no objectives.", el: "Το εργαστήριο δεν έχει στόχους." },
+  issue_objectiveNoInstruction: {
+    en: "Objective {n} has no instruction.",
+    el: "Ο στόχος {n} δεν έχει οδηγία.",
+  },
+  issue_objectiveNoTest: {
+    en: "Objective {n} has no completion test, so nobody can finish it.",
+    el: "Ο στόχος {n} δεν έχει έλεγχο ολοκλήρωσης, άρα κανείς δεν μπορεί να τον ολοκληρώσει.",
+  },
+  issue_objectiveBadBuiltin: {
+    en: "Objective {n} keeps a built-in test that this lab does not have.",
+    el: "Ο στόχος {n} κρατά έναν υπάρχοντα έλεγχο που δεν υπάρχει σε αυτό το εργαστήριο.",
+  },
+  issue_objectiveBadXp: {
+    en: "Objective {n} has an invalid XP value.",
+    el: "Ο στόχος {n} έχει μη έγκυρη τιμή XP.",
+  },
+  issue_needsTwoChallenges: {
+    en: "The lab needs two final challenges.",
+    el: "Το εργαστήριο χρειάζεται δύο τελικές προκλήσεις.",
+  },
+  issue_challengeNoTest: {
+    en: "Challenge {n} has no completion test, so it can never be passed.",
+    el: "Η πρόκληση {n} δεν έχει έλεγχο ολοκλήρωσης, άρα δεν μπορεί ποτέ να ολοκληρωθεί.",
+  },
+  issue_challengeBadBuiltin: {
+    en: "Challenge {n} keeps a built-in test that this lab does not have.",
+    el: "Η πρόκληση {n} κρατά έναν υπάρχοντα έλεγχο που δεν υπάρχει σε αυτό το εργαστήριο.",
+  },
   correctAns: { en: "Correct!", el: "Σωστό!" },
   wrongAns: { en: "Not quite — see the highlighted answer.", el: "Όχι ακριβώς — δες τη σωστή απάντηση." },
   continueLabel: { en: "Continue", el: "Συνέχεια" },

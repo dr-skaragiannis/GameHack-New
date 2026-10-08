@@ -322,31 +322,48 @@ export function effectiveModuleById(overlay: ContentOverlay, id: string): Module
   return effectiveModules(overlay).find((module) => module.id === id);
 }
 
+/**
+ * A blocking problem in an authored lab, as a code plus the position it refers
+ * to. Codes rather than prose so the editor can render them in either language.
+ */
+export type AuthoredIssue =
+  | { code: "noTitle" }
+  | { code: "noTheory" }
+  | { code: "theoryNoHeading"; index: number }
+  | { code: "theoryNoBody"; index: number }
+  | { code: "noObjectives" }
+  | { code: "objectiveNoInstruction"; index: number }
+  | { code: "objectiveNoTest"; index: number }
+  | { code: "objectiveBadBuiltin"; index: number }
+  | { code: "objectiveBadXp"; index: number }
+  | { code: "needsTwoChallenges" }
+  | { code: "challengeNoTest"; index: number }
+  | { code: "challengeBadBuiltin"; index: number };
+
 /** Problems an educator should fix before publishing; keyed by lab id. */
-export function overlayIssues(overlay: ContentOverlay): { moduleId: string; issues: string[] }[] {
-  const out: { moduleId: string; issues: string[] }[] = [];
+export function overlayIssues(overlay: ContentOverlay): { moduleId: string; issues: AuthoredIssue[] }[] {
+  const out: { moduleId: string; issues: AuthoredIssue[] }[] = [];
   for (const [id, authored] of Object.entries(overlay.modules)) {
-    const issues: string[] = [];
-    if (!authored.title.en.trim() && !authored.title.el.trim()) issues.push("lab has no title");
-    if (authored.theory.length === 0) issues.push("lab has no theory");
+    const issues: AuthoredIssue[] = [];
+    const shipped = moduleById(id);
+    if (!authored.title.en.trim() && !authored.title.el.trim()) issues.push({ code: "noTitle" });
+    if (authored.theory.length === 0) issues.push({ code: "noTheory" });
     authored.theory.forEach((section, index) => {
-      if (!section.heading.en.trim() && !section.heading.el.trim()) issues.push(`theory section ${index + 1} has no heading`);
-      if (!section.body.en.trim() && !section.body.el.trim()) issues.push(`theory section ${index + 1} has no body`);
+      if (!section.heading.en.trim() && !section.heading.el.trim()) issues.push({ code: "theoryNoHeading", index });
+      if (!section.body.en.trim() && !section.body.el.trim()) issues.push({ code: "theoryNoBody", index });
     });
-    if (authored.tasks.length === 0) issues.push("lab has no objectives");
-    authored.tasks.forEach((task) => {
-      if (!task.instruction.en.trim() && !task.instruction.el.trim()) issues.push(`objective ${task.id} has no instruction`);
-      if (task.check.kind === "unset") issues.push(`objective ${task.id} has no completion test`);
-      if (task.check.kind === "builtin" && !moduleById(id)) issues.push(`objective ${task.id} keeps a built-in test that does not exist`);
-      if (!Number.isFinite(task.reward) || task.reward < 0) issues.push(`objective ${task.id} has an invalid XP value`);
+    if (authored.tasks.length === 0) issues.push({ code: "noObjectives" });
+    authored.tasks.forEach((task, index) => {
+      if (!task.instruction.en.trim() && !task.instruction.el.trim()) issues.push({ code: "objectiveNoInstruction", index });
+      if (task.check.kind === "unset") issues.push({ code: "objectiveNoTest", index });
+      if (task.check.kind === "builtin" && !shipped) issues.push({ code: "objectiveBadBuiltin", index });
+      if (!Number.isFinite(task.reward) || task.reward < 0) issues.push({ code: "objectiveBadXp", index });
     });
-    if (authored.challenges.length < 2) issues.push("lab needs two final challenges");
+    if (authored.challenges.length < 2) issues.push({ code: "needsTwoChallenges" });
     authored.challenges.forEach((challenge, index) => {
       // A challenge nobody can pass locks the lab, so it is an error too.
-      if (challenge.check.kind === "unset") issues.push(`challenge ${index + 1} has no completion test`);
-      if (challenge.check.kind === "builtin" && !moduleById(id)) {
-        issues.push(`challenge ${index + 1} keeps a built-in test that does not exist`);
-      }
+      if (challenge.check.kind === "unset") issues.push({ code: "challengeNoTest", index });
+      if (challenge.check.kind === "builtin" && !shipped) issues.push({ code: "challengeBadBuiltin", index });
     });
     if (issues.length) out.push({ moduleId: id, issues });
   }
