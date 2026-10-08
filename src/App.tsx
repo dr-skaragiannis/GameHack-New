@@ -375,8 +375,8 @@ export default function App() {
   const totalLabs = LEARNING_PATHS.reduce((sum, path) => sum + path.modules.length, 0);
   const nav: { id: NavId; icon: string; label: string; show: boolean; badge?: number; quietBadge?: boolean }[] = [
     { id: "dashboard", icon: "grid", label: t("homeNav", lang), show: user.role === "player" },
-    { id: "campaigns", icon: "flag", label: t("challengesNav", lang), show: true, badge: totalLabs, quietBadge: true },
-    { id: "map", icon: "book", label: t("learningMapNav", lang), show: true },
+    { id: "campaigns", icon: "book", label: t("challengesNav", lang), show: true, badge: totalLabs, quietBadge: true },
+    { id: "map", icon: "map", label: t("learningMapNav", lang), show: true },
     { id: "scoreboard", icon: "crown", label: t("leaderboard", lang), show: true },
     { id: "educator", icon: "chart", label: t("educator", lang), show: user.role === "educator" },
     { id: "teams", icon: "users", label: t("teamsNav", lang), show: true },

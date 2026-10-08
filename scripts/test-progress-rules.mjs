@@ -69,7 +69,7 @@ try {
 
   const greekMenu = ["homeNav", "challengesNav", "learningMapNav", "leaderboard", "teamsNav", "activityNav", "profileNav", "settingsNav", "ticketsNav"]
     .map((key) => i18n.t(key, "el"));
-  assert.deepEqual(greekMenu, ["Αρχική", "Προκλήσεις", "Μαθησιακές Διαδρομές", "Κατάταξη", "Ομάδες", "Δραστηριότητα", "Το προφίλ μου", "Ρυθμίσεις", "Βοήθεια & Υποστήριξη"]);
+  assert.deepEqual(greekMenu, ["Αρχική", "Μαθησιακές Διαδρομές", "Χάρτης", "Κατάταξη", "Ομάδες", "Δραστηριότητα", "Το προφίλ μου", "Ρυθμίσεις", "Βοήθεια & Υποστήριξη"]);
 
   assert.equal(i18n.uppercaseLabel("Συνέχεια μάθησης", "el"), "Συνεχεια μαθησης");
   assert.equal(i18n.uppercaseLabel("ΐδιο", "el"), "ϊδιο", "Greek dialytika should remain when tonos is removed");
