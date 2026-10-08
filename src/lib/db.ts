@@ -153,6 +153,17 @@ export type DB = {
 };
 
 const KEY = "gamehack.platform.v1";
+
+/**
+ * The two logins that must always work: a player account for trying the
+ * platform and the instructor account. ensureDemoAccounts() recreates them if
+ * storage ever loses them and restores these passwords if they stop matching,
+ * so a shared classroom login cannot be locked out by one student.
+ */
+export const DEMO_ACCOUNTS = [
+  { username: "nova", password: "demodemo", role: "player", displayName: "Nova Reyes" },
+  { username: "educator", password: "teach123", role: "educator", displayName: "Dr. Mara Vance" },
+] as const;
 const LEGACY_KEY = "hackforge.platform.v1";
 
 export const INTERESTS_POOL = [
@@ -561,7 +572,7 @@ function seed(): DB {
   const edu: User = {
     id: uid(),
     username: "educator",
-    passwordHash: "teach123",
+    passwordHash: DEMO_ACCOUNTS[1].password,
     role: "educator",
     displayName: "Dr. Mara Vance",
     avatar: "ic:owl:#f97316",
@@ -598,7 +609,7 @@ function seed(): DB {
     db.users.push({
       id: uid(),
       username: u,
-      passwordHash: "demo",
+      passwordHash: u === "nova" ? DEMO_ACCOUNTS[0].password : "demo",
       role: "player",
       displayName: dn,
       avatar: randomIconAvatar(u.length / 10 + 0.11),
@@ -680,6 +691,51 @@ function enrichDemoPresence(db: DB) {
     if (u.lastSeen === undefined || uname === "nova" || uname === "cipher") u.lastSeen = now - plan.seenAgoMs;
   }
   (db as unknown as Record<string, unknown>)[DEMO_MAP_MARK] = 1;
+}
+
+/**
+ * Guarantee the demo and educator logins. Called on every database load, so
+ * wiping, importing or corrupting storage cannot leave the platform without a
+ * way in. A password that no longer matches the documented one is reset, which
+ * is deliberate: these are shared accounts, not personal ones.
+ */
+function ensureDemoAccounts(db: DB): boolean {
+  let changed = false;
+  for (const account of DEMO_ACCOUNTS) {
+    const existing = db.users.find(
+      (user) => user.username.trim().toLowerCase() === account.username.toLowerCase(),
+    );
+    if (!existing) {
+      db.users.push({
+        id: uid(),
+        username: account.username,
+        passwordHash: hashPassword(account.password),
+        role: account.role,
+        displayName: account.displayName,
+        avatar: randomIconAvatar(),
+        bio: "",
+        interests: [],
+        hobbies: [],
+        createdAt: Date.now(),
+        lang: "en",
+        accepted: true,
+        progress: {},
+        metrics: freshMetrics(),
+        badges: [],
+      });
+      changed = true;
+      continue;
+    }
+    if (existing.role !== account.role) {
+      existing.role = account.role;
+      changed = true;
+    }
+    if (!verifyPassword(account.password, existing.passwordHash)) {
+      existing.passwordHash = hashPassword(account.password);
+      changed = true;
+    }
+  }
+  return changed;
 }
 
 function normalizeStoredDB(value: unknown): DB | null {
@@ -902,6 +958,7 @@ export function getDB(): DB {
       if (cache) {
         migrateLegacyCampaignIds(cache);
         enrichDemoPresence(cache);
+        ensureDemoAccounts(cache);
         if (saveDB()) {
           try {
             localStorage.removeItem(LEGACY_KEY);
@@ -918,6 +975,7 @@ export function getDB(): DB {
   cache = seed();
   enrichDemoPresence(cache);
   upgradePasswordHashes(cache);
+  ensureDemoAccounts(cache);
   saveDB();
   return cache;
 }

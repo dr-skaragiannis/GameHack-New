@@ -396,8 +396,10 @@ export default function AuthScreen({
           {mode === "in" && (
             <div className="mt-5 rounded-xl border border-dashed border-cyan-500/30 bg-cyan-500/5 p-3 text-sm text-iron-500 space-y-1">
               <div className="uppercase tracking-widest text-iron-400 text-xs mb-1">{uppercaseLabel(t("demoHint", lang), lang)}</div>
+              {/* Only the player demo is advertised here. The instructor login is
+                  seeded but deliberately never shown. */}
               <div>
-                player — <span className="text-zinc-300 font-mono font-semibold">nova / demo</span>
+                player — <span className="text-zinc-300 font-mono font-semibold">nova / demodemo</span>
               </div>
             </div>
           )}

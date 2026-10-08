@@ -22,7 +22,7 @@ try {
   const educator = db.allEducators()[0];
   assert.match(educator.passwordHash, /^scrypt\$[0-9a-f]{32}\$[0-9a-f]{128}$/i, "local passwords must be stored as salted scrypt hashes");
   assert.equal(db.login("educator", "teach123").ok, true, "the seeded educator can still sign in after hashing");
-  assert.equal(db.login("nova", "demo").ok, true, "seeded players can still sign in after hashing");
+  assert.equal(db.login("nova", "demodemo").ok, true, "the demo player can still sign in after hashing");
   assert.equal(db.login("nova", "wrong-password").ok, false);
   db.logout();
   const storedPasswords = JSON.parse(values.get("gamehack.platform.v1"));
