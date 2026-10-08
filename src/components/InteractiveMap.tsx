@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { LEARNING_PATHS, type Campaign, type Module } from "../data/lessons";
+import { type Campaign, type Module } from "../data/lessons";
 import {
   allPlayers,
   isOnline,
@@ -11,6 +11,7 @@ import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import Icon, { MODULE_ICON } from "./Icon";
 import Avatar from "./Avatar";
 import { cn } from "../utils/cn";
+import { learningPaths } from "../lib/catalog";
 
 type PlayerFilter = "all" | "online" | "offline";
 type MapLocation = { campaignId: string; moduleId: string };
@@ -61,7 +62,7 @@ function progressState(module: Module, index: number, ordered: Module[], progres
 }
 
 function resolveLocation(player: User): MapLocation {
-  const activeCampaign = LEARNING_PATHS.find((campaign) => campaign.id === player.activeCampaignId);
+  const activeCampaign = learningPaths().find((campaign) => campaign.id === player.activeCampaignId);
   const activeModule = activeCampaign?.modules.find((module) => module.id === player.activeModuleId);
 
   if (activeCampaign && activeModule) {
@@ -74,7 +75,7 @@ function resolveLocation(player: User): MapLocation {
     return { campaignId: activeCampaign.id, moduleId: (next || ordered.at(-1) || activeModule).id };
   }
 
-  const started = LEARNING_PATHS.map((campaign) => {
+  const started = learningPaths().map((campaign) => {
     const ordered = orderedModules(campaign);
     const touched = ordered.filter((module) => player.progress[module.id]);
     const complete = touched.filter((module) => player.progress[module.id]?.completed).length;
@@ -90,7 +91,7 @@ function resolveLocation(player: User): MapLocation {
     if (next) return { campaignId: campaign.id, moduleId: next.id };
   }
 
-  const firstCampaign = LEARNING_PATHS[0];
+  const firstCampaign = learningPaths()[0];
   return { campaignId: firstCampaign.id, moduleId: orderedModules(firstCampaign)[0].id };
 }
 
@@ -123,7 +124,7 @@ export default function InteractiveMap({
   const playerMenu = useRef<HTMLDivElement>(null);
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(LEARNING_PATHS.map((campaign) => [campaign.id, false]))
+    Object.fromEntries(learningPaths().map((campaign) => [campaign.id, false]))
   );
   const [focusTarget, setFocusTarget] = useState<MapFocus | null>(null);
 
@@ -234,7 +235,7 @@ export default function InteractiveMap({
                 <div className="map-player-list">
                   {visibleLocations.length === 0 && <div className="map-empty-players">{t("mapNoPlayers", lang)}</div>}
                   {visibleLocations.map((entry) => {
-                    const campaign = LEARNING_PATHS.find((item) => item.id === entry.campaignId);
+                    const campaign = learningPaths().find((item) => item.id === entry.campaignId);
                     const module = campaign?.modules.find((item) => item.id === entry.moduleId);
                     if (!campaign || !module) return null;
                     return (
@@ -274,7 +275,7 @@ export default function InteractiveMap({
       </header>
 
       <CampaignUniverse
-        campaigns={LEARNING_PATHS}
+        campaigns={learningPaths()}
         locations={visibleLocations}
         viewer={liveViewer}
         lang={lang}

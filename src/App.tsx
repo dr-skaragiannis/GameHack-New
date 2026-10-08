@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { LEARNING_PATHS, moduleById } from "./data/lessons";
+
 import { t, uppercaseLabel, type Lang } from "./i18n";
 import * as db from "./lib/db";
 import { applyUiScale, normalizeUiScale, readStoredUiScale } from "./lib/uiScale";
 import { useAuth } from "./lib/useAuth";
 import { sound } from "./lib/sound";
 import { passesQuickQuiz } from "./lib/quizProgress";
+import { QUIZZES } from "./data/quizzes";
+import { ASSESSMENTS } from "./data/assessments";
 import { cn } from "./utils/cn";
 import AuthScreen from "./components/AuthScreen";
 import HomePage from "./components/HomePage";
@@ -28,7 +30,7 @@ import AssessmentPopup from "./components/AssessmentPopup";
 import PlayerQuickStats from "./components/PlayerQuickStats";
 import OverallScoreboardPopup from "./components/OverallScoreboardPopup";
 import type { User } from "./lib/db";
-
+import { learningPaths, moduleById } from "./lib/catalog";
 
 type View = "dashboard" | "educator" | "campaigns" | "map" | "module" | "messages" | "tickets" | "profile" | "teams" | "activity" | "settings";
 type ModuleTab = "theory" | "guide" | "lab";
@@ -52,7 +54,7 @@ function readThemePreference(): ThemeName {
 type LearningTarget = { campaignId: string; moduleId: string };
 
 function continueLearningTarget(user: User): LearningTarget {
-  const activeCampaign = LEARNING_PATHS.find((campaign) => campaign.id === user.activeCampaignId);
+  const activeCampaign = learningPaths().find((campaign) => campaign.id === user.activeCampaignId);
   if (activeCampaign) {
     const ordered = [...activeCampaign.modules].sort((a, b) => a.order - b.order);
     const activeIndex = ordered.findIndex((module) => module.id === user.activeModuleId);
@@ -67,7 +69,7 @@ function continueLearningTarget(user: User): LearningTarget {
     if (next) return { campaignId: activeCampaign.id, moduleId: next.id };
   }
 
-  for (const campaign of LEARNING_PATHS) {
+  for (const campaign of learningPaths()) {
     const ordered = [...campaign.modules].sort((a, b) => a.order - b.order);
     const next = ordered.find((module, index) =>
       !user.progress[module.id]?.completed &&
@@ -76,9 +78,9 @@ function continueLearningTarget(user: User): LearningTarget {
     if (next) return { campaignId: campaign.id, moduleId: next.id };
   }
 
-  const fallbackCampaign = activeCampaign || LEARNING_PATHS[0];
+  const fallbackCampaign = activeCampaign || learningPaths()[0];
   const fallbackModule = [...fallbackCampaign.modules].sort((a, b) => a.order - b.order).at(-1);
-  return { campaignId: fallbackCampaign.id, moduleId: fallbackModule?.id || LEARNING_PATHS[0].modules[0].id };
+  return { campaignId: fallbackCampaign.id, moduleId: fallbackModule?.id || learningPaths()[0].modules[0].id };
 }
 
 function EthicsGate({ lang, onAccept }: { lang: Lang; onAccept: () => void }) {
@@ -109,7 +111,7 @@ export default function App() {
   const [view, setView] = useState<View>("dashboard");
   const previousUserId = useRef<string | null>(user?.id ?? null);
   const [theme, setTheme] = useState<ThemeName>(readThemePreference);
-  const [campaignId, setCampaignId] = useState(LEARNING_PATHS[0].id);
+  const [campaignId, setCampaignId] = useState(learningPaths()[0].id);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [moduleInitialTab, setModuleInitialTab] = useState<ModuleTab | undefined>();
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -171,12 +173,12 @@ export default function App() {
     const grant = (id: string) => {
       if (db.grantBadge(user.id, id)) earned.push(id);
     };
-    for (const campaign of LEARNING_PATHS) {
+    for (const campaign of learningPaths()) {
       if (!campaign.modules.every((module) => saved.progress[module.id]?.completed)) continue;
       const cert = db.PATH_CERTIFICATION[campaign.id];
       if (cert) grant(cert);
     }
-    if (LEARNING_PATHS.every((campaign) => campaign.modules.every((module) => saved.progress[module.id]?.completed))) {
+    if (learningPaths().every((campaign) => campaign.modules.every((module) => saved.progress[module.id]?.completed))) {
       grant("cert-all");
     }
     if (!earned[0]) return;
@@ -247,7 +249,7 @@ export default function App() {
     );
   }
 
-  const campaign = LEARNING_PATHS.find((item) => item.id === campaignId) || LEARNING_PATHS[0];
+  const campaign = learningPaths().find((item) => item.id === campaignId) || learningPaths()[0];
   const active = activeId ? moduleById(activeId) : null;
   const collapsed = !!user.sidebarCollapsed;
   const unread = db.inboxFor(user.id).filter((m) => !m.read).length;
@@ -283,7 +285,7 @@ export default function App() {
   };
 
   const openCampaign = (cid: string) => {
-    const selectedCampaign = LEARNING_PATHS.find((item) => item.id === cid);
+    const selectedCampaign = learningPaths().find((item) => item.id === cid);
     if (!selectedCampaign) return;
     const modules = [...selectedCampaign.modules].sort((a, b) => a.order - b.order);
     const firstAvailable = modules.find((module, index) =>
@@ -331,7 +333,7 @@ export default function App() {
     });
     const objectiveModule = moduleById(moduleId);
     const objective = objectiveModule?.tasks.find((task) => task.id === taskId);
-    const objectiveCampaign = LEARNING_PATHS.find((campaign) => campaign.modules.some((module) => module.id === moduleId));
+    const objectiveCampaign = learningPaths().find((campaign) => campaign.modules.some((module) => module.id === moduleId));
     const baseReward = objective?.reward ?? 5;
     const hintPenalty = hintUsed && objective ? Math.min(db.HINT_XP_PENALTY, baseReward) : 0;
     const { gained, leveledUp } = db.awardXp(user.id, Math.max(0, baseReward - hintPenalty));
@@ -362,7 +364,7 @@ export default function App() {
       ...u.progress,
       [moduleId]: { ...mp, completed: true, completedAt: mp.completedAt || Date.now() },
     };
-    const currentCampaign = LEARNING_PATHS.find((item) => item.modules.some((module) => module.id === moduleId));
+    const currentCampaign = learningPaths().find((item) => item.modules.some((module) => module.id === moduleId));
     db.updateUser(user.id, { progress: nextProgress });
 
     const { gained } = db.awardXp(user.id, 15);
@@ -378,7 +380,7 @@ export default function App() {
       if (cert) maybeBadge(cert);
       if (db.pathCompletedSwiftly(currentCampaign.modules, nextProgress)) maybeBadge("swift");
       if (db.pathCompletedCleanly(currentCampaign.modules, nextProgress)) maybeBadge("clean_run");
-      if (LEARNING_PATHS.every((campaign) => campaign.modules.every((module) => nextProgress[module.id]?.completed))) {
+      if (learningPaths().every((campaign) => campaign.modules.every((module) => nextProgress[module.id]?.completed))) {
         maybeBadge("cert-all");
       }
     }
@@ -387,8 +389,34 @@ export default function App() {
     refresh();
   };
 
+  /** Open the next unfinished lab in the path, or fall back to the map. */
+  const advanceAfterModule = (moduleId: string) => {
+    const currentCampaign = learningPaths().find((item) => item.modules.some((module) => module.id === moduleId));
+    const orderedModules = currentCampaign ? [...currentCampaign.modules].sort((a, b) => a.order - b.order) : [];
+    const currentIndex = orderedModules.findIndex((module) => module.id === moduleId);
+    if (currentCampaign && currentIndex >= 0) {
+      const progress = db.userById(user.id)!.progress;
+      const nextModule = orderedModules.slice(currentIndex + 1).find((module, offset) => {
+        const previousModule = orderedModules[currentIndex + offset];
+        return !progress[module.id]?.completed && !!previousModule &&
+          (previousModule.id === moduleId || !!progress[previousModule.id]?.completed);
+      });
+      if (nextModule) {
+        openModule(currentCampaign.id, nextModule.id, "lab");
+        return;
+      }
+    }
+    go("map");
+  };
+
+  /** Authored labs ship no quiz, so finishing both challenges completes them. */
+  const finishLabWithoutQuiz = (moduleId: string) => {
+    completeModuleAfterQuiz(moduleId);
+    advanceAfterModule(moduleId);
+  };
+
   type NavId = View | "scoreboard";
-  const totalLabs = LEARNING_PATHS.reduce((sum, path) => sum + path.modules.length, 0);
+  const totalLabs = learningPaths().reduce((sum, path) => sum + path.modules.length, 0);
   const nav: { id: NavId; icon: string; label: string; show: boolean; badge?: number; quietBadge?: boolean }[] = [
     { id: "dashboard", icon: "grid", label: t("homeNav", lang), show: user.role === "player" },
     { id: "campaigns", icon: "book", label: t("challengesNav", lang), show: true, badge: totalLabs, quietBadge: true },
@@ -567,7 +595,7 @@ export default function App() {
     </div>
   );
   const continueTarget = continueLearningTarget(user);
-  const quizCampaign = quizFor ? LEARNING_PATHS.find((item) => item.modules.some((module) => module.id === quizFor)) : undefined;
+  const quizCampaign = quizFor ? learningPaths().find((item) => item.modules.some((module) => module.id === quizFor)) : undefined;
   const quizModules = quizCampaign ? [...quizCampaign.modules].sort((a, b) => a.order - b.order) : [];
   const quizModuleIndex = quizModules.findIndex((module) => module.id === quizFor);
   const quizNextLab = quizModuleIndex >= 0
@@ -811,7 +839,7 @@ export default function App() {
                 <h1 className="text-3xl font-bold mt-1">{t("chooseCampaign", lang)}</h1>
               </div>
               <div className="grid md:grid-cols-3 gap-4">
-                {LEARNING_PATHS.map((c, i) => {
+                {learningPaths().map((c, i) => {
                   const n = c.modules.filter((m) => user.progress[m.id]?.completed).length;
                   const pct = c.modules.length ? Math.round((n / c.modules.length) * 100) : 0;
                   return (
@@ -883,6 +911,9 @@ export default function App() {
                 sound.popup();
               }}
               assessmentTaken={!!user.progress[active.id]?.assessed}
+              hasQuiz={(QUIZZES[active.id]?.length || 0) > 0}
+              hasAssessment={(ASSESSMENTS[active.id]?.length || 0) > 0}
+              onCompleteLab={() => finishLabWithoutQuiz(active.id)}
               onBack={() => go("map")}
             />
           )}
@@ -1000,7 +1031,7 @@ export default function App() {
             if (!moduleId || !passesQuickQuiz(score, total)) return;
             if (score === total) maybeBadge("perfect_quiz");
 
-            const currentCampaign = LEARNING_PATHS.find((item) => item.modules.some((module) => module.id === moduleId));
+            const currentCampaign = learningPaths().find((item) => item.modules.some((module) => module.id === moduleId));
             const orderedModules = currentCampaign ? [...currentCampaign.modules].sort((a, b) => a.order - b.order) : [];
             const currentIndex = orderedModules.findIndex((module) => module.id === moduleId);
             completeModuleAfterQuiz(moduleId);

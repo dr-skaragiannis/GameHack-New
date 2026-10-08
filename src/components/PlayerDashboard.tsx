@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { LEARNING_PATHS } from "../data/lessons";
+
 import {
   accuracyScore,
   BADGES,
@@ -18,6 +18,8 @@ import { cn } from "../utils/cn";
 import InteractiveMap from "./InteractiveMap";
 import PlayerTeamPanel from "./PlayerTeamPanel";
 import PlayerConstellation from "./PlayerConstellation";
+import type { Campaign } from "../data/lessons";
+import { learningPaths } from "../lib/catalog";
 
 const BADGE_CATEGORY_RANK: Record<BadgeCategory, number> = { certification: 0, achievement: 1, legacy: 2 };
 
@@ -45,7 +47,7 @@ function visibleBadgeEntries(earnedIds: string[]) {
     });
 }
 
-function nextUnlockedModule(campaign: (typeof LEARNING_PATHS)[number], user: User, preferActive: boolean) {
+function nextUnlockedModule(campaign: Campaign, user: User, preferActive: boolean) {
   const ordered = [...campaign.modules].sort((a, b) => a.order - b.order);
   if (preferActive) {
     const active = ordered.find((module) => module.id === user.activeModuleId && !user.progress[module.id]?.completed);
@@ -57,7 +59,7 @@ function nextUnlockedModule(campaign: (typeof LEARNING_PATHS)[number], user: Use
   ) || null;
 }
 
-function campaignIcon(campaign: (typeof LEARNING_PATHS)[number]) {
+function campaignIcon(campaign: Campaign) {
   if (campaign.id === "ssh-service") return "lock";
   if (campaign.scenario === "raven") return "crown";
   if (campaign.scenario === "ssh") return "key";
@@ -99,7 +101,7 @@ function DashboardMapPreview({
       <p className="player-dashboard__map-intro">{t("mapExplore", lang)}</p>
 
       <div className="player-dashboard__map-routes" role="group" aria-label={t("mapCampaigns", lang)}>
-        {LEARNING_PATHS.map((campaign, index) => {
+        {learningPaths().map((campaign, index) => {
           const ordered = [...campaign.modules].sort((a, b) => a.order - b.order);
           const completed = ordered.filter((module) => user.progress[module.id]?.completed).length;
           const percent = Math.round((completed / Math.max(1, ordered.length)) * 100);
@@ -366,7 +368,7 @@ export default function PlayerDashboard({
   const [mapExpanded, setMapExpanded] = useState(false);
   const [badgesOpen, setBadgesOpen] = useState(false);
   const lv = levelFromXp(user.metrics.xp);
-  const allMods = LEARNING_PATHS.flatMap((campaign) => campaign.modules);
+  const allMods = learningPaths().flatMap((campaign) => campaign.modules);
   const completedModules = allMods.filter((module) => user.progress[module.id]?.completed).length;
   const scoreboard = overallScoreboard();
   const myStanding = scoreboard.find((entry) => entry.user.id === user.id);
@@ -380,12 +382,12 @@ export default function PlayerDashboard({
     }
   }, [user.id]);
 
-  const savedCampaign = LEARNING_PATHS.find((campaign) => campaign.id === user.activeCampaignId);
+  const savedCampaign = learningPaths().find((campaign) => campaign.id === user.activeCampaignId);
   const savedModule = savedCampaign ? nextUnlockedModule(savedCampaign, user, true) : null;
-  const nextByPath = LEARNING_PATHS
+  const nextByPath = learningPaths()
     .map((campaign) => ({ campaign, module: nextUnlockedModule(campaign, user, false) }))
     .find((entry) => entry.module) || null;
-  const currentCampaign = (savedModule ? savedCampaign : nextByPath?.campaign) || savedCampaign || LEARNING_PATHS[0];
+  const currentCampaign = (savedModule ? savedCampaign : nextByPath?.campaign) || savedCampaign || learningPaths()[0];
   const currentModule = savedModule || (nextByPath?.campaign.id === currentCampaign.id ? nextByPath.module : null);
   const currentPathCompleted = currentCampaign.modules.filter((module) => user.progress[module.id]?.completed).length;
   const currentPathPercent = Math.round((currentPathCompleted / Math.max(1, currentCampaign.modules.length)) * 100);

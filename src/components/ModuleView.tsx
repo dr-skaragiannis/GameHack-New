@@ -155,6 +155,9 @@ export default function ModuleView({
   onStartQuiz,
   onStartAssessment,
   assessmentTaken,
+  hasQuiz,
+  hasAssessment,
+  onCompleteLab,
   onBack,
 }: {
   module: Module;
@@ -173,6 +176,11 @@ export default function ModuleView({
   onStartQuiz: () => void;
   onStartAssessment: () => void;
   assessmentTaken?: boolean;
+  /** False for an authored lab: the educator wrote no quiz for it yet. */
+  hasQuiz?: boolean;
+  hasAssessment?: boolean;
+  /** Marks the lab complete without a quiz. */
+  onCompleteLab: () => void;
   onBack: () => void;
 }) {
   const [tab, setTab] = useState<"theory" | "guide" | "lab">(initialTab || (done.length ? "lab" : "theory"));
@@ -532,6 +540,9 @@ export default function ModuleView({
                               <>
                             <div className={ok ? "text-zinc-500 line-through" : "text-zinc-200"}>
                               {idx + 1}. {bi(task.instruction, lang)}
+                              <span className="ml-2 rounded-full border border-cyan-400/30 px-2 py-0.5 text-xs text-cyan-300">
+                                +{task.reward ?? 5} {t("xp", lang)}
+                              </span>
                             </div>
                             <p className="mt-1 text-sm text-zinc-400 leading-5 line-clamp-3">
                               {splitExplain(bi(task.explain, lang)).why}
@@ -579,6 +590,16 @@ export default function ModuleView({
                                 </pre>
                               </div>
                             )}
+                            {task.material && bi(task.material, lang).trim() && (
+                              <div className="mt-2 rounded-lg border border-gamehack-border bg-black/20 p-3">
+                                <div className="text-xs uppercase tracking-widest text-iron-400">
+                                  {t("additionalMaterial", lang)}
+                                </div>
+                                <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-300">
+                                  {bi(task.material, lang).trim()}
+                                </p>
+                              </div>
+                            )}
                               </>
                             )}
                           </div>
@@ -619,25 +640,40 @@ export default function ModuleView({
               <section className="glass flex flex-col gap-4 rounded-2xl border border-neon-green/25 p-4 sm:flex-row sm:items-center sm:justify-between lg:col-span-2" aria-labelledby="lab-quiz-prompt-title">
                 <div>
                   <h2 id="lab-quiz-prompt-title" className="text-base font-semibold text-zinc-100">{t("labComplete", lang)}</h2>
-                  <p className="mt-1 text-sm leading-relaxed text-zinc-400">{t("quizPassRequirement", lang)}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-iron-500">{t("assessmentPrompt", lang)}</p>
+                  {hasQuiz
+                    ? <p className="mt-1 text-sm leading-relaxed text-zinc-400">{t("quizPassRequirement", lang)}</p>
+                    : <p className="mt-1 text-sm leading-relaxed text-zinc-400">{t("noQuizForLab", lang)}</p>}
+                  {hasAssessment && <p className="mt-1 text-sm leading-relaxed text-iron-500">{t("assessmentPrompt", lang)}</p>}
                 </div>
                 <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={onStartAssessment}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-500/50 px-4 py-2.5 font-semibold text-violet-200 transition hover:border-violet-400 hover:text-violet-100"
-                  >
-                    {assessmentTaken ? t("assessmentTaken", lang) : t("startAssessment", lang)}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onStartQuiz}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 font-semibold text-white transition hover:bg-cyan-500"
-                  >
-                    {t("startQuickQuiz", lang)}
-                    <Icon name="chevron" className="h-4 w-4" />
-                  </button>
+                  {hasAssessment && (
+                    <button
+                      type="button"
+                      onClick={onStartAssessment}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-500/50 px-4 py-2.5 font-semibold text-violet-200 transition hover:border-violet-400 hover:text-violet-100"
+                    >
+                      {assessmentTaken ? t("assessmentTaken", lang) : t("startAssessment", lang)}
+                    </button>
+                  )}
+                  {hasQuiz ? (
+                    <button
+                      type="button"
+                      onClick={onStartQuiz}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 font-semibold text-white transition hover:bg-cyan-500"
+                    >
+                      {t("startQuickQuiz", lang)}
+                      <Icon name="chevron" className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={onCompleteLab}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 font-semibold text-white transition hover:bg-cyan-500"
+                    >
+                      {t("markLabComplete", lang)}
+                      <Icon name="chevron" className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </section>
             )}

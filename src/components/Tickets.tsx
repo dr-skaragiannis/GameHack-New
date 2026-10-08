@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { LEARNING_PATHS } from "../data/lessons";
+
 import { createTicket, replyTicket, setTicketStatus, ticketsFor, type Ticket, type User } from "../lib/db";
 import { t, type Lang } from "../i18n";
 import { cn } from "../utils/cn";
+import { learningPaths } from "../lib/catalog";
 
 export default function Tickets({ user, lang, onChange }: { user: User; lang: Lang; onChange: () => void }) {
   const list = ticketsFor(user);
@@ -14,7 +15,7 @@ export default function Tickets({ user, lang, onChange }: { user: User; lang: La
   const [active, setActive] = useState<string | null>(list[0]?.id || null);
   const [reply, setReply] = useState("");
   const tk = list.find((x) => x.id === active);
-  const mods = LEARNING_PATHS.flatMap((c) => c.modules);
+  const mods = learningPaths().flatMap((c) => c.modules);
 
   return (
     <div className="w-full">

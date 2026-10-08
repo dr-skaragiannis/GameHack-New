@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { LEARNING_PATHS } from "../data/lessons";
+
 import { BADGES } from "../lib/db";
 import { t, uppercaseLabel, type Lang } from "../i18n";
 import Icon from "./Icon";
+import { learningPaths } from "../lib/catalog";
 
 type CliLine = { text: string; kind: "cmd" | "out" | "ok" };
 
@@ -134,7 +135,7 @@ export default function HomePage({
   onLogin: () => void;
   onRegister: () => void;
 }) {
-  const labCount = LEARNING_PATHS.reduce((total, campaign) => total + campaign.modules.length, 0);
+  const labCount = learningPaths().reduce((total, campaign) => total + campaign.modules.length, 0);
   const badgeCount = Object.values(BADGES).filter((badge) => badge.category !== "legacy").length;
   const steps = [1, 2, 3, 4].map((n) => ({
     title: t(`landingStep${n}T`, lang),
@@ -201,7 +202,7 @@ export default function HomePage({
             <dl className="landing-stats">
               <div>
                 <dt>{uppercaseLabel(t("landingStatsPaths", lang), lang)}</dt>
-                <dd>{LEARNING_PATHS.length}</dd>
+                <dd>{learningPaths().length}</dd>
               </div>
               <div>
                 <dt>{uppercaseLabel(t("landingStatsLabs", lang), lang)}</dt>

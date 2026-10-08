@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { LEARNING_PATHS } from "../data/lessons";
+
 import { levelFromXp, overallScoreboard } from "../lib/db";
 import { t, type Lang } from "../i18n";
 import Avatar from "./Avatar";
 import Icon from "./Icon";
+import { learningPaths } from "../lib/catalog";
 
 export default function OverallScoreboardPopup({
   viewerId,
@@ -17,7 +18,7 @@ export default function OverallScoreboardPopup({
   onProfile: (playerId: string) => void;
 }) {
   const entries = overallScoreboard();
-  const totalModules = LEARNING_PATHS.reduce((total, campaign) => total + campaign.modules.length, 0);
+  const totalModules = learningPaths().reduce((total, campaign) => total + campaign.modules.length, 0);
   const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function OverallScoreboardPopup({
               </thead>
               <tbody>
                 {entries.map(({ user, rank }) => {
-                  const completedModules = LEARNING_PATHS
+                  const completedModules = learningPaths()
                     .flatMap((campaign) => campaign.modules)
                     .filter((module) => user.progress[module.id]?.completed).length;
                   const ownRow = user.id === viewerId;

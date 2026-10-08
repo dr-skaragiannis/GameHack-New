@@ -18,7 +18,10 @@ import {
   type Team,
   type User,
 } from "../lib/db";
-import { LEARNING_PATHS } from "../data/lessons";
+
+import { type ContentOverlay } from "../lib/contentAuthoring";
+import { getContentOverlay, saveContentOverlay } from "../lib/db";
+import ContentEditor from "./ContentEditor";
 import { parsePlayerArchive, type PlayerArchive } from "../lib/playerArchive";
 import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import Avatar from "./Avatar";
@@ -42,8 +45,9 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
+import { invalidateCatalog, learningPaths } from "../lib/catalog";
 
-type EducatorTab = "overview" | "players" | "teams" | "commands" | "labs";
+type EducatorTab = "overview" | "players" | "teams" | "commands" | "labs" | "content";
 type TeamAnalytics = {
   team: Team;
   members: User[];
@@ -56,8 +60,8 @@ type TeamAnalytics = {
 };
 
 const CHART_COLORS = ["var(--color-cyan-400)", "#22d3ee", "#a78bfa", "#3ddc84"];
-const TOTAL_MODULES = LEARNING_PATHS.reduce((total, campaign) => total + campaign.modules.length, 0);
-const ALL_MODULES = LEARNING_PATHS.flatMap((campaign) => campaign.modules);
+const TOTAL_MODULES = learningPaths().reduce((total, campaign) => total + campaign.modules.length, 0);
+const ALL_MODULES = learningPaths().flatMap((campaign) => campaign.modules);
 const TOOLTIP_STYLE = {
   background: "#101012",
   border: "1px solid #33333a",
@@ -109,12 +113,12 @@ function activeDuration(seconds: number, lang: Lang) {
 }
 
 function campaignName(campaignId: string, lang: Lang) {
-  const campaign = LEARNING_PATHS.find((item) => item.id === campaignId);
+  const campaign = learningPaths().find((item) => item.id === campaignId);
   return campaign ? bi(campaign.title, lang) : campaignId || "—";
 }
 
 function moduleName(campaignId: string, moduleId: string, lang: Lang) {
-  const campaign = LEARNING_PATHS.find((item) => item.id === campaignId);
+  const campaign = learningPaths().find((item) => item.id === campaignId);
   const module = campaign?.modules.find((item) => item.id === moduleId)
     || ALL_MODULES.find((item) => item.id === moduleId);
   return module ? bi(module.title, lang) : moduleId || "—";
@@ -131,7 +135,7 @@ export function EducatorLabCatalog({
 }) {
   return (
     <div className="educator-lab-catalog">
-      {LEARNING_PATHS.map((campaign) => {
+      {learningPaths().map((campaign) => {
         const modules = [...campaign.modules].sort((a, b) => a.order - b.order);
         return (
           <section key={campaign.id} className="educator-card educator-labs">
@@ -232,6 +236,8 @@ export default function EducatorDashboard({
   onShowMap?: (campaignId: string) => void;
 }) {
   const [activeTab, setActiveTab] = useState<EducatorTab>("overview");
+  const [overlay, setOverlay] = useState<ContentOverlay>(() => getContentOverlay());
+  const [authoringMessage, setAuthoringMessage] = useState("");
   const [teamFilter, setTeamFilter] = useState("all");
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[] | null>(null);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[] | null>(null);
@@ -414,6 +420,7 @@ export default function EducatorDashboard({
     { id: "teams", icon: "shield", label: t("teamManagement", lang) },
     { id: "commands", icon: "terminal", label: t("commandActivity", lang) },
     { id: "labs", icon: "layers", label: t("labsTab", lang) },
+    { id: "content", icon: "book", label: t("courseAuthoring", lang) },
   ];
 
   return (
@@ -436,7 +443,7 @@ export default function EducatorDashboard({
             </button>
           ))}
         </nav>
-        {activeTab !== "labs" && (
+        {activeTab !== "labs" && activeTab !== "content" && (
           <label className="educator-scope">
             <span>{t("assignedTeam", lang)}</span>
             <select value={teamFilter} onChange={(event) => { setTeamFilter(event.target.value); setSelectedPlayerIds(null); }}>
@@ -787,6 +794,22 @@ export default function EducatorDashboard({
         <div className="educator-dashboard__content">
           <p className="educator-labs__intro">{t("educatorLabsHint", lang)}</p>
           <EducatorLabCatalog lang={lang} onOpen={onOpenLab} onShowMap={onShowMap} />
+        </div>
+      )}
+
+      {activeTab === "content" && (
+        <div className="educator-dashboard__content">
+          {authoringMessage && <p className="educator-archive__status">{authoringMessage}</p>}
+          <ContentEditor
+            lang={lang}
+            overlay={overlay}
+            onCommit={(next, message) => {
+              saveContentOverlay(next);
+              invalidateCatalog();
+              setOverlay({ ...next });
+              setAuthoringMessage(message);
+            }}
+          />
         </div>
       )}
 

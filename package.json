@@ -12,6 +12,7 @@
     "test:linux": "node scripts/test-linux-sandbox.mjs",
     "test:progression": "node scripts/test-progress-rules.mjs",
     "test:educator": "node scripts/test-educator-features.mjs",
+    "test:authoring": "node scripts/test-content-authoring.mjs",
     "test:auth": "node scripts/test-auth.mjs",
     "preview": "npm start",
     "start": "node server/index.mjs"

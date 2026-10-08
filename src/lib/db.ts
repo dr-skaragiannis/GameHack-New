@@ -2,6 +2,7 @@ import type { Lang } from "../i18n";
 import { AVATAR_COLORS, AVATAR_ICONS } from "./avatarCatalog";
 import { hashPassword, isScryptHash, verifyPassword } from "./passwordHash";
 import { buildPlayerArchive, hashRecoveryKey, passwordHashForImport, type PlayerArchive } from "./playerArchive";
+import { emptyOverlay, type AuthoredModule, type ContentOverlay } from "./contentAuthoring";
 
 export type Role = "player" | "educator";
 export type ContentWidth = "centered" | "wide" | "full";
@@ -148,6 +149,7 @@ export type DB = {
   teams: Team[];
   teamApplications: TeamApplication[];
   commandLog: CommandExecution[];
+  contentOverlay: ContentOverlay;
 };
 
 const KEY = "gamehack.platform.v1";
@@ -553,6 +555,7 @@ function seed(): DB {
     teams: [],
     teamApplications: [],
     commandLog: [],
+    contentOverlay: emptyOverlay(),
   };
 
   const edu: User = {
@@ -693,6 +696,7 @@ function normalizeStoredDB(value: unknown): DB | null {
     teams: Array.isArray(stored.teams) ? stored.teams : [],
     teamApplications: Array.isArray(stored.teamApplications) ? stored.teamApplications : [],
     commandLog: Array.isArray(stored.commandLog) ? stored.commandLog : [],
+    contentOverlay: sanitizeOverlay(stored.contentOverlay),
   };
 }
 
@@ -773,6 +777,119 @@ function migrateLegacyCampaignIds(db: DB): void {
   for (const execution of db.commandLog) {
     if (execution.campaignId === "forge" || execution.campaignId === "gamehack") execution.campaignId = "linux-part-01";
   }
+}
+
+/**
+ * Authored content comes from storage, so it is shape-checked on the way in
+ * rather than trusted. Anything malformed is dropped instead of rendered.
+ */
+function sanitizeBi(value: unknown): { en: string; el: string } {
+  const record = (value || {}) as Record<string, unknown>;
+  return {
+    en: typeof record.en === "string" ? record.en.slice(0, 8000) : "",
+    el: typeof record.el === "string" ? record.el.slice(0, 8000) : "",
+  };
+}
+
+function sanitizeCheck(value: unknown): AuthoredModule["tasks"][number]["check"] {
+  const record = (value || {}) as Record<string, unknown>;
+  const text = (field: string) => (typeof record[field] === "string" ? (record[field] as string).slice(0, 600) : "");
+  switch (record.kind) {
+    case "command":
+      return { kind: "command", pattern: text("pattern") };
+    case "flag":
+      return { kind: "flag", name: text("name") };
+    case "fileRead":
+      return { kind: "fileRead", path: text("path") };
+    case "commandAndFile":
+      return { kind: "commandAndFile", pattern: text("pattern"), path: text("path") };
+    case "builtin":
+      return { kind: "builtin" };
+    default:
+      return { kind: "unset" };
+  }
+}
+
+function sanitizeOverlay(value: unknown): ContentOverlay {
+  const record = (value || {}) as Record<string, unknown>;
+  const modules: ContentOverlay["modules"] = {};
+  if (record.modules && typeof record.modules === "object") {
+    for (const [rawId, raw] of Object.entries(record.modules as Record<string, Record<string, unknown>>)) {
+      if (!rawId || typeof raw !== "object" || !raw) continue;
+      const id = rawId.slice(0, 80);
+      const difficulty = Number(raw.difficulty);
+      modules[id] = {
+        id,
+        order: Number.isFinite(Number(raw.order)) ? Number(raw.order) : 1,
+        icon: typeof raw.icon === "string" ? raw.icon.slice(0, 40) : "terminal",
+        color: typeof raw.color === "string" ? raw.color.slice(0, 80) : "from-cyan-400 to-sky-900",
+        difficulty: ([1, 2, 3, 4, 5].includes(difficulty) ? difficulty : 2) as AuthoredModule["difficulty"],
+        scenario: (["lab", "raven", "ssh", "sudorun", "dfir"].includes(String(raw.scenario)) ? String(raw.scenario) : "lab") as AuthoredModule["scenario"],
+        title: sanitizeBi(raw.title),
+        subtitle: sanitizeBi(raw.subtitle),
+        badge: sanitizeBi(raw.badge),
+        theory: Array.isArray(raw.theory)
+          ? raw.theory.slice(0, 40).map((section: Record<string, unknown>, index: number) => ({
+              id: typeof section?.id === "string" ? section.id.slice(0, 80) : `${id}-theory-${index}`,
+              heading: sanitizeBi(section?.heading),
+              body: sanitizeBi(section?.body),
+              ...(section?.tip ? { tip: sanitizeBi(section.tip) } : {}),
+            }))
+          : [],
+        cheats: Array.isArray(raw.cheats)
+          ? raw.cheats.slice(0, 80).map((cheat: Record<string, unknown>) => ({
+              cmd: typeof cheat?.cmd === "string" ? cheat.cmd.slice(0, 300) : "",
+              desc: sanitizeBi(cheat?.desc),
+            }))
+          : [],
+        tasks: Array.isArray(raw.tasks)
+          ? raw.tasks.slice(0, 40).map((task: Record<string, unknown>, index: number) => ({
+              id: typeof task?.id === "string" ? task.id.slice(0, 80) : `${id}-task-${index}`,
+              instruction: sanitizeBi(task?.instruction),
+              hint: sanitizeBi(task?.hint),
+              explain: sanitizeBi(task?.explain),
+              reward: Number.isFinite(Number(task?.reward)) ? Math.max(0, Math.min(999, Number(task.reward))) : 5,
+              ...(task?.material ? { material: sanitizeBi(task.material) } : {}),
+              check: sanitizeCheck(task?.check),
+            }))
+          : [],
+        challenges: Array.isArray(raw.challenges)
+          ? raw.challenges.slice(0, 2).map((challenge: Record<string, unknown>, index: number) => ({
+              id: typeof challenge?.id === "string" ? challenge.id.slice(0, 80) : `${id}-challenge-${index}`,
+              title: sanitizeBi(challenge?.title),
+              brief: sanitizeBi(challenge?.brief),
+              success: sanitizeBi(challenge?.success),
+              check: sanitizeCheck(challenge?.check),
+            }))
+          : [],
+      };
+    }
+  }
+  const paths = Array.isArray(record.paths)
+    ? record.paths.slice(0, 20).map((path: Record<string, unknown>, index: number) => ({
+        id: typeof path?.id === "string" && path.id ? path.id.slice(0, 80) : `path-${index}`,
+        title: sanitizeBi(path?.title),
+        subtitle: sanitizeBi(path?.subtitle),
+        blurb: sanitizeBi(path?.blurb),
+        scenario: (["lab", "raven", "ssh", "sudorun", "dfir"].includes(String(path?.scenario)) ? String(path.scenario) : "lab") as ContentOverlay["paths"][number]["scenario"],
+        accent: typeof path?.accent === "string" ? path.accent.slice(0, 40) : "cyan",
+        moduleIds: Array.isArray(path?.moduleIds)
+          ? (path.moduleIds as unknown[]).filter((entry): entry is string => typeof entry === "string").slice(0, 40)
+          : [],
+      }))
+    : [];
+  return { modules, paths };
+}
+
+/** The authored-content layer educators edit from the dashboard. */
+export function getContentOverlay(): ContentOverlay {
+  return getDB().contentOverlay;
+}
+
+export function saveContentOverlay(overlay: ContentOverlay): boolean {
+  const db = getDB();
+  db.contentOverlay = sanitizeOverlay(overlay);
+  return saveDB();
 }
 
 export function getDB(): DB {

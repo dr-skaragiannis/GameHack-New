@@ -18,6 +18,8 @@ export type Task = {
   explain: Bi;
   check: (ctx: CheckCtx) => boolean;
   reward?: number;
+  // Optional extra reading an educator attaches to an objective.
+  material?: Bi;
 };
 
 export type Shot = { cmd?: string; caption?: Bi; lines: string[] };

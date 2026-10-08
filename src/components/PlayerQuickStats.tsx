@@ -1,7 +1,8 @@
-import { LEARNING_PATHS } from "../data/lessons";
+
 import { accuracyScore, fidelityScore, levelFromXp, overallScoreboard, type User } from "../lib/db";
 import { t, uppercaseLabel, type Lang } from "../i18n";
 import Icon from "./Icon";
+import { learningPaths } from "../lib/catalog";
 
 export default function PlayerQuickStats({
   user,
@@ -14,7 +15,7 @@ export default function PlayerQuickStats({
   onContinue: () => void;
   onOpenScoreboard: () => void;
 }) {
-  const allModules = LEARNING_PATHS.flatMap((campaign) => campaign.modules);
+  const allModules = learningPaths().flatMap((campaign) => campaign.modules);
   const completedModules = allModules.filter((module) => user.progress[module.id]?.completed).length;
   const level = levelFromXp(user.metrics.xp).level;
   const scoreboard = overallScoreboard();

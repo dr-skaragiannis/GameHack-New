@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LEARNING_PATHS, moduleById } from "../data/lessons";
+
 import {
   getFeed,
   isOnline,
@@ -13,6 +13,7 @@ import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import { cn } from "../utils/cn";
 import Avatar from "./Avatar";
 import Icon from "./Icon";
+import { learningPaths, moduleById } from "../lib/catalog";
 
 type PlayerFilter = "all" | "online" | "offline" | "top10";
 type RankDelta = { direction: "up" | "down"; places: number; token: number };
@@ -191,7 +192,7 @@ export default function PlayerConstellation({ user, lang, compact = false, onPro
   const recentSignal = (event: FeedEvent) => now - event.ts <= SIGNAL_BUBBLE_MS;
   const broadcast = feed.find((event) => event.kind === "broadcast" && recentSignal(event));
   const completedPath = feed.find((event) => event.kind === "module" && event.pathCompleted && recentSignal(event));
-  const path = completedPath?.campaignId ? LEARNING_PATHS.find((campaign) => campaign.id === completedPath.campaignId) : undefined;
+  const path = completedPath?.campaignId ? learningPaths().find((campaign) => campaign.id === completedPath.campaignId) : undefined;
   const events = [
     broadcast && {
       id: broadcast.id,
