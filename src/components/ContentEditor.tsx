@@ -154,7 +154,16 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
     if (!draft) return;
     const rest = { ...overlay.modules };
     delete rest[draft.id];
-    onCommit({ ...overlay, modules: rest }, t("saved", lang));
+    // Drop the lab from any path that listed it, so no path keeps a dead id.
+    const paths = overlay.paths.map((path) =>
+      path.moduleIds.includes(draft.id)
+        ? { ...path, moduleIds: path.moduleIds.filter((id) => id !== draft.id) }
+        : path,
+    );
+    if (pathDraft?.moduleIds.includes(draft.id)) {
+      setPathDraft({ ...pathDraft, moduleIds: pathDraft.moduleIds.filter((id) => id !== draft.id) });
+    }
+    onCommit({ modules: rest, paths }, t("saved", lang));
     setDraft(null);
     setModuleId(null);
   };
@@ -162,9 +171,22 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
   const addLab = () => {
     if (!authoredPath) return;
     const created = emptyModule(authoredPath.moduleIds.length + 1);
-    onCommit({ ...overlay, modules: { ...overlay.modules, [created.id]: created } }, t("saved", lang));
-    setPathDraft({ ...authoredPath, moduleIds: [...authoredPath.moduleIds, created.id] });
-    openModule(created.id);
+    const moduleIds = [...authoredPath.moduleIds, created.id];
+    // The lab has to be listed on the path in the same commit, otherwise the
+    // player-facing catalog compiles the path without it.
+    onCommit(
+      {
+        modules: { ...overlay.modules, [created.id]: created },
+        paths: overlay.paths.map((path) => (path.id === authoredPath.id ? { ...path, moduleIds } : path)),
+      },
+      t("saved", lang),
+    );
+    setPathDraft({ ...authoredPath, moduleIds });
+    // Open the lab that was just committed, not a re-derived one: openModule
+    // reads the overlay prop, which is still the pre-commit copy here, so it
+    // would mint a second lab the path never lists.
+    setModuleId(created.id);
+    setDraft(structuredClone(created));
   };
 
   const addPath = () => {

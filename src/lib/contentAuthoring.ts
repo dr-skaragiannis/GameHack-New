@@ -341,6 +341,13 @@ export function overlayIssues(overlay: ContentOverlay): { moduleId: string; issu
       if (!Number.isFinite(task.reward) || task.reward < 0) issues.push(`objective ${task.id} has an invalid XP value`);
     });
     if (authored.challenges.length < 2) issues.push("lab needs two final challenges");
+    authored.challenges.forEach((challenge, index) => {
+      // A challenge nobody can pass locks the lab, so it is an error too.
+      if (challenge.check.kind === "unset") issues.push(`challenge ${index + 1} has no completion test`);
+      if (challenge.check.kind === "builtin" && !moduleById(id)) {
+        issues.push(`challenge ${index + 1} keeps a built-in test that does not exist`);
+      }
+    });
     if (issues.length) out.push({ moduleId: id, issues });
   }
   return out;

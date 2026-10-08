@@ -172,6 +172,9 @@ try {
     reward: 6,
     check: { kind: "command", pattern: "^ls -al " },
   }];
+  for (const challenge of [...newLabA.challenges, ...newLabB.challenges]) {
+    challenge.check = { kind: "command", pattern: "^(tail|ls) " };
+  }
   const newPath = authoring.emptyPath();
   newPath.id = "path-authored-1";
   newPath.title = { en: "Log forensics", el: "Ανάλυση αρχείων καταγραφής" };
@@ -209,6 +212,7 @@ try {
   assert.ok(flagged.issues.some((issue) => issue.includes("no instruction")), "a missing instruction is reported");
   assert.ok(flagged.issues.some((issue) => issue.includes("no completion test")), "an objective with no test is reported");
   assert.ok(flagged.issues.some((issue) => issue.includes("two final challenges")), "a lab needs two challenges");
+  assert.ok(flagged.issues.some((issue) => issue.includes("challenge 1 has no completion test")), "a challenge nobody can pass is reported");
   assert.deepEqual(
     authoring.overlayIssues({ modules: { [newLabA.id]: newLabA, [newLabB.id]: newLabB }, paths: [] }),
     [],
