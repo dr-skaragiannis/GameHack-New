@@ -595,9 +595,9 @@ function enrichDemoPresence(db: DB) {
     if (Object.keys(u.progress).length === 0) {
       for (const mid of plan.done) u.progress[mid] = { completed: true, done: [] };
     }
-    if (!u.activeCampaignId) {
-      u.activeCampaignId = "gamehack";
-      u.activeModuleId = uname === "cipher" ? "bruteforce" : uname === "nova" ? "permissions" : "files";
+    if (!u.activeCampaignId || u.activeCampaignId === "gamehack") {
+      u.activeCampaignId = "linux-part-01";
+      u.activeModuleId = uname === "cipher" ? "sr-perms" : uname === "nova" ? "sr-files" : "sr-intro";
     }
     if (u.lastSeen === undefined || uname === "nova" || uname === "cipher") u.lastSeen = now - plan.seenAgoMs;
   }
@@ -645,7 +645,42 @@ function upgradePasswordHashes(db: DB): boolean {
 
 function migrateLegacyCampaignIds(db: DB): void {
   for (const user of db.users) {
-    if (user.activeCampaignId === "forge") user.activeCampaignId = "gamehack";
+    const hiddenCampaigns = new Set([
+      "forge",
+      "gamehack",
+      "raven",
+      "wirewalk",
+      "sudorun",
+      "linux-beginners-2",
+      "linux-beginners-3",
+      "dfir-fieldwork",
+      "ssh-service",
+    ]);
+    const visibleCampaignForModule: Record<string, string> = {
+      "sr-intro": "linux-part-01",
+      "sr-help": "linux-part-01",
+      "sr-search": "linux-part-01",
+      "sr-files": "linux-part-01",
+      "sr-text": "linux-part-01",
+      "sr-apt": "linux-part-01",
+      "sr-perms": "linux-part-01",
+      "sr-net": "linux-part-02",
+      "sr-proc": "linux-part-02",
+      "sr-env": "linux-part-02",
+      "sr-bash": "linux-part-03",
+      "sr-cron": "linux-part-03",
+      "sr-svc": "linux-part-03",
+      "ssh-doc-setup": "ssh-port-22",
+      "ssh-svc-recon": "ssh-port-22",
+      "ssh-svc-auth": "ssh-port-22",
+      "ssh-doc-boundary": "ssh-port-22",
+      "ssh-svc-harden": "ssh-port-22",
+    };
+    if (!user.activeCampaignId || hiddenCampaigns.has(user.activeCampaignId)) {
+      const visible = visibleCampaignForModule[user.activeModuleId || ""];
+      user.activeCampaignId = visible || "linux-part-01";
+      if (!visible) user.activeModuleId = "sr-intro";
+    }
     if (typeof user.avatar === "string") user.avatar = user.avatar.replace(/#ff6a2b/gi, "#06b6d4");
     if (user.bio === "Lead cybersecurity instructor. Here to help you forge real skills.") {
       user.bio = "Lead cybersecurity instructor. Here to help you build practical skills.";
@@ -657,11 +692,11 @@ function migrateLegacyCampaignIds(db: DB): void {
     }
   }
   for (const event of db.feed) {
-    if (event.campaignId === "forge") event.campaignId = "gamehack";
+    if (event.campaignId === "forge" || event.campaignId === "gamehack") event.campaignId = "linux-part-01";
     if (typeof event.text === "string") event.text = event.text.replace(/\bjoined HACKFORGE\b/g, "joined GameHack");
   }
   for (const execution of db.commandLog) {
-    if (execution.campaignId === "forge") execution.campaignId = "gamehack";
+    if (execution.campaignId === "forge" || execution.campaignId === "gamehack") execution.campaignId = "linux-part-01";
   }
 }
 

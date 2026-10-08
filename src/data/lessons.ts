@@ -4,7 +4,7 @@ import { SUDO_RUN_ALL } from "./sudorun-lessons";
 import { DFIR_MODULES } from "./dfir-lessons";
 import { LINUX_BEGINNERS_2_MODULES } from "./linux-beginners-2";
 import { LINUX_BEGINNERS_3_MODULES } from "./linux-beginners-3";
-import { SSH_SERVICE_MODULES } from "./ssh-service-lessons";
+import { SSH_DOC_BOUNDARY_MODULE, SSH_DOC_SETUP_MODULE, SSH_SERVICE_MODULES } from "./ssh-service-lessons";
 
 export type Bi = { en: string; el: string };
 
@@ -1097,7 +1097,9 @@ const REHOMED_LINUX_BEGINNERS_MODULE_IDS = new Set([
   "sr-bash", "sr-cron", "sr-svc",
 ]);
 
-export const CAMPAIGNS: Campaign[] = ([
+const numbered = (modules: Module[]): Module[] => modules.map((module, index) => ({ ...module, order: index + 1 }));
+
+const ARCHIVED_CAMPAIGNS: Campaign[] = ([
   {
     id: "gamehack",
     pathNumber: 1,
@@ -1214,7 +1216,67 @@ export const CAMPAIGNS: Campaign[] = ([
   },
 ] as Campaign[]).sort((a, b) => a.pathNumber - b.pathNumber);
 
-export const LEARNING_PATHS = [...CAMPAIGNS];
+export const LEARNING_PATHS: Campaign[] = [
+  {
+    id: "linux-part-01",
+    pathNumber: 1,
+    title: { en: "Linux for Beginners, Part 1", el: "Linux για αρχάριους, μέρος 1" },
+    subtitle: { en: "The shell, files, text, packages and permissions", el: "Το shell, τα αρχεία, το κείμενο, τα πακέτα και τα δικαιώματα" },
+    blurb: {
+      en: "Path 01. Why the shell exists, how to read a prompt, and the everyday commands for files, text, packages and permissions. Every example stays in the sandbox.",
+      el: "Διαδρομή 01. Γιατί υπάρχει το shell, πώς διαβάζεται ένα prompt, και οι καθημερινές εντολές για αρχεία, κείμενο, πακέτα και δικαιώματα. Κάθε παράδειγμα μένει στο sandbox.",
+    },
+    scenario: "sudorun",
+    accent: "lime",
+    modules: numbered(SUDO_RUN_ALL.filter((module) => !REHOMED_LINUX_BEGINNERS_MODULE_IDS.has(module.id))),
+  },
+  {
+    id: "linux-part-02",
+    pathNumber: 2,
+    title: { en: "Linux for Beginners, Part 2", el: "Linux για αρχάριους, μέρος 2" },
+    subtitle: { en: "Networks, processes and environment variables", el: "Δίκτυα, διεργασίες και μεταβλητές περιβάλλοντος" },
+    blurb: {
+      en: "Path 02. Read fictional interfaces, names and resolvers, inspect and signal processes, and see which environment a new shell inherits. Address changes stay inside the sandbox.",
+      el: "Διαδρομή 02. Διάβασε εικονικές διεπαφές, ονόματα και resolvers, παρατήρησε και σήμανε διεργασίες, και δες ποιο περιβάλλον κληρονομεί ένα νέο shell. Οι αλλαγές διεύθυνσης μένουν μέσα στο sandbox.",
+    },
+    scenario: "sudorun",
+    accent: "cyan",
+    modules: numbered(LINUX_BEGINNERS_2_MODULES),
+  },
+  {
+    id: "linux-part-03",
+    pathNumber: 3,
+    title: { en: "Linux for Beginners, Part 3", el: "Linux για αρχάριους, μέρος 3" },
+    subtitle: { en: "Scripting, scheduling and services", el: "Scripting, χρονοπρογραμματισμός και υπηρεσίες" },
+    blurb: {
+      en: "Path 03. Write a small Bash script, schedule it, and start the simulated Apache, OpenSSH and FTP services. Nothing leaves the virtual filesystem.",
+      el: "Διαδρομή 03. Γράψε ένα μικρό Bash script, προγραμμάτισέ το, και ξεκίνα τις εικονικές υπηρεσίες Apache, OpenSSH και FTP. Τίποτα δεν φεύγει από το εικονικό σύστημα αρχείων.",
+    },
+    scenario: "sudorun",
+    accent: "lime",
+    modules: numbered(LINUX_BEGINNERS_3_MODULES),
+  },
+  {
+    id: "ssh-port-22",
+    pathNumber: 4,
+    title: { en: "SSH on Port 22", el: "SSH στη θύρα 22" },
+    subtitle: { en: "Identify the service, then harden it", el: "Αναγνώρισε την υπηρεσία και μετά σκλήρυνέ την" },
+    blurb: {
+      en: "Path 04. Read the fictional SSH service, its authentication methods, and the controls that close a weak login. Attack procedures from the source notes are not exercises in this path.",
+      el: "Διαδρομή 04. Διάβασε την εικονική υπηρεσία SSH, τις μεθόδους ταυτοποίησής της, και τους ελέγχους που κλείνουν μια αδύναμη σύνδεση. Οι διαδικασίες επίθεσης από τις σημειώσεις πηγής δεν είναι ασκήσεις σε αυτή τη διαδρομή.",
+    },
+    scenario: "lab",
+    accent: "cyan",
+    modules: numbered([
+      SSH_DOC_SETUP_MODULE,
+      ...SSH_SERVICE_MODULES.filter((module) => module.id === "ssh-svc-recon" || module.id === "ssh-svc-auth"),
+      SSH_DOC_BOUNDARY_MODULE,
+      ...SSH_SERVICE_MODULES.filter((module) => module.id === "ssh-svc-harden"),
+    ]),
+  },
+];
+
+export const CAMPAIGNS: Campaign[] = [...LEARNING_PATHS, ...ARCHIVED_CAMPAIGNS];
 
 export function moduleById(id: string): Module | undefined {
   return (

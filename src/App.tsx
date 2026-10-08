@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CAMPAIGNS, LEARNING_PATHS, campaignById, moduleById } from "./data/lessons";
+import { LEARNING_PATHS, moduleById } from "./data/lessons";
 import { t, uppercaseLabel, type Lang } from "./i18n";
 import * as db from "./lib/db";
 import { applyUiScale, normalizeUiScale, readStoredUiScale } from "./lib/uiScale";
@@ -75,7 +75,7 @@ const MODULE_BADGE: Record<string, string> = {
 type LearningTarget = { campaignId: string; moduleId: string };
 
 function continueLearningTarget(user: User): LearningTarget {
-  const activeCampaign = campaignById(user.activeCampaignId || "");
+  const activeCampaign = LEARNING_PATHS.find((campaign) => campaign.id === user.activeCampaignId);
   if (activeCampaign) {
     const ordered = [...activeCampaign.modules].sort((a, b) => a.order - b.order);
     const activeIndex = ordered.findIndex((module) => module.id === user.activeModuleId);
@@ -236,7 +236,7 @@ export default function App() {
     );
   }
 
-  const campaign = campaignById(campaignId) || LEARNING_PATHS[0];
+  const campaign = LEARNING_PATHS.find((item) => item.id === campaignId) || LEARNING_PATHS[0];
   const active = activeId ? moduleById(activeId) : null;
   const collapsed = !!user.sidebarCollapsed;
   const unread = db.inboxFor(user.id).filter((m) => !m.read).length;
@@ -281,7 +281,7 @@ export default function App() {
   };
 
   const openCampaign = (cid: string) => {
-    const selectedCampaign = campaignById(cid);
+    const selectedCampaign = LEARNING_PATHS.find((item) => item.id === cid);
     if (!selectedCampaign) return;
     const modules = [...selectedCampaign.modules].sort((a, b) => a.order - b.order);
     const firstAvailable = modules.find((module, index) =>
@@ -319,7 +319,7 @@ export default function App() {
     });
     const objectiveModule = moduleById(moduleId);
     const objective = objectiveModule?.tasks.find((task) => task.id === taskId);
-    const objectiveCampaign = CAMPAIGNS.find((campaign) => campaign.modules.some((module) => module.id === moduleId));
+    const objectiveCampaign = LEARNING_PATHS.find((campaign) => campaign.modules.some((module) => module.id === moduleId));
     const baseReward = objective?.reward ?? 5;
     const hintPenalty = hintUsed && objective ? Math.min(db.HINT_XP_PENALTY, baseReward) : 0;
     const { gained, leveledUp } = db.awardXp(user.id, Math.max(0, baseReward - hintPenalty));
@@ -347,7 +347,7 @@ export default function App() {
     if (mp.completed) return;
 
     const nextProgress = { ...u.progress, [moduleId]: { ...mp, completed: true } };
-    const currentCampaign = CAMPAIGNS.find((item) => item.modules.some((module) => module.id === moduleId));
+    const currentCampaign = LEARNING_PATHS.find((item) => item.modules.some((module) => module.id === moduleId));
     db.updateUser(user.id, { progress: nextProgress });
 
     const { gained } = db.awardXp(user.id, 15);
@@ -551,7 +551,7 @@ export default function App() {
     </div>
   );
   const continueTarget = continueLearningTarget(user);
-  const quizCampaign = quizFor ? CAMPAIGNS.find((item) => item.modules.some((module) => module.id === quizFor)) : undefined;
+  const quizCampaign = quizFor ? LEARNING_PATHS.find((item) => item.modules.some((module) => module.id === quizFor)) : undefined;
   const quizModules = quizCampaign ? [...quizCampaign.modules].sort((a, b) => a.order - b.order) : [];
   const quizModuleIndex = quizModules.findIndex((module) => module.id === quizFor);
   const quizNextLab = quizModuleIndex >= 0
@@ -954,7 +954,7 @@ export default function App() {
             const moduleId = quizFor;
             if (!moduleId || !passesQuickQuiz(score, total)) return;
 
-            const currentCampaign = CAMPAIGNS.find((item) => item.modules.some((module) => module.id === moduleId));
+            const currentCampaign = LEARNING_PATHS.find((item) => item.modules.some((module) => module.id === moduleId));
             const orderedModules = currentCampaign ? [...currentCampaign.modules].sort((a, b) => a.order - b.order) : [];
             const currentIndex = orderedModules.findIndex((module) => module.id === moduleId);
             completeModuleAfterQuiz(moduleId);

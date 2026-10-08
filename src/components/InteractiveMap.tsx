@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { CAMPAIGNS, LEARNING_PATHS, type Campaign, type Module } from "../data/lessons";
+import { LEARNING_PATHS, type Campaign, type Module } from "../data/lessons";
 import {
   allPlayers,
   isOnline,
@@ -61,7 +61,7 @@ function progressState(module: Module, index: number, ordered: Module[], progres
 }
 
 function resolveLocation(player: User): MapLocation {
-  const activeCampaign = CAMPAIGNS.find((campaign) => campaign.id === player.activeCampaignId);
+  const activeCampaign = LEARNING_PATHS.find((campaign) => campaign.id === player.activeCampaignId);
   const activeModule = activeCampaign?.modules.find((module) => module.id === player.activeModuleId);
 
   if (activeCampaign && activeModule) {
@@ -234,8 +234,9 @@ export default function InteractiveMap({
                 <div className="map-player-list">
                   {visibleLocations.length === 0 && <div className="map-empty-players">{t("mapNoPlayers", lang)}</div>}
                   {visibleLocations.map((entry) => {
-                    const campaign = CAMPAIGNS.find((item) => item.id === entry.campaignId)!;
-                    const module = campaign.modules.find((item) => item.id === entry.moduleId)!;
+                    const campaign = LEARNING_PATHS.find((item) => item.id === entry.campaignId);
+                    const module = campaign?.modules.find((item) => item.id === entry.moduleId);
+                    if (!campaign || !module) return null;
                     return (
                       <div
                         key={entry.player.id}
@@ -384,9 +385,10 @@ function CampaignUniverse({
 
   applyViewRef.current = (next) => {
     const viewport = scrollRef.current;
+    const locked = { ...next, scale: 1 };
     const clamped = viewport
-      ? clampMapView(next, viewport, sizeRef.current.width, sizeRef.current.height)
-      : { ...next, scale: clampMapScale(next.scale) };
+      ? clampMapView(locked, viewport, sizeRef.current.width, sizeRef.current.height)
+      : locked;
     viewRef.current = clamped;
     if (universeRef.current) {
       universeRef.current.style.transform = `translate3d(${clamped.x}px, ${clamped.y}px, 0) scale(${clamped.scale})`;
@@ -409,25 +411,11 @@ function CampaignUniverse({
         deltaX *= viewport.clientWidth;
         deltaY *= viewport.clientHeight;
       }
-      if (event.shiftKey && !event.ctrlKey) {
-        applyViewRef.current({ ...current, x: current.x - deltaY, y: current.y - deltaX });
+      if (event.shiftKey && Math.abs(deltaY) > Math.abs(deltaX)) {
+        applyViewRef.current({ ...current, scale: 1, x: current.x - deltaY, y: current.y - deltaX });
         return;
       }
-      if (!event.ctrlKey && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
-        applyViewRef.current({ ...current, x: current.x - deltaX, y: current.y - deltaY });
-        return;
-      }
-      const rect = viewport.getBoundingClientRect();
-      const px = event.clientX - rect.left;
-      const py = event.clientY - rect.top;
-      const nextScale = clampMapScale(current.scale * Math.exp(-deltaY * 0.0016));
-      const worldX = (px - current.x) / current.scale;
-      const worldY = (py - current.y) / current.scale;
-      applyViewRef.current({
-        scale: nextScale,
-        x: px - worldX * nextScale,
-        y: py - worldY * nextScale,
-      });
+      applyViewRef.current({ ...current, scale: 1, x: current.x - deltaX, y: current.y - deltaY });
     };
     viewport.addEventListener("wheel", onWheel, { passive: false });
     const observer = new ResizeObserver(() => applyViewRef.current(viewRef.current));
@@ -464,31 +452,12 @@ function CampaignUniverse({
     return () => window.cancelAnimationFrame(frame);
   }, [campaigns, cardCenterX, firstNodeX, focusTarget, nodeSpacing, rowHeight, topPadding]);
 
-  const zoomAtCenter = (factor: number) => {
-    const viewport = scrollRef.current;
-    const current = viewRef.current;
-    const nextScale = clampMapScale(current.scale * factor);
-    if (!viewport) {
-      applyViewRef.current({ ...current, scale: nextScale });
-      return;
-    }
-    const px = viewport.clientWidth / 2;
-    const py = viewport.clientHeight / 2;
-    const worldX = (px - current.x) / current.scale;
-    const worldY = (py - current.y) / current.scale;
-    applyViewRef.current({
-      scale: nextScale,
-      x: px - worldX * nextScale,
-      y: py - worldY * nextScale,
-    });
-  };
-
   const resetView = () => applyViewRef.current({ x: 24, y: 16, scale: 1 });
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 && event.button !== 1) return;
     const target = event.target as HTMLElement | null;
-    if (target?.closest(".map-zoom-controls")) return;
+    if (target?.closest("button, a, input, textarea")) return;
     if (dragRef.current) return;
     if (event.button === 1) event.preventDefault();
     const drag = {
@@ -551,9 +520,7 @@ function CampaignUniverse({
     else if (event.key === "ArrowRight") applyViewRef.current({ ...current, x: current.x - step });
     else if (event.key === "ArrowUp") applyViewRef.current({ ...current, y: current.y + step });
     else if (event.key === "ArrowDown") applyViewRef.current({ ...current, y: current.y - step });
-    else if (event.key === "+" || event.key === "=") zoomAtCenter(1.16);
-    else if (event.key === "-" || event.key === "_") zoomAtCenter(1 / 1.16);
-    else if (event.key === "0") resetView();
+    else if (event.key === "0" || event.key === "Home") resetView();
     else return;
     event.preventDefault();
   };
@@ -720,11 +687,6 @@ function CampaignUniverse({
             </div>
           );
         })}
-      </div>
-      <div className="map-zoom-controls">
-        <button type="button" onClick={() => zoomAtCenter(1 / 1.2)} aria-label={t("mapZoomOut", lang)}>−</button>
-        <button type="button" className="map-zoom-controls__level" onClick={resetView} aria-label={t("mapZoomReset", lang)} title={t("mapZoomReset", lang)}>{Math.round(view.scale * 100)}%</button>
-        <button type="button" onClick={() => zoomAtCenter(1.2)} aria-label={t("mapZoomIn", lang)}>+</button>
       </div>
     </div>
   );

@@ -88,7 +88,16 @@ try {
   assert.ok(linuxPart3, "Linux for Beginners #3 should be registered as a learning path");
   assert.equal(learningPath.pathNumber, 3);
   assert.equal(linuxPart3.pathNumber, 4);
-  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.pathNumber), [1, 2, 3, 4, 5, 6, 7, 8]);
+  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.id), ["linux-part-01", "linux-part-02", "linux-part-03", "ssh-port-22"]);
+  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.pathNumber), [1, 2, 3, 4]);
+  assert.deepEqual(lessons.LEARNING_PATHS[0].modules.map((module) => module.id), ["sr-intro", "sr-help", "sr-search", "sr-files", "sr-text", "sr-apt", "sr-perms"]);
+  assert.deepEqual(lessons.LEARNING_PATHS[1].modules.map((module) => module.id), ["sr-net", "sr-proc", "sr-env"]);
+  assert.deepEqual(lessons.LEARNING_PATHS[2].modules.map((module) => module.id), ["sr-bash", "sr-cron", "sr-svc"]);
+  assert.deepEqual(lessons.LEARNING_PATHS[3].modules.map((module) => module.id), ["ssh-doc-setup", "ssh-svc-recon", "ssh-svc-auth", "ssh-doc-boundary", "ssh-svc-harden"]);
+  assert.doesNotMatch(JSON.stringify(lessons.LEARNING_PATHS[3]), /hydra -l|netexec|meterpreter|ssh2john/i);
+  for (const hiddenId of ["gamehack", "raven", "wirewalk", "sudorun", "linux-beginners-2", "linux-beginners-3", "dfir-fieldwork", "ssh-service"]) {
+    assert.equal(lessons.LEARNING_PATHS.some((path) => path.id === hiddenId), false, `${hiddenId} should stay off the visible map`);
+  }
   assert.deepEqual(learningPath.modules.map((module) => module.id), ["sr-net", "sr-proc", "sr-env"]);
   assert.deepEqual(linuxPart3.modules.map((module) => module.id), ["sr-bash", "sr-cron", "sr-svc"]);
   assert.equal(lessons.campaignById("wirewalk")?.pathNumber, 5);
