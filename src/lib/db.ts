@@ -12,8 +12,11 @@ import {
   type PlayerArchive,
   type RecoveryKeyFileRecord,
 } from "./playerArchive";
-import { emptyOverlay, type AuthoredModule, type ContentOverlay } from "./contentAuthoring";
+import { emptyOverlay, type AuthoredModule, type AuthoredSection, type ContentOverlay } from "./contentAuthoring";
 import { buildCourseExport, type CourseExport } from "./courseExport";
+import type { AssessmentQ } from "../data/assessments";
+import type { QuizQ } from "../data/quizzes";
+import { applyCourseQuizOverrides } from "./courseQuizOverrides";
 
 export type Role = "player" | "educator";
 export type ContentWidth = "centered" | "wide" | "full";
@@ -912,6 +915,30 @@ function sanitizeCheck(value: unknown): AuthoredModule["tasks"][number]["check"]
   }
 }
 
+/** Terminal transcripts are plain data; dropping them here would silently
+ *  delete every screenshot from an edited or imported lab. */
+function sanitizeShots(value: unknown): AuthoredSection["shots"] {
+  if (!Array.isArray(value)) return undefined;
+  const shots = value.slice(0, 40).map((shot: Record<string, unknown>) => ({
+    ...(typeof shot?.cmd === "string" ? { cmd: shot.cmd.slice(0, 500) } : {}),
+    ...(shot?.caption ? { caption: sanitizeBi(shot.caption) } : {}),
+    lines: Array.isArray(shot?.lines)
+      ? (shot.lines as unknown[]).filter((line): line is string => typeof line === "string").slice(0, 200).map((line) => line.slice(0, 500))
+      : [],
+  }));
+  return shots.length ? shots : undefined;
+}
+
+function sanitizeQuestionBank<T>(value: unknown): Record<string, T[]> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const result: Record<string, T[]> = {};
+  for (const [rawId, questions] of Object.entries(value as Record<string, unknown>)) {
+    if (!rawId || !Array.isArray(questions)) continue;
+    result[rawId.slice(0, 80)] = questions.slice(0, 20) as T[];
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
 function sanitizeOverlay(value: unknown): ContentOverlay {
   const record = (value || {}) as Record<string, unknown>;
   const modules: ContentOverlay["modules"] = {};
@@ -936,6 +963,10 @@ function sanitizeOverlay(value: unknown): ContentOverlay {
               heading: sanitizeBi(section?.heading),
               body: sanitizeBi(section?.body),
               ...(section?.tip ? { tip: sanitizeBi(section.tip) } : {}),
+              ...(Array.isArray(section?.shots) && section.shots.length
+                ? { shots: sanitizeShots(section.shots) }
+                : {}),
+              ...(section?.visual ? { visual: structuredClone(section.visual) as AuthoredSection["visual"] } : {}),
             }))
           : [],
         cheats: Array.isArray(raw.cheats)
@@ -980,7 +1011,14 @@ function sanitizeOverlay(value: unknown): ContentOverlay {
           : [],
       }))
     : [];
-  return { modules, paths };
+  const quizzes = sanitizeQuestionBank<QuizQ>(record.quizzes);
+  const assessments = sanitizeQuestionBank<AssessmentQ>(record.assessments);
+  return {
+    modules,
+    paths,
+    ...(quizzes ? { quizzes } : {}),
+    ...(assessments ? { assessments } : {}),
+  };
 }
 
 /** The authored-content layer educators edit from the dashboard. */
@@ -991,6 +1029,7 @@ export function getContentOverlay(): ContentOverlay {
 export function saveContentOverlay(overlay: ContentOverlay): boolean {
   const db = getDB();
   db.contentOverlay = sanitizeOverlay(overlay);
+  applyCourseQuizOverrides(db.contentOverlay);
   return saveDB();
 }
 
@@ -1005,6 +1044,9 @@ export function getDB(): DB {
         migrateLegacyCampaignIds(cache);
         enrichDemoPresence(cache);
         ensureDemoAccounts(cache);
+        // Imported question banks have to reach the live maps before any screen
+        // reads them, which happens on first render.
+        applyCourseQuizOverrides(cache.contentOverlay);
         if (saveDB()) {
           try {
             localStorage.removeItem(LEGACY_KEY);

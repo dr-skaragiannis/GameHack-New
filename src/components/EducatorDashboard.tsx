@@ -24,7 +24,15 @@ import { type ContentOverlay } from "../lib/contentAuthoring";
 import { getContentOverlay, saveContentOverlay } from "../lib/db";
 import ContentEditor from "./ContentEditor";
 import { parsePlayerArchive, type PlayerArchive } from "../lib/playerArchive";
-import { courseExportFilename, downloadJsonFile, serialiseCourseExport } from "../lib/courseExport";
+import {
+  buildOverlayFromCourseExport,
+  courseExportFilename,
+  downloadJsonFile,
+  parseCourseExport,
+  serialiseCourseExport,
+  type CourseExport,
+  type CourseImportSummary,
+} from "../lib/courseExport";
 import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 import Avatar from "./Avatar";
 import LiveFeed from "./LiveFeed";
@@ -253,6 +261,8 @@ export default function EducatorDashboard({
   const [assignTargets, setAssignTargets] = useState<Record<string, string>>({});
   const [archiveMessage, setArchiveMessage] = useState("");
   const [courseMessage, setCourseMessage] = useState("");
+  const [pendingCourse, setPendingCourse] = useState<{ export: CourseExport; summary: CourseImportSummary } | null>(null);
+  const courseInput = useRef<HTMLInputElement>(null);
   const [pendingArchive, setPendingArchive] = useState<PlayerArchive | null>(null);
   const archiveInput = useRef<HTMLInputElement>(null);
 
@@ -522,7 +532,32 @@ export default function EducatorDashboard({
               }}>
                 <Icon name="download" className="h-4 w-4" />{t("learningPathsExport", lang)}
               </button>
+              <button type="button" className="educator-lab-map dashboard-action" onClick={() => courseInput.current?.click()}>
+                <Icon name="folder" className="h-4 w-4" />{t("importLearningPaths", lang)}
+              </button>
+              <input
+                ref={courseInput}
+                type="file"
+                accept="application/json,.json"
+                hidden
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (!file) return;
+                  void file.text().then((contents) => {
+                    const parsed = parseCourseExport(contents);
+                    if (!parsed) {
+                      setCourseMessage(t("learningPathsInvalid", lang));
+                      return;
+                    }
+                    const { summary } = buildOverlayFromCourseExport(parsed, getContentOverlay());
+                    setCourseMessage("");
+                    setPendingCourse({ export: parsed, summary });
+                  });
+                }}
+              />
             </div>
+            <p>{t("importLearningPathsHint", lang)}</p>
           </section>
           <section className="educator-stat-grid" aria-label={t("playerStatistics", lang)}>
             <MetricCard label={t("totalPlayers", lang)} value={filteredPlayers.length} detail={`${onlineCount} ${t("activeNow", lang).toLowerCase()}`} icon="users" tone="cyan" />
@@ -918,6 +953,36 @@ export default function EducatorDashboard({
                   setArchiveMessage(`${t("importPlayersDone", lang)} ${count}`);
                 });
               }}>{t("importPlayers", lang)}</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {pendingCourse && (
+        <div className="dashboard-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPendingCourse(null); }}>
+          <section className="confirm-dialog dashboard-modal-surface" role="dialog" aria-modal="true" aria-labelledby="import-course-title">
+            <div className="educator-eyebrow">{uppercaseLabel(t("learningPathsExport", lang), lang)}</div>
+            <h2 id="import-course-title">{t("importLearningPaths", lang)}</h2>
+            <p>{t("importLearningPathsConfirm", lang)}</p>
+            <p>
+              {pendingCourse.summary.paths} · {pendingCourse.summary.labs} · {pendingCourse.summary.objectives}
+              {" · "}{pendingCourse.summary.newLabs}
+            </p>
+            {pendingCourse.summary.objectivesNeedingTests > 0 && (
+              <p className="educator-archive__status">
+                {pendingCourse.summary.objectivesNeedingTests} {t("importLearningPathsNeedsTests", lang)}
+              </p>
+            )}
+            <div className="confirm-dialog__actions">
+              <button type="button" className="dashboard-action" onClick={() => setPendingCourse(null)}>{t("cancel", lang)}</button>
+              <button type="button" className="dashboard-action confirm-dialog__danger" onClick={() => {
+                const { overlay } = buildOverlayFromCourseExport(pendingCourse.export, getContentOverlay());
+                saveContentOverlay(overlay);
+                invalidateCatalog();
+                setOverlay({ ...overlay });
+                setPendingCourse(null);
+                setCourseMessage(t("importLearningPathsDone", lang));
+              }}>{t("importLearningPaths", lang)}</button>
             </div>
           </section>
         </div>

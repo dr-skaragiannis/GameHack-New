@@ -1,4 +1,6 @@
 import { usedCmd, type Terminal } from "./terminal";
+import type { AssessmentQ } from "../data/assessments";
+import type { QuizQ } from "../data/quizzes";
 import {
   LEARNING_PATHS,
   moduleById,
@@ -7,6 +9,8 @@ import {
   type Challenge,
   type Module,
   type Section,
+  type SectionVisual,
+  type Shot,
   type Task,
 } from "../data/lessons";
 
@@ -37,6 +41,13 @@ export type AuthoredSection = {
   heading: Bi;
   body: Bi;
   tip?: Bi;
+  /**
+   * Terminal transcripts and diagrams are plain data, so they are carried here
+   * rather than dropped. Without them, editing or importing a lab silently
+   * deleted every screenshot the shipped lesson had.
+   */
+  shots?: Shot[];
+  visual?: SectionVisual;
 };
 
 export type AuthoredCheat = { cmd: string; desc: Bi };
@@ -90,6 +101,14 @@ export type ContentOverlay = {
   modules: Record<string, AuthoredModule>;
   /** Educator-created learning paths, in display order. */
   paths: AuthoredPath[];
+  /**
+   * Per-lab quiz and assessment overrides. The shipped question banks are
+   * static module data, so an imported catalogue has nowhere else to put its
+   * questions; without these an import would accept the file and silently
+   * discard every question in it.
+   */
+  quizzes?: Record<string, QuizQ[]>;
+  assessments?: Record<string, AssessmentQ[]>;
 };
 
 export const emptyOverlay = (): ContentOverlay => ({ modules: {}, paths: [] });
@@ -206,6 +225,8 @@ export function snapshotModule(module: Module): AuthoredModule {
       heading: { ...section.heading },
       body: { ...section.body },
       ...(section.tip ? { tip: { ...section.tip } } : {}),
+      ...(section.shots?.length ? { shots: section.shots.map((shot) => ({ ...shot })) } : {}),
+      ...(section.visual ? { visual: structuredClone(section.visual) } : {}),
     })),
     cheats: module.cheats.map((cheat) => ({ cmd: cheat.cmd, desc: { ...cheat.desc } })),
     tasks: module.tasks.map((task) => ({
@@ -252,6 +273,8 @@ function compileSection(section: AuthoredSection): Section {
     heading: section.heading,
     body: section.body,
     ...(section.tip ? { tip: section.tip } : {}),
+    ...(section.shots?.length ? { shots: section.shots } : {}),
+    ...(section.visual ? { visual: section.visual } : {}),
   };
 }
 

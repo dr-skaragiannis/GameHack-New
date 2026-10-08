@@ -261,7 +261,130 @@ try {
   assert.match(migrated.passwordHash, /^scrypt\$/i, "a legacy plaintext password must still be migrated to scrypt");
   assert.equal(db.login(legacyId, "hunter2hunter2").ok, true, "the migrated password must still log the user in");
 
-  console.log(`Data export checks passed: the learning-paths JSON carries all ${counts.paths} paths, ${counts.labs} labs, ${counts.objectives} objectives, ${counts.quiz} quizzes and ${counts.assessment} assessments with objective tests marked rather than dropped; a self export covers one account, mints a recovery key only on the opt-in, and imports back cleanly; the real profile renders the download, the password change and the recovery key with the opt-in off by default; and a stored record missing its interests, hobbies, badges and progress now loads with empty collections, keeps its migrated password and exports cleanly instead of throwing.`);
+
+  // ── Request 17: the file documents its own structure, and imports back ──
+  //
+  // JSON has no comment syntax, so the documentation is a data field that the
+  // parser ignores. It has to be the FIRST key or it is not really a header.
+  assert.equal(Object.keys(exported)[0], "readme", "the structure docs must come first in the file");
+  assert.ok(exported.readme && typeof exported.readme === "object", "the export needs a readme");
+  assert.match(exported.readme.what.en, /catalogue/i, "the readme must say what the file is");
+  assert.match(exported.readme.howToRead.en, /comment/i, "the readme must explain that JSON has no comment syntax");
+  assert.match(exported.readme.howToRead.el, /σχολ/, "the Greek readme must explain the same thing");
+  for (const key of ["path", "module", "theorySection", "task", "challenge", "quizQuestion", "assessmentQuestion"]) {
+    assert.ok(exported.readme[key], `the readme must document "${key}"`);
+  }
+  for (const key of ["format", "version", "exportedAt", "readme", "note", "paths"]) {
+    assert.ok(exported.readme.fields[key], `the readme must document the top-level "${key}"`);
+  }
+  assert.ok(exported.readme.importing.en && exported.readme.importing.el, "the readme must explain how to import, in both languages");
+  assert.match(exported.readme.task.check.en, /\bbuiltin\b/, "the task entry must explain the check marker");
+  assert.match(exported.readme.module.id.el, /αναγνωριστικό/, "the module entry must explain the id field in Greek too");
+  assert.match(exported.readme.theorySection.shots.en, /transcript/i, "the readme must document the terminal transcripts");
+  assert.ok(serialised.indexOf('"readme"') < serialised.indexOf('"format"'), "the readme must serialise before the payload");
+
+  // ── Round-trip: importing the catalogue must not lose the theory visuals ──
+  const baseOverlay = { modules: {}, paths: [] };
+  const roundTrip = courseExport.buildOverlayFromCourseExport(exported, baseOverlay);
+  assert.ok(Object.keys(roundTrip.overlay.modules).length > 0, "the import must produce overlay modules");
+  const roundTripped = authoring.effectiveLearningPaths(roundTrip.overlay);
+  const shotsBefore = lessons.LEARNING_PATHS.flatMap((campaign) => campaign.modules)
+    .find((mod) => mod.theory.some((section) => section.shots?.length));
+  const shotsAfter = roundTripped.flatMap((campaign) => campaign.modules).find((mod) => mod.id === shotsBefore.id);
+  assert.ok(shotsAfter.theory.some((section) => section.shots?.length), "importing a lab must not strip its terminal screenshots");
+
+  // ── Editing a built-in lab in the file takes effect ──
+  const edited = structuredClone(exported);
+  const targetPath = edited.paths.find((path) => path.id === "linux-part-01");
+  const targetModule = targetPath.modules.find((mod) => mod.id === "sr-intro");
+  targetModule.theory[0].body.en = "Edited from an imported file.";
+  const { overlay: editedOverlay } = courseExport.buildOverlayFromCourseExport(edited, baseOverlay);
+  const editedCatalog = authoring.effectiveLearningPaths(editedOverlay);
+  const editedModule = editedCatalog.flatMap((campaign) => campaign.modules).find((mod) => mod.id === "sr-intro");
+  assert.equal(editedModule.theory[0].body.en, "Edited from an imported file.", "an edited built-in lab must be picked up");
+  assert.equal(editedOverlay.modules["sr-intro"].tasks[0].check.kind, "builtin", "the overlay defers the completion test to the built-in lab");
+  const originalTask = lessons.moduleById("sr-intro").tasks.find((candidate) => candidate.id === editedModule.tasks[0].id);
+  assert.ok(originalTask, "the exported objective id must still match the built-in lab");
+  assert.equal(editedModule.tasks[0].check, originalTask.check, "an edited built-in lab keeps its real objective test, not a stub");
+
+  // ── A file can add a whole new learning path ──
+  const authored = {
+    readme: exported.readme,
+    format: courseExport.COURSE_EXPORT_FORMAT,
+    version: courseExport.COURSE_EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    note: "hand written",
+    paths: [{
+      id: "path-imported",
+      title: { en: "Imported path", el: "Εισηγμένο μονοπάτι" },
+      subtitle: { en: "From a file", el: "Από αρχείο" },
+      blurb: { en: "Authored outside the app.", el: "Γράφτηκε έξω από την εφαρμογή." },
+      scenario: "lab",
+      accent: "cyan",
+      modules: [{
+        id: "imported-lab",
+        order: 1,
+        icon: "terminal",
+        color: "from-cyan-400 to-sky-900",
+        difficulty: 2,
+        scenario: "lab",
+        title: { en: "Imported lab", el: "Εισηγμένο εργαστήριο" },
+        subtitle: { en: "New content", el: "Νέο περιεχόμενο" },
+        badge: { en: "Imported", el: "Εισηγμένο" },
+        theory: [{
+          id: "imported-lab-theory",
+          heading: { en: "Why", el: "Γιατί" },
+          body: { en: "Because.\n\nSecond paragraph.", el: "Διότι.\n\nΔεύτερη παράγραφος." },
+          shots: [{ cmd: "pwd", lines: ["/home/player"] }],
+        }],
+        cheats: [{ cmd: "pwd", desc: { en: "Where am I", el: "Πού είμαι" } }],
+        tasks: [{ id: "imported-lab-task", instruction: { en: "Print the cwd.", el: "Εκτύπωσε το cwd." }, hint: { en: "pwd", el: "pwd" }, explain: { en: "pwd", el: "pwd" }, reward: 5 }],
+        challenges: [{ id: "imported-lab-challenge", title: { en: "Challenge", el: "Πρόκληση" }, brief: { en: "Brief", el: "Σύνοψη" }, success: { en: "Done", el: "Ολοκληρώθηκε" } }],
+        quiz: [{ id: "q1", q: { en: "Question?", el: "Ερώτηση;" }, choices: [{ en: "A", el: "Α" }, { en: "B", el: "Β" }], answer: 0, why: { en: "Because.", el: "Διότι." } }],
+        assessment: [{ id: "a1", prompt: { en: "Judge this.", el: "Κρίνε το." }, choices: [{ en: "A", el: "Α" }, { en: "B", el: "Β" }], answer: 0, why: { en: "Because.", el: "Διότι." } }],
+      }],
+    }],
+  };
+  const { overlay: authoredOverlay, summary } = courseExport.buildOverlayFromCourseExport(authored, baseOverlay);
+  assert.equal(summary.newLabs, 1, "the imported lab must be reported as new");
+  assert.equal(summary.objectivesNeedingTests, 1, "a new lab has objectives without completion tests");
+  const authoredCatalog = authoring.effectiveLearningPaths(authoredOverlay);
+  assert.ok(authoredCatalog.some((campaign) => campaign.id === "path-imported"), "the imported path must join the catalogue");
+  const authoredLab = authoring.effectiveModuleById(authoredOverlay, "imported-lab");
+  assert.equal(authoredLab?.title.en, "Imported lab", "the imported lab must resolve through moduleById");
+  assert.equal(authoredLab?.tasks.length, 1, "the imported objective must survive");
+  // Module.challenges is a fixed two-tuple, so a lab authored with one
+  // challenge is padded with an empty placeholder, exactly as in the editor.
+  assert.equal(authoredLab?.challenges.length, 2, "challenges stay a fixed pair");
+  assert.equal(authoredLab?.challenges[0].title.en, "Challenge", "the imported challenge must survive");
+  // Quizzes and assessments are not fields on Module; they live in the static
+  // banks, which is why the overlay carries its own copies.
+  assert.equal(authoredOverlay.quizzes["imported-lab"].length, 1, "the imported quiz must be stored on the overlay");
+  assert.equal(authoredOverlay.assessments["imported-lab"].length, 1, "the imported assessment must be stored on the overlay");
+
+  // ── Question banks survive a save/load cycle ──
+  db.saveContentOverlay(authoredOverlay);
+  const reloaded = db.getContentOverlay();
+  assert.equal(reloaded.quizzes["imported-lab"][0].q.en, "Question?", "the imported quiz must survive persistence");
+  assert.equal(reloaded.assessments["imported-lab"][0].prompt.en, "Judge this.", "the imported assessment must survive persistence");
+  assert.equal(authoredLab.theory[0].heading.en, "Why", "the imported theory must survive persistence");
+  const persistedLab = authoring.effectiveModuleById(reloaded, "imported-lab");
+  assert.equal(persistedLab.theory[0].shots?.length, 1, "the terminal transcript must survive the save/load sanitiser");
+  assert.deepEqual(persistedLab.theory[0].shots?.[0]?.lines, ["/home/player"], "the transcript lines must survive verbatim");
+
+  // The live question maps must reflect the import, since the popups read them directly.
+  const { QUIZZES } = await server.ssrLoadModule("/src/data/quizzes.ts");
+  const { ASSESSMENTS } = await server.ssrLoadModule("/src/data/assessments.ts");
+  assert.equal(QUIZZES["imported-lab"][0].q.en, "Question?", "the live quiz map must carry the imported questions");
+  assert.equal(ASSESSMENTS["imported-lab"][0].prompt.en, "Judge this.", "the live assessment map must carry the imported questions");
+  assert.ok(QUIZZES["sr-intro"]?.length, "the shipped question banks must not be clobbered by an import");
+
+  // Resetting the overlay puts the shipped catalogue back.
+  db.saveContentOverlay({ modules: {}, paths: [] });
+  assert.equal(QUIZZES["imported-lab"], undefined, "resetting the overlay must drop the imported questions");
+  assert.ok(QUIZZES["sr-intro"]?.length, "resetting the overlay must restore the shipped questions");
+
+  console.log(`Data export checks passed: the learning-paths JSON carries all ${counts.paths} paths, ${counts.labs} labs, ${counts.objectives} objectives, ${counts.quiz} quizzes and ${counts.assessment} assessments with objective tests marked rather than dropped; a self export covers one account, mints a recovery key only on the opt-in, and imports back cleanly; the real profile renders the download, the password change and the recovery key with the opt-in off by default; a stored record missing its interests, hobbies, badges and progress now loads with empty collections, keeps its migrated password and exports cleanly instead of throwing; and the exported file documents its own structure in a leading readme, imports back without losing its terminal screenshots, can edit a built-in lab while keeping that lab's real objective tests, can add a whole new learning path with its quiz and assessment, and both survive a save/load cycle while the shipped question banks stay intact.`);
 } finally {
   await server.close();
 }
