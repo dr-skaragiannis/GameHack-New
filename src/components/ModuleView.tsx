@@ -153,6 +153,8 @@ export default function ModuleView({
   onCommandMetric,
   onHint,
   onStartQuiz,
+  onStartAssessment,
+  assessmentTaken,
   onBack,
 }: {
   module: Module;
@@ -169,6 +171,8 @@ export default function ModuleView({
   onCommandMetric: (pasted: boolean, typo: boolean, execution: CommandExecutionInput) => void;
   onHint: () => void;
   onStartQuiz: () => void;
+  onStartAssessment: () => void;
+  assessmentTaken?: boolean;
   onBack: () => void;
 }) {
   const [tab, setTab] = useState<"theory" | "guide" | "lab">(initialTab || (done.length ? "lab" : "theory"));
@@ -585,15 +589,25 @@ export default function ModuleView({
                 <div>
                   <h2 id="lab-quiz-prompt-title" className="text-base font-semibold text-zinc-100">{t("labComplete", lang)}</h2>
                   <p className="mt-1 text-sm leading-relaxed text-zinc-400">{t("quizPassRequirement", lang)}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-iron-500">{t("assessmentPrompt", lang)}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={onStartQuiz}
-                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 font-semibold text-white transition hover:bg-cyan-500"
-                >
-                  {t("startQuickQuiz", lang)}
-                  <Icon name="chevron" className="h-4 w-4" />
-                </button>
+                <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={onStartAssessment}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-500/50 px-4 py-2.5 font-semibold text-violet-200 transition hover:border-violet-400 hover:text-violet-100"
+                  >
+                    {assessmentTaken ? t("assessmentTaken", lang) : t("startAssessment", lang)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onStartQuiz}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 font-semibold text-white transition hover:bg-cyan-500"
+                  >
+                    {t("startQuickQuiz", lang)}
+                    <Icon name="chevron" className="h-4 w-4" />
+                  </button>
+                </div>
               </section>
             )}
           </div>

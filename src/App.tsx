@@ -24,6 +24,7 @@ import Icon from "./components/Icon";
 import Avatar from "./components/Avatar";
 import BadgeModal from "./components/BadgeModal";
 import QuizPopup from "./components/QuizPopup";
+import AssessmentPopup from "./components/AssessmentPopup";
 import PlayerQuickStats from "./components/PlayerQuickStats";
 import OverallScoreboardPopup from "./components/OverallScoreboardPopup";
 import type { User } from "./lib/db";
@@ -116,6 +117,7 @@ export default function App() {
   const [mobile, setMobile] = useState(false);
   const [badgeId, setBadgeId] = useState<string | null>(null);
   const [quizFor, setQuizFor] = useState<string | null>(null);
+  const [assessmentFor, setAssessmentFor] = useState<string | null>(null);
   const [scoreboardOpen, setScoreboardOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -876,6 +878,11 @@ export default function App() {
                 setQuizFor(active.id);
                 sound.popup();
               }}
+              onStartAssessment={() => {
+                setAssessmentFor(active.id);
+                sound.popup();
+              }}
+              assessmentTaken={!!user.progress[active.id]?.assessed}
               onBack={() => go("map")}
             />
           )}
@@ -958,6 +965,26 @@ export default function App() {
           lang={lang}
           onClose={() => setScoreboardOpen(false)}
           onProfile={openProfile}
+        />
+      )}
+      {assessmentFor && (
+        <AssessmentPopup
+          key={assessmentFor}
+          moduleId={assessmentFor}
+          lang={lang}
+          onCancel={() => setAssessmentFor(null)}
+          onDone={(score, total) => {
+            const moduleId = assessmentFor;
+            if (!moduleId || !passesQuickQuiz(score, total)) {
+              setAssessmentFor(null);
+              return;
+            }
+            const current = db.userById(user.id)!;
+            const mp = current.progress[moduleId] || { completed: false, done: [] };
+            db.updateUser(user.id, { progress: { ...current.progress, [moduleId]: { ...mp, assessed: true } } });
+            setAssessmentFor(null);
+            refresh();
+          }}
         />
       )}
       {badgeId && <BadgeModal badgeId={badgeId} lang={lang} onClose={() => setBadgeId(null)} />}

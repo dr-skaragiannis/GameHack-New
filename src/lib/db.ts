@@ -11,6 +11,8 @@ export type ModProgress = {
   startedAt?: number;
   completedAt?: number;
   hinted?: boolean;
+  // True once the student passes this lab's scenario assessment.
+  assessed?: boolean;
 };
 
 // A revealed hint reduces that objective's base XP reward by this amount on completion.

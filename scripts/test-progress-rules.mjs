@@ -10,12 +10,15 @@ const server = await createServer({
 });
 
 try {
-  const [db, i18n, quizProgress, quizData, recoveryKeyFile] = await Promise.all([
+  const [db, i18n, quizProgress, quizData, recoveryKeyFile, lessons, assessmentData, catalog] = await Promise.all([
     server.ssrLoadModule("/src/lib/db.ts"),
     server.ssrLoadModule("/src/i18n.ts"),
     server.ssrLoadModule("/src/lib/quizProgress.ts"),
     server.ssrLoadModule("/src/data/quizzes.ts"),
     server.ssrLoadModule("/src/lib/recoveryKeyFile.ts"),
+    server.ssrLoadModule("/src/data/lessons.ts"),
+    server.ssrLoadModule("/src/data/assessments.ts"),
+    server.ssrLoadModule("/src/lib/linuxCommandCatalog.ts"),
   ]);
 
   const levelBoundaries = [
@@ -53,6 +56,66 @@ try {
     for (const question of questions) {
       assert.ok(Number.isInteger(question.answer) && question.answer >= 0 && question.answer < question.choices.length,
         `${moduleId} has a valid correct-answer index`);
+    }
+  }
+
+  // Every visible lab carries a scenario assessment, and none of its text may
+  // reproduce a command the lab already hands to the student.
+  const commandNames = new Set(catalog.ALL_LINUX_COMMANDS.map((command) => command.name.toLowerCase()));
+  for (const path of lessons.LEARNING_PATHS) {
+    for (const module of path.modules) {
+      const questions = assessmentData.ASSESSMENTS[module.id] || [];
+      assert.equal(questions.length, 3, `${module.id} should have three assessment scenarios`);
+
+      const labCommands = new Set();
+      for (const cheat of module.cheats) labCommands.add(cheat.cmd.trim().replace(/\s+/g, " "));
+      for (const task of module.tasks) {
+        for (const hint of [task.hint.en, task.hint.el]) {
+          for (const line of hint.split(/\r?\n/)) {
+            const trimmed = line.trim().replace(/\s+/g, " ");
+            if (trimmed) labCommands.add(trimmed);
+          }
+        }
+      }
+      const quizTexts = (quizData.QUIZZES[module.id] || []).map((item) => item.q.en);
+
+      for (const question of questions) {
+        assert.ok(question.scenario.en && question.scenario.el, `${module.id} scenarios must be bilingual`);
+        assert.ok(question.q.en && question.q.el && question.why.en && question.why.el, `${module.id} assessment items must be bilingual`);
+        assert.equal(question.choices.length, 4, `${module.id} assessment choices should be four`);
+        assert.ok(Number.isInteger(question.answer) && question.answer >= 0 && question.answer < question.choices.length,
+          `${module.id} has a valid assessment answer index`);
+        for (const language of ["en", "el"]) {
+          assert.ok(!quizTexts.includes(question.q[language]), `${module.id} assessment should not reuse a quiz question`);
+        }
+
+        const text = [
+          question.scenario.en, question.scenario.el,
+          question.q.en, question.q.el,
+          question.why.en, question.why.el,
+          ...question.choices.flatMap((choice) => [choice.en, choice.el]),
+        ];
+        for (const chunk of text) {
+          const normalised = chunk.replace(/\s+/g, " ");
+          for (const command of labCommands) {
+            // Only real invocations count: a bare word such as "history" in prose
+            // is not the student being handed a command.
+            if (command.length >= 5 && command.includes(" ") && normalised.includes(command)) {
+              assert.fail(`${module.id} assessment repeats a lab command: ${command}`);
+            }
+          }
+        }
+        for (const choice of question.choices) {
+          for (const language of ["en", "el"]) {
+            const words = choice[language].trim().split(/\s+/);
+            const first = words[0].toLowerCase();
+            assert.ok(
+              !(words.length > 1 && commandNames.has(first) && /^-{1,2}\S/.test(words[1] || "")),
+              `${module.id} assessment choices must not be commands: ${choice[language]}`,
+            );
+          }
+        }
+      }
     }
   }
 
@@ -102,7 +165,7 @@ try {
     assert.equal(stripped, stripped.normalize("NFD").replace(/\u0301|\u0300|\u0342/g, "").normalize("NFC"));
   }
 
-  console.log("Progression, quiz thresholds, recovery-key file parsing, Greek navigation copy, and uppercase accent checks passed.");
+  console.log("Progression, quiz thresholds, per-lab scenario assessments, recovery-key file parsing, Greek navigation copy, and uppercase accent checks passed.");
 } finally {
   await server.close();
 }
