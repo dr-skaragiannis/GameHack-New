@@ -10,11 +10,12 @@ const server = await createServer({
 });
 
 try {
-  const [{ ALL_LINUX_COMMANDS }, terminal, playerTerminal, lessons] = await Promise.all([
+  const [{ ALL_LINUX_COMMANDS }, terminal, playerTerminal, lessons, commandGuide] = await Promise.all([
     server.ssrLoadModule("/src/lib/linuxCommandCatalog.ts"),
     server.ssrLoadModule("/src/lib/terminal.ts"),
     server.ssrLoadModule("/src/lib/playerTerminal.ts"),
     server.ssrLoadModule("/src/data/lessons.ts"),
+    server.ssrLoadModule("/src/data/commandGuide.ts"),
   ]);
 
   const failedCommands = [];
@@ -52,6 +53,28 @@ try {
     "set", "more", "env", "export", "unset", "read", "reboot", "exit", "telnet", "ftp", "update-rc.d",
   ]) {
     assert.ok(catalogNames.has(name), `source command ${name} should be in the shared command catalog`);
+  }
+
+  // Every row of every lab's command sheet must resolve to a real entry in the
+  // in-app command library, or the player gets the "no entry yet" fallback
+  // for a command the course just taught them.
+  const unexplained = [];
+  let cheatRows = 0;
+  for (const path of lessons.LEARNING_PATHS) {
+    for (const module of path.modules) {
+      for (const cheat of module.cheats) {
+        cheatRows += 1;
+        if (!commandGuide.commandLessonForLabel(cheat.cmd)) {
+          unexplained.push(`${module.id}: ${cheat.cmd}`);
+        }
+      }
+    }
+  }
+  assert.deepEqual(unexplained, [], "every command-sheet row should have a command library entry");
+  assert.ok(cheatRows > 200, `the command sheets should still be substantial (saw ${cheatRows})`);
+  // The share-enumeration tools the fifth path teaches must be explained too.
+  for (const name of ["testparm", "smbclient", "nxc", "exportfs", "showmount", "rpcinfo", "mount", "umount"]) {
+    assert.ok(commandGuide.commandLessonForName(name), `the command library should explain ${name}`);
   }
 
   const topTerm = playerTerminal.createPlayerTerminal();

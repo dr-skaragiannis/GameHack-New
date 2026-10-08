@@ -1075,6 +1075,85 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     output: both("The lab records the simulated public key in the fictional account and leaves the real filesystem untouched.", "Το εργαστήριο καταγράφει το εικονικό δημόσιο κλειδί στον φανταστικό λογαριασμό και δεν αγγίζει το πραγματικό σύστημα αρχείων."),
     syntax: "ssh-copy-id [-i KEY.pub] USER@HOST", example: "ssh-copy-id labuser@10.10.10.12",
   },
+  {
+    key: "sort", aliases: ["sort"], title: both("Put lines in order", "Ταξινόμηση γραμμών"),
+    purpose: both("Bring order to output so patterns and duplicates become visible.", "Βάλε τάξη στην έξοδο ώστε να φανούν μοτίβα και διπλοεγγραφές."),
+    mechanics: both("sort reads lines and writes them back in order: alphabetical by default, numeric with -n, reverse with -r, and by a chosen field with -k. Pipe it after grep or cut when the interesting column is not the first one. Combined with uniq it collapses repeats, but uniq only removes neighbours, so sort first.", "Η sort διαβάζει γραμμές και τις επιστρέφει ταξινομημένες: αλφαβητικά από προεπιλογή, αριθμητικά με -n, ανάποδα με -r και με επιλεγμένο πεδίο με -k. Βάλε την σε pipe μετά από grep ή cut όταν το ενδιαφέρον πεδίο δεν είναι το πρώτο. Μαζί με την uniq διώχνει τις επαναλήψεις, όμως η uniq αφαιρεί μόνο γειτονικές, οπότε ταξινόμησε πρώτα."),
+    output: both("The same lines you fed in, reordered. A count that changes after uniq tells you how many duplicates the original held.", "Οι ίδιες γραμμές που έδωσες, αναδιαταγμένες. Ένα πλήθος που αλλάζει μετά την uniq δείχνει πόσες διπλοεγγραφές υπήρχαν."),
+    syntax: "sort [-n] [-r] [-k FIELD] [FILE]", example: "sort -n /root/linux-beginners-2/network/interfaces.txt",
+  },
+  {
+    key: "wc", aliases: ["wc"], title: both("Count lines, words and bytes", "Μέτρηση γραμμών, λέξεων και bytes"),
+    purpose: both("Turn a file or a stream into a number you can compare against something else.", "Κάνε ένα αρχείο ή μια ροή έναν αριθμό που μπορείς να συγκρίνεις."),
+    mechanics: both("wc prints newlines, words and bytes in that order. -l keeps only the line count, which is the one you usually want. Because it reads standard input, it belongs at the end of a pipe: command | wc -l counts what survived the filtering, not what the file holds.", "Η wc εμφανίζει νέες γραμμές, λέξεις και bytes με αυτή τη σειρά. Η -l κρατά μόνο το πλήθος γραμμών, που συνήθως είναι αυτό που θέλεις. Επειδή διαβάζει standard input, μπαίνει στο τέλος ενός pipe: command | wc -l μετρά ό,τι επέζησε από το φιλτράρισμα, όχι ό,τι περιέχει το αρχείο."),
+    output: both("Three numbers, or one with -l. A log with more lines than expected is a lead, not an answer; read a sample before you conclude anything.", "Τρεις αριθμοί, ή ένας με -l. Ένα αρχείο καταγραφής με περισσότερες γραμμές από το αναμενόμενο είναι ένδειξη, όχι απάντηση· διάβασε ένα δείγμα πριν καταλήξεις."),
+    syntax: "wc [-l] [-w] [-c] [FILE]", example: "wc -l /var/log/auth.log",
+  },
+  {
+    key: "who", aliases: ["who"], title: both("List the sessions on this host", "Λίστα συνεδριών στον host"),
+    purpose: both("See which accounts are signed in right now, and from where.", "Δες ποιοι λογαριασμοί είναι συνδεδεμένοι τώρα και από πού."),
+    mechanics: both("who reads the utmp record of live sessions and prints user, terminal, and login time. who am i narrows it to your own session, which is the quick way to learn the account and source address your current privileges belong to.", "Η who διαβάζει την εγγραφή utmp με τις ζωντανές συνεδρίες και εμφανίζει χρήστη, τερματικό και ώρα σύνδεσης. Η who am i την περιορίζει στη δική σου συνεδρία, που είναι ο γρήγορος τρόπος να μάθεις τον λογαριασμό και τη διεύθυνση προέλευσης στην οποία ανήκουν τα τρέχοντα δικαιώματά σου."),
+    output: both("One line per session. On a lab host an empty list simply means nobody else is signed in, not that the command failed.", "Μία γραμμή ανά συνεδρία. Σε έναν εργαστηριακό host μια κενή λίστα σημαίνει απλώς ότι δεν είναι συνδεδεμένος κανείς άλλος, όχι ότι η εντολή απέτυχε."),
+    syntax: "who | who am i", example: "who am i",
+  },
+  {
+    key: "testparm", aliases: ["testparm"], title: both("Check a Samba configuration", "Έλεγχος ρυθμίσεων Samba"),
+    purpose: both("Confirm Samba can parse its own configuration before you judge what it exposes.", "Επιβεβαίωσε ότι η Samba διαβάζει τις ρυθμίσεις της πριν κρίνεις τι εκθέτει."),
+    mechanics: both("testparm reads smb.conf, reports syntax errors, and prints the settings Samba actually applies. -s skips the interactive pause and writes the effective configuration to standard output, which is the version worth reading: it shows defaults you never wrote in the file.", "Η testparm διαβάζει το smb.conf, αναφέρει συντακτικά λάθη και εμφανίζει τις ρυθμίσεις που εφαρμόζει πραγματικά η Samba. Η -s παραλείπει την παύση και γράφει την ενεργή διαμόρφωση στην standard output, που είναι η εκδοχή που αξίζει να διαβάσεις: δείχνει προεπιλογές που δεν έγραψες ποτέ στο αρχείο."),
+    output: both("Load smb config files up to the version line, then each share in brackets with its parameters. guest ok = yes on a share is the setting that lets an unauthenticated user in.", "Φόρτωση του smb config μέχρι τη γραμμή έκδοσης και μετά κάθε share σε αγκύλες με τις παραμέτρους του. Το guest ok = yes σε ένα share είναι η ρύθμιση που επιτρέπει την είσοδο χωρίς ταυτοποίηση."),
+    syntax: "testparm [-s] [smb.conf]", example: "testparm -s",
+  },
+  {
+    key: "smbclient", aliases: ["smbclient"], title: both("Browse a share like an FTP session", "Περιήγηση σε share σαν συνεδρία FTP"),
+    purpose: both("List and pull files from an SMB share from the command line.", "Εμφάνισε και κατέβασε αρχεία από ένα SMB share μέσω γραμμής εντολών."),
+    mechanics: both("-L asks a host for its share list, and //HOST/SHARE opens one as an interactive session with ls, cd, get and bye. -N means no password, which is exactly the test for a guest-accessible share: if the listing arrives, the share did not ask who you are.", "Η -L ζητά από έναν host τη λίστα των share του και η //HOST/SHARE ανοίγει ένα ως διαδραστική συνεδρία με ls, cd, get και bye. Η -N σημαίνει χωρίς κωδικό, που είναι ακριβώς ο έλεγχος για share προσβάσιμο από guest: αν έρθει η λίστα, το share δεν ρώτησε ποιος είσαι."),
+    output: both("Share names with their type and comment, then a directory listing inside the session. A Domain and OS line describes the server, not your access level.", "Ονόματα share με τύπο και σχόλιο και μετά η λίστα καταλόγου μέσα στη συνεδρία. Μια γραμμή Domain και OS περιγράφει τον server, όχι το επίπεδο πρόσβασής σου."),
+    syntax: "smbclient -N -L //HOST | smbclient //HOST/SHARE -N", example: "smbclient -N -L //192.168.1.9",
+    caution: both("Only run this against lab hosts you are authorised to test. An open share on someone else's network is a finding to report, not a place to look around.", "Τρέξε την μόνο σε εργαστηριακούς host που έχεις άδεια να ελέγξεις. Ένα ανοιχτό share σε δίκτυο άλλου είναι εύρημα προς αναφορά, όχι μέρος για εξερεύνηση."),
+  },
+  {
+    key: "nxc", aliases: ["nxc", "netexec"], title: both("Enumerate shares across a protocol", "Απαρίθμηση share σε ένα πρωτόκολλο"),
+    purpose: both("Ask a service what it publishes, in one pass instead of one connection at a time.", "Ρώτησε μια υπηρεσία τι δημοσιεύει, σε ένα πέρασμα αντί για μία σύνδεση τη φορά."),
+    mechanics: both("nxc PROTOCOL TARGET speaks SMB or NFS and reports what it finds. --shares lists shares, --ls walks a path, and --get-file copies one file. Supplying -u guest -p '' is not a shortcut, it is the question: does this service answer an account with no password?", "Η nxc ΠΡΩΤΟΚΟΛΛΟ ΣΤΟΧΟΣ μιλάει SMB ή NFS και αναφέρει ό,τι βρίσκει. Η --shares εμφανίζει τα share, η --ls διασχίζει μια διαδρομή και η --get-file αντιγράφει ένα αρχείο. Το -u guest -p '' δεν είναι συντόμευση, είναι η ερώτηση: απαντά αυτή η υπηρεσία σε λογαριασμό χωρίς κωδικό;"),
+    output: both("One line per share or file with a status marker. Read it as a claim about the target and confirm anything important with a second tool.", "Μία γραμμή ανά share ή αρχείο με δείκτη κατάστασης. Διάβασέ την ως ισχυρισμό για τον στόχο και επιβεβαίωσε ό,τι σημαντικό με δεύτερο εργαλείο."),
+    syntax: "nxc smb|nfs TARGET [--shares | --ls PATH | --get-file F] [-u USER -p PASS]", example: "nxc smb 192.168.1.9 --shares -u 'guest' -p ''",
+    caution: both("This is an assessment tool. Use it only on lab targets you own or are contracted to test.", "Αυτό είναι εργαλείο αξιολόγησης. Χρησιμοποίησέ το μόνο σε εργαστηριακούς στόχους που σου ανήκουν ή έχεις σύμβαση να ελέγξεις."),
+  },
+  {
+    key: "exportfs", aliases: ["exportfs"], title: both("Show what NFS is publishing", "Εμφάνιση όσων δημοσιεύει το NFS"),
+    purpose: both("Read the server side of an NFS share without re-reading the file that configured it.", "Διάβασε την πλευρά του server σε ένα NFS share χωρίς να ξαναδιαβάσεις το αρχείο που το ρύθμισε."),
+    mechanics: both("exportfs prints the exports the NFS server is currently offering, with the option list it applied. -v adds the resolved options per host, which is where no_root_squash and insecure become visible; -a re-exports everything from /etc/exports.", "Η exportfs εμφανίζει τα exports που προσφέρει αυτή τη στιγμή ο NFS server μαζί με τη λίστα επιλογών που εφάρμοσε. Η -v προσθέτει τις επιλυμένες επιλογές ανά host, όπου γίνονται ορατά τα no_root_squash και insecure· η -a republικά όλα τα exports από το /etc/exports."),
+    output: both("One line per export with its path and options. no_root_squash means a client root stays root on your files, which is the setting that turns a share into a takeover.", "Μία γραμμή ανά export με διαδρομή και επιλογές. Το no_root_squash σημαίνει ότι ο root του client μένει root στα αρχεία σου, που είναι η ρύθμιση η οποία μετατρέπει ένα share σε ανάληψη ελέγχου."),
+    syntax: "exportfs [-v] [-a]", example: "exportfs -v",
+  },
+  {
+    key: "showmount", aliases: ["showmount"], title: both("Ask a host what it exports", "Ερώτηση σε host για τα exports του"),
+    purpose: both("Enumerate NFS exports from the client side, the way an outsider would.", "Απαρίθμησε NFS exports από την πλευρά του client, όπως θα το έκανε ένας έξω."),
+    mechanics: both("showmount -e HOST queries the target's mount daemon and lists what it exports, optionally with the hosts allowed to mount each one. It needs no credentials, which is precisely why an unfiltered exports list is a disclosure.", "Η showmount -e HOST ρωτά τον mount daemon του στόχου και εμφανίζει ό,τι εξάγει, προαιρετικά με τους host που επιτρέπεται να το προσαρτήσουν. Δεν χρειάζεται credentials, που είναι ακριβώς ο λόγος γιατί μια αφιλτράριστη λίστα exports αποτελεί αποκάλυψη."),
+    output: both("An Export list for the host, one path per line. Compare it with exportfs -v on the server: the two views describe the same configuration from opposite ends.", "Μια Export list για τον host, μία διαδρομή ανά γραμμή. Σύγκρινέ την με την exportfs -v στον server: οι δύο όψεις περιγράφουν την ίδια διαμόρφωση από αντίθετες πλευρές."),
+    syntax: "showmount -e HOST", example: "showmount -e 192.168.1.9",
+  },
+  {
+    key: "rpcinfo", aliases: ["rpcinfo"], title: both("List the RPC services on a host", "Λίστα υπηρεσιών RPC σε έναν host"),
+    purpose: both("Find out which RPC programs a host answers, and on which ports.", "Μάθε σε ποια προγράμματα RPC απαντά ένας host και σε ποιες θύρες."),
+    mechanics: both("rpcinfo -p HOST asks the portmapper for its registration table. NFS and its mount daemon register there, so the program and version numbers tell you which NFS family the host runs before you try to mount anything.", "Η rpcinfo -p HOST ζητά από τον portmapper τον πίνακα εγγραφών του. Το NFS και ο mount daemon του εγγράφονται εκεί, οπότε οι αριθμοί προγράμματος και έκδοσης σου λένε ποια οικογένεια NFS τρέχει ο host πριν δοκιμάσεις να προσαρτήσεις οτιδήποτε."),
+    output: both("Columns of program, version, protocol and port. 100003 is NFS and 100005 is the mount daemon; a host showing both is offering file shares over RPC.", "Στήλες με πρόγραμμα, έκδοση, πρωτόκολλο και θύρα. Το 100003 είναι το NFS και το 100005 ο mount daemon· ένας host που δείχνει και τα δύο προσφέρει κοινά αρχεία μέσω RPC."),
+    syntax: "rpcinfo -p HOST", example: "rpcinfo -p 192.168.1.9",
+  },
+  {
+    key: "mount", aliases: ["mount"], title: both("Attach a filesystem to a directory", "Προσάρτηση συστήματος αρχείων σε κατάλογο"),
+    purpose: both("Make a remote or local filesystem readable at a path you choose.", "Κάνε ένα απομακρυσμένο ή τοπικό σύστημα αρχείων αναγνώσιμο σε μια διαδρομή που επιλέγεις."),
+    mechanics: both("mount -t TYPE SOURCE TARGET attaches SOURCE at TARGET, creating the directory first if needed. For NFS the source is written HOST:/exported/path. The mount only inherits the permissions the server granted, so what you can read afterwards is decided on the other end, not by this command.", "Η mount -t ΤΥΠΟΣ ΠΗΓΗ ΣΤΟΧΟΣ προσαρτά την ΠΗΓΗ στον ΣΤΟΧΟ, δημιουργώντας πρώτα τον κατάλογο αν χρειάζεται. Για NFS η πηγή γράφεται HOST:/exported/path. Η προσάρτηση κληρονομεί μόνο τα δικαιώματα που παραχώρησε ο server, οπότε τι διαβάζεις μετά το αποφασίζει η άλλη πλευρά, όχι αυτή η εντολή."),
+    output: both("Silence on success, an error naming the reason on failure. Plain mount with no arguments lists what is currently attached and with which options.", "Σιωπή στην επιτυχία και σφάλμα που κατονομάζει τον λόγο στην αποτυχία. Η απλή mount χωρίς ορίσματα εμφανίζει ό,τι είναι προσαρτημένο τώρα και με ποιες επιλογές."),
+    syntax: "mount [-t TYPE] SOURCE TARGET", example: "mount -t nfs 192.168.1.9:/srv/nfs/public /tmp/nfs",
+  },
+  {
+    key: "umount", aliases: ["umount"], title: both("Detach a mounted filesystem", "Αποπροσάρτηση συστήματος αρχείων"),
+    purpose: both("Leave the lab the way you found it, and release what you attached.", "Άσε το εργαστήριο όπως το βρήκες και απελευθέρωσε ό,τι προσάρτησες."),
+    mechanics: both("umount TARGET detaches the filesystem mounted at TARGET. It refuses while a shell is still inside the mount point or a file there is open, so step out first. Note the spelling: no n after the u.", "Η umount ΣΤΟΧΟΣ αποπροσαρτά το σύστημα αρχείων που είναι προσαρτημένο στον ΣΤΟΧΟ. Αρνείται όσο ένα shell βρίσκεται ακόμα μέσα στο σημείο προσάρτησης ή κάποιο αρχείο εκεί είναι ανοιχτό, οπότε βγες πρώτα έξω. Πρόσεξε την ορθογραφία: χωρίς n μετά το u."),
+    output: both("Nothing on success. A target is busy message means something still holds it open, and the fix is to leave the directory rather than force the unmount.", "Τίποτα στην επιτυχία. Το μήνυμα target is busy σημαίνει ότι κάτι ακόμα το κρατά ανοιχτό και η λύση είναι να βγεις από τον κατάλογο, όχι να επιβάλεις την αποπροσάρτηση."),
+    syntax: "umount TARGET", example: "umount /tmp/nfs",
+  },
 ];
 
 export function commandLessonForName(name: string): CommandLesson | undefined {
@@ -1102,9 +1181,10 @@ export function commandLessonForLabel(label: string): CommandLesson | undefined 
   if (/\bsudo\b/.test(text)) return commandLessonForName("sudo");
   if (/^\s*\d+\s+\d+\s+\*/.test(text)) return commandLessonForName("crontab");
   if (/\b(get|bye|anonymous)\b/.test(text)) return commandLessonForName("ftp");
-  if (/&/.test(text) && /cmd|background|nano/.test(text)) return commandLessonForName("jobs");
+  if (/&/.test(text) && /cmd|command|background|nano/.test(text)) return commandLessonForName("jobs");
   if (/^[a-z_][a-z0-9_]*\s*=/.test(text.trim())) return commandLessonForName("env");
   if (/^\s*histsize\s*=/.test(text)) return commandLessonForName("env");
+  if (/^\s*(\.\/|\.\.\/|\/[A-Za-z0-9_.])/.test(text)) return commandLessonForName("bash");
   if (/rot13|decode/.test(text)) return commandLessonForName("rot13");
   if (/tab/.test(text)) return commandLessonForName("tab");
   if (/↑|↓|history/.test(text)) return commandLessonForName("history");
