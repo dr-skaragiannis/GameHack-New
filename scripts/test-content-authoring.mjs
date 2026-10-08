@@ -279,7 +279,99 @@ try {
   catalog.invalidateCatalog();
   assert.equal(catalog.moduleById(newLabA.id), undefined, "deleting the authored path removes its labs from the catalog");
 
-  console.log("Content authoring checks passed: lab snapshots, authored objectives with XP, hints and extra material, every completion-test flavour, new learning paths, editor warnings, storage round-trip and catalog refresh.");
+
+  // ── Editing and deleting a shipped learning path or lab ───────────────────
+  const shippedPaths = lessons.LEARNING_PATHS;
+  const firstShipped = shippedPaths[0];
+
+  // Snapshotting a lab must not silently drop additional material. This was
+  // dropping it for all 24 labs, so opening any built-in lab and saving once
+  // deleted the extra reading on 68 objectives.
+  const canon = (value) => JSON.stringify(value, (key, val) =>
+    val && typeof val === "object" && !Array.isArray(val)
+      ? Object.fromEntries(Object.keys(val).sort().map((k) => [k, val[k]]))
+      : val);
+  const materialBefore = shippedPaths.flatMap((path) => path.modules).flatMap((mod) => mod.tasks)
+    .filter((task) => task.material && (task.material.en.trim() || task.material.el.trim()));
+  assert.ok(materialBefore.length > 0, "the shipped catalogue is expected to carry additional material");
+  // An absent reward and an explicit 5 are the same to the platform: App.tsx
+  // and ModuleView.tsx both read `reward ?? 5`, so snapshotting fills the
+  // default rather than changing what a player earns.
+  const tasksFor = (mod) => mod.tasks.map(({ check, reward, ...rest }) => ({ ...rest, reward: reward ?? 5 }));
+  for (const mod of shippedPaths.flatMap((path) => path.modules)) {
+    const round = authoring.compileModule(authoring.snapshotModule(mod));
+    assert.equal(canon(tasksFor(round)), canon(tasksFor(mod)), `snapshotting ${mod.id} must not lose objective content`);
+  }
+  const materialAfter = shippedPaths.flatMap((path) => path.modules)
+    .flatMap((mod) => authoring.compileModule(authoring.snapshotModule(mod)).tasks)
+    .filter((task) => task.material && (task.material.en.trim() || task.material.el.trim()));
+  assert.equal(materialAfter.length, materialBefore.length, "every objective keeps its additional material through a snapshot");
+
+  // Renaming a shipped path stores a layer over it and leaves the original alone.
+  const originalTitle = { ...firstShipped.title };
+  const renamed = { ...authoring.snapshotPath(firstShipped), title: { en: "Renumbered basics", el: "Αναριθμημένα βασικά" } };
+  const renamedCatalog = authoring.effectiveLearningPaths({ modules: {}, paths: [], pathEdits: { [firstShipped.id]: renamed } });
+  assert.equal(renamedCatalog[0].title.en, "Renumbered basics", "the educator's path title reaches the catalogue");
+  assert.equal(renamedCatalog[0].title.el, "Αναριθμημένα βασικά", "both languages of the edit reach the catalogue");
+  assert.deepEqual(firstShipped.title, originalTitle, "the shipped path is never overwritten in place");
+  assert.equal(renamedCatalog[0].modules.length, firstShipped.modules.length, "an edit that does not touch the lab list keeps every lab");
+
+  // A path edit can also drop a lab by listing the ones that remain.
+  const kept = firstShipped.modules.slice(1).map((mod) => mod.id);
+  const trimmed = authoring.effectiveLearningPaths({
+    modules: {}, paths: [],
+    pathEdits: { [firstShipped.id]: { ...authoring.snapshotPath(firstShipped), moduleIds: kept } },
+  });
+  assert.equal(trimmed[0].modules.length, firstShipped.modules.length - 1, "a path edit can drop a lab");
+  assert.equal(trimmed[0].modules[0].id, firstShipped.modules[1].id, "the remaining labs keep their order");
+  assert.equal(trimmed[0].modules[0].order, 1, "lab numbering is recomputed after a drop");
+
+  // Removing a shipped path hides it rather than deleting source data.
+  const hiddenPathOverlay = { modules: {}, paths: [], hiddenPaths: [firstShipped.id] };
+  const withoutPath = authoring.effectiveLearningPaths(hiddenPathOverlay);
+  assert.equal(withoutPath.length, shippedPaths.length - 1, "a removed path leaves the catalogue");
+  assert.ok(!withoutPath.some((path) => path.id === firstShipped.id), "the removed path is not in the catalogue");
+  assert.equal(withoutPath[0].pathNumber, 1, "the paths after a removal are renumbered from one");
+  assert.ok(authoring.isPathHidden(hiddenPathOverlay, firstShipped.id), "the editor can tell a path is removed");
+
+  // Restoring is the same edit in reverse.
+  assert.equal(authoring.effectiveLearningPaths({ modules: {}, paths: [], hiddenPaths: [] }).length, shippedPaths.length, "restoring brings the path back");
+
+  // Removing a shipped lab hides it from the path that lists it.
+  const targetLab = firstShipped.modules[1];
+  const hiddenLabOverlay = { modules: {}, paths: [], hiddenModules: [targetLab.id] };
+  const withoutLab = authoring.effectiveLearningPaths(hiddenLabOverlay);
+  assert.ok(!withoutLab[0].modules.some((mod) => mod.id === targetLab.id), "the removed lab leaves its path");
+  assert.equal(authoring.effectiveModuleById(hiddenLabOverlay, targetLab.id), undefined, "the removed lab is not openable anywhere");
+  assert.equal(withoutLab[0].modules.length, firstShipped.modules.length - 1, "the rest of the path is untouched");
+
+  // The same removal works on a path the educator authored.
+  const authoredPathForHide = authoring.emptyPath();
+  const hiddenAuthored = authoring.effectiveLearningPaths({ modules: {}, paths: [authoredPathForHide], hiddenPaths: [authoredPathForHide.id] });
+  assert.ok(!hiddenAuthored.some((path) => path.id === authoredPathForHide.id), "an authored path can be removed too");
+
+  // Every one of these has to survive the storage sanitiser, or the educator's
+  // removals would come back on the next load.
+  db.saveContentOverlay({
+    modules: {},
+    paths: [],
+    pathEdits: { [firstShipped.id]: renamed },
+    hiddenPaths: [shippedPaths[1].id],
+    hiddenModules: [targetLab.id],
+  });
+  const persisted = db.getContentOverlay();
+  assert.equal(persisted.pathEdits[firstShipped.id].title.en, "Renumbered basics", "a path edit survives storage");
+  assert.deepEqual(persisted.hiddenPaths, [shippedPaths[1].id], "a path removal survives storage");
+  assert.deepEqual(persisted.hiddenModules, [targetLab.id], "a lab removal survives storage");
+  catalog.invalidateCatalog();
+  assert.equal(catalog.moduleById(targetLab.id), undefined, "a removed lab disappears from the live catalog");
+  assert.ok(catalog.moduleById(firstShipped.modules[0].id), "labs the educator kept stay openable");
+
+  db.saveContentOverlay({ modules: {}, paths: [] });
+  catalog.invalidateCatalog();
+  assert.ok(catalog.moduleById(targetLab.id), "restoring a removed lab brings it back to the live catalog");
+
+  console.log("Content authoring checks passed: lab snapshots that keep every objective including its additional material, authored objectives with XP, hints and extra material, every completion-test flavour, new learning paths, editor warnings, storage round-trip and catalog refresh; editing a shipped learning path stores a layer over the untouched original, a path edit can drop a lab and renumber the rest, and removing a shipped path or lab hides it in a way that survives storage and can be restored.");
 } finally {
   await server.close();
 }

@@ -109,6 +109,20 @@ export type ContentOverlay = {
    */
   quizzes?: Record<string, QuizQ[]>;
   assessments?: Record<string, AssessmentQ[]>;
+  /**
+   * Edits to a shipped learning path, keyed by its built-in id. Shipped paths
+   * are source data, so "editing" one means storing a replacement here; the
+   * catalogue applies it on every compile.
+   */
+  pathEdits?: Record<string, AuthoredPath>;
+  /**
+   * Shipped path ids the educator removed from the catalogue. Deletion cannot
+   * be a hard delete for source data, so removal is a reversible hide and the
+   * editor offers a restore.
+   */
+  hiddenPaths?: string[];
+  /** Lab ids removed from whichever path lists them. */
+  hiddenModules?: string[];
 };
 
 export const emptyOverlay = (): ContentOverlay => ({ modules: {}, paths: [] });
@@ -209,6 +223,19 @@ export function compileCheck(spec: AuthoredCheck, fallback?: (ctx: Terminal) => 
 }
 
 /** A built-in objective's test cannot be serialised, so it stays behind a marker. */
+/** The editable form of a shipped learning path. */
+export function snapshotPath(path: Campaign): AuthoredPath {
+  return {
+    id: path.id,
+    title: { ...path.title },
+    subtitle: { ...path.subtitle },
+    blurb: { ...path.blurb },
+    scenario: path.scenario,
+    accent: path.accent,
+    moduleIds: path.modules.map((module) => module.id),
+  };
+}
+
 export function snapshotModule(module: Module): AuthoredModule {
   return {
     id: module.id,
@@ -235,6 +262,7 @@ export function snapshotModule(module: Module): AuthoredModule {
       hint: { ...task.hint },
       explain: { ...task.explain },
       reward: task.reward ?? 5,
+      ...(task.material ? { material: { ...task.material } } : {}),
       check: { kind: "builtin" } as AuthoredCheck,
     })),
     challenges: module.challenges.map((challenge, index) => ({
@@ -327,13 +355,57 @@ export function compilePath(authored: AuthoredPath, pathNumber: number, overlay:
  * The list the player-facing app renders: the shipped paths with any authored
  * replacement applied, followed by the paths the educator created.
  */
+export function isPathHidden(overlay: ContentOverlay, id: string): boolean {
+  return (overlay.hiddenPaths || []).includes(id);
+}
+
+export function isModuleHidden(overlay: ContentOverlay, id: string): boolean {
+  return (overlay.hiddenModules || []).includes(id);
+}
+
+/**
+ * Whether the educator has taken a lab out of the catalogue, either directly or
+ * by removing the path that carried it. Shipped labs stay resolvable by id
+ * otherwise, so a removed lab would still open through any stale link.
+ */
+export function isModuleRemoved(overlay: ContentOverlay, id: string): boolean {
+  if (isModuleHidden(overlay, id)) return true;
+  return LEARNING_PATHS.some((path) => isPathHidden(overlay, path.id) && path.modules.some((module) => module.id === id));
+}
+
 export function effectiveLearningPaths(overlay: ContentOverlay): Campaign[] {
-  const base = LEARNING_PATHS.map((path) => {
-    if (!path.modules.some((module) => overlay.modules[module.id])) return path;
-    return { ...path, modules: path.modules.map((module) => (overlay.modules[module.id] ? compileModule(overlay.modules[module.id]) : module)) };
+  const hiddenModules = new Set(overlay.hiddenModules || []);
+  const base = LEARNING_PATHS.filter((path) => !isPathHidden(overlay, path.id)).map((path) => {
+    const edit = overlay.pathEdits?.[path.id];
+    // An edit replaces the lab list; without one the shipped list stands.
+    const ids = edit ? edit.moduleIds : path.modules.map((module) => module.id);
+    const modules = ids
+      .filter((id) => !hiddenModules.has(id))
+      .map((id, index) => {
+        const authored = overlay.modules[id];
+        if (authored) return compileModule({ ...authored, order: index + 1 });
+        const shipped = path.modules.find((candidate) => candidate.id === id);
+        return shipped ? { ...shipped, order: index + 1 } : undefined;
+      })
+      .filter((module): module is Module => !!module);
+    return {
+      ...path,
+      ...(edit
+        ? { title: edit.title, subtitle: edit.subtitle, blurb: edit.blurb, scenario: edit.scenario, accent: edit.accent }
+        : {}),
+      modules,
+    };
   });
-  const authored = overlay.paths.map((path, index) => compilePath(path, base.length + index + 1, overlay));
-  return [...base, ...authored];
+  const authored = overlay.paths
+    .filter((path) => !isPathHidden(overlay, path.id))
+    .map((path) => ({
+      ...path,
+      moduleIds: path.moduleIds.filter((id) => !hiddenModules.has(id)),
+    }))
+    .map((path, index) => compilePath(path, base.length + index + 1, overlay));
+  // Numbering is positional: removing a path must not leave the rest wearing
+  // the numbers of paths that are no longer there.
+  return [...base, ...authored].map((path, index) => ({ ...path, pathNumber: index + 1 }));
 }
 
 /** Every lab the app can open, authored ones included. */

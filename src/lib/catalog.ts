@@ -1,5 +1,5 @@
 import { LEARNING_PATHS, moduleById as shippedModuleById, type Campaign, type Module } from "../data/lessons";
-import { effectiveLearningPaths } from "./contentAuthoring";
+import { effectiveLearningPaths, isModuleRemoved } from "./contentAuthoring";
 import { getContentOverlay } from "./db";
 
 /**
@@ -27,7 +27,12 @@ export function learningPaths(): Campaign[] {
 }
 
 export function moduleById(id: string): Module | undefined {
-  return build().byId.get(id) || shippedModuleById(id);
+  const found = build().byId.get(id);
+  if (found) return found;
+  // The shipped fallback must not resurrect a lab the educator removed, or a
+  // stale id would still open it after it left the catalogue.
+  if (isModuleRemoved(getContentOverlay(), id)) return undefined;
+  return shippedModuleById(id);
 }
 
 /** The shipped catalog only, for screens that must ignore authored edits. */

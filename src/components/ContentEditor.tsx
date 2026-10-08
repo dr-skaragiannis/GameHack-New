@@ -8,6 +8,7 @@ import {
   emptyTask,
   overlayIssues,
   snapshotModule,
+  snapshotPath,
   type AuthoredChallenge,
   type AuthoredCheck,
   type AuthoredModule,
@@ -126,14 +127,26 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
 
   const issues = useMemo(() => overlayIssues(overlay), [overlay]);
   const issueFor = (id: string) => issues.find((entry) => entry.moduleId === id)?.issues || [];
-  const labName = (id: string) => {
-    const authored = overlay.modules[id];
-    return authored?.title[lang] || authored?.title.en || id;
-  };
   const describeIssue = (issue: AuthoredIssue) =>
     t(`issue_${issue.code}`, lang).replace("{n}", String("index" in issue ? issue.index + 1 : 0));
 
   const authoredPath = overlay.paths.find((path) => path.id === pathId) || null;
+  /** A shipped path is editable too: its draft comes from the stored edit if
+   *  there is one, otherwise from a snapshot of the original. */
+  const shippedPath = LEARNING_PATHS.find((path) => path.id === pathId) || null;
+  const hiddenPaths = overlay.hiddenPaths || [];
+  const hiddenModules = overlay.hiddenModules || [];
+
+  const labLabel = (id: string) => {
+    const authored = overlay.modules[id];
+    if (authored?.title[lang] || authored?.title.en) return authored.title[lang] || authored.title.en;
+    const shipped = moduleById(id);
+    return (shipped && (shipped.title[lang] || shipped.title.en)) || id;
+  };
+
+  /** True when the lab being edited ships with the platform, so it can be
+   *  reverted rather than only deleted. */
+  const draftIsShipped = !!draft && LEARNING_PATHS.some((path) => path.modules.some((module) => module.id === draft.id));
 
   /** Open a lab for editing: the authored copy if there is one, else a snapshot of the shipped lab. */
   const openModule = (id: string) => {
@@ -176,19 +189,13 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
   };
 
   const addLab = () => {
-    if (!authoredPath) return;
-    const created = emptyModule(authoredPath.moduleIds.length + 1);
-    const moduleIds = [...authoredPath.moduleIds, created.id];
+    if (!pathDraft) return;
+    const created = emptyModule(pathDraft.moduleIds.length + 1);
+    const moduleIds = [...pathDraft.moduleIds, created.id];
     // The lab has to be listed on the path in the same commit, otherwise the
     // player-facing catalog compiles the path without it.
-    onCommit(
-      {
-        modules: { ...overlay.modules, [created.id]: created },
-        paths: overlay.paths.map((path) => (path.id === authoredPath.id ? { ...path, moduleIds } : path)),
-      },
-      t("saved", lang),
-    );
-    setPathDraft({ ...authoredPath, moduleIds });
+    commitPathDraft({ ...pathDraft, moduleIds }, { modules: { ...overlay.modules, [created.id]: created } });
+    setPathDraft({ ...pathDraft, moduleIds });
     // Open the lab that was just committed, not a re-derived one: openModule
     // reads the overlay prop, which is still the pre-commit copy here, so it
     // would mint a second lab the path never lists.
@@ -205,20 +212,71 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
     setDraft(null);
   };
 
+  /**
+   * Persist the path being edited. An authored path is the educator's own data
+   * and is replaced in the list; a shipped path is source data, so the edit is
+   * stored as a layer over the original instead of overwriting it.
+   */
+  const commitPathDraft = (next: AuthoredPath, extra?: Partial<ContentOverlay>) => {
+    const base = { ...overlay, ...(extra || {}) };
+    onCommit(
+      authoredPath
+        ? { ...base, paths: base.paths.map((path) => (path.id === next.id ? { ...next } : path)) }
+        : { ...base, pathEdits: { ...(base.pathEdits || {}), [next.id]: next } },
+      t("saved", lang),
+    );
+  };
+
   const savePathDraft = () => {
     if (!pathDraft) return;
-    onCommit({ ...overlay, paths: overlay.paths.map((path) => (path.id === pathDraft.id ? { ...pathDraft } : path)) }, t("saved", lang));
+    commitPathDraft(pathDraft);
+  };
+
+  const revertPathDraft = () => {
+    if (!shippedPath) return;
+    const edits = { ...(overlay.pathEdits || {}) };
+    delete edits[shippedPath.id];
+    onCommit({ ...overlay, pathEdits: Object.keys(edits).length ? edits : undefined }, t("saved", lang));
+    setPathDraft(snapshotPath(shippedPath));
   };
 
   const removePath = () => {
-    if (!authoredPath) return;
-    const rest = { ...overlay.modules };
-    for (const id of authoredPath.moduleIds) delete rest[id];
-    onCommit({ ...overlay, modules: rest, paths: overlay.paths.filter((path) => path.id !== authoredPath.id) }, t("saved", lang));
+    if (!pathDraft) return;
+    if (authoredPath) {
+      // The educator's own path: delete it and the labs only it used.
+      const rest = { ...overlay.modules };
+      for (const id of authoredPath.moduleIds) delete rest[id];
+      onCommit({ ...overlay, modules: rest, paths: overlay.paths.filter((path) => path.id !== authoredPath.id) }, t("saved", lang));
+    } else {
+      // Source data cannot be deleted, only hidden - and it must stay restorable.
+      onCommit({ ...overlay, hiddenPaths: [...new Set([...hiddenPaths, pathDraft.id])] }, t("saved", lang));
+    }
     setPathId(null);
     setPathDraft(null);
     setModuleId(null);
     setDraft(null);
+  };
+
+  const removeLab = (id: string) => {
+    onCommit({ ...overlay, hiddenModules: [...new Set([...hiddenModules, id])] }, t("saved", lang));
+    if (draft?.id === id) {
+      setDraft(null);
+      setModuleId(null);
+    }
+  };
+
+  const restorePath = (id: string) => onCommit({ ...overlay, hiddenPaths: hiddenPaths.filter((entry) => entry !== id) }, t("saved", lang));
+
+  const restoreLab = (id: string) => onCommit({ ...overlay, hiddenModules: hiddenModules.filter((entry) => entry !== id) }, t("saved", lang));
+
+  /** Drop the authored copy of a shipped lab, keeping the lab itself. */
+  const revertLabDraft = () => {
+    if (!draft) return;
+    const rest = { ...overlay.modules };
+    delete rest[draft.id];
+    onCommit({ ...overlay, modules: rest }, t("saved", lang));
+    const shipped = moduleById(draft.id);
+    setDraft(shipped ? structuredClone(snapshotModule(shipped)) : null);
   };
 
   const patchDraft = (patch: Partial<AuthoredModule>) => setDraft((current) => (current ? { ...current, ...patch } : current));
@@ -248,7 +306,7 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
           <ul>
             {issues.flatMap((entry) => entry.issues.map((issue) => (
               <li key={`${entry.moduleId}-${issue.code}-${"index" in issue ? issue.index : ""}`}>
-                <strong>{labName(entry.moduleId)}:</strong> {describeIssue(issue)}
+                <strong>{labLabel(entry.moduleId)}:</strong> {describeIssue(issue)}
               </li>
             )))}
           </ul>
@@ -259,17 +317,26 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
         <div className="content-pane">
           <h3>{t("learningPaths", lang)}</h3>
           <ul className="content-list">
-            {LEARNING_PATHS.map((path) => (
-              <li key={path.id}>
-                <button
-                  type="button"
-                  className={pathId === path.id ? "is-active" : ""}
-                  onClick={() => { setPathId(path.id); setPathDraft(null); setModuleId(null); setDraft(null); }}
-                >
-                  {path.pathNumber}. {path.title[lang] || path.title.en}
-                </button>
-              </li>
-            ))}
+            {LEARNING_PATHS.filter((path) => !hiddenPaths.includes(path.id)).map((path) => {
+              const edit = overlay.pathEdits?.[path.id];
+              return (
+                <li key={path.id}>
+                  <button
+                    type="button"
+                    className={pathId === path.id ? "is-active" : ""}
+                    onClick={() => {
+                      setPathId(path.id);
+                      setPathDraft(edit ? structuredClone(edit) : snapshotPath(path));
+                      setModuleId(null);
+                      setDraft(null);
+                    }}
+                  >
+                    {path.pathNumber}. {(edit?.title[lang] || edit?.title.en) || path.title[lang] || path.title.en}
+                    {edit && <span className="content-tag">{t("edited", lang)}</span>}
+                  </button>
+                </li>
+              );
+            })}
             {overlay.paths.map((path, index) => (
               <li key={path.id}>
                 <button
@@ -287,9 +354,10 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
         </div>
 
         <div className="content-pane">
-          {authoredPath && pathDraft ? (
+          {pathDraft ? (
             <>
               <h3>{t("editPath", lang)}</h3>
+              {!authoredPath && <p className="content-lede">{t("editShippedPathNote", lang)}</p>}
               <BiField label={t("pathTitle", lang)} value={pathDraft.title} onChange={(title) => setPathDraft({ ...pathDraft, title })} />
               <BiField label={t("pathSubtitle", lang)} value={pathDraft.subtitle} onChange={(subtitle) => setPathDraft({ ...pathDraft, subtitle })} />
               <BiField label={t("pathBlurb", lang)} value={pathDraft.blurb} rows={3} onChange={(blurb) => setPathDraft({ ...pathDraft, blurb })} />
@@ -304,46 +372,55 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
               </div>
               <div className="content-actions">
                 <button type="button" className="educator-primary-button" onClick={savePathDraft}>{t("savePath", lang)}</button>
-                <button type="button" className="content-danger" onClick={removePath}>{t("deletePath", lang)}</button>
+                {!authoredPath && overlay.pathEdits?.[pathDraft.id] && (
+                  <button type="button" onClick={revertPathDraft}>{t("revertToShipped", lang)}</button>
+                )}
+                <button type="button" className="content-danger" onClick={removePath}>
+                  {authoredPath ? t("deletePath", lang) : t("removePathFromCatalogue", lang)}
+                </button>
               </div>
 
               <h3>{t("labsInPath", lang)}</h3>
               <ul className="content-list">
-                {pathDraft.moduleIds.map((id) => {
-                  const authored = overlay.modules[id];
-                  return (
-                    <li key={id}>
-                      <button type="button" className={moduleId === id ? "is-active" : ""} onClick={() => openModule(id)}>
-                        {authored?.title[lang] || authored?.title.en || id}
-                        {issueFor(id).length > 0 && <span className="content-tag content-tag--warn">{issueFor(id).length}</span>}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              <button type="button" className="educator-primary-button" onClick={addLab}>{t("newLab", lang)}</button>
-            </>
-          ) : pathId ? (
-            <>
-              <h3>{t("labsInPath", lang)}</h3>
-              <p className="content-lede">{t("shippedPathNote", lang)}</p>
-              <ul className="content-list">
-                {(LEARNING_PATHS.find((path) => path.id === pathId)?.modules || []).map((module) => (
-                  <li key={module.id}>
-                    <button type="button" className={moduleId === module.id ? "is-active" : ""} onClick={() => openModule(module.id)}>
-                      {module.title[lang] || module.title.en}
-                      {overlay.modules[module.id] && <span className="content-tag">{t("edited", lang)}</span>}
-                      {issueFor(module.id).length > 0 && <span className="content-tag content-tag--warn">{issueFor(module.id).length}</span>}
+                {pathDraft.moduleIds.filter((id) => !hiddenModules.includes(id)).map((id) => (
+                  <li key={id} className="content-list__row">
+                    <button type="button" className={moduleId === id ? "is-active" : ""} onClick={() => openModule(id)}>
+                      {labLabel(id)}
+                      {overlay.modules[id] && <span className="content-tag">{t("edited", lang)}</span>}
+                      {issueFor(id).length > 0 && <span className="content-tag content-tag--warn">{issueFor(id).length}</span>}
                     </button>
+                    <button type="button" className="content-danger" onClick={() => removeLab(id)}>{t("removeLabFromCatalogue", lang)}</button>
                   </li>
                 ))}
               </ul>
+              <button type="button" className="educator-primary-button" onClick={addLab}>{t("newLab", lang)}</button>
             </>
           ) : (
             <p className="content-lede">{t("pickAPath", lang)}</p>
           )}
         </div>
       </div>
+
+      {(hiddenPaths.length > 0 || hiddenModules.length > 0) && (
+        <div className="content-removed">
+          <h3>{t("removedContent", lang)}</h3>
+          <p className="content-lede">{t("removedContentNote", lang)}</p>
+          <ul className="content-list">
+            {hiddenPaths.map((id) => (
+              <li key={id} className="content-list__row">
+                <span>{t("removedPathLabel", lang)}: {LEARNING_PATHS.find((path) => path.id === id)?.title[lang] || id}</span>
+                <button type="button" onClick={() => restorePath(id)}>{t("restoreContent", lang)}</button>
+              </li>
+            ))}
+            {hiddenModules.map((id) => (
+              <li key={id} className="content-list__row">
+                <span>{t("removedLabLabel", lang)}: {labLabel(id)}</span>
+                <button type="button" onClick={() => restoreLab(id)}>{t("restoreContent", lang)}</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {draft && (
         <div className="content-lab">
@@ -475,8 +552,19 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
           <div className="content-actions content-actions--sticky">
             <button type="button" className="educator-primary-button" onClick={saveDraft}>{t("saveLab", lang)}</button>
             <button type="button" onClick={revertDraft}>{t("revert", lang)}</button>
-            {overlay.modules[draft.id] && (
-              <button type="button" className="content-danger" onClick={discardDraft}>{t("deleteLab", lang)}</button>
+            {draftIsShipped ? (
+              <>
+                {overlay.modules[draft.id] && (
+                  <button type="button" onClick={revertLabDraft}>{t("revertToShipped", lang)}</button>
+                )}
+                <button type="button" className="content-danger" onClick={() => removeLab(draft.id)}>
+                  {t("removeLabFromCatalogue", lang)}
+                </button>
+              </>
+            ) : (
+              overlay.modules[draft.id] && (
+                <button type="button" className="content-danger" onClick={discardDraft}>{t("deleteLab", lang)}</button>
+              )
             )}
           </div>
         </div>

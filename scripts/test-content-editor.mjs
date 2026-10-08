@@ -297,7 +297,77 @@ try {
   act(() => { dashRoot.unmount(); });
   dashContainer.remove();
 
-  console.log("Content editor UI checks passed: creating a learning path, adding and writing a lab with XP and a completion test, reaching the player catalog, deleting without leftovers, bilingual warnings, and reaching it all from the educator dashboard.");
+
+  // ── Editing and removing a learning path or lab that ships with the app ──
+  overlay = authoring.emptyOverlay();
+  render();
+
+  const clickContaining = (fragment) => {
+    const button = buttons().find((candidate) => candidate.textContent.includes(fragment));
+    assert.ok(button, `something labelled with "${fragment}" is on screen`);
+    act(() => { button.click(); });
+  };
+  const text = () => document.querySelector(".content-editor").textContent;
+
+  const shippedPath = lessons.LEARNING_PATHS[0];
+  const shippedLab = shippedPath.modules[0];
+
+  // A shipped path opens as an editable form, pre-filled with the original.
+  clickContaining(shippedPath.title.en);
+  assert.ok(text().includes("This path ships with the platform"), "the editor says a shipped path is layered, not overwritten");
+  assert.equal(labelled("Path title — EN", "textarea").value, shippedPath.title.en, "the shipped path title pre-fills the form");
+
+  type(labelled("Path title — EN", "textarea"), "Renamed by the educator");
+  clickButton("Save path");
+  assert.equal(overlay.pathEdits[shippedPath.id].title.en, "Renamed by the educator", "the rename is stored as an edit on the shipped path");
+  assert.equal(shippedPath.title.en === "Renamed by the educator", false, "the shipped data itself is untouched");
+
+  // Once edited, the list marks it and offers a way back.
+  clickContaining("Renamed by the educator");
+  assert.ok(buttons().some((button) => button.textContent.trim() === "Revert to the shipped version"), "an edited shipped path can be reverted");
+  clickButton("Revert to the shipped version");
+  assert.equal(overlay.pathEdits?.[shippedPath.id], undefined, "reverting drops the stored edit");
+  assert.ok(text().includes(shippedPath.title.en), "the shipped title is back on screen");
+
+  // Removing one lab from a shipped path.
+  clickContaining(shippedPath.title.en);
+  const removeButtons = buttons().filter((button) => button.textContent.trim() === "Remove lab");
+  assert.ok(removeButtons.length >= shippedPath.modules.length, "every lab in the path offers a remove action");
+  act(() => { removeButtons[0].click(); });
+  assert.deepEqual(overlay.hiddenModules, [shippedLab.id], "removing a lab records it as hidden");
+  // The "Removed" section names the lab in a span, so the lab list is checked
+  // by its buttons rather than by the pane's text.
+  assert.ok(!buttons().some((button) => button.textContent.includes(shippedLab.title.en)), "the removed lab leaves the path's lab list");
+  assert.ok(text().includes("Removed from the catalogue"), "the editor shows what was removed");
+  assert.ok(text().includes("Restore"), "and offers a restore");
+
+  clickContaining("Restore");
+  assert.deepEqual(overlay.hiddenModules, [], "restoring clears the removal");
+  assert.ok(buttons().some((button) => button.textContent.includes(shippedLab.title.en)), "the lab is back in the path");
+
+  // Removing the whole shipped path.
+  clickContaining(shippedPath.title.en);
+  clickButton("Remove path from the catalogue");
+  assert.deepEqual(overlay.hiddenPaths, [shippedPath.id], "removing a shipped path records it as hidden");
+  assert.ok(!buttons().some((button) => button.textContent.includes(shippedPath.title.en)), "the removed path leaves the path list");
+  assert.ok(text().includes("Removed from the catalogue"), "the removed path is listed for restore");
+  clickContaining("Restore");
+  assert.deepEqual(overlay.hiddenPaths, [], "restoring brings the path back");
+  assert.ok(buttons().some((button) => button.textContent.includes(shippedPath.title.en)), "and it is selectable again");
+
+  // A lab the educator opens for editing can be reverted or removed.
+  clickContaining(shippedPath.title.en);
+  clickContaining(shippedLab.title.en);
+  assert.ok(buttons().some((button) => button.textContent.trim() === "Remove lab"), "a shipped lab in the lab editor offers removal");
+  type(labelled("Lab title — EN", "textarea"), "Renamed lab");
+  clickButton("Save lab");
+  assert.equal(overlay.modules[shippedLab.id].title.en, "Renamed lab", "the lab edit is stored on the overlay");
+  assert.ok(buttons().some((button) => button.textContent.trim() === "Revert to the shipped version"), "an edited shipped lab can be reverted");
+  clickButton("Revert to the shipped version");
+  assert.equal(overlay.modules[shippedLab.id], undefined, "reverting drops the authored copy of the lab");
+  assert.equal(labelled("Lab title — EN", "textarea").value, shippedLab.title.en, "and the form falls back to the shipped lab");
+
+  console.log("Content editor UI checks passed: creating a learning path, adding and writing a lab with XP and a completion test, reaching the player catalog, deleting without leftovers, bilingual warnings, and reaching it all from the educator dashboard; plus editing and removing a learning path or lab that ships with the app - the edit is layered over an untouched original, every removal is listed with a restore, and reverting hands the shipped version back.");
 } finally {
   await server.close();
 }

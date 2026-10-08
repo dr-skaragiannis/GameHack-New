@@ -12,7 +12,7 @@ import {
   type PlayerArchive,
   type RecoveryKeyFileRecord,
 } from "./playerArchive";
-import { emptyOverlay, type AuthoredModule, type AuthoredSection, type ContentOverlay } from "./contentAuthoring";
+import { emptyOverlay, type AuthoredModule, type AuthoredPath, type AuthoredSection, type ContentOverlay } from "./contentAuthoring";
 import { buildCourseExport, type CourseExport } from "./courseExport";
 import type { AssessmentQ } from "../data/assessments";
 import type { QuizQ } from "../data/quizzes";
@@ -929,6 +929,38 @@ function sanitizeShots(value: unknown): AuthoredSection["shots"] {
   return shots.length ? shots : undefined;
 }
 
+function stringIdList(value: unknown, limit: number): string[] {
+  if (!Array.isArray(value)) return [];
+  return (value as unknown[]).filter((entry): entry is string => typeof entry === "string" && !!entry).slice(0, limit).map((entry) => entry.slice(0, 80));
+}
+
+function sanitizePath(path: Record<string, unknown> | undefined, fallbackId: string): AuthoredPath {
+  return {
+    id: typeof path?.id === "string" && path.id ? path.id.slice(0, 80) : fallbackId,
+    title: sanitizeBi(path?.title),
+    subtitle: sanitizeBi(path?.subtitle),
+    blurb: sanitizeBi(path?.blurb),
+    scenario: (["lab", "raven", "ssh", "sudorun", "dfir"].includes(String(path?.scenario)) ? String(path?.scenario) : "lab") as AuthoredPath["scenario"],
+    accent: typeof path?.accent === "string" ? path.accent.slice(0, 40) : "cyan",
+    moduleIds: Array.isArray(path?.moduleIds)
+      ? (path.moduleIds as unknown[]).filter((entry): entry is string => typeof entry === "string").slice(0, 40)
+      : [],
+  };
+}
+
+/** Edits to shipped paths, keyed by built-in id. A blank key would be unaddressable. */
+function sanitizePathEdits(value: unknown): Record<string, AuthoredPath> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const result: Record<string, AuthoredPath> = {};
+  let count = 0;
+  for (const [rawId, raw] of Object.entries(value as Record<string, Record<string, unknown>>)) {
+    if (!rawId || !raw || typeof raw !== "object" || count >= 20) continue;
+    result[rawId.slice(0, 80)] = sanitizePath(raw, rawId.slice(0, 80));
+    count += 1;
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
 function sanitizeQuestionBank<T>(value: unknown): Record<string, T[]> | undefined {
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
   const result: Record<string, T[]> = {};
@@ -999,23 +1031,19 @@ function sanitizeOverlay(value: unknown): ContentOverlay {
     }
   }
   const paths = Array.isArray(record.paths)
-    ? record.paths.slice(0, 20).map((path: Record<string, unknown>, index: number) => ({
-        id: typeof path?.id === "string" && path.id ? path.id.slice(0, 80) : `path-${index}`,
-        title: sanitizeBi(path?.title),
-        subtitle: sanitizeBi(path?.subtitle),
-        blurb: sanitizeBi(path?.blurb),
-        scenario: (["lab", "raven", "ssh", "sudorun", "dfir"].includes(String(path?.scenario)) ? String(path.scenario) : "lab") as ContentOverlay["paths"][number]["scenario"],
-        accent: typeof path?.accent === "string" ? path.accent.slice(0, 40) : "cyan",
-        moduleIds: Array.isArray(path?.moduleIds)
-          ? (path.moduleIds as unknown[]).filter((entry): entry is string => typeof entry === "string").slice(0, 40)
-          : [],
-      }))
+    ? record.paths.slice(0, 20).map((path: Record<string, unknown>, index: number) => sanitizePath(path, `path-${index}`))
     : [];
+  const pathEdits = sanitizePathEdits(record.pathEdits);
+  const hiddenPaths = stringIdList(record.hiddenPaths, 20);
+  const hiddenModules = stringIdList(record.hiddenModules, 200);
   const quizzes = sanitizeQuestionBank<QuizQ>(record.quizzes);
   const assessments = sanitizeQuestionBank<AssessmentQ>(record.assessments);
   return {
     modules,
     paths,
+    ...(pathEdits ? { pathEdits } : {}),
+    ...(hiddenPaths.length ? { hiddenPaths } : {}),
+    ...(hiddenModules.length ? { hiddenModules } : {}),
     ...(quizzes ? { quizzes } : {}),
     ...(assessments ? { assessments } : {}),
   };

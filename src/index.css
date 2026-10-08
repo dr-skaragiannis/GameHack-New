@@ -8154,6 +8154,54 @@ nav .ui-live-icon:nth-child(2n) { animation-delay: 0.4s; }
   background: rgba(34, 211, 238, 0.1);
   color: #eafcff;
 }
+/* A row that pairs the lab/path button with its own remove or restore action. */
+.content-list__row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+.content-list__row > button:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.content-list__row > button:not(:first-child) {
+  flex: 0 0 auto;
+  width: auto;
+  white-space: nowrap;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  color: #c9c9d2;
+  font-size: 0.72rem;
+}
+.content-list__row > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  color: #c9c9d2;
+  font-size: 0.8rem;
+}
+.content-removed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  border-radius: 14px;
+  background: rgba(248, 113, 113, 0.05);
+}
+.content-removed h3 {
+  margin: 0;
+  color: #fca5a5;
+  font-size: 0.82rem;
+  font-weight: 720;
+  letter-spacing: 0.02em;
+}
 .content-tag {
   margin-left: auto;
   padding: 1px 7px;
