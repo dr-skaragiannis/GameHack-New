@@ -480,6 +480,7 @@ export const UI: Dict = {
   importPlayersDone: { en: "Players imported.", el: "Οι παίκτες εισήχθησαν." },
   importPlayersInvalid: { en: "That file is not a GameHack player archive.", el: "Αυτό το αρχείο δεν είναι αρχείο παικτών GameHack." },
   playerArchiveSaved: { en: "Player archive downloaded.", el: "Το αρχείο παικτών κατέβηκε." },
+  saved: { en: "Saved. Players see this on their next refresh.", el: "Αποθηκεύτηκε. Οι παίκτες θα το δουν στην επόμενη ανανέωση." },
   accountMenu: { en: "Account menu", el: "Μενού λογαριασμού" },
   controlCenter: { en: "Control center", el: "Κέντρο ελέγχου" },
   community: { en: "Community", el: "Κοινότητα" },
