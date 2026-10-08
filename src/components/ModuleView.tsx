@@ -586,7 +586,7 @@ export default function ModuleView({
                                   {t("hintPenaltyApplied", lang).replace("{xp}", String(HINT_XP_PENALTY))}
                                 </p>
                                 <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-cyan-100">
-                                  {task.hint.en.trim()}
+                                  {bi(task.hint, lang).trim()}
                                 </pre>
                               </div>
                             )}

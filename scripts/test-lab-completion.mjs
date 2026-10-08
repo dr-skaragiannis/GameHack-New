@@ -165,7 +165,55 @@ try {
   );
   unmount(greek);
 
-  console.log("Lab completion checks passed: an authored lab with no quiz completes directly, a quiz-backed lab still routes through its quiz, the prompt only shows on a finished lab, and both languages are labelled.");
+  // ── A revealed hint is rendered in the reader's language ─────────────────
+  // ModuleView read task.hint.en here unconditionally, so a Greek reader was
+  // shown the English hint. Nothing covered it because every shipped hint had
+  // identical en and el text. This lab deliberately makes them differ.
+  const bilingualHintLab = authoring.compileModule({
+    id: "lab-hint-lang", order: 1, icon: "terminal", color: "from-cyan-400 to-sky-900",
+    difficulty: 2, scenario: "lab",
+    title: { en: "Hint language", el: "Γλώσσα υπόδειξης" },
+    subtitle: { en: "Revealed hints", el: "Υποδείξεις" },
+    badge: { en: "Hints", el: "Υποδείξεις" },
+    theory: [{
+      id: "s1",
+      heading: { en: "Hints", el: "Υποδείξεις" },
+      body: { en: "A hint names the command.\n\nIt should read in your language.", el: "Η υπόδειξη ονομάζει την εντολή.\n\nΠρέπει να διαβάζεται στη γλώσσα σου." },
+    }],
+    cheats: [],
+    tasks: [{
+      id: "t1",
+      instruction: { en: "Read the log.", el: "Διάβασε το αρχείο καταγραφής." },
+      hint: { en: "tail -n 20 /var/log/auth.log", el: "tail -n 20 /var/log/auth.log # τελευταίες γραμμές" },
+      explain: { en: "Why: the tail of a log is where the answer is. How: tail prints the last lines without reading the whole file, which matters when the file is large.", el: "Γιατί: στο τέλος του αρχείου καταγραφής βρίσκεται η απάντηση. Πώς: η tail εμφανίζει τις τελευταίες γραμμές χωρίς να διαβάσει ολόκληρο το αρχείο, που έχει σημασία όταν το αρχείο είναι μεγάλο." },
+      reward: 9,
+      check: { kind: "command", pattern: "^tail " },
+    }],
+    challenges: [],
+  });
+
+  for (const [lang, expected, other] of [
+    ["el", "tail -n 20 /var/log/auth.log # τελευταίες γραμμές", "Show exact command"],
+    ["en", "tail -n 20 /var/log/auth.log", "τελευταίες γραμμές"],
+  ]) {
+    const view = mount({
+      module: bilingualHintLab, userId: `hint-${lang}`, campaignId: "path-1",
+      lang, initialTab: "lab", hasQuiz: false, hasAssessment: false, done: [],
+    });
+    const reveal = lang === "el"
+      ? view.label("Εμφάνιση ακριβούς εντολής")
+      : view.label("Show exact command");
+    assert.ok(reveal, `the reveal button should be labelled in ${lang}`);
+    act(() => { reveal.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })); });
+    const shown = view.container.textContent;
+    assert.ok(shown.includes(expected), `the revealed hint should be the ${lang} text`);
+    if (lang === "el") {
+      assert.ok(!shown.includes(other), `the ${lang} view should not fall back to the English label`);
+    }
+    unmount(view);
+  }
+
+  console.log("Lab completion checks passed: an authored lab with no quiz completes directly, a quiz-backed lab still routes through its quiz, the prompt only shows on a finished lab, both languages are labelled, and a revealed hint renders in the reader's language.");
 } finally {
   await server.close();
 }
