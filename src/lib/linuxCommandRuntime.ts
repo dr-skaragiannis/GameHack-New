@@ -343,8 +343,34 @@ tmpfs           512M     0  512M   0% /tmp`);
       return true;
     }
     case "mount": {
+      const typeIndex = rest.indexOf("-t");
+      const fsType = typeIndex >= 0 ? rest[typeIndex + 1] || "" : "";
+      if (fsType === "nfs") {
+        const positional = rest.filter((value, index) => !value.startsWith("-") && rest[index - 1] !== "-t");
+        const [source, mountPoint] = positional;
+        if (!source || !mountPoint) {
+          print("usage: mount -t nfs HOST:/export /mountpoint", "err");
+          return true;
+        }
+        const exportPath = source.includes(":") ? source.slice(source.indexOf(":") + 1) : source;
+        const exported = getNode(t.fs, resolvePath(t, exportPath));
+        if (!exported || exported.type !== "dir") {
+          print(`mount.nfs: mounting ${source} failed, reason given by server: No such file or directory\n# the export path must exist in this lab before it can be mounted.`, "err");
+          return true;
+        }
+        const destination = getNode(t.fs, resolvePath(t, mountPoint));
+        if (!destination || destination.type !== "dir") {
+          print(`mount: ${mountPoint}: mount point does not exist (create it with mkdir -p)`, "err");
+          return true;
+        }
+        destination.children = { ...(exported.children || {}) };
+        destination.mountSource = source;
+        t.flags.add("nfs-mount");
+        print(`# ${source} is mounted on ${mountPoint} inside the virtual filesystem; no host mount table was changed.`);
+        return true;
+      }
       if (rest.length === 0) {
-        print("/dev/virtual-root on / type ext4 (ro,relatime)\ntmpfs on /tmp type tmpfs (rw,nosuid,nodev)\n# Host mounts and block devices are not exposed.");
+        print("/dev/virtual-root on / type ext4 (ro,relatime)\ntmpfs on /tmp type tmpfs (rw,nosuid,nodev)\n# Host mounts and block devices are not exposed. NFS mounts are simulated with mount -t nfs HOST:/export /mountpoint.");
       } else {
         print("mount: host devices cannot be mounted in the GameHack sandbox", "err");
       }
@@ -664,21 +690,377 @@ tmpfs           512M     0  512M   0% /tmp`);
       result.filter((line) => line.kind !== "in").forEach((line) => print(line.text, line.kind));
       return true;
     }
+    case "ss": {
+      const listeners: { netid: string; local: string; process: string }[] = [
+        { netid: "tcp", local: "0.0.0.0:22", process: "sshd" },
+        { netid: "tcp", local: "0.0.0.0:80", process: "apache2" },
+        { netid: "tcp", local: "127.0.0.1:3306", process: "mysqld" },
+        { netid: "tcp", local: "0.0.0.0:21", process: "vsftpd" },
+        { netid: "tcp", local: "0.0.0.0:139", process: "smbd" },
+        { netid: "tcp", local: "0.0.0.0:445", process: "smbd" },
+        { netid: "tcp", local: "0.0.0.0:111", process: "rpcbind" },
+        { netid: "tcp", local: "0.0.0.0:2049", process: "nfsd" },
+      ];
+      const serviceFor = (process: string) =>
+        process === "apache2" ? "apache2"
+        : process === "vsftpd" ? "vsftpd"
+        : process === "smbd" ? "smbd"
+        : process === "rpcbind" || process === "nfsd" ? "nfs-kernel-server"
+        : process === "mysqld" ? "mysql"
+        : "ssh";
+      const legacyAlias: Record<string, string[]> = { vsftpd: ["ftp"], nfsd: ["nfs"], smbd: ["samba", "nmbd"] };
+      const rows = listeners.filter((entry) => {
+        const primary = serviceFor(entry.process);
+        if (t.services[primary] === "running") return true;
+        return (legacyAlias[primary] || []).some((alias) => t.services[alias] === "running");
+      });
+      const wantUdp = flags.has("u");
+      const wantTcp = flags.has("t") || !wantUdp;
+      const shown = rows.filter((entry) => (wantTcp ? entry.netid === "tcp" : entry.netid === "udp"));
+      const header = `${flags.has("n") || true ? "Netid" : "Netid"} State  Recv-Q Send-Q Local Address:Port  Peer Address:Port Process`;
+      const body = shown.map((entry) => {
+        const listenerPid: Record<string, number> = { sshd: 612, apache2: 1024, mysqld: 1180, vsftpd: 1842, smbd: 2261, rpcbind: 2418, nfsd: 2431 };
+        const process = flags.has("p") ? `users:(("${entry.process}",pid=${listenerPid[entry.process] || 1024},fd=3))` : "";
+        return `${entry.netid}   LISTEN 0      128    ${entry.local.padEnd(20)}${"0.0.0.0:*".padEnd(18)}${process}`;
+      });
+      print(
+        [header, ...body, shown.length ? "" : "# no virtual listener is up: start a simulated service first (service NAME start)."]
+          .filter((line, index, all) => line || index === all.length - 1)
+          .join("\n"),
+      );
+      print("# ss replaces netstat: -t tcp, -u udp, -l listening, -n numeric, -p owning process. No host sockets were inspected.");
+      return true;
+    }
     case "systemctl": {
       const action = pos[0] || "status";
       const unit = (pos[1] || "").replace(/\.service$/, "");
+      if (action === "list-timers") {
+        print(
+          "NEXT                        LEFT        LAST                        PASSED   UNIT                         ACTIVATES\n" +
+            t.atQueue
+              .map((job) => `${`simulated ${job.time}`.padEnd(28)}${"—".padEnd(12)}${"n/a".padEnd(28)}${"n/a".padEnd(9)}${`${job.id}.timer`.padEnd(29)}${job.command}`)
+              .join("\n") || "no timers recorded in this lab",
+        );
+        print(`${t.crontab.filter((line) => !line.startsWith("#")).length} crontab entries are also recorded; the simulator never runs them.`);
+        return true;
+      }
+      if (action === "get-default") {
+        print("graphical.target (simulated)");
+        return true;
+      }
+      if (action === "list-unit-files") {
+        print(
+          "UNIT FILE            STATE    \n" +
+            Object.entries({ apache2: t.services.apache2 ? "enabled" : "disabled", cron: "enabled", mysql: t.bootServices.mysql || "disabled", ssh: "enabled" })
+              .map(([name, state]) => `${`${name}.service`.padEnd(21)}${state}`)
+              .join("\n"),
+        );
+        return true;
+      }
       if (!unit) {
         print("systemctl: missing unit name", "err");
         return true;
       }
       if (action === "start" || action === "restart") t.services[unit] = "running";
       else if (action === "stop") t.services[unit] = "stopped";
-      else if (action !== "status" && action !== "is-active" && action !== "enable" && action !== "disable") {
+      else if (action === "enable") t.bootServices[unit] = "enabled";
+      else if (action === "disable") t.bootServices[unit] = "disabled";
+      else if (action !== "status" && action !== "is-active" && action !== "is-enabled") {
         print(`systemctl: unsupported action '${action}'`, "err");
         return true;
       }
       const state = t.services[unit] || "inactive";
-      print(action === "is-active" ? state : `● ${unit}.service - GameHack simulated service\n   Loaded: loaded (/lib/systemd/system/${unit}.service; static)\n   Active: ${state === "running" ? "active (running)" : state}`);
+      const bootState = t.bootServices[unit] || (state === "inactive" ? "disabled" : "enabled");
+      if (action === "is-active") {
+        print(state === "running" ? "active" : state === "stopped" ? "inactive" : state);
+        return true;
+      }
+      if (action === "is-enabled") {
+        print(bootState);
+        return true;
+      }
+      if (action === "enable" || action === "disable") {
+        print(`Created symlink /etc/systemd/system/multi-user.target.wants/${unit}.service (simulated); boot state is now ${bootState}.`);
+        return true;
+      }
+      print(
+        `● ${unit}.service - GameHack simulated service\n` +
+          `   Loaded: loaded (/lib/systemd/system/${unit}.service; ${bootState})\n` +
+          `   Active: ${state === "running" ? "active (running)" : state}`,
+      );
+      return true;
+    }
+    case "testparm": {
+      const config = readVirtualFile(t, "/etc/samba/smb.conf", cmd, print);
+      if (!config) return true;
+      const sections: { name: string; params: [string, string][] }[] = [];
+      let current: { name: string; params: [string, string][] } | null = null;
+      for (const raw of config.text.split(/\r?\n/)) {
+        const line = raw.trim();
+        if (!line || line.startsWith("#") || line.startsWith(";")) continue;
+        const section = line.match(/^\[([^\]]+)\]$/);
+        if (section) {
+          current = { name: section[1], params: [] };
+          sections.push(current);
+          continue;
+        }
+        const pair = line.match(/^([^=]+?)\s*=\s*(.*)$/);
+        if (pair && current) {
+          const value = pair[2].trim();
+          const normalized = /^(yes|no)$/i.test(value) ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : value;
+          current.params.push([pair[1].trim().toLowerCase(), normalized]);
+        }
+      }
+      const lines = ["Loaded services file OK.", "Weak crypto is allowed by default.", "", "Server role: ROLE_STANDALONE", ""];
+      for (const section of sections) {
+        lines.push(`[${section.name}]`);
+        for (const [name, value] of section.params.sort((a, b) => a[0].localeCompare(b[0]))) lines.push(`\t${name} = ${value}`);
+        lines.push("");
+      }
+      print(lines.join("\n").trimEnd());
+      print("# testparm validates the configuration and prints it normalised; apply changes only after it reports no error.");
+      t.flags.add("testparm");
+      if (/\[\s*shares\s*\]/i.test(config.text)) t.flags.add("testparm-shares");
+      return true;
+    }
+    case "exportfs": {
+      const table = readVirtualFile(t, "/etc/exports", cmd, print);
+      if (!table) return true;
+      const entries = table.text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith("#"))
+        .map((line) => {
+          const match = line.match(/^(\S+)\s+(\S+?)\(([^)]*)\)\s*$/);
+          if (!match) return null;
+          return { path: match[1], clients: match[2], options: match[3].split(",").map((value) => value.trim()).filter(Boolean) };
+        })
+        .filter((entry): entry is { path: string; clients: string; options: string[] } => entry !== null);
+      if (flags.has("a")) {
+        print(entries.length ? `# ${entries.length} export line(s) reloaded from /etc/exports (simulated); exportfs -a prints nothing on success.` : "# no active export lines in /etc/exports, so there was nothing to reload.");
+        t.flags.add("exportfs-apply");
+        return true;
+      }
+      if (flags.has("v")) {
+        if (!entries.length) {
+          print("# no exports are defined in /etc/exports");
+          t.flags.add("exportfs-empty");
+          return true;
+        }
+        print(
+          entries
+            .map((entry) => {
+              const effective = ["rw", "wdelay", ...entry.options.filter((option) => option !== "sync"), "sec=sys", "no_all_squash"];
+              return `${entry.path}\n\t\t${entry.clients}(${[...new Set(effective)].join(",")})`;
+            })
+            .join("\n"),
+        );
+        print("# exportfs -v shows the effective options the kernel will enforce, not the text you typed.");
+        t.flags.add("exportfs-verify");
+        if (entries.some((entry) => entry.options.includes("no_root_squash"))) t.flags.add("exportfs-no-root-squash");
+        return true;
+      }
+      print(entries.map((entry) => `${entry.path} \t\t${entry.clients}`).join("\n") || "# no exports are defined in /etc/exports");
+      return true;
+    }
+    case "showmount": {
+      const target = pos[0] || "";
+      if (!flags.has("e") && !flags.has("a")) {
+        print("usage: showmount [-a|-e] [HOST]", "err");
+        return true;
+      }
+      const table = readVirtualFile(t, "/etc/exports", cmd, print);
+      const entries = (table?.text || "")
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith("#"))
+        .map((line) => line.match(/^(\S+)\s+(\S+?)\(/))
+        .filter((match): match is RegExpMatchArray => match !== null);
+      print(`Export list for ${target || "localhost"}:`);
+      print(entries.map((match) => `${match[1]} ${match[2]}`).join("\n"));
+      if (!entries.length) print("# the target advertises no exports, so there is nothing to mount or enumerate.");
+      t.flags.add("showmount");
+      if (entries.length) t.flags.add("showmount-export");
+      return true;
+    }
+    case "rpcinfo": {
+      const target = pos.find((value) => !value.startsWith("-")) || "localhost";
+      if (!flags.has("p")) {
+        print("usage: rpcinfo -p [HOST]", "err");
+        return true;
+      }
+      print(
+        [
+          "   program vers proto   port  service",
+          "    100000    4   tcp    111  portmapper",
+          "    100000    3   tcp    111  portmapper",
+          "    100000    2   tcp    111  portmapper",
+          "    100000    4   udp    111  portmapper",
+          "    100005    3   tcp  45231  mountd",
+          "    100005    3   udp  42768  mountd",
+          "    100003    4   tcp   2049  nfs",
+          "    100003    3   tcp   2049  nfs",
+          "    100003    4   udp   2049  nfs",
+          "    100003    3   udp   2049  nfs",
+        ].join("\n"),
+      );
+      print(`# rpcinfo -p ${target} reads the portmapper: dynamic mountd ports are normal unless an administrator pins them.`);
+      t.flags.add("rpcinfo");
+      return true;
+    }
+    case "nxc":
+    case "netexec": {
+      const protocol = (pos[0] || "").toLowerCase();
+      const target = pos[1] || "";
+      const optionValue = (name: string) => {
+        const index = rest.indexOf(name);
+        return index >= 0 ? (rest[index + 1] || "").replace(/^['"]|['"]$/g, "") : null;
+      };
+      if (!protocol || !target) {
+        print("usage: nxc smb|nfs HOST [--shares|--enum-shares|--share PATH [--ls PATH|--get-file REMOTE LOCAL]]", "err");
+        return true;
+      }
+      if (protocol === "smb") {
+        if (!rest.includes("--shares")) {
+          print("nxc smb: this lab supports --shares only; it never attempts a password against a live host.", "sys");
+          return true;
+        }
+        const user = optionValue("-u") || "guest";
+        print(
+          [
+            `[*] SMB         ${target}    445    UBUNTU-LAB     [*] Unix - Samba 4.17.7-Ubuntu`,
+            `[+] SMB         ${target}    445    UBUNTU-LAB     UBUNTU-LAB\\${user}: (Guest)`,
+            `[*] SMB         ${target}    445    UBUNTU-LAB     Enumerated shares`,
+            `[*] SMB         ${target}    445    UBUNTU-LAB     Share           Permissions     Remark`,
+            `[*] SMB         ${target}    445    UBUNTU-LAB     -----           -----------     ------`,
+            `[*] SMB         ${target}    445    UBUNTU-LAB     print$                          Printer Drivers`,
+            `[*] SMB         ${target}    445    UBUNTU-LAB     shares          READ            Lab file share`,
+            `[*] SMB         ${target}    445    UBUNTU-LAB     IPC$                            IPC Service`,
+          ].join("\n"),
+        );
+        print("# [*] informational, [+] success, [-] failure: the marker convention is the same across NetExec protocols.");
+        t.flags.add("nxc-smb-shares");
+        return true;
+      }
+      if (protocol === "nfs") {
+        const share = optionValue("--share");
+        const table = readVirtualFile(t, "/etc/exports", cmd, print);
+        const entries = (table?.text || "")
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter((line) => line && !line.startsWith("#"))
+          .map((line) => line.match(/^(\S+)\s+(\S+?)\(([^)]*)\)\s*$/))
+          .filter((match): match is RegExpMatchArray => match !== null);
+        if (rest.includes("--enum-shares")) {
+          print(`[*] NFS         ${target}    2049   UBUNTU-LAB     [*] Enumerating NFS exports`);
+          if (!entries.length) {
+            print(`[-] NFS         ${target}    2049   UBUNTU-LAB     no exports are advertised by this target`);
+            return true;
+          }
+          for (const match of entries) {
+            const options = match[3].split(",").map((value) => value.trim());
+            const rootEscape = options.includes("no_root_squash");
+            print(`[+] NFS         ${target}    2049   UBUNTU-LAB     ${match[1]} (${options.join(", ")}, root escape: ${rootEscape ? "True" : "False"})`);
+          }
+          t.flags.add("nxc-nfs-enum");
+          if (entries.some((match) => match[3].includes("no_root_squash"))) t.flags.add("nxc-nfs-root-escape");
+          return true;
+        }
+        if (!share) {
+          print("nxc nfs: pass --enum-shares to discover exports, or --share PATH with --ls or --get-file.", "sys");
+          return true;
+        }
+        const sharePath = share.replace(/\/$/, "");
+        const directory = getNode(t.fs, resolvePath(t, sharePath));
+        if (!directory || directory.type !== "dir") {
+          print(`[-] NFS         ${target}    2049   UBUNTU-LAB     ${sharePath}: no such export in this lab`, "err");
+          return true;
+        }
+        const lsTarget = optionValue("--ls");
+        if (lsTarget) {
+          print(`[*] NFS         ${target}    2049   UBUNTU-LAB     [*] Listing ${lsTarget} on ${sharePath}`);
+          const rows = Object.values(directory.children || {})
+            .filter((node) => node.name !== ".keep")
+            .map((node) => `[*] NFS         ${target}    2049   UBUNTU-LAB     ${node.type === "dir" ? "drwxrwxrwx" : "-rw-r--r--"} ${node.owner || "root"} ${node.group || "root"} ${String((node.content || "").length || 4096).padStart(4)} ${node.name}`);
+          print(rows.join("\n") || `[*] NFS         ${target}    2049   UBUNTU-LAB     (empty export)`);
+          t.flags.add("nxc-nfs-ls");
+          return true;
+        }
+        if (rest.includes("--get-file")) {
+          const index = rest.indexOf("--get-file");
+          const remoteName = rest[index + 1] || "";
+          const localName = rest[index + 2] || remoteName;
+          const remoteFile = getNode(t.fs, resolvePath(t, `${sharePath}/${remoteName}`));
+          if (!remoteFile || remoteFile.type !== "file") {
+            print(`[-] NFS         ${target}    2049   UBUNTU-LAB     ${remoteName}: file not found in the export`, "err");
+            return true;
+          }
+          print(`[*] NFS         ${target}    2049   UBUNTU-LAB     [*] Downloading ${remoteName} from ${sharePath}/`);
+          if (!writeVirtualFile(t, localName, remoteFile.content || "", false, cmd, print)) return true;
+          print(`[+] NFS         ${target}    2049   UBUNTU-LAB     File successfully downloaded to ${localName}`);
+          t.flags.add("nxc-nfs-get");
+          return true;
+        }
+        print("nxc nfs: --share PATH needs --ls PATH or --get-file REMOTE LOCAL.", "sys");
+        return true;
+      }
+      print(`nxc: protocol '${protocol}' is not simulated in this lab (smb and nfs are).`, "err");
+      return true;
+    }
+    case "umount": {
+      const mountPoint = pos[0];
+      if (!mountPoint) {
+        print("usage: umount MOUNTPOINT", "err");
+        return true;
+      }
+      const target = resolvePath(t, mountPoint);
+      const destination = getNode(t.fs, target);
+      if (!destination || destination.type !== "dir") {
+        print(`umount: ${mountPoint}: not mounted.\n# mount an export first with mount -t nfs HOST:/export ${mountPoint}.`);
+        return true;
+      }
+      const source = destination.mountSource;
+      destination.children = {};
+      delete destination.mountSource;
+      t.flags.add("nfs-umount");
+      print(source ? `# ${source} was unmounted from ${mountPoint}; verify that the mount point is now empty.` : `# ${mountPoint} was unmounted.`);
+      return true;
+    }
+    case "sshd": {
+      const config = readVirtualFile(t, "/etc/ssh/sshd_config", cmd, print);
+      const directives = new Map<string, string>();
+      for (const line of (config?.text || "").split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const [name, ...value] = trimmed.split(/\s+/);
+        directives.set(name.toLowerCase(), value.join(" "));
+      }
+      if (flags.has("t")) {
+        const broken = [...directives.entries()].find(([, value]) => !value);
+        if (broken) print(`sshd: ${broken[0]}: missing argument (simulated configuration check)`, "err");
+        else print("# configuration syntax OK: every directive in the simulated sshd_config carries a value.");
+        print("# sshd -t only validates; on a real host you still reload the service to apply changes.");
+        return true;
+      }
+      if (flags.has("T")) {
+        const defaults: Record<string, string> = {
+          port: "22",
+          permitrootlogin: "prohibit-password",
+          passwordauthentication: "yes",
+          pubkeyauthentication: "yes",
+          kbdinteractiveauthentication: "yes",
+          maxauthtries: "6",
+          logingracetime: "120",
+          allowtcpforwarding: "yes",
+          x11forwarding: "yes",
+          allowagentforwarding: "yes",
+        };
+        const merged = { ...defaults, ...Object.fromEntries(directives) };
+        print(Object.entries(merged).map(([name, value]) => `${name} ${value}`).join("\n"));
+        print("# sshd -T prints the effective configuration after every include is merged; this lab merges only its simulated file.");
+        return true;
+      }
+      print("sshd: use -t to validate the configuration or -T to print the effective settings (simulated daemon; nothing was started).", "sys");
       return true;
     }
     case "exit": {

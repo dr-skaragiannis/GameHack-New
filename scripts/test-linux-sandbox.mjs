@@ -88,12 +88,13 @@ try {
   assert.ok(linuxPart3, "Linux for Beginners #3 should be registered as a learning path");
   assert.equal(learningPath.pathNumber, 3);
   assert.equal(linuxPart3.pathNumber, 4);
-  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.id), ["linux-part-01", "linux-part-02", "linux-part-03", "ssh-port-22"]);
-  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.pathNumber), [1, 2, 3, 4]);
+  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.id), ["linux-part-01", "linux-part-02", "linux-part-03", "ssh-port-22", "file-shares"]);
+  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.pathNumber), [1, 2, 3, 4, 5]);
   assert.deepEqual(lessons.LEARNING_PATHS[0].modules.map((module) => module.id), ["sr-intro", "sr-help", "sr-search", "sr-files", "sr-text", "sr-apt", "sr-perms"]);
   assert.deepEqual(lessons.LEARNING_PATHS[1].modules.map((module) => module.id), ["sr-net", "sr-proc", "sr-env"]);
   assert.deepEqual(lessons.LEARNING_PATHS[2].modules.map((module) => module.id), ["sr-bash", "sr-cron", "sr-svc"]);
-  assert.deepEqual(lessons.LEARNING_PATHS[3].modules.map((module) => module.id), ["ssh-doc-setup", "ssh-svc-recon", "ssh-svc-auth", "ssh-doc-boundary", "ssh-svc-harden"]);
+  assert.deepEqual(lessons.LEARNING_PATHS[3].modules.map((module) => module.id), ["ssh-doc-setup", "ssh-svc-recon", "ssh-svc-auth", "ssh-doc-boundary", "ssh-svc-harden", "ssh-doc-audit"]);
+  assert.deepEqual(lessons.LEARNING_PATHS[4].modules.map((module) => module.id), ["share-doc-intro", "share-ftp", "share-smb", "share-nfs", "share-harden"]);
   assert.doesNotMatch(JSON.stringify(lessons.LEARNING_PATHS[3]), /hydra -l|netexec|meterpreter|ssh2john/i);
   for (const hiddenId of ["gamehack", "raven", "wirewalk", "sudorun", "linux-beginners-2", "linux-beginners-3", "dfir-fieldwork", "ssh-service"]) {
     assert.equal(lessons.LEARNING_PATHS.some((path) => path.id === hiddenId), false, `${hiddenId} should stay off the visible map`);
@@ -120,6 +121,29 @@ try {
   ];
   for (const label of sshLabels) {
     assert.doesNotMatch(label, /[ΆΈΉΊΌΎΏΪΫ]/, `Greek label should not put a tonos on a capital: ${label}`);
+  }
+  const fileShares = lessons.campaignById("file-shares");
+  assert.ok(fileShares, "the anonymous-login file-share path should be registered");
+  assert.equal(fileShares.pathNumber, 5);
+  assert.deepEqual(fileShares.modules.map((module) => module.id), ["share-doc-intro", "share-ftp", "share-smb", "share-nfs", "share-harden"]);
+  const shareLabels = [
+    fileShares.title.el,
+    fileShares.subtitle.el,
+    ...fileShares.modules.flatMap((module) => [
+      module.title.el,
+      module.subtitle.el,
+      module.badge.el,
+      ...module.theory.map((section) => section.heading.el),
+    ]),
+  ];
+  for (const label of shareLabels) {
+    assert.doesNotMatch(label, /[ΆΈΉΊΌΎΏΪΫ]/, `Greek label should not put a tonos on a capital: ${label}`);
+  }
+  for (const section of fileShares.modules.flatMap((module) => module.theory)) {
+    for (const language of ["en", "el"]) {
+      const paragraphs = section.body[language].split(/\n\s*\n/).filter((paragraph) => paragraph.trim());
+      assert.ok(paragraphs.length >= 2, `${section.heading.en} should have two ${language} paragraphs`);
+    }
   }
   for (const section of sshService.modules.flatMap((module) => module.theory)) {
     for (const language of ["en", "el"]) {
@@ -184,6 +208,12 @@ try {
     "/etc/rc6.d",
     "/var/www/html/index.html",
     "/srv/ftp/ubuntu/release/favicon.ico",
+    "/etc/vsftpd.conf",
+    "/etc/samba/smb.conf",
+    "/etc/samba/gdbcommands",
+    "/etc/exports",
+    "/var/ftp",
+    "/srv/nfs",
   ];
   for (const path of courseFixtures) {
     assert.ok(terminal.getNode(courseTerm.fs, path), `missing virtual course fixture: ${path}`);
@@ -196,9 +226,12 @@ try {
     }
   }
   assert.equal(courseTerm.net.ip, "10.10.10.42", "the simulated DHCP lease should replace the temporary interface address");
-  assert.equal(courseTerm.atQueue.length, 1, "at should record a one-time simulated job");
-  assert.deepEqual(courseTerm.atQueue[0], { id: 1, time: "21:30", command: "/root/scanning_script.sh" });
-  assert.equal(courseTerm.jobs.length, 0, "fg should return the background editor to the foreground");
+  assert.equal(courseTerm.atQueue.length, 1, "the queue should hold the scheduled job that was not cancelled");
+  assert.deepEqual(courseTerm.atQueue[0], { id: 2, time: "21:30", command: "/root/scanning_script.sh" },
+    "at should record a one-time job, and the queue exercise cancels only the entry it created");
+  assert.ok(courseTerm.flags.has("atrm"), "atrm should remove a queued job without executing it");
+  assert.equal(courseTerm.jobs.length, 1, "only the nohup job should remain in the background table");
+  assert.match(courseTerm.jobs[0].cmd, /^nohup \//, "fg should return the background editor to the foreground");
   assert.ok(courseTerm.flags.has("crontab-install"), "crontab - should accept a recurring entry from the virtual pipe");
   assert.match(courseTerm.crontab.join("\n"), /30 21 \* \* \* \/root\/scanning_script\.sh/);
   assert.equal(courseTerm.procs.find((process) => process.pid === 7440)?.nice, 10, "renice should update the simulated process");
@@ -215,6 +248,17 @@ try {
     for (const objective of module.tasks) {
       for (const command of objective.hint.en.split(/\r?\n/).filter(Boolean)) terminal.runCommand(courseTerm, command);
       assert.ok(objective.check(courseTerm), `${module.id}/${objective.id} should complete from its exact hint`);
+    }
+  }
+  // every visible learning path: each task must complete when the player types its own hint
+  for (const visiblePath of lessons.LEARNING_PATHS) {
+    for (const module of visiblePath.modules) {
+      const moduleTerm = playerTerminal.createPlayerTerminal();
+      playerTerminal.activateTerminalForModule(moduleTerm, module.id, module.scenario);
+      for (const objective of module.tasks) {
+        for (const command of objective.hint.en.split(/\r?\n/).filter(Boolean)) terminal.runCommand(moduleTerm, command);
+        assert.ok(objective.check(moduleTerm), `${module.id}/${objective.id} should complete from its exact hint`);
+      }
     }
   }
   assert.ok(courseTerm.flags.has("hello-script"));

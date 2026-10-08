@@ -360,10 +360,25 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
           shot("ps aux | grep mysql", ["mysql     3410  0.1  1.2   44253  7373 ?        S    09:00  0:00 mysqld --defaults-file=/etc/mysql/my.cnf (simulated)"]),
         ],
       ),
+      section(
+        bi("systemctl, is-active and systemd timers", "systemctl, is-active και systemd timers"),
+        bi(
+          "Before you schedule anything, confirm that the scheduler itself is running, because minimal installs sometimes ship without it. The traditional check is service cron status and the modern one is systemctl status cron, which prints a small report card. Loaded tells you whether the unit is enabled for boot, and Active tells you whether it runs right now; a unit can be enabled and still inactive, which means a scheduled job would not fire until the next start. systemctl is-active cron answers with one word, which is the form to use inside a script.\n\nOn systemd distributions the equivalents are systemctl start cron and systemctl stop cron for immediate control, systemctl enable cron for boot, and systemctl is-enabled cron for the boot question alone. Debian names the unit cron while the Red Hat family names it crond, so check the name before you conclude that a scheduler is missing. The modern counterpart of a crontab line is a systemd timer: it pairs a .timer unit with a .service unit and supports conditions such as ten minutes after boot, and systemctl list-timers --all lists every scheduled timer. This lab records timers and crontab lines without executing either.",
+          "Πριν προγραμματίσεις οτιδήποτε, επιβεβαίωσε ότι ο ίδιος ο scheduler εκτελείται, επειδή οι λιτές εγκαταστάσεις μερικές φορές έρχονται χωρίς αυτόν. Ο παραδοσιακός έλεγχος είναι service cron status και ο σύγχρονος systemctl status cron, που εμφανίζει μικρή κάρτα αναφοράς. Το Loaded λέει αν η μονάδα είναι ενεργοποιημένη για εκκίνηση και το Active αν εκτελείται τώρα. Μια μονάδα μπορεί να είναι enabled και ταυτόχρονα inactive, που σημαίνει ότι η προγραμματισμένη εργασία δεν θα εκτελούνταν μέχρι την επόμενη εκκίνηση. Το systemctl is-active cron απαντά με μία λέξη, που είναι η μορφή για χρήση μέσα σε σενάριο.\n\nΣτις διανομές με systemd τα αντίστοιχα είναι systemctl start cron και systemctl stop cron για άμεσο έλεγχο, systemctl enable cron για εκκίνηση στο boot και systemctl is-enabled cron μόνο για το ερώτημα της εκκίνησης. Στο Debian η μονάδα ονομάζεται cron ενώ στην οικογένεια Red Hat ονομάζεται crond, οπότε έλεγξε το όνομα πριν συμπεράνεις ότι λείπει scheduler. Η σύγχρονη αντίστοιχη μορφή μιας γραμμής crontab είναι το systemd timer: ζευγαρώνει μια μονάδα .timer με μια .service και υποστηρίζει συνθήκες όπως δέκα λεπτά μετά την εκκίνηση, ενώ το systemctl list-timers --all εμφανίζει όλα τα προγραμματισμένα χρονόμετρα. Αυτό το εργαστήριο καταγράφει χρονόμετρα και γραμμές crontab χωρίς να εκτελεί τίποτα από τα δύο.",
+        ),
+        [
+          shot("systemctl is-active cron", ["inactive"]),
+          shot("systemctl start cron", ["Created symlink /etc/systemd/system/multi-user.target.wants/cron.service (simulated); boot state is now enabled."]),
+          shot("systemctl list-timers", ["NEXT                        LEFT        LAST                        PASSED   UNIT                         ACTIVATES"]),
+        ],
+      ),
     ],
     cheats: [
       { cmd: "service cron status", desc: bi("inspect the simulated scheduler", "έλεγχος του εικονικού scheduler") },
       { cmd: "service cron start", desc: bi("start cron inside this virtual lab", "εκκίνηση του cron μέσα στο εικονικό lab") },
+      { cmd: "systemctl is-active cron", desc: bi("one-word answer for scripts", "απάντηση μίας λέξης για σενάρια") },
+      { cmd: "systemctl is-enabled cron", desc: bi("does it start at boot?", "εκκινεί στο boot;") },
+      { cmd: "systemctl list-timers", desc: bi("list the recorded schedule", "εμφάνιση του καταγεγραμμένου προγράμματος") },
       { cmd: "cat /etc/crontab", desc: bi("read the system table and its user column", "ανάγνωση του system table και του πεδίου χρήστη") },
       { cmd: "crontab -e", desc: bi("open the current user’s schedule", "άνοιγμα του προγράμματος του τρέχοντος χρήστη") },
       { cmd: "crontab -l", desc: bi("list the current user’s schedule", "εμφάνιση του προγράμματος του τρέχοντος χρήστη") },
@@ -445,6 +460,19 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
         (term) =>
           ["defaults", "disable", "enable", "remove"].every((action) => term.flags.has(`rc-mysql-${action}`)) &&
           term.flags.has("reboot") && term.procs.some((process) => process.alive && /mysqld/.test(process.cmd)),
+      ),
+      task(
+        "systemd-view",
+        bi(
+          "Ask the same question in the systemd dialect: is the scheduler active, does it start at boot, and what schedule is recorded?",
+          "Κάνε το ίδιο ερώτημα στη διάλεκτο του systemd: είναι ενεργός ο scheduler, εκκινεί στο boot και ποιο πρόγραμμα έχει καταγραφεί;",
+        ),
+        bi("systemctl is-active cron\nsystemctl is-enabled cron\nsystemctl list-timers", "systemctl is-active cron\nsystemctl is-enabled cron\nsystemctl list-timers"),
+        bi(
+          "Why: Enabled and active answer different questions, and a scheduled job needs both. How: is-active reports the current state in one word, is-enabled reports the boot setting, and list-timers shows the recorded schedule. The lab answers from its own service and schedule records; nothing runs on the host.",
+          "Γιατί: Το enabled και το active απαντούν σε διαφορετικά ερωτήματα και μια προγραμματισμένη εργασία χρειάζεται και τα δύο. Πώς: το is-active αναφέρει την τρέχουσα κατάσταση με μία λέξη, το is-enabled τη ρύθμιση εκκίνησης και το list-timers το καταγεγραμμένο πρόγραμμα. Το εργαστήριο απαντά από τα δικά του αρχεία υπηρεσιών και προγράμματος, τίποτα δεν εκτελείται στον υπολογιστή.",
+        ),
+        (term) => usedCmd(term, /systemctl\s+is-active/) && usedCmd(term, /systemctl\s+is-enabled/) && usedCmd(term, /systemctl\s+list-timers/),
       ),
     ],
     challenges: [
@@ -552,12 +580,31 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
           "Ο απομακρυσμένος φάκελος και το favicon.ico είναι αρχεία fixture στο /srv/ftp του κοινού εικονικού συστήματος του παίκτη. Δεν γίνεται ποτέ σύνδεση στον δημόσιο server του άρθρου.",
         ),
       ),
+      section(
+        bi("apache2ctl, systemctl and ss: who is listening", "apache2ctl, systemctl και ss: ποιος ακούει"),
+        bi(
+          "Some services ship their own control script. apache2ctl configtest parses the configuration and answers Syntax OK without opening a port, apache2ctl -S prints the virtual-host layout, and apache2ctl start, stop, restart, or graceful control the daemon. On systemd machines the same four verbs are written systemctl start apache2, and service is a thin wrapper around it, so both spellings reach the same state; systemctl is-enabled adds the boot question that service never answered.\n\nStarting a web server is the moment a machine becomes reachable, so confirm it from the socket side. ss -tlnp is the modern replacement for netstat: -t selects TCP, -u UDP, -l listening sockets, -n numeric output, and -p the owning process. A row reading 0.0.0.0:80 with users:((\"apache2\",...)) means the service listens on every interface, while 127.0.0.1:3306 means a database answers only to the local machine. Read those two shapes as a security statement before you read them as a status report, and pipe the result into grep when you only care about one port: ss -tlnp | grep :22.",
+          "Κάποιες υπηρεσίες έχουν το δικό τους σενάριο ελέγχου. Το apache2ctl configtest διαβάζει τις ρυθμίσεις και απαντά Syntax OK χωρίς να ανοίξει θύρα, το apache2ctl -S εμφανίζει τη διάταξη των virtual hosts και τα apache2ctl start, stop, restart ή graceful ελέγχουν τον δαίμονα. Σε μηχανήματα με systemd τα ίδια τέσσερα ρήματα γράφονται systemctl start apache2, ενώ το service είναι απλό wrapper από πάνω, οπότε και οι δύο μορφές φτάνουν στην ίδια κατάσταση, το systemctl is-enabled προσθέτει το ερώτημα της εκκίνησης που το service δεν απαντούσε ποτέ.\n\nΗ εκκίνηση ενός web server είναι η στιγμή που το μηχάνημα γίνεται προσβάσιμο, οπότε επιβεβαίωσέ το από την πλευρά των υποδοχών. Το ss -tlnp είναι ο σύγχρονος αντικαταστάτης της netstat: το -t επιλέγει TCP, το -u UDP, το -l τις υποδοχές ακρόασης, το -n την αριθμητική έξοδο και το -p τη διεργασία ιδιοκτήτη. Μια γραμμή 0.0.0.0:80 με users:((\"apache2\",...)) σημαίνει ότι η υπηρεσία ακούει σε όλες τις διεπαφές, ενώ η 127.0.0.1:3306 σημαίνει ότι μια βάση απαντά μόνο στο τοπικό μηχάνημα. Διάβασε αυτά τα δύο σχήματα ως δήλωση ασφάλειας πριν τα διαβάσεις ως αναφορά κατάστασης, και πέρασε το αποτέλεσμα σε grep όταν σε ενδιαφέρει μία θύρα: ss -tlnp | grep :22.",
+        ),
+        [
+          shot("apache2ctl configtest", ["Syntax OK"]),
+          shot("service apache2 start", ["starting apache2 (simulated)."]),
+          shot("ss -tlnp", [
+            "Netid State  Recv-Q Send-Q Local Address:Port  Peer Address:Port Process",
+            'tcp   LISTEN 0      128    0.0.0.0:80          0.0.0.0:*         users:(("apache2",pid=1024,fd=3))',
+          ]),
+        ],
+      ),
     ],
     cheats: [
       { cmd: "service apache2 start", desc: bi("start only the virtual web service", "εκκίνηση μόνο της εικονικής web υπηρεσίας") },
       { cmd: "service apache2 status", desc: bi("inspect the virtual web service", "έλεγχος της εικονικής web υπηρεσίας") },
       { cmd: "service apache2 stop", desc: bi("stop the virtual web service", "διακοπή της εικονικής web υπηρεσίας") },
       { cmd: "service apache2 restart", desc: bi("restart after a page or configuration change", "επανεκκίνηση μετά από αλλαγή σελίδας ή ρύθμισης") },
+      { cmd: "apache2ctl configtest", desc: bi("parse the configuration, open no port", "ανάγνωση ρυθμίσεων, χωρίς θύρα") },
+      { cmd: "apache2ctl -S", desc: bi("show the virtual-host layout", "διάταξη virtual hosts") },
+      { cmd: "ss -tlnp", desc: bi("who listens, on which port, with which process", "ποιος ακούει, σε ποια θύρα, με ποια διεργασία") },
+      { cmd: "systemctl status apache2", desc: bi("unit file, boot state and active state", "unit file, κατάσταση boot και active") },
       { cmd: "nano /var/www/html/index.html", desc: bi("preview the virtual document root", "προεπισκόπηση του εικονικού document root") },
       { cmd: 'echo "<h1>GameHack</h1>" > /var/www/html/index.html', desc: bi("write HTML into the player’s virtual page", "εγγραφή HTML στην εικονική σελίδα του παίκτη") },
       { cmd: "curl http://localhost", desc: bi("read the local simulated web response", "ανάγνωση της τοπικής εικονικής απόκρισης") },
@@ -667,6 +714,19 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
           const downloaded = getNode(term.fs, `${term.cwd}/favicon.ico`);
           return term.flags.has("ftp-get") && term.flags.has("ftp-bye") && downloaded?.type === "file";
         },
+      ),
+      task(
+        "confirm-the-listener",
+        bi(
+          "Check the Apache configuration, start the service, then prove from the socket side which port is now open and which process owns it.",
+          "Έλεγξε τις ρυθμίσεις του Apache, ξεκίνα την υπηρεσία και έπειτα απόδειξε από την πλευρά των υποδοχών ποια θύρα άνοιξε και ποια διεργασία την κατέχει.",
+        ),
+        bi("apache2ctl configtest\napache2ctl start\nss -tlnp\nsystemctl status apache2", "apache2ctl configtest\napache2ctl start\nss -tlnp\nsystemctl status apache2"),
+        bi(
+          "Why: A service that is started is not the same as a service that is reachable, and the difference shows up in the listening socket. How: configtest validates the configuration without opening a port, start records the running state, ss -tlnp lists the listener with its owning process, and systemctl status shows the unit and its boot state. Every row here belongs to the virtual lab; no host port is opened.",
+          "Γιατί: Μια υπηρεσία που ξεκίνησε δεν ταυτίζεται με μια υπηρεσία προσβάσιμη, και η διαφορά φαίνεται στην υποδοχή ακρόασης. Πώς: το configtest επικυρώνει τις ρυθμίσεις χωρίς να ανοίξει θύρα, το start καταγράφει την κατάσταση λειτουργίας, το ss -tlnp εμφανίζει την υποδοχή με τη διεργασία ιδιοκτήτη και το systemctl status τη μονάδα με την κατάσταση εκκίνησης. Κάθε γραμμή εδώ ανήκει στο εικονικό εργαστήριο, καμία θύρα του υπολογιστή δεν ανοίγει.",
+        ),
+        (term) => term.flags.has("apache2ctl-configtest") && term.flags.has("apache2ctl-start") && usedCmd(term, /ss\s+-/) && usedCmd(term, /systemctl\s+status\s+apache2/),
       ),
     ],
     challenges: [

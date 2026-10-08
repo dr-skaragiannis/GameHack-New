@@ -94,7 +94,7 @@ export const SSH_DOC_BOUNDARY_MODULE: Module = {
   badge: bi("Boundary Keeper", "Φύλακας ορίου"),
   theory: [
     section(
-      bi("A weak password is the easy door", "Ένας αδύναμος κωδικός είναι η εύκολη πόρτα"),
+      bi("A weak password is the easy door", "Ο αδύναμος κωδικός είναι η εύκολη πόρτα"),
       bi(
         "If password authentication is on, a guess against that one account can succeed. Trying many likely passwords against one account is noisy. Trying one common password against many accounts is quieter and is meant to avoid a lockout. The impact is not the same. A hit on an ordinary user is a finding. A hit on an account that can administer the host is the whole machine, because no second password is required to become root.\n\nThis sandbox does not guess passwords, does not accept a list of your own, and does not offer a privileged account to attack. The defender's reading is the exercise: unique passwords, lockout, an alert on repeated failures, and no password authentication once keys work.",
         "Αν η ταυτοποίηση με κωδικό είναι ανοιχτή, μια μαντεψιά σε εκείνον τον έναν λογαριασμό μπορεί να πετύχει. Το να δοκιμάζεις πολλούς πιθανούς κωδικούς σε έναν λογαριασμό είναι θορυβώδες. Το να δοκιμάζεις έναν συνηθισμένο κωδικό σε πολλούς λογαριασμούς είναι πιο ήσυχο και στοχεύει στο να αποφύγει το κλείδωμα. Η συνέπεια δεν είναι η ίδια. Επιτυχία σε απλό χρήστη είναι εύρημα. Επιτυχία σε λογαριασμό που μπορεί να διαχειριστεί τον host είναι ολόκληρο το μηχάνημα, γιατί δεν χρειάζεται δεύτερος κωδικός για να γίνει κάποιος root.\n\nΑυτό το sandbox δεν μαντεύει κωδικούς, δεν δέχεται δική σου λίστα και δεν προσφέρει προνομιούχο λογαριασμό για επίθεση. Η ανάγνωση του αμυνόμενου είναι η άσκηση: μοναδικοί κωδικοί, κλείδωμα, ειδοποίηση στις επανειλημμένες αποτυχίες, και καθόλου ταυτοποίηση με κωδικό αφού δουλέψουν τα κλειδιά.",
@@ -325,7 +325,7 @@ export const SSH_SERVICE_MODULES: Module[] = [
         ),
       ),
       section(
-        bi("One password across many accounts", "Ένας κωδικός σε πολλούς λογαριασμούς"),
+        bi("One password across many accounts", "Ο ίδιος κωδικός σε πολλούς λογαριασμούς"),
         bi(
           "A dictionary check tries many passwords against one account. A spray tries one common password against many accounts, slowly enough to avoid a lockout. The impact is different. A hit on an ordinary user is a finding. A hit on an account that can administer the host is the whole machine, because no second password is required to become root. Shared or trivial passwords on privileged accounts are the failure this path keeps returning to.\n\nThis sandbox does not spray accounts, does not accept a password list of your own, and does not offer a privileged account to attack. The defender's reading is enough: unique passwords, no password authentication once keys work, lockout, and an alert on repeated failures.",
           "Ο έλεγχος λεξικού δοκιμάζει πολλούς κωδικούς σε έναν λογαριασμό. Ο ψεκασμός δοκιμάζει έναν συνηθισμένο κωδικό σε πολλούς λογαριασμούς, αρκετά αργά ώστε να αποφύγει το κλείδωμα. Η συνέπεια διαφέρει. Επιτυχία σε απλό χρήστη είναι εύρημα. Επιτυχία σε λογαριασμό που μπορεί να διαχειριστεί τον host είναι ολόκληρο το μηχάνημα, γιατί δεν χρειάζεται δεύτερος κωδικός για να γίνει κάποιος root. Κοινοί ή τετριμμένοι κωδικοί σε προνομιούχους λογαριασμούς είναι η αποτυχία στην οποία γυρίζει αυτό το μονοπάτι.\n\nΑυτό το sandbox δεν ψεκάζει λογαριασμούς, δεν δέχεται δική σου λίστα κωδικών και δεν προσφέρει προνομιούχο λογαριασμό για επίθεση. Η ανάγνωση του αμυνόμενου αρκεί: μοναδικοί κωδικοί, καθόλου ταυτοποίηση με κωδικό αφού δουλέψουν τα κλειδιά, κλείδωμα, και ειδοποίηση στις επανειλημμένες αποτυχίες.",
@@ -435,7 +435,7 @@ export const SSH_SERVICE_MODULES: Module[] = [
         ),
       ),
       section(
-        bi("A copied key outlives the password", "Ένα αντιγραμμένο κλειδί ζει μετά τον κωδικό"),
+        bi("A copied key outlives the password", "Το αντιγραμμένο κλειδί ζει μετά τον κωδικό"),
         bi(
           "After password authentication is disabled, access depends on who is listed in authorized_keys and who holds the matching private key. Anyone who can write that file can add their own public key and keep a login that no longer asks for a password. Anyone who can read a private key can carry that login to another machine. Audit ~/.ssh on every account. The directory should contain only keys you issued, and authorized_keys should contain only public keys you meant to trust.\n\nFile copy over the same channel is why the audit matters. An authenticated session can move a note, and it can also move a key. In this lab the copy is a local note to a fictional path. Do not practice by pulling account databases or by replacing a trust list from another computer.",
           "Αφού απενεργοποιηθεί η ταυτοποίηση με κωδικό, η πρόσβαση εξαρτάται από το ποιος είναι στη λίστα του authorized_keys και ποιος κρατά το αντίστοιχο ιδιωτικό κλειδί. Όποιος μπορεί να γράψει αυτό το αρχείο μπορεί να προσθέσει το δικό του δημόσιο κλειδί και να κρατήσει σύνδεση που δεν ζητά πια κωδικό. Όποιος μπορεί να διαβάσει ένα ιδιωτικό κλειδί μπορεί να μεταφέρει αυτή τη σύνδεση σε άλλο μηχάνημα. Έλεγξε το ~/.ssh σε κάθε λογαριασμό. Ο κατάλογος πρέπει να έχει μόνο κλειδιά που εξέδωσες εσύ, και το authorized_keys μόνο δημόσια κλειδιά που σκόπευες να εμπιστευτείς.\n\nΗ αντιγραφή αρχείων στο ίδιο κανάλι είναι ο λόγος που ο έλεγχος έχει σημασία. Μια ταυτοποιημένη συνεδρία μπορεί να μετακινήσει μια σημείωση, και μπορεί επίσης να μετακινήσει ένα κλειδί. Σε αυτό το εργαστήριο η αντιγραφή είναι μια τοπική σημείωση σε φανταστική διαδρομή. Μην εξασκείσαι τραβώντας βάσεις λογαριασμών ή αντικαθιστώντας μια λίστα εμπιστοσύνης από άλλον υπολογιστή.",
@@ -579,3 +579,199 @@ export const SSH_SERVICE_MODULES: Module[] = [
     ),
   },
 ];
+
+export const SSH_DOC_AUDIT_MODULE: Module = {
+  id: "ssh-doc-audit",
+  order: 5,
+  icon: "lock",
+  color: "from-slate-300 to-slate-800",
+  difficulty: 3,
+  scenario: lab,
+  title: bi("Hardening summary and audit", "Σύνοψη σκλήρυνσης και έλεγχος"),
+  subtitle: bi("Close the chain in the order that actually holds", "Κλείσε την αλυσίδα με τη σειρά που πραγματικά αντέχει"),
+  badge: bi("Hardening Auditor", "Ελεγκτής σκλήρυνσης"),
+  theory: [
+    section(
+      bi("Remove password authentication first", "Αφαίρεσε πρώτα την ταυτοποίηση με κωδικό"),
+      bi(
+        `${auth.en}\n\nEvery credential guess depends on the server accepting a password over the network. Setting PasswordAuthentication no and KbdInteractiveAuthentication no removes that whole category, because there is no longer a human-chosen secret for anyone to guess. The practical preconditions are a tested key for every user who needs access and a way to place a key on a machine that was just rebuilt; certificate-based access or an out-of-band provisioning step solves both, and neither is a reason to leave passwords enabled indefinitely.`,
+        `${auth.el}\n\nΚάθε μαντεψιά διαπιστευτηρίου στηρίζεται στο ότι ο server δέχεται κωδικό πάνω από το δίκτυο. Αν ορίσεις PasswordAuthentication no και KbdInteractiveAuthentication no, αφαιρείς ολόκληρη την κατηγορία, επειδή δεν υπάρχει πια μυστικό επιλογής ανθρώπου για να μαντέψει κανείς. Οι πρακτικές προϋποθέσεις είναι ένα δοκιμασμένο κλειδί για κάθε χρήστη που χρειάζεται πρόσβαση και τρόπος να τοποθετήσεις κλειδί σε μηχάνημα που μόλις ξαναχτίστηκε, η ταυτοποίηση με πιστοποιητικά ή ένα βήμα provisioning εκτός ζώνης λύνουν και τα δύο, και κανένα από τα δύο δεν είναι λόγος να κρατάς τους κωδικούς ενεργούς επ’ αόριστον.`,
+      ),
+      [
+        shot("grep -i passwordauthentication /etc/ssh/sshd_config", ["PasswordAuthentication yes"]),
+      ],
+    ),
+    section(
+      bi("Protect the keys that replace it", "Προστάτεψε τα κλειδιά που τον αντικαθιστούν"),
+      bi(
+        "Disabling passwords is only as strong as the passphrase on the keys that remain. A key that a wordlist can open is not a credential, it is a liability: it grants access without leaving an authentication record on the server, so the only evidence is a copy of the file on someone else's disk. Use long, randomly generated passphrases kept in an agent instead of typed repeatedly, and keep the private file at mode 600 so only its owner can read it.\n\nAudit the ~/.ssh directory on every host for keys that should no longer be trusted. A key belonging to someone who left three years ago is still a working credential today, and the comment field at the end of a public key is what identifies it. Keep a complete inventory of the keys you issued and of where each one is authorized, because revocation without an inventory is guesswork rather than a procedure.",
+        "Η απενεργοποίηση των κωδικών είναι τόσο ισχυρή όσο η συνθηματική φράση στα κλειδιά που μένουν. Ένα κλειδί που ανοίγει με λίστα λέξεων δεν είναι διαπιστευτήριο, είναι υποχρέωση: δίνει πρόσβαση χωρίς να αφήνει καταγραφή ταυτοποίησης στον server, οπότε η μόνη απόδειξη είναι ένα αντίγραφο του αρχείου στον δίσκο κάποιου άλλου. Χρησιμοποίησε μακριές, τυχαία παραγόμενες φράσεις αποθηκευμένες σε agent, παρά πληκτρολογημένες ξανά και ξανά, και κράτα το ιδιωτικό αρχείο με δικαιώματα 600 ώστε μόνο ο ιδιοκτήτης του να το διαβάζει.\n\nΈλεγξε τον κατάλογο ~/.ssh σε κάθε host για κλειδιά που δεν πρέπει πια να εμπιστεύεσαι. Ένα κλειδί ατόμου που έφυγε πριν τρία χρόνια είναι ακόμα ενεργό διαπιστευτήριο σήμερα, και το πεδίο σχολίου στο τέλος του δημόσιου κλειδιού είναι αυτό που το αναγνωρίζει. Κράτα πλήρη απογραφή των κλειδιών που εξέδωσες και του πού είναι εξουσιοδοτημένο το καθένα, επειδή η ανάκληση χωρίς απογραφή είναι μαντεψιά και όχι διαδικασία.",
+      ),
+      [
+        shot("ssh-copy-id labuser@10.10.10.12", ["Simulated public key recorded in the lab trust list; the private key never left this sandbox."]),
+        shot("ssh labuser@10.10.10.12 id", ["uid=1000(labuser) gid=1000(labuser) groups=1000(labuser) (simulated output)"]),
+      ],
+    ),
+    section(
+      bi("Close forwarding, then watch the egress", "Κλείσε την προώθηση και παρακολούθησε την έξοδο"),
+      bi(
+        "An ordinary authenticated account can reach services that no firewall rule protects, because those services trust anything arriving on the loopback address. AllowTcpForwarding no closes that category outright; if some forwarding is genuinely required, PermitOpen restricts it to specific destinations. On hosts where tunneling is part of the design, log forwarding requests and alert on them instead of allowing them silently.\n\nThe same logic runs in the other direction. A callback shell and the exfiltration of a private key both depend on the target being able to open an outbound connection to an address the attacker chose, so restricting egress to the destinations the server truly needs defeats more techniques than almost any other control, and in practice it is rarer than it should be. Monitor egress as carefully as you monitor ingress.",
+        "Ένας απλός ταυτοποιημένος λογαριασμός φτάνει υπηρεσίες που κανένας κανόνας firewall δεν προστατεύει, επειδή εκείνες οι υπηρεσίες εμπιστεύονται οτιδήποτε φτάνει στη διεύθυνση loopback. Το AllowTcpForwarding no κλείνει ολόκληρη την κατηγορία, ενώ αν κάποια προώθηση χρειάζεται πραγματικά, το PermitOpen την περιορίζει σε συγκεκριμένους προορισμούς. Σε host όπου το tunneling είναι μέρος του σχεδιασμού, κατέγραφε τα αιτήματα προώθησης και σήμαινε συναγερμό, αντί να τα επιτρέπεις σιωπηλά.\n\nΗ ίδια λογική ισχύει και προς την αντίθετη κατεύθυνση. Ένα κέλυφος αντίστροφης σύνδεσης και η εξαγωγή ενός ιδιωτικού κλειδιού εξαρτώνται και τα δύο από το ότι ο στόχος μπορεί να ανοίξει εξερχόμενη σύνδεση προς διεύθυνση της επιλογής του επιτιθέμενου, οπότε ο περιορισμός της εξόδου στους προορισμούς που χρειάζεται πραγματικά ο server νικά περισσότερες τεχνικές από σχεδόν κάθε άλλο έλεγχο, και στην πράξη είναι σπανιότερος από όσο θα έπρεπε. Παρακολούθησε την έξοδο όσο προσεκτικά παρακολουθείς την είσοδο.",
+      ),
+    ),
+    section(
+      bi("Harden the daemon configuration itself", "Σκλήρυνε την ίδια τη ρύθμιση του δαίμονα"),
+      bi(
+        "Modern OpenSSH offers a compact set of directives that closes a large surface at once. PermitRootLogin no, or at least prohibit-password, removes the single most attacked account. MaxAuthTries 3 ends an online guessing run early, and LoginGraceTime 30 stops half-open connections from accumulating. AllowUsers or AllowGroups restricts which accounts may connect at all, while X11Forwarding no together with AllowAgentForwarding no removes features most servers never use.\n\nTwo commands make the change safe. sshd -t validates the syntax before anything is reloaded, and sshd -T prints the effective configuration after every include has been merged, which is the only reliable way to see what the daemon will actually enforce. Applying a configuration without a syntax check is the difference between a setting change and an outage, so validate first, reload second, and test a login third.",
+        "Το σύγχρονο OpenSSH προσφέρει ένα συμπαγές σύνολο οδηγιών που κλείνει μεγάλη επιφάνεια με τη μία. Το PermitRootLogin no, ή τουλάχιστον prohibit-password, αφαιρεί τον λογαριασμό με τις περισσότερες επιθέσεις. Το MaxAuthTries 3 τερματίζει νωρίς μια online προσπάθεια μαντεψιάς και το LoginGraceTime 30 εμποδίζει τις μισάνοιχτες συνδέσεις να συσσωρεύονται. Το AllowUsers ή το AllowGroups περιορίζει ποιοι λογαριασμοί μπορούν να συνδεθούν καθόλου, ενώ το X11Forwarding no μαζί με το AllowAgentForwarding no αφαιρούν χαρακτηριστικά που οι περισσότεροι servers δεν χρησιμοποιούν ποτέ.\n\nΔύο εντολές κάνουν την αλλαγή ασφαλή. Το sshd -t επικυρώνει τη σύνταξη πριν επαναφορτωθεί οτιδήποτε και το sshd -T εμφανίζει την ενεργή ρύθμιση αφού έχουν συγχωνευτεί όλα τα includes, που είναι ο μόνος αξιόπιστος τρόπος να δεις τι θα εφαρμόσει πραγματικά ο δαίμονας. Η εφαρμογή ρύθμισης χωρίς έλεγχο σύνταξης είναι η διαφορά ανάμεσα σε αλλαγή ρύθμισης και σε διακοπή, οπότε επικύρωσε πρώτα, επαναφόρτωσε δεύτερον και δοκίμασε μια σύνδεση τρίτον.",
+      ),
+    ),
+    section(
+      bi("Rate limits, evidence and revocation drills", "Όριο ρυθμού, αποδείξεις και πρόβες ανάκλησης"),
+      bi(
+        "Rate limiting and blocking buy time and produce evidence. A filter that watches the authentication log denies an address after a handful of failures, which turns a noisy guessing run into a fight with a ban list; a firewall that permits SSH only from known management ranges is stronger still, and an intrusion-prevention layer at the network edge adds another. None of these replaces an authentication policy, but applied together they make a successful online guessing run unlikely.\n\nOrchestration and auditing are what turn the whole chain from invisible into obvious: a weekly check that no authorized_keys file changed, an alert on sessions that open forwarding, and a report for every host with more than a handful of failed logins. Assume breach and rehearse revocation. An incident plan that cannot answer which machines trusted a given key has not actually been tested.",
+        "Το όριο ρυθμού και το μπλοκάρισμα αγοράζουν χρόνο και παράγουν αποδείξεις. Ένα φίλτρο που παρακολουθεί το αρχείο καταγραφής ταυτοποίησης απαγορεύει μια διεύθυνση μετά από μερικές αποτυχίες, που μετατρέπει μια θορυβώδη προσπάθεια μαντεψιάς σε μάχη με τη λίστα απαγόρευσης, ένα firewall που επιτρέπει SSH μόνο από γνωστά εύρη διαχείρισης είναι ακόμα ισχυρότερο και ένα στρώμα πρόληψης εισβολής στην άκρη του δικτύου προσθέτει άλλο ένα. Τίποτα από αυτά δεν αντικαθιστά την πολιτική ταυτοποίησης, αλλά μαζί καθιστούν την επιτυχημένη online μαντεψιά απίθανη.\n\nΗ ενοργάνωση και ο έλεγχος είναι αυτά που μετατρέπουν ολόκληρη την αλυσίδα από αόρατη σε προφανή: εβδομαδιαίος έλεγχος ότι κανένα αρχείο authorized_keys δεν άλλαξε, συναγερμός σε συνεδρίες που ανοίγουν προώθηση και αναφορά για κάθε host με περισσότερες από μερικές αποτυχημένες συνδέσεις. Υποθέσε παραβίαση και πρόβαρε την ανάκληση. Ένα σχέδιο αντιμετώπισης περιστατικού που δεν μπορεί να απαντήσει ποια μηχανήματα εμπιστεύονταν ένα συγκεκριμένο κλειδί δεν έχει δοκιμαστεί πραγματικά.",
+      ),
+    ),
+    section(
+      bi("The audit you can run on a machine you own", "Ο έλεγχος που μπορείς να τρέξεις σε μηχάνημα που σου ανήκει"),
+      bi(
+        "The audit is a handful of read-only commands and it answers three questions. Is the service listening where you expect? Which public keys are trusted, on every account? What did the authentication log record recently? The first question is answered by ss -tlnp, the second by a find across the filesystem for authorized_keys files read with ls -l so owner and mode are visible, and the third by journalctl -u ssh with a time window.\n\nRun the same audit on a machine you administer and compare the answers with what you believed the configuration said; the mismatch is the finding. Every command in this module reads the simulated lab. None of them opens a connection to a real host, changes a daemon setting, or touches a machine you do not own.",
+        "Ο έλεγχος είναι μερικές εντολές μόνο για ανάγνωση και απαντά σε τρία ερωτήματα. Ακούει η υπηρεσία εκεί που περιμένεις; Ποια δημόσια κλειδιά είναι αξιόπιστα, σε κάθε λογαριασμό; Τι κατέγραψε πρόσφατα το αρχείο ταυτοποίησης; Στο πρώτο απαντά το ss -tlnp, στο δεύτερο μια αναζήτηση find σε όλο το σύστημα για αρχεία authorized_keys διαβασμένα με ls -l ώστε να φαίνονται ιδιοκτήτης και δικαιώματα, και στο τρίτο το journalctl -u ssh με χρονικό παράθυρο.\n\nΤρέξε τον ίδιο έλεγχο σε μηχάνημα που διαχειρίζεσαι και σύγκρινε τις απαντήσεις με αυτά που πίστευες ότι λέει η ρύθμιση, η διαφορά είναι το εύρημα. Κάθε εντολή αυτού του κεφαλαίου διαβάζει το εικονικό εργαστήριο. Καμία δεν ανοίγει σύνδεση με πραγματικό host, δεν αλλάζει ρύθμιση δαίμονα και δεν αγγίζει μηχάνημα που δεν σου ανήκει.",
+      ),
+      [
+        shot("service ssh start", ["Starting the virtual ssh service."]),
+        shot("find / -name authorized_keys", ["/home/raven/.ssh/authorized_keys"]),
+        shot("journalctl -u ssh --since \"1 hour ago\"", ["Apr 12 08:00:01 kali systemd[1]: Started GameHack lab services."]),
+      ],
+    ),
+  ],
+  cheats: [
+    { cmd: "cat /etc/ssh/sshd_config", desc: bi("read the starting policy", "ανάγνωση της αρχικής πολιτικής") },
+    { cmd: "grep -i passwordauthentication /etc/ssh/sshd_config", desc: bi("the line that decides everything else", "η γραμμή που κρίνει όλα τα υπόλοιπα") },
+    { cmd: "service ssh start", desc: bi("start the simulated daemon", "εκκίνηση του εικονικού δαίμονα") },
+    { cmd: "ss -tlnp", desc: bi("listening sockets with their owning process", "υποδοχές ακρόασης με τη διεργασία ιδιοκτήτη") },
+    { cmd: "systemctl status ssh", desc: bi("unit file, boot state, active state", "unit file, κατάσταση boot και active") },
+    { cmd: "sshd -t", desc: bi("validate the syntax before any reload", "επικύρωση σύνταξης πριν την επαναφόρτωση") },
+    { cmd: "sshd -T", desc: bi("the effective configuration after merging", "η ενεργή ρύθμιση μετά τη συγχώνευση") },
+    { cmd: "find / -name authorized_keys", desc: bi("every trust list on the filesystem", "κάθε λίστα εμπιστοσύνης στο σύστημα") },
+    { cmd: "ls -l /home/raven/.ssh/authorized_keys", desc: bi("owner and mode of one trust list", "ιδιοκτήτης και δικαιώματα μίας λίστας") },
+    { cmd: "cat /home/raven/.ssh/authorized_keys", desc: bi("which public keys are trusted", "ποια δημόσια κλειδιά είναι αξιόπιστα") },
+    { cmd: "journalctl -u ssh --since \"1 hour ago\"", desc: bi("recent authentication activity", "πρόσφατη δραστηριότητα ταυτοποίησης") },
+    { cmd: "ssh-keygen -t ed25519", desc: bi("record a simulated key pair", "καταγραφή εικονικού ζεύγους κλειδιών") },
+    { cmd: "ssh-copy-id labuser@10.10.10.12", desc: bi("install the public half only", "εγκατάσταση μόνο του δημόσιου μισού") },
+    { cmd: "ssh labuser@10.10.10.12 id", desc: bi("one remote command, then return", "μία απομακρυσμένη εντολή και επιστροφή") },
+    { cmd: "ssh -o PreferredAuthentications=password labuser@10.10.10.12", desc: bi("verify what happens when passwords are off", "έλεγχος τι συμβαίνει όταν κλείσουν οι κωδικοί") },
+    { cmd: "scp notes.txt labuser@10.10.10.12:/tmp/notes.txt", desc: bi("simulated transfer over the same channel", "εικονική μεταφορά στο ίδιο κανάλι") },
+    { cmd: "ssh -L 8080:127.0.0.1:8080 labuser@10.10.10.12", desc: bi("record a forward request, open no socket", "καταγραφή αιτήματος, χωρίς socket") },
+  ],
+  tasks: [
+    task(
+      "effective-policy",
+      bi(
+        "Read the daemon policy and pull out the line that decides whether a password can ever be checked.",
+        "Διάβασε την πολιτική του δαίμονα και απομόνωσε τη γραμμή που κρίνει αν μπορεί καν να ελεγχθεί κωδικός.",
+      ),
+      bi("cat /etc/ssh/sshd_config\ngrep -i passwordauthentication /etc/ssh/sshd_config", "cat /etc/ssh/sshd_config\ngrep -i passwordauthentication /etc/ssh/sshd_config"),
+      bi(
+        "Why: A commented line is a default, and an active line is a decision; only the second one is enforced. How: cat shows the whole policy and grep keeps the authentication line. The file belongs to the simulated lab, so reading it changes nothing.",
+        "Γιατί: Μια σχολιασμένη γραμμή είναι προεπιλογή και μια ενεργή γραμμή είναι απόφαση, μόνο η δεύτερη εφαρμόζεται. Πώς: το cat εμφανίζει ολόκληρη την πολιτική και το grep κρατά τη γραμμή ταυτοποίησης. Το αρχείο ανήκει στο εικονικό εργαστήριο, οπότε η ανάγνωσή του δεν αλλάζει τίποτα.",
+      ),
+      (term) => term.flags.has("read-sshd") && usedCmd(term, /grep\s+-i\s+passwordauthentication/),
+    ),
+    task(
+      "trust-inventory",
+      bi(
+        "Find every trust list on the filesystem, inspect the owner and mode of one, then read which public keys it contains.",
+        "Βρες κάθε λίστα εμπιστοσύνης στο σύστημα, έλεγξε ιδιοκτήτη και δικαιώματα σε μία και διάβασε ποια δημόσια κλειδιά περιέχει.",
+      ),
+      bi(
+        "find / -name authorized_keys\nls -l /home/raven/.ssh/authorized_keys\ncat /home/raven/.ssh/authorized_keys",
+        "find / -name authorized_keys\nls -l /home/raven/.ssh/authorized_keys\ncat /home/raven/.ssh/authorized_keys",
+      ),
+      bi(
+        "Why: After password authentication is off, this file is the whole authorization decision. How: find locates every copy, ls -l shows who owns it and how widely it can be read, and cat lists the trusted keys with the comment that identifies each one. All three read the simulated filesystem only.",
+        "Γιατί: Όταν κλείσει η ταυτοποίηση με κωδικό, αυτό το αρχείο είναι ολόκληρη η απόφαση εξουσιοδότησης. Πώς: το find εντοπίζει κάθε αντίγραφο, το ls -l δείχνει ποιος το κατέχει και πόσο ευρέως διαβάζεται, και το cat εμφανίζει τα αξιόπιστα κλειδιά με το σχόλιο που αναγνωρίζει το καθένα. Και τα τρία διαβάζουν μόνο το εικονικό σύστημα αρχείων.",
+      ),
+      (term) => usedCmd(term, /find\s+\/\s+-name\s+authorized_keys/) && term.filesRead.some((path) => path.endsWith("/authorized_keys")),
+    ),
+    task(
+      "key-then-verify",
+      bi(
+        "Create a simulated key, install its public half, prove a key login works, and then confirm what a password attempt does once passwords are gone.",
+        "Δημιούργησε εικονικό κλειδί, εγκατάστησε το δημόσιο μισό, απόδειξε ότι η σύνδεση με κλειδί δουλεύει και επιβεβαίωσε τι κάνει μια προσπάθεια με κωδικό όταν οι κωδικοί έχουν φύγει.",
+      ),
+      bi(
+        "ssh-keygen -t ed25519\nssh-copy-id labuser@10.10.10.12\nssh labuser@10.10.10.12 id\nssh -o PreferredAuthentications=password labuser@10.10.10.12",
+        "ssh-keygen -t ed25519\nssh-copy-id labuser@10.10.10.12\nssh labuser@10.10.10.12 id\nssh -o PreferredAuthentications=password labuser@10.10.10.12",
+      ),
+      bi(
+        "Why: The order is the lesson; switching the setting before a key login has succeeded is how administrators lose their own machine. How: ssh-copy-id appends only the public half to the lab trust list, the remote id call returns one line and closes, and the last line asks for a method the lab no longer offers. Nothing here contacts a real host.",
+        "Γιατί: Η σειρά είναι το μάθημα, η αλλαγή της ρύθμισης πριν πετύχει μια σύνδεση με κλειδί είναι ο τρόπος που οι διαχειριστές χάνουν το δικό τους μηχάνημα. Πώς: το ssh-copy-id προσθέτει μόνο το δημόσιο μισό στην εικονική λίστα εμπιστοσύνης, η απομακρυσμένη κλήση id επιστρέφει μία γραμμή και κλείνει, και η τελευταία γραμμή ζητά μέθοδο που το εργαστήριο δεν προσφέρει πια. Τίποτα εδώ δεν επικοινωνεί με πραγματικό host.",
+      ),
+      (term) => term.flags.has("ssh-keygen-ed25519") && term.flags.has("ssh-copy-id") && usedCmd(term, /ssh\s+-o\s+PreferredAuthentications=password/),
+    ),
+    task(
+      "daemon-effective-config",
+      bi(
+        "Validate the daemon configuration, then print the effective settings and isolate the password line.",
+        "Επικύρωσε τις ρυθμίσεις του δαίμονα και μετά εμφάνισε τις ενεργές ρυθμίσεις απομονώνοντας τη γραμμή του κωδικού.",
+      ),
+      bi("sshd -t\nsshd -T | grep -i passwordauthentication", "sshd -t\nsshd -T | grep -i passwordauthentication"),
+      bi(
+        "Why: A commented line is a default, so reading the file alone can mislead you about what the daemon enforces. How: sshd -t validates the syntax before a reload, and sshd -T prints the merged configuration, which the pipe narrows to the authentication line. The lab merges only its simulated file and starts no daemon.",
+        "Γιατί: Μια σχολιασμένη γραμμή είναι προεπιλογή, οπότε η απλή ανάγνωση του αρχείου μπορεί να σε παραπλανήσει για το τι εφαρμόζει ο δαίμονας. Πώς: η sshd -t επικυρώνει τη σύνταξη πριν από μια επαναφόρτωση και η sshd -T εμφανίζει τη συγχωνευμένη ρύθμιση, την οποία το pipe περιορίζει στη γραμμή ταυτοποίησης. Το εργαστήριο συγχωνεύει μόνο το εικονικό του αρχείο και δεν ξεκινά δαίμονα.",
+      ),
+      (term) => usedCmd(term, /sshd\s+-t/) && usedCmd(term, /sshd\s+-T/),
+    ),
+    task(
+      "listener-and-log",
+      bi(
+        "Start the simulated daemon, confirm from the socket side which port it holds, and read what the authentication log recorded.",
+        "Ξεκίνα τον εικονικό δαίμονα, επιβεβαίωσε από την πλευρά των υποδοχών ποια θύρα κατέχει και διάβασε τι κατέγραψε το αρχείο ταυτοποίησης.",
+      ),
+      bi(
+        "service ssh start\nss -tlnp\njournalctl -u ssh --since \"1 hour ago\"",
+        "service ssh start\nss -tlnp\njournalctl -u ssh --since \"1 hour ago\"",
+      ),
+      bi(
+        "Why: A service you cannot see listening is not running, and a login you cannot see in the log is not evidence. How: the simulated start records the listener, ss -tlnp prints it with the owning process, and journalctl shows the recorded authentication lines. The lab answers from its own state; no host socket or journal was read.",
+        "Γιατί: Μια υπηρεσία που δεν φαίνεται να ακούει δεν εκτελείται, και μια σύνδεση που δεν φαίνεται στο αρχείο καταγραφής δεν είναι απόδειξη. Πώς: η εικονική εκκίνηση καταγράφει την υποδοχή ακρόασης, το ss -tlnp την εμφανίζει με τη διεργασία ιδιοκτήτη και το journalctl δείχνει τις καταγεγραμμένες γραμμές ταυτοποίησης. Το εργαστήριο απαντά από την κατάστασή του, καμία υποδοχή ή αρχείο καταγραφής του υπολογιστή δεν διαβάστηκε.",
+      ),
+      (term) => usedCmd(term, /service\s+ssh\s+start/) && usedCmd(term, /ss\s+-/) && usedCmd(term, /journalctl\s+-u\s+ssh/),
+    ),
+    task(
+      "channel-uses",
+      bi(
+        "Show both non-shell uses of the same authenticated channel: a file copy and a recorded forward request.",
+        "Δείξε τις δύο χρήσεις της ίδιας ταυτοποιημένης σύνδεσης που δεν είναι shell: μια αντιγραφή αρχείου και ένα καταγεγραμμένο αίτημα προώθησης.",
+      ),
+      bi(
+        "scp notes.txt labuser@10.10.10.12:/tmp/notes.txt\nssh -L 8080:127.0.0.1:8080 labuser@10.10.10.12",
+        "scp notes.txt labuser@10.10.10.12:/tmp/notes.txt\nssh -L 8080:127.0.0.1:8080 labuser@10.10.10.12",
+      ),
+      bi(
+        "Why: A stolen credential buys more than a prompt, and the two controls are separate: file transfer is limited by account permissions, forwarding by AllowTcpForwarding. How: the simulated scp reports a completed copy and the forward line records a request without opening a socket.",
+        "Γιατί: Ένα κλεμμένο διαπιστευτήριο αγοράζει περισσότερα από ένα prompt, και οι δύο έλεγχοι είναι ξεχωριστοί: η μεταφορά αρχείων περιορίζεται από τα δικαιώματα του λογαριασμού και η προώθηση από το AllowTcpForwarding. Πώς: το εικονικό scp δηλώνει ολοκληρωμένη αντιγραφή και η γραμμή προώθησης καταγράφει αίτημα χωρίς να ανοίξει socket.",
+      ),
+      (term) => term.flags.has("scp") && term.flags.has("ssh-forward"),
+    ),
+  ],
+  challenges: pair(
+    {
+      title: bi("Order the controls", "Βάλε τους ελέγχους σε σειρά"),
+      brief: bi(
+        "Prove a key login before you would remove password authentication, using the lab key pair and the trust list.",
+        "Απόδειξε τη σύνδεση με κλειδί πριν αφαιρούσες την ταυτοποίηση με κωδικό, χρησιμοποιώντας το εικονικό ζεύγος και τη λίστα εμπιστοσύνης.",
+      ),
+      success: bi("The key was created and its public half recorded before any policy change.", "Το κλειδί δημιουργήθηκε και το δημόσιο μισό του καταγράφηκε πριν από κάθε αλλαγή πολιτικής."),
+      check: (term) => term.flags.has("ssh-keygen-ed25519") && term.flags.has("ssh-copy-id"),
+    },
+    {
+      title: bi("Audit every trust list", "Έλεγξε κάθε λίστα εμπιστοσύνης"),
+      brief: bi("find / -name authorized_keys, then read the file you found.", "find / -name authorized_keys και μετά διάβασε το αρχείο που βρήκες."),
+      success: bi("You can now say which keys are trusted and who owns the file that decides.", "Τώρα μπορείς να πεις ποια κλειδιά είναι αξιόπιστα και ποιος κατέχει το αρχείο που κρίνει."),
+      check: (term) => usedCmd(term, /find\s+\/\s+-name\s+authorized_keys/) && term.filesRead.some((path) => path.endsWith("/authorized_keys")),
+    },
+  ),
+};

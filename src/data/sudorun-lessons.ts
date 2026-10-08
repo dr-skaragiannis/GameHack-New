@@ -467,8 +467,8 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "nl — number lines", el: "nl — αρίθμηση" },
         body: {
-          en: "nl FILE prints the file with a line number in front of each line. That is how you turn a vague 'near the top' into a place another person can find. cat -n does a similar job on a real system. In this lab, use nl. wc -l FILE, on a real machine, counts the lines instead of printing them. This lab does not implement wc. If you need the count, number the file and read the last number.",
-          el: "Η nl FILE τυπώνει το αρχείο με έναν αριθμό γραμμής μπροστά από κάθε γραμμή. Έτσι ένα αόριστο «κοντά στην αρχή» γίνεται σημείο που μπορεί να βρει και άλλος. Το cat -n κάνει παρόμοια δουλειά σε πραγματικό σύστημα. Σε αυτό το εργαστήριο, χρησιμοποίησε nl. Το wc -l FILE, σε πραγματικό μηχάνημα, μετρά τις γραμμές αντί να τις τυπώνει. Αυτό το εργαστήριο δεν υλοποιεί το wc. Αν χρειάζεσαι το πλήθος, αρίθμησε το αρχείο και διάβασε τον τελευταίο αριθμό.",
+          en: "nl FILE prints the file with a line number in front of each line. That is how you turn a vague 'near the top' into a place another person can find. cat -n does a similar job on a real system. In this lab, use nl. wc -l FILE counts the lines instead of printing them, and this lab implements it, so wc -l /etc/ettercap/etter.dns answers with a single number.",
+          el: "Η nl FILE τυπώνει το αρχείο με έναν αριθμό γραμμής μπροστά από κάθε γραμμή. Έτσι ένα αόριστο «κοντά στην αρχή» γίνεται σημείο που μπορεί να βρει και άλλος. Το cat -n κάνει παρόμοια δουλειά σε πραγματικό σύστημα. Σε αυτό το εργαστήριο, χρησιμοποίησε nl. Το wc -l FILE μετρά τις γραμμές αντί να τις τυπώνει και αυτό το εργαστήριο το υλοποιεί, οπότε το wc -l /etc/ettercap/etter.dns απαντά με έναν μόνο αριθμό.",
         },
         shots: [shot("nl /etc/ettercap/etter.dns", ["     1  # etter.dns — GameHack lab copy of a DNS spoof config (educational)"])],
       },
@@ -488,6 +488,17 @@ export const SUDO_RUN_MODULES: Module[] = [
         },
         shots: [shot("more /etc/ettercap/etter.dns", ["# etter.dns — GameHack lab copy …", "(page 1 — Enter would continue on a TTY)"])],
       },
+      {
+        heading: { en: "wc, sort, uniq and tee", el: "wc, sort, uniq και tee" },
+        body: {
+          en: "Three more commands complete the basic set. wc counts lines, words, and characters, and wc -l FILE answers the question every operator asks first: how many entries does this list hold. sort orders lines alphabetically or numerically, and uniq collapses adjacent duplicates, which turns a raw stream into a short report. uniq only compares neighbours, so the useful order is almost always sort first and uniq second.\n\nThe chain cut -d' ' -f1 FILE | grep -v '^#' | sort is the characteristic way of working on Linux: cut isolates the first field of every line using the space as the delimiter, grep -v '^#' throws away the comment lines, and sort puts the remaining names in order. Instead of one monolithic program with dozens of options, small tools each do one job well and are connected by pipes. tee belongs to the same family: it shows the output on screen and stores it in a file at the same time, so ifconfig | tee /tmp/net.txt | grep inet keeps the full capture and prints only the address lines.",
+          el: "Τρεις επιπλέον εντολές συμπληρώνουν το βασικό σύνολο. Η wc μετρά γραμμές, λέξεις και χαρακτήρες, και το wc -l FILE απαντά στην ερώτηση που κάνει πρώτα κάθε χειριστής: πόσες εγγραφές περιέχει αυτή η λίστα. Η sort ταξινομεί γραμμές αλφαβητικά ή αριθμητικά και η uniq συμπτύσσει συνεχόμενα διπλότυπα, μετατρέποντας μια ακατέργαστη ροή σε σύντομη αναφορά. Η uniq συγκρίνει μόνο γειτονικές γραμμές, οπότε η χρήσιμη σειρά είναι σχεδόν πάντα πρώτα sort και μετά uniq.\n\nΗ αλυσίδα cut -d' ' -f1 FILE | grep -v '^#' | sort είναι ο χαρακτηριστικός τρόπος εργασίας στο Linux: το cut απομονώνει το πρώτο πεδίο κάθε γραμμής με διαχωριστικό το κενό, το grep -v '^#' απορρίπτει τις γραμμές σχολίων και το sort βάζει τα υπόλοιπα ονόματα σε σειρά. Αντί για ένα μονολιθικό πρόγραμμα με δεκάδες επιλογές, μικρά εργαλεία εκτελούν από μία δουλειά άρτια και συνδέονται με σωληνώσεις. Η tee ανήκει στην ίδια οικογένεια: εμφανίζει την έξοδο στην οθόνη και ταυτόχρονα την αποθηκεύει σε αρχείο, οπότε το ifconfig | tee /tmp/net.txt | grep inet κρατά την πλήρη καταγραφή και τυπώνει μόνο τις γραμμές με τις διευθύνσεις.",
+        },
+        shots: [
+          shot("wc -l /etc/ettercap/etter.dns", ["15 /etc/ettercap/etter.dns"]),
+          shot("cut -d' ' -f1 /etc/ettercap/etter.dns | grep -v '^#' | sort", ["*.gamehack.lab", "*.microsoft.com", "192.168.1.13", "gamehack.lab", "mail.gamehack.lab", "microsoft.com", "operator"]),
+        ],
+      },
     ],
     cheats: [
       { cmd: "head FILE", desc: { en: "first 10 lines", el: "πρώτες 10" } },
@@ -496,6 +507,11 @@ export const SUDO_RUN_MODULES: Module[] = [
       { cmd: "sed s/A/B/g FILE", desc: { en: "replace A with B", el: "αντικατάσταση" } },
       { cmd: "more FILE", desc: { en: "page through", el: "σελίδες" } },
       { cmd: "less FILE", desc: { en: "page + search", el: "σελίδες + αναζήτηση" } },
+      { cmd: "wc -l FILE", desc: { en: "count lines", el: "μέτρηση γραμμών" } },
+      { cmd: "sort FILE", desc: { en: "order lines", el: "ταξινόμηση" } },
+      { cmd: "sort FILE | uniq", desc: { en: "collapse duplicates", el: "διπλότυπα" } },
+      { cmd: "cut -d' ' -f1 FILE | sort", desc: { en: "first field, ordered", el: "πρώτο πεδίο, ταξινομημένο" } },
+      { cmd: "CMD | tee FILE", desc: { en: "show and save at once", el: "προβολή και αποθήκευση" } },
     ],
     tasks: [
       {
@@ -532,6 +548,34 @@ export const SUDO_RUN_MODULES: Module[] = [
         hint: { en: "more /etc/ettercap/etter.dns", el: "more …" },
         explain: { en: "Pager.", el: "Σελιδοποιητής (pager)." },
         check: (t) => usedCmd(t, /^\s*more\b/),
+      },
+      {
+        id: "wc-count",
+        instruction: { en: "Count the entries in the fixture: wc -l /etc/ettercap/etter.dns", el: "Μέτρα τις εγγραφές του fixture: wc -l /etc/ettercap/etter.dns" },
+        hint: { en: "wc -l /etc/ettercap/etter.dns", el: "wc -l /etc/ettercap/etter.dns" },
+        explain: { en: "A single number answers 'how big is this list' faster than reading it.", el: "Ένας αριθμός απαντά στο «πόσο μεγάλη είναι η λίστα» πιο γρήγορα από την ανάγνωση." },
+        check: (t) => usedCmd(t, /wc\s+-l/),
+      },
+      {
+        id: "sort-uniq",
+        instruction: { en: "Order the local host table and collapse duplicates: sort /etc/hosts | uniq", el: "Ταξινόμησε τον τοπικό πίνακα host και σύμπτυξε τα διπλότυπα: sort /etc/hosts | uniq" },
+        hint: { en: "sort /etc/hosts | uniq", el: "sort /etc/hosts | uniq" },
+        explain: { en: "uniq only compares neighbours, so sorting first is what makes it useful.", el: "Η uniq συγκρίνει μόνο γειτονικές γραμμές, γι' αυτό η ταξινόμηση πρώτα είναι αυτή που την κάνει χρήσιμη." },
+        check: (t) => usedCmd(t, /sort\s+\/etc\/hosts/) && usedCmd(t, /uniq/),
+      },
+      {
+        id: "cut-sort-chain",
+        instruction: { en: "Keep only the first field of the fixture, drop the comments, and order the names.", el: "Κράτα μόνο το πρώτο πεδίο του fixture, απόρριψε τα σχόλια και ταξινόμησε τα ονόματα." },
+        hint: { en: "cut -d' ' -f1 /etc/ettercap/etter.dns | grep -v '^#' | sort", el: "cut -d' ' -f1 /etc/ettercap/etter.dns | grep -v '^#' | sort" },
+        explain: { en: "One job per tool, connected by pipes: field, filter, order.", el: "Μία δουλειά ανά εργαλείο, συνδεδεμένες με σωληνώσεις: πεδίο, φίλτρο, σειρά." },
+        check: (t) => usedCmd(t, /cut\s+-d/) && usedCmd(t, /grep\s+-v/) && usedCmd(t, /sort/),
+      },
+      {
+        id: "tee-capture",
+        instruction: { en: "Keep the interface capture and print only the address lines: ifconfig | tee /tmp/net.txt | grep inet", el: "Κράτα την καταγραφή διεπαφών και τύπωσε μόνο τις γραμμές διευθύνσεων: ifconfig | tee /tmp/net.txt | grep inet" },
+        hint: { en: "ifconfig | tee /tmp/net.txt | grep inet", el: "ifconfig | tee /tmp/net.txt | grep inet" },
+        explain: { en: "tee writes the whole stream to a file while the rest of the pipeline filters what you see.", el: "Η tee γράφει ολόκληρη τη ροή σε αρχείο ενώ το υπόλοιπο pipeline φιλτράρει ό,τι βλέπεις." },
+        check: (t) => usedCmd(t, /tee\s+\/tmp\/net\.txt/),
       },
       {
         id: "less",

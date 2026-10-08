@@ -17,6 +17,7 @@ export type FileNode = {
   group?: string;
   linkTarget?: string;
   linkDisplayTarget?: string;
+  mountSource?: string;
   children?: Record<string, FileNode>;
 };
 
@@ -64,7 +65,8 @@ export type Terminal = {
   services: Record<string, "running" | "stopped" | "inactive">;
   bootServices: Record<string, "enabled" | "disabled">;
   packages: Set<string>;
-  ftp: { host: string; user: string | null; cwd: string; authenticated?: boolean } | null;
+  ftp: { host: string; user: string | null; cwd: string; authenticated?: boolean; root?: string } | null;
+  smb: { target: string; share: string | null; guest: boolean; cwd: string } | null;
   crontab: string[];
   crontabEditorPending: boolean;
   sshReturn: { user: string; host: string; cwd: string; home: string; isRoot: boolean; scenario: string } | null;
@@ -110,6 +112,13 @@ export function defaultFS(): FileNode {
       file("shadow", "root:*:19000:0:99999:7:::\noperator:*:19000:0:99999:7:::\n", "-rw-------"),
       file("issue", "GameHack Training OS 1.0 — simulated Kali\nUnauthorized access is a crime. This is a sandbox.\n"),
       dir("ssh", [file("sshd_config", "Port 22\nPermitRootLogin no\nPasswordAuthentication yes\nPubkeyAuthentication yes\n")]),
+      file("vsftpd.conf", "# vsftpd packaged defaults (simulated lab copy)\nlisten=NO\nlisten_ipv6=YES\n#anonymous_enable=NO\nlocal_enable=YES\nwrite_enable=NO\ndirmessage_enable=YES\nuse_localtime=YES\nxferlog_enable=YES\nconnect_from_port_20=YES\n"),
+      dir("samba", [
+        file("smb.conf", "# Samba packaged defaults (simulated lab copy)\n[global]\n   workgroup = WORKGROUP\n   server string = %h server (Samba, Ubuntu)\n   log file = /var/log/samba/log.%m\n   max log size = 1000\n   server role = standalone server\n   obey pam restrictions = yes\n   unix password sync = yes\n   pam password change = yes\n   map to guest = Bad User\n\n[printers]\n   comment = All Printers\n   browseable = no\n   path = /var/spool/samba\n   printable = yes\n   guest ok = no\n\n[print$]\n   comment = Printer Drivers\n   path = /var/lib/samba/printers\n   browseable = yes\n   read only = yes\n   guest ok = no\n"),
+        file("gdbcommands", "shell echo started\n"),
+        dir("tls", [file("README", "Certificate material belongs here on a real host.\n")]),
+      ]),
+      file("exports", "# /etc/exports: the access control list for NFS filesystems (simulated lab copy)\n#\n# Example for NFSv4:\n# /srv/nfs  hostname.example.com(rw,sync,no_subtree_check)\n"),
     ]),
     dir("var", [
       dir("log", [
@@ -128,6 +137,7 @@ export function defaultFS(): FileNode {
           ),
         ]),
       ]),
+      dir("ftp", [file("welcome.txt", "Anonymous FTP root of the simulated ubuntu-lab target. Create pub/ before offering a drop folder.\n")]),
     ]),
     dir("tmp", [file(".keep", ""), dir("empty", [])]),
     dir("root", [file("flag.txt", "FLAG{root_of_the_lab}\n", "-rw-------")], "drwx------"),
@@ -136,6 +146,10 @@ export function defaultFS(): FileNode {
         file("user.txt", "FLAG{raven_foothold}\n"),
         file("todo.txt", "Move the web backup off this box.\nCheck /var/www/html.\n"),
       ]),
+    ]),
+    dir("srv", [
+      dir("nfs", [file(".keep", "")]),
+      dir("ftp", [file("welcome.txt", "A conventional per-host FTP tree. The ubuntu-lab target uses /var/ftp instead.\n")]),
     ]),
     dir("usr", [
       dir("bin", []),
@@ -241,6 +255,18 @@ const DEFAULT_HOSTS: HostInfo[] = [
     ports: [{ port: 22, proto: "tcp", service: "ssh", version: "OpenSSH 7.9", state: "open" }],
   },
   {
+    ip: "192.168.1.9",
+    hostname: "ubuntu-lab",
+    os: "Linux 5.15",
+    ports: [
+      { port: 21, proto: "tcp", service: "ftp", version: "vsftpd 3.0.5", state: "open" },
+      { port: 111, proto: "tcp", service: "rpcbind", version: "2-4", state: "open" },
+      { port: 139, proto: "tcp", service: "netbios-ssn", version: "Samba smbd 4.17.7-Ubuntu", state: "open" },
+      { port: 445, proto: "tcp", service: "microsoft-ds", version: "Samba smbd 4.17.7-Ubuntu", state: "open" },
+      { port: 2049, proto: "tcp", service: "nfs", version: "3-4", state: "open" },
+    ],
+  },
+  {
     ip: "10.10.10.21",
     hostname: "db.lab",
     os: "Linux 5.10",
@@ -338,6 +364,7 @@ export function createTerminal(opts?: { fs?: FileNode; user?: string; host?: str
     bootServices: {},
     packages: new Set(["git", "nmap", "hydra", "apache2", "cron", "openssh-server"]),
     ftp: null,
+    smb: null,
     crontab: ["# m h dom mon dow command"],
     crontabEditorPending: false,
     sshReturn: null,
@@ -391,6 +418,7 @@ export function setTerminalScenario(
   t.shellVars.USER = t.user;
   t.isRoot = overrides.isRoot ?? defaults.isRoot;
   t.ftp = null;
+  t.smb = null;
 }
 
 export function getNode(root: FileNode, path: string, followLinks = true): FileNode | null {
@@ -440,6 +468,20 @@ function promptOf(t: Terminal): string {
 
 function lsMode(n: FileNode): string {
   return n.mode || (n.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--");
+}
+
+// Turns a symbolic mode such as "drwxrwxrwt" into its octal value, including the
+// setuid/setgid/sticky bits, so that `find -perm` can be evaluated in the lab.
+function modeToOctal(mode: string): number {
+  const body = (mode || "").slice(-9);
+  if (body.length !== 9) return 0;
+  const bit = (ch: string) => (ch === "-" || ch === "S" || ch === "T" ? 0 : 1);
+  let value = 0;
+  for (const start of [0, 3, 6]) value = value * 8 + bit(body[start]) * 4 + bit(body[start + 1]) * 2 + bit(body[start + 2]);
+  if (body[2] === "s") value += 4 * 512;
+  if (body[5] === "s") value += 2 * 512;
+  if (body[8] === "t") value += 512;
+  return value;
 }
 
 function canRead(t: Terminal, n: FileNode): boolean {
@@ -784,9 +826,19 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
         }
         const long = flags.has("l");
         const all = flags.has("a");
+        const directoryOnly = flags.has("d");
         t.flags.add("ls");
         if (all) t.flags.add("ls-a");
         if (long) t.flags.add("ls-l");
+        if (directoryOnly) t.flags.add("ls-d");
+        if (node.type === "dir" && directoryOnly) {
+          print(
+            long
+              ? `${lsMode(node)} ${Object.keys(node.children || {}).length} ${node.owner || "root"} ${node.group || "root"} 4096 ${displayPath(t, target)}`
+              : displayPath(t, target),
+          );
+          break;
+        }
         if (node.type === "file") {
           print(long ? `${lsMode(node)} 1 ${node.owner || t.user} ${node.group || t.user} ${String(node.content?.length || 0).padStart(4)} ${node.name}` : node.name);
           break;
@@ -939,9 +991,15 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
           print("usage: grep [OPTIONS] PATTERN FILE", "err");
           break;
         }
-        const hits = source.split("\n").map((line, index) => ({ line, index }))
-          .filter(({ line }) => flags.has("v") ? !re.test(line) : re.test(line))
-          .map(({ line, index }) => flags.has("n") ? `${index + 1}:${line}` : line);
+        const matched = source.split("\n").map((line, index) => ({ line, index }))
+          .filter(({ line }) => flags.has("v") ? !re.test(line) : re.test(line));
+        const hits = matched.map(({ line, index }) => flags.has("n") ? `${index + 1}:${line}` : line);
+        if (flags.has("c")) {
+          print(String(matched.length));
+          t.flags.add("grep");
+          t.flags.add("grep-count");
+          break;
+        }
         print(hits.join("\n") || "");
         t.flags.add("grep");
         if (/echo/i.test(pat)) t.flags.add("grep-echo");
@@ -961,14 +1019,38 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
         const nameIdx = rest.indexOf("-name");
         const pat = nameIdx >= 0 ? rest[nameIdx + 1] : "*";
         const re = globToRe(pat || "*");
+        const typeIdx = rest.indexOf("-type");
+        const wantedType = typeIdx >= 0 ? rest[typeIdx + 1] || "" : "";
+        const permTests: { spec: string; negated: boolean }[] = [];
+        rest.forEach((token, index) => {
+          if (token === "-perm") permTests.push({ spec: rest[index + 1] || "", negated: rest[index - 1] === "!" || rest[index - 1] === "-not" });
+        });
         const acc: { path: string; node: FileNode }[] = [];
         walk(node, start, acc);
         const includeMountPaths = (pos[0] || "").startsWith("/labs");
         const hits = acc
           .filter((a) => re.test(a.node.name))
+          .filter((a) => {
+            if (!wantedType) return true;
+            if (wantedType === "f") return a.node.type === "file";
+            if (wantedType === "d") return a.node.type === "dir";
+            if (wantedType === "l") return Boolean(a.node.linkTarget);
+            return true;
+          })
+          .filter((a) => permTests.every(({ spec, negated }) => {
+            const value = Number.parseInt(spec.replace(/^[-/]/, ""), 8) || 0;
+            const actual = modeToOctal(a.node.mode || (a.node.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--"));
+            const matches = spec.startsWith("-")
+              ? (actual & value) === value
+              : spec.startsWith("/")
+                ? (actual & value) !== 0
+                : actual === value;
+            return negated ? !matches : matches;
+          }))
           .map((a) => includeMountPaths ? a.path : displayPath(t, a.path));
         print(hits.join("\n") || "");
         t.flags.add("find");
+        if (permTests.length) t.flags.add("find-perm");
         if (hits.some((h) => h.includes(".secret") || h.includes("flag") || h.includes("id_rsa"))) t.flags.add("find-secret");
         if (hits.some((h) => /gamehack$/i.test(h) || h.endsWith("/gamehack"))) t.flags.add("find-gamehack");
         break;
@@ -1042,7 +1124,11 @@ lo: flags=73<UP,LOOPBACK,RUNNING> mtu 65536
         } else if (action === "neigh") {
           print(`10.10.10.1 dev eth0 lladdr 08:00:27:aa:bb:01 REACHABLE\n10.10.10.8 dev eth0 lladdr 08:00:27:aa:bb:08 STALE`);
         } else if (action === "address" || action === "addr" || action === "a") {
-          print(`1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 state UNKNOWN\n    inet 127.0.0.1/8 scope host lo\n2: eth0: <BROADCAST,MULTICAST${t.net.up ? ",UP,LOWER_UP" : ""}> mtu 1500 state ${t.net.up ? "UP" : "DOWN"} qdisc fq_codel state ${t.net.up ? "UP" : "DOWN"}\n    link/ether ${t.net.mac} brd ff:ff:ff:ff:ff:ff\n    inet ${t.net.ip}/24 brd ${t.net.bcast} scope global eth0\n    inet6 fe80::a00:27ff:fe12:3456/64 scope link`);
+          const deviceIndex = rest.findIndex((value) => value === "show" || value === "dev");
+          const device = deviceIndex >= 0 ? rest[deviceIndex + 1] || "" : "";
+          const loopbackBlock = `1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 state UNKNOWN\n    inet 127.0.0.1/8 scope host lo`;
+          const wiredBlock = `2: eth0: <BROADCAST,MULTICAST${t.net.up ? ",UP,LOWER_UP" : ""}> mtu 1500 state ${t.net.up ? "UP" : "DOWN"} qdisc fq_codel state ${t.net.up ? "UP" : "DOWN"}\n    link/ether ${t.net.mac} brd ff:ff:ff:ff:ff:ff\n    inet ${t.net.ip}/24 brd ${t.net.bcast} scope global eth0\n    inet6 fe80::a00:27ff:fe12:3456/64 scope link`;
+          print(device === "lo" ? loopbackBlock : device === "eth0" ? wiredBlock : `${loopbackBlock}\n${wiredBlock}`);
         } else {
           print("Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\nObjects: link, address, route, neigh", "err");
         }
@@ -1084,22 +1170,60 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
         if (h.ip === "10.10.10.12") t.flags.add("nmap-ssh");
         const authMethods = /ssh-auth-methods/.test(input) && h.ip === "10.10.10.12";
         if (authMethods) t.flags.add("ssh-auth-methods");
+        const portArgIndex = rest.findIndex((value) => value === "-p");
+        const portSpec = (portArgIndex >= 0 ? rest[portArgIndex + 1] : rest.find((value) => /^-p\d/.test(value))?.slice(2)) || "";
+        const wantedPorts = portSpec
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+          .map((value) => Number(value))
+          .filter((value) => Number.isFinite(value));
+        const scannedPorts = wantedPorts.length ? h.ports.filter((p) => wantedPorts.includes(p.port)) : h.ports;
+        if (wantedPorts.length && !scannedPorts.length) {
+          print(`Starting Nmap 7.94 ( simulated )\nNmap scan report for ${h.hostname} (${h.ip})\nHost is up (0.0012s latency).\nAll ${wantedPorts.length} scanned ports on ${h.hostname} (${h.ip}) are in state: closed\nNmap done: 1 IP address (1 host up) scanned\n# a service that is not listening cannot be enumerated at all: check the daemon before blaming the network.`);
+          break;
+        }
+        const vsftpdConf = getNode(t.fs, "/etc/vsftpd.conf");
+        const anonymousLines = (vsftpdConf?.content || "").split(/\r?\n/).filter((line) => /^\s*anonymous_enable\s*=/i.test(line));
+        const lastAnonymous = anonymousLines.at(-1) || "";
+        const anonymousEnabled = /^\s*anonymous_enable\s*=\s*YES/i.test(lastAnonymous);
+        const ftpRunning = t.services.vsftpd === "running" || t.services.ftp === "running";
+        const ftpAnon = h.ip === "192.168.1.9" && wantedPorts.includes(21) && (svc || rest.includes("-sC")) && ftpRunning;
+        if (ftpAnon) t.flags.add("nmap-ftp-anon");
+        const anonymousRoot = getNode(t.fs, "/var/ftp");
+        const anonymousListing = Object.values(anonymousRoot?.children || {})
+          .filter((node) => node.name !== "welcome.txt" && node.name !== ".keep")
+          .map((node) => `${node.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--"}    2 ftp      ftp          4096 Feb 10 12:01 ${node.name}`);
         const lines = [
           `Starting Nmap 7.94 ( simulated )`,
           `Nmap scan report for ${h.hostname} (${h.ip})`,
           `Host is up (0.0012s latency).`,
           svc && h.os ? `OS: ${h.os}` : "",
           `PORT     STATE    SERVICE    ${svc ? "VERSION" : ""}`,
-          ...h.ports.map(
+          ...scannedPorts.map(
             (p) =>
               `${String(p.port).padEnd(5)}/${p.proto} ${p.state.padEnd(8)} ${p.service.padEnd(10)} ${svc ? p.version : ""}`.trimEnd()
           ),
+          ftpAnon && anonymousEnabled
+            ? [
+                "| ftp-anon: Anonymous FTP login allowed (FTP code 230)",
+                ...(anonymousListing.length ? anonymousListing : ["| (the anonymous root is empty: create the drop directory before it becomes a finding)"]),
+                "|_End of status.",
+                "MAC Address: 00:0C:29:1B:2C:3D (VMware)",
+                "Service Info: OS: Unix",
+              ].join("\n")
+            : "",
+          ftpAnon && !anonymousEnabled
+            ? ["| ftp-anon: Anonymous FTP login not allowed (the daemon answered 530)", "|_End of status.", "# the last active anonymous_enable line in /etc/vsftpd.conf is not YES, so the script found no passwordless login."].join("\n")
+            : "",
           `Nmap done: 1 IP address (1 host up) scanned`,
           authMethods
             ? ["| ssh-auth-methods:", "|   Supported authentication methods:", "|     publickey", "|_    password", "Lab note: password is enabled on ssh.lab so the hardening lesson has a weak starting policy. This script does not query any other host."].join("\n")
             : "",
         ].filter(Boolean);
         print(lines.join("\n"));
+        if (ftpAnon && !anonymousEnabled) t.flags.add("nmap-ftp-anon-denied");
+        if (wantedPorts.length > 1) t.flags.add("nmap-share-ports");
         break;
       }
       case "curl":
@@ -1171,8 +1295,27 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
           t.lastExit = 1;
           break;
         }
-        const dest = pos.find((p) => p.includes("@") || p.includes(".")) || pos[0] || "";
+        const dest = pos.find((p) => p.includes("@")) || pos.find((p) => p.includes(".")) || pos[0] || "";
         const key = rest.includes("-i") || /id_/.test(input);
+        const remoteCommand = pos.filter((entry) => entry !== dest && !entry.includes("@")).join(" ").trim();
+        if (remoteCommand && dest.includes("@") && /10\.10\.10\.12|ssh\.lab/.test(dest)) {
+          t.flags.add("ssh-remote-command");
+          const remoteOutput = /(^|\s)id$/.test(remoteCommand)
+            ? "uid=1000(labuser) gid=1000(labuser) groups=1000(labuser)"
+            : /ifconfig|ip addr/.test(remoteCommand)
+              ? "eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST> mtu 1500\n        inet 10.10.10.12  netmask 255.255.255.0  broadcast 10.10.10.255"
+              : /\/etc\/passwd/.test(remoteCommand)
+                ? "root:x:0:0:root:/root:/bin/bash\nlabuser:x:1000:1000:Lab User:/home/labuser:/bin/bash"
+                : /whoami/.test(remoteCommand)
+                  ? "labuser"
+                  : `simulated output of '${remoteCommand}' on ssh.lab`;
+          print(
+            `${remoteOutput}\n` +
+              "# one command over the encrypted channel, no interactive shell: no TTY unless you pass -t, and the\n" +
+              "# remote exit status becomes the local ssh exit status, which is what makes it usable inside scripts.",
+          );
+          break;
+        }
         if (/ignite@|192\.168\.0\.11/.test(dest) || /ignite@/.test(input)) {
           if (t.services.ssh !== "running") {
             print("ssh: connect to host ubuntu.lab port 22: Connection refused; start the simulated service with service ssh start.", "err");
@@ -1282,7 +1425,7 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
         }
         const privilegedCommands = new Set([
           "apt", "apt-get", "apt-cache", "chown", "chgrp", "chmod", "mount", "umount",
-          "systemctl", "service", "useradd", "usermod", "groupadd", "passwd", "rm", "cp", "mv", "ln",
+          "systemctl", "service", "useradd", "usermod", "groupadd", "passwd", "rm", "cp", "mv", "ln", "sshd",
         ]);
         if (rest[0] && privilegedCommands.has(rest[0])) {
           const previousUser = t.user;
@@ -1357,6 +1500,22 @@ Table: users
         t.flags.add("scp");
         print("scp: simulated transfer complete.");
         break;
+      case "ssh-copy-id": {
+        t.flags.add("ssh-copy-id");
+        if (!/10\.10\.10\.12|ssh\.lab|labuser@/.test(input)) {
+          print("ssh-copy-id: the simulator only installs a key on the fictional ssh.lab host (labuser@10.10.10.12).", "err");
+          t.lastExit = 1;
+          break;
+        }
+        t.flags.add("ssh-copy-id-lab");
+        print(
+          "Number of key(s) added: 1 (simulated)\n\n" +
+            "The public key was appended to the fictional ~/.ssh/authorized_keys of labuser@ssh.lab.\n" +
+            "Verify with: ssh -i <key> labuser@10.10.10.12 'id'\n" +
+            "# authorized_keys is the server's trust list: whoever can write it can log in without a password.",
+        );
+        break;
+      }
       case "touch": {
         if (!pos.length) {
           print("touch: missing file operand", "err");

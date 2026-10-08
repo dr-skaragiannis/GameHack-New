@@ -153,8 +153,8 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       section(
         bi("/etc/hosts: a local name table", "/etc/hosts: τοπικός πίνακας ονομάτων"),
         bi(
-          "The file /etc/hosts stores static name-to-address entries for one machine. A line contains an address followed by one or more names, for example 10.10.10.30 docs.gamehack.lab. This mapping affects name resolution on the local machine; it does not publish a record to DNS.\n\nRead the fixture rows as a small map. The 127.0.0.1 localhost row keeps the machine talking to itself, 127.0.1.1 kali follows the Debian convention of pairing the machine name with loopback, and 192.168.0.11 ubuntu.lab keeps a second fictional host reachable by name. Matching is first-match-wins from the top, so your appended docs line must not duplicate an earlier mapping for the same name — duplicates resolve to the upper row and hide the lower one.",
-          "Το αρχείο /etc/hosts αποθηκεύει στατικές αντιστοιχίσεις ονομάτων και διευθύνσεων για έναν υπολογιστή. Μια γραμμή περιέχει πρώτα τη διεύθυνση και έπειτα ένα ή περισσότερα ονόματα, για παράδειγμα 10.10.10.30 docs.gamehack.lab. Η αντιστοίχιση επηρεάζει την επίλυση ονομάτων μόνο στον συγκεκριμένο υπολογιστή, δεν δημοσιεύει εγγραφή DNS.\n\nΗ nano /etc/hosts ανοίγει το αρχείο στον εικονικό προβολέα κειμένου του εργαστηρίου, ενώ η cat το εμφανίζει στο τερματικό. Για να προσθέσεις με ασφάλεια ένα δοκιμαστικό alias μέσα στο VFS, μπορείς να χρησιμοποιήσεις echo \"10.10.10.30 docs.gamehack.lab\" >> /etc/hosts και μετά να επιβεβαιώσεις τη γραμμή με grep.\n\nΔιάβασε τις γραμμές ως μικρό χάρτη. Η γραμμή 127.0.0.1 localhost κρατά τον υπολογιστή σε επικοινωνία με τον εαυτό του, η 127.0.1.1 kali ακολουθεί τη συνήθεια του Debian να ζευγαρώνει το όνομα μηχανήματος με loopback, και η 192.168.0.11 ubuntu.lab κρατά δεύτερο εικονικό host προσβάσιμο με όνομα. Η αντιστοίχιση κερδίζεται από την πρώτη γραμμή από πάνω, οπότε η δική σου γραμμή docs δεν πρέπει να διπλασιάζει προηγούμενη αντιστοίχιση του ίδιου ονόματος, γιατί τα διπλότυπα επιλύονται στην επάνω γραμμή και κρύβουν την κάτω.",
+          "The file /etc/hosts stores static name-to-address entries for one machine. A line contains an address followed by one or more names, for example 10.10.10.30 docs.gamehack.lab. This mapping affects name resolution on the local machine; it does not publish a record to DNS.\n\nRead the fixture rows as a small map. The 127.0.0.1 localhost row keeps the machine talking to itself, 127.0.1.1 kali follows the Debian convention of pairing the machine name with loopback, and 192.168.0.11 ubuntu.lab keeps a second fictional host reachable by name. Matching is first-match-wins from the top, so your appended docs line must not duplicate an earlier mapping for the same name — duplicates resolve to the upper row and hide the lower one.\n\ngetent hosts NAME proves the override the way an application sees it: the command consults the operating system's resolver order, which reads /etc/hosts before asking any name server, so it returns your lab row. dig skips that file entirely and talks straight to a DNS server, which is why the same name can work in a browser and still answer differently under dig. Run both after appending a hosts line; the disagreement is the lesson, not a bug.",
+          "Το αρχείο /etc/hosts αποθηκεύει στατικές αντιστοιχίσεις ονομάτων και διευθύνσεων για έναν υπολογιστή. Μια γραμμή περιέχει πρώτα τη διεύθυνση και έπειτα ένα ή περισσότερα ονόματα, για παράδειγμα 10.10.10.30 docs.gamehack.lab. Η αντιστοίχιση επηρεάζει την επίλυση ονομάτων μόνο στον συγκεκριμένο υπολογιστή, δεν δημοσιεύει εγγραφή DNS.\n\nΗ nano /etc/hosts ανοίγει το αρχείο στον εικονικό προβολέα κειμένου του εργαστηρίου, ενώ η cat το εμφανίζει στο τερματικό. Για να προσθέσεις με ασφάλεια ένα δοκιμαστικό alias μέσα στο VFS, μπορείς να χρησιμοποιήσεις echo \"10.10.10.30 docs.gamehack.lab\" >> /etc/hosts και μετά να επιβεβαιώσεις τη γραμμή με grep.\n\nΔιάβασε τις γραμμές ως μικρό χάρτη. Η γραμμή 127.0.0.1 localhost κρατά τον υπολογιστή σε επικοινωνία με τον εαυτό του, η 127.0.1.1 kali ακολουθεί τη συνήθεια του Debian να ζευγαρώνει το όνομα μηχανήματος με loopback, και η 192.168.0.11 ubuntu.lab κρατά δεύτερο εικονικό host προσβάσιμο με όνομα. Η αντιστοίχιση κερδίζεται από την πρώτη γραμμή από πάνω, οπότε η δική σου γραμμή docs δεν πρέπει να διπλασιάζει προηγούμενη αντιστοίχιση του ίδιου ονόματος, γιατί τα διπλότυπα επιλύονται στην επάνω γραμμή και κρύβουν την κάτω.\n\nΤο getent hosts NAME αποδεικνύει την παράκαμψη όπως τη βλέπει μια εφαρμογή: η εντολή συμβουλεύεται τη σειρά επίλυσης του λειτουργικού, που διαβάζει το /etc/hosts πριν ρωτήσει οποιονδήποτε name server, οπότε επιστρέφει τη δική σου γραμμή εργαστηρίου. Η dig παρακάμπτει εντελώς αυτό το αρχείο και μιλά απευθείας σε διακομιστή DNS, γι’ αυτό το ίδιο όνομα μπορεί να δουλεύει σε έναν browser και να απαντά διαφορετικά στην dig. Τρέξε και τις δύο μετά την προσθήκη γραμμής hosts, η διαφωνία είναι το μάθημα και όχι σφάλμα.",
         ),
         "cat /etc/hosts",
         [
@@ -177,6 +177,7 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       { cmd: "dig -x ADDRESS", desc: bi("Reverse lookup: name for an IP", "Αντίστροφη αναζήτηση: όνομα για IP") },
       { cmd: "ip route", desc: bi("Show the virtual default gateway", "Προβολή εικονικού default gateway") },
       { cmd: "cat /etc/resolv.conf", desc: bi("Read the configured resolver", "Ανάγνωση του resolver") },
+      { cmd: "getent hosts NAME", desc: bi("Resolve the way applications do", "Επίλυση όπως την κάνουν οι εφαρμογές") },
       { cmd: "nano /etc/hosts", desc: bi("Inspect local name mappings", "Έλεγχος τοπικών αντιστοιχίσεων") },
       { cmd: 'echo "ADDRESS NAME" >> /etc/hosts', desc: bi("Append a local lab alias", "Προσθήκη τοπικού alias") },
     ],
@@ -238,6 +239,19 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
           "Γιατί: το resolv.conf επιλέγει resolver, ενώ το hosts κρατά τοπικές στατικές αντιστοιχίσεις, τα δύο αρχεία εξυπηρετούν διαφορετικές ανάγκες επίλυσης ονομάτων. Πώς: χρησιμοποίησε > μόνο στο αρχείο resolver που θέλεις να αντικαταστήσεις, >> για να διατηρήσεις τις υπάρχουσες εγγραφές hosts και διάβασε και τα δύο αρχεία για επαλήθευση. Οι αλλαγές μένουν στο προσωπικό VFS.",
         ),
         (term) => term.flags.has("dns-set") && usedCmd(term, />>\s*\/etc\/hosts/) && usedCmd(term, /grep\s+docs\.gamehack\.lab/),
+      ),
+      task(
+        "hosts-versus-dns",
+        bi(
+          "Resolve one lab name twice: once the way applications do, and once straight at the resolver. Compare the two answers and name which file each one read.",
+          "Επίλυσε ένα όνομα του εργαστηρίου δύο φορές: μία όπως το κάνουν οι εφαρμογές και μία απευθείας στον resolver. Σύγκρινε τις δύο απαντήσεις και ονόμασε ποιο αρχείο διάβασε η καθεμία.",
+        ),
+        bi("getent hosts gamehack.lab\ndig gamehack.lab", "getent hosts gamehack.lab\ndig gamehack.lab"),
+        bi(
+          "Why: The resolver order decides which source wins, and knowing it explains names that work in one tool and not another. How: getent follows the system order and reads /etc/hosts first, while dig asks a name server and ignores that file. Both answers are fictional lab data; nothing leaves the sandbox.",
+          "Γιατί: Η σειρά επίλυσης αποφασίζει ποια πηγή κερδίζει, και γνωρίζοντάς την εξηγείς ονόματα που δουλεύουν στο ένα εργαλείο και όχι στο άλλο. Πώς: η getent ακολουθεί τη σειρά του συστήματος και διαβάζει πρώτα το /etc/hosts, ενώ η dig ρωτά name server και αγνοεί εκείνο το αρχείο. Και οι δύο απαντήσεις είναι εικονικά δεδομένα του εργαστηρίου, τίποτα δεν φεύγει από το sandbox.",
+        ),
+        (term) => term.flags.has("getent") && term.flags.has("dig-a"),
       ),
     ],
     challenges: [
@@ -385,6 +399,33 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
           "# m h dom mon dow command",
         ],
       ),
+      section(
+        bi("pgrep, pkill and killall: find before you signal", "pgrep, pkill και killall: βρες πριν σημάνεις"),
+        bi(
+          "Filtering ps aux with grep works, and it also lists the grep itself, which is the classic beginner surprise. pgrep was built for the job: it answers with process IDs only, never lists itself, and takes options that cover the cases you actually meet. pgrep -a NAME prints the PID with its full command line, pgrep -l NAME shortens the name to fifteen characters, pgrep -f PATTERN matches the whole command line instead of the program name, and pgrep -u USER restricts the search to one account.\n\nBecause a broad pattern can catch programs you did not mean, the safe order is to look first and signal second. pkill -f PATTERN signals by command line, pkill -u USER -TERM -f PATTERN narrows it to one account, and killall NAME signals by exact program name. Run the equivalent pgrep first, read the PIDs it returns, and only then send the signal. This lab keeps every process fictional, so the drill is about the order of operations, not about stopping real work.",
+          "Το φιλτράρισμα της ps aux με grep δουλεύει, και εμφανίζει και την ίδια τη grep, που είναι η κλασική έκπληξη των αρχαρίων. Η pgrep φτιάχτηκε για αυτή τη δουλειά: απαντά μόνο με αναγνωριστικά διεργασιών, δεν εμφανίζει ποτέ τον εαυτό της και δέχεται επιλογές για τις περιπτώσεις που συναντάς πραγματικά. Το pgrep -a NAME τυπώνει το PID μαζί με ολόκληρη τη γραμμή εντολής, το pgrep -l NAME κόβει το όνομα στους δεκαπέντε χαρακτήρες, το pgrep -f PATTERN ταιριάζει ολόκληρη τη γραμμή εντολής αντί για το όνομα του προγράμματος και το pgrep -u USER περιορίζει την αναζήτηση σε έναν λογαριασμό.\n\nΕπειδή ένα ευρύ μοτίβο μπορεί να πιάσει προγράμματα που δεν εννοούσες, η ασφαλής σειρά είναι πρώτα έλεγχος και μετά σήμα. Το pkill -f PATTERN στέλνει σήμα με βάση τη γραμμή εντολών, το pkill -u USER -TERM -f PATTERN το περιορίζει σε έναν λογαριασμό και το killall NAME στέλνει σήμα με βάση το ακριβές όνομα προγράμματος. Τρέξε πρώτα την αντίστοιχη pgrep, διάβασε τα PID που επιστρέφει και μόνο τότε στείλε το σήμα. Σε αυτό το εργαστήριο κάθε διεργασία είναι εικονική, οπότε η εξάσκηση αφορά τη σειρά των ενεργειών και όχι το σταμάτημα πραγματικής εργασίας.",
+        ),
+        "pgrep -a training",
+        ["7440 training-worker --batch", "7441 training-reporter", "7442 training-cleanup"],
+      ),
+      section(
+        bi("jobs -l, bg, disown and nohup", "jobs -l, bg, disown και nohup"),
+        bi(
+          "Job control has a small vocabulary worth memorising. Ctrl+Z pauses the foreground job, bg %1 continues job 1 in the background, fg %1 brings it back, jobs lists the table, kill %1 signals by job number, and disown %1 removes the job from the shell's table so a closing shell no longer signals it. Add -l to jobs and each row also shows its PID, which is what you need to correlate a job with ps output.\n\nWhen a terminal closes, the shell sends SIGHUP to its jobs and anything that does not handle the signal dies with it. nohup is the classic shield: nohup ./scan.sh > scan.log 2>&1 & ignores the hangup and redirects both standard output and errors into a file. Leave the redirection out and nohup writes nohup.out in the current directory instead. For long work on a machine you administer, a terminal multiplexer such as tmux or screen is the better tool, because it keeps whole sessions alive and lets you reconnect; the lab records the nohup form without starting a host process.",
+          "Ο έλεγχος εργασιών έχει μικρό λεξιλόγιο που αξίζει να απομνημονεύσεις. Το Ctrl+Z παγώνει την εργασία προσκηνίου, το bg %1 συνεχίζει την εργασία 1 στο παρασκήνιο, το fg %1 την επαναφέρει, το jobs εμφανίζει τον πίνακα, το kill %1 στέλνει σήμα με αριθμό εργασίας και το disown %1 αφαιρεί την εργασία από τον πίνακα του shell ώστε ένα κλείσιμο να μην τη σημάνει πια. Πρόσθεσε -l στο jobs και κάθε γραμμή δείχνει και το PID της, που χρειάζεται για να συσχετίσεις την εργασία με την έξοδο της ps.\n\nΌταν κλείνει ένα τερματικό, το shell στέλνει SIGHUP στις εργασίες του και ό,τι δεν διαχειρίζεται το σήμα σταματά μαζί του. Η nohup είναι η κλασική ασπίδα: το nohup ./scan.sh > scan.log 2>&1 & αγνοεί το σήμα αποσύνδεσης και ανακατευθύνει τόσο την τυπική έξοδο όσο και τα σφάλματα σε αρχείο. Χωρίς την ανακατεύθυνση, η nohup γράφει στο nohup.out του τρέχοντος καταλόγου. Για μακροχρόνια εργασία σε μηχάνημα που διαχειρίζεσαι, ένας πολυπλέκτης τερματικού όπως το tmux ή το screen είναι το καλύτερο εργαλείο, επειδή κρατά ολόκληρες συνεδρίες ζωντανές και επιτρέπει επανασύνδεση, το εργαστήριο καταγράφει τη μορφή nohup χωρίς να ξεκινά διεργασία στον υπολογιστή σου.",
+        ),
+        "nohup /root/scanning_script.sh > scan.log 2>&1 &",
+        ["[1] 7100", "nohup: ignoring input and redirecting output to 'scan.log'"],
+      ),
+      section(
+        bi("atq, at -c and atrm: reading the one-time queue", "atq, at -c και atrm: ανάγνωση της εφάπαξ ουράς"),
+        bi(
+          "A queued job you cannot see is a job you cannot trust. atq lists the pending entries with their numbers, at -c NUMBER prints the environment and the exact command the daemon would run, and atrm NUMBER cancels an entry before it fires. The -c output matters more than it looks: it shows that at runs jobs through /bin/sh with a minimal environment, which is why aliases, shell functions, and relative paths from your interactive shell do not carry over.\n\nTwo uses of the queue are worth keeping. Defensively, an unknown entry in atq is a persistence clue that deserves the same attention as an unknown crontab line, so read both when you audit a machine. Operationally, scheduling your own rollback is the safe way to change a firewall or a network setting on a box you administer: queue the restore command a few minutes ahead, and a mistake cannot lock you out permanently. In this lab the queue is a record only, so you can practise listing, inspecting, and removing without risk.",
+          "Μια εργασία στην ουρά που δεν μπορείς να δεις είναι εργασία που δεν μπορείς να εμπιστευτείς. Η atq εμφανίζει τις εκκρεμείς εγγραφές με τους αριθμούς τους, η at -c ΑΡΙΘΜΟΣ τυπώνει το περιβάλλον και την ακριβή εντολή που θα εκτελούσε ο δαίμονας, και η atrm ΑΡΙΘΜΟΣ ακυρώνει την εγγραφή πριν εκτελεστεί. Η έξοδος της -c έχει περισσότερη σημασία από όσο φαίνεται: δείχνει ότι η at εκτελεί εργασίες μέσω /bin/sh με ελάχιστο περιβάλλον, γι’ αυτό ψευδώνυμα, συναρτήσεις shell και σχετικές διαδρομές του διαδραστικού σου shell δεν μεταφέρονται.\n\nΔύο χρήσεις της ουράς αξίζει να κρατήσεις. Αμυντικά, μια άγνωστη εγγραφή στην atq είναι ένδειξη διατήρησης πρόσβασης που αξίζει την ίδια προσοχή με μια άγνωστη γραμμή crontab, οπότε διάβαζε και τις δύο όταν ελέγχεις ένα μηχάνημα. Λειτουργικά, το να προγραμματίσεις τη δική σου επαναφορά είναι ο ασφαλής τρόπος να αλλάξεις τείχος προστασίας ή ρύθμιση δικτύου σε μηχάνημα που διαχειρίζεσαι: βάλε την εντολή επαναφοράς λίγα λεπτά μπροστά και ένα λάθος δεν μπορεί να σε κλειδώσει έξω μόνιμα. Σε αυτό το εργαστήριο η ουρά είναι μόνο εγγραφή, οπότε εξασκείσαι στην προβολή, την επιθεώρηση και την αφαίρεση χωρίς ρίσκο.",
+        ),
+        "atq\nat -c 1\natrm 1",
+        ["1	21:30	/root/scanning_script.sh", "SHELL=/bin/sh", "job 1 removed from the virtual queue; nothing was executed."],
+      ),
     ],
     cheats: [
       { cmd: "ps", desc: bi("Show processes attached to the shell", "Εμφάνιση διεργασιών του shell") },
@@ -398,6 +439,12 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
       { cmd: "COMMAND &", desc: bi("Run a shell job in the background", "Εκτέλεση εργασίας στο παρασκήνιο") },
       { cmd: "jobs / fg", desc: bi("List jobs / return one to foreground", "Λίστα εργασιών / επαναφορά στο προσκήνιο") },
       { cmd: "at TIME COMMAND / crontab -e / -l", desc: bi("Queue once / edit or inspect recurring work", "Εφάπαξ εργασία / επεξεργασία ή έλεγχος επανάληψης") },
+      { cmd: "pgrep -a NAME", desc: bi("PIDs plus full command line", "PID μαζί με ολόκληρη τη γραμμή εντολής") },
+      { cmd: "pkill -f PATTERN / killall NAME", desc: bi("Signal by command line / exact name", "Σήμα με γραμμή εντολών / ακριβές όνομα") },
+      { cmd: "jobs -l", desc: bi("List jobs with their PIDs", "Λίστα εργασιών με τα PID τους") },
+      { cmd: "bg %1 / disown %1", desc: bi("Continue in background / detach from shell", "Συνέχιση στο παρασκήνιο / αποσύνδεση από το shell") },
+      { cmd: "nohup COMMAND > FILE 2>&1 &", desc: bi("Ignore SIGHUP and log the output", "Αγνόηση SIGHUP και καταγραφή εξόδου") },
+      { cmd: "atq / at -c JOB / atrm JOB", desc: bi("List, inspect and cancel queued work", "Προβολή, επιθεώρηση και ακύρωση ουράς") },
     ],
     tasks: [
       task(
@@ -467,6 +514,48 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
           "Γιατί: Οι εργασίες παρασκηνίου αφήνουν διαθέσιμο το prompt, ενώ οι schedulers αναλαμβάνουν εργασίες για αργότερα. Πώς: βάλε & για εργασία του shell, χρησιμοποίησε jobs για να τη βρεις και fg για να την επαναφέρεις, το at είναι εφάπαξ και το cron επαναλαμβανόμενο. Το sandbox καταγράφει και προβάλλει τις ενέργειες χωρίς να τις εκτελεί στο σύστημα υποδοχής.",
         ),
         (term) => term.flags.has("bg") && term.flags.has("jobs") && term.flags.has("fg") && term.flags.has("at") && term.flags.has("crontab-install") && term.flags.has("crontab"),
+      ),
+      task(
+        "pgrep-before-pkill",
+        bi(
+          "Find the simulated training processes without listing grep itself, then show the PID and command line of one of them. Do not send any signal.",
+          "Βρες τις εικονικές εκπαιδευτικές διεργασίες χωρίς να εμφανίσεις την ίδια τη grep και έπειτα δείξε το PID και τη γραμμή εντολής μίας από αυτές. Μην στείλεις σήμα.",
+        ),
+        bi("pgrep training\npgrep -a training", "pgrep training\npgrep -a training"),
+        bi(
+          "Why: A pattern can match more than you intend, so the PID list is the check you read before any signal. How: plain pgrep answers with numbers, and -a adds the full command line so you can see what each number really is. pkill and killall exist for the signalling step; this exercise stops at the reading.",
+          "Γιατί: Ένα μοτίβο μπορεί να ταιριάξει περισσότερα από όσα εννοείς, οπότε η λίστα PID είναι ο έλεγχος που διαβάζεις πριν από κάθε σήμα. Πώς: η σκέτη pgrep απαντά με αριθμούς και το -a προσθέτει ολόκληρη τη γραμμή εντολής ώστε να βλέπεις τι είναι πραγματικά ο κάθε αριθμός. Οι pkill και killall υπάρχουν για το βήμα του σήματος, αυτή η άσκηση σταματά στην ανάγνωση.",
+        ),
+        (term) => term.flags.has("pgrep") && usedCmd(term, /pgrep\s+-a/),
+      ),
+      task(
+        "survive-a-closing-shell",
+        bi(
+          "Start a background job, list it with its PID, keep it running without the terminal, then shield the training script from SIGHUP with nohup and a log file.",
+          "Ξεκίνα μια εργασία παρασκηνίου, εμφάνισέ την με το PID της, κράτησέ τη χωρίς το τερματικό και έπειτα προστάτεψε το εκπαιδευτικό script από το SIGHUP με nohup και αρχείο καταγραφής.",
+        ),
+        bi(
+          "nano /root/linux-beginners-2/processes/notes.txt &\njobs -l\nbg %1\ndisown %1\nnohup /root/scanning_script.sh > scan.log 2>&1 &",
+          "nano /root/linux-beginners-2/processes/notes.txt &\njobs -l\nbg %1\ndisown %1\nnohup /root/scanning_script.sh > scan.log 2>&1 &",
+        ),
+        bi(
+          "Why: A closing shell signals its jobs, and work that matters should not depend on one terminal staying open. How: & backgrounds the job, jobs -l adds the PID, bg keeps a paused job running, disown removes it from the shell's table, and nohup ignores SIGHUP while the redirection keeps its output. The simulator records each step and starts no host process.",
+          "Γιατί: Ένα shell που κλείνει σηματοδοτεί τις εργασίες του και η δουλειά που μετράει δεν πρέπει να εξαρτάται από το ότι ένα τερματικό μένει ανοιχτό. Πώς: το & βάζει την εργασία στο παρασκήνιο, το jobs -l προσθέτει το PID, το bg κρατά μια παγωμένη εργασία ενεργή, το disown την αφαιρεί από τον πίνακα του shell και η nohup αγνοεί το SIGHUP ενώ η ανακατεύθυνση κρατά την έξοδο. Ο προσομοιωτής καταγράφει κάθε βήμα και δεν ξεκινά διεργασία στον υπολογιστή σου.",
+        ),
+        (term) => term.flags.has("jobs-l") && term.flags.has("bg-job") && term.flags.has("disown") && term.flags.has("nohup"),
+      ),
+      task(
+        "inspect-the-queue",
+        bi(
+          "Queue the training script once, list the queue, read what would actually run, and then cancel the entry before it fires.",
+          "Βάλε το εκπαιδευτικό script μία φορά στην ουρά, εμφάνισε την ουρά, διάβασε τι θα εκτελούνταν πραγματικά και έπειτα ακύρωσε την εγγραφή πριν εκτελεστεί.",
+        ),
+        bi("at 21:30 /root/scanning_script.sh\natq\nat -c 1\natrm 1", "at 21:30 /root/scanning_script.sh\natq\nat -c 1\natrm 1"),
+        bi(
+          "Why: A queue you cannot read is a queue you cannot audit, and at runs jobs through /bin/sh with a minimal environment. How: atq numbers the entries, at -c shows the environment and the exact command, and atrm removes the entry. In this lab the record is removed from the virtual queue and nothing is ever executed.",
+          "Γιατί: Μια ουρά που δεν διαβάζεται είναι ουρά που δεν ελέγχεται, και η at εκτελεί εργασίες μέσω /bin/sh με ελάχιστο περιβάλλον. Πώς: η atq αριθμεί τις εγγραφές, η at -c δείχνει το περιβάλλον και την ακριβή εντολή και η atrm αφαιρεί την εγγραφή. Σε αυτό το εργαστήριο η εγγραφή αφαιρείται από την εικονική ουρά και τίποτα δεν εκτελείται.",
+        ),
+        (term) => term.flags.has("atq") && term.flags.has("at-inspect") && term.flags.has("atrm"),
       ),
     ],
     challenges: [

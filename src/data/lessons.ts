@@ -4,7 +4,8 @@ import { SUDO_RUN_ALL } from "./sudorun-lessons";
 import { DFIR_MODULES } from "./dfir-lessons";
 import { LINUX_BEGINNERS_2_MODULES } from "./linux-beginners-2";
 import { LINUX_BEGINNERS_3_MODULES } from "./linux-beginners-3";
-import { SSH_DOC_BOUNDARY_MODULE, SSH_DOC_SETUP_MODULE, SSH_SERVICE_MODULES } from "./ssh-service-lessons";
+import { SSH_DOC_AUDIT_MODULE, SSH_DOC_BOUNDARY_MODULE, SSH_DOC_SETUP_MODULE, SSH_SERVICE_MODULES } from "./ssh-service-lessons";
+import { FILE_SHARE_MODULES } from "./file-share-lessons";
 
 export type Bi = { en: string; el: string };
 
@@ -1272,7 +1273,21 @@ export const LEARNING_PATHS: Campaign[] = [
       ...SSH_SERVICE_MODULES.filter((module) => module.id === "ssh-svc-recon" || module.id === "ssh-svc-auth"),
       SSH_DOC_BOUNDARY_MODULE,
       ...SSH_SERVICE_MODULES.filter((module) => module.id === "ssh-svc-harden"),
+      SSH_DOC_AUDIT_MODULE,
     ]),
+  },
+  {
+    id: "file-shares",
+    pathNumber: 5,
+    title: { en: "Anonymous Logins and File Shares", el: "Ανώνυμες συνδέσεις και κοινόχρηστα αρχεία" },
+    subtitle: { en: "FTP, SMB and NFS: expose it, prove it, close it", el: "FTP, SMB και NFS: εκθεσέ το, απόδειξέ το, κλείσε το" },
+    blurb: {
+      en: "Path 05. Build the three classic unauthenticated shares on the fictional target ubuntu-lab, enumerate each one, retrieve a marker, and then apply the control that closes it. Every command stays inside the sandbox.",
+      el: "Διαδρομή 05. Φτιάξε τα τρία κλασικά κοινόχρηστα χωρίς ταυτοποίηση στον φανταστικό στόχο ubuntu-lab, απαρίθμησε το καθένα, ανάκτησε έναν δείκτη και μετά εφάρμοσε τον έλεγχο που το κλείνει. Κάθε εντολή μένει μέσα στο sandbox.",
+    },
+    scenario: "lab",
+    accent: "lime",
+    modules: numbered(FILE_SHARE_MODULES),
   },
 ];
 

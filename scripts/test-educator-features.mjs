@@ -100,10 +100,10 @@ try {
   db.resetAll();
   values.set("hackforge.platform.v1", JSON.stringify(reloaded));
   const migrated = db.getDB();
-  assert.equal(migrated.users[0].activeCampaignId, "gamehack", "legacy campaign IDs should migrate without resetting player progress");
+  assert.equal(migrated.users[0].activeCampaignId, "linux-part-01", "a retired campaign ID should migrate to the visible path that holds the player's modules");
   assert.equal(migrated.users[0].avatar, "ic:terminal:#06b6d4", "the old brand accent should migrate to the cyan palette");
-  assert.equal(migrated.commandLog[0].campaignId, "gamehack");
-  assert.equal(migrated.feed.at(-1).campaignId, "gamehack");
+  assert.equal(migrated.commandLog[0].campaignId, "linux-part-01", "command audit records should follow the migrated path id");
+  assert.equal(migrated.feed.at(-1).campaignId, "linux-part-01", "feed events should follow the migrated path id");
   assert.equal(migrated.feed.at(-1).text, "Ada joined GameHack", "legacy platform names should be removed from app-generated feed events");
   assert.ok(migrated.teams.some((team) => team.name === "Packet Ops"), "the legacy demo-team name should be rebranded");
   assert.ok(values.has("gamehack.platform.v1"), "the migrated database should be saved under the GameHack key");

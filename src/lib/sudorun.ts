@@ -274,12 +274,17 @@ function chmodMode(n: FileNode, spec: string) {
     let prefix = n.type === "dir" ? "d" : "-";
     let body = rwx;
     if (special === "4") {
-      body = body.slice(0, 2) + "s" + body.slice(3);
+      body = body.slice(0, 2) + (body[2] === "x" ? "s" : "S") + body.slice(3);
       n.mode = prefix + body;
       return;
     }
     if (special === "2") {
-      body = body.slice(0, 5) + "s" + body.slice(6);
+      body = body.slice(0, 5) + (body[5] === "x" ? "s" : "S") + body.slice(6);
+      n.mode = prefix + body;
+      return;
+    }
+    if (special === "1") {
+      body = body.slice(0, 8) + (body[8] === "x" ? "t" : "T");
       n.mode = prefix + body;
       return;
     }
@@ -289,6 +294,10 @@ function chmodMode(n: FileNode, spec: string) {
   if (spec === "+x" || spec === "u+x" || spec === "a+x") {
     const m = n.mode || "-rw-r--r--";
     n.mode = m.slice(0, 3) + "x" + m.slice(4);
+  }
+  if (spec === "+t" || spec === "a+t" || spec === "o+t") {
+    const m = n.mode || (n.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--");
+    n.mode = m.slice(0, 9) + (m[9] === "x" ? "t" : "T");
   }
 }
 
@@ -345,6 +354,10 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
 
   if (t.ftp) {
     return handleFtp(t, input, print);
+  }
+
+  if (t.smb) {
+    return handleSmbSession(t, input, print);
   }
 
   switch (cmd) {
@@ -416,7 +429,7 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
         .replace(/^["']|["']$/g, "") || ":";
       const fieldSpec = fieldOption?.slice(2) || (fieldIndex >= 0 ? rest[fieldIndex + 1] : "1") || "1";
       const field = Math.max(1, Number.parseInt(fieldSpec.split(",")[0], 10) || 1);
-      const path = pos.find((value) => !/^\d+$/.test(value));
+      const path = pos.find((value) => !/^\d+$/.test(value) && value.trim() !== "");
       let source = stdin;
       if (source == null && path) {
         const resolved = resolvePath(t, path);
@@ -581,6 +594,7 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
       if (/4644/.test(spec)) t.flags.add("suid");
       if (/2466/.test(spec)) t.flags.add("sgid");
       if (/\+x/.test(spec)) t.flags.add("chmod-x");
+      if (/^1\d{3}$/.test(spec) || /^\+t$/.test(spec)) t.flags.add("sticky");
       print(`Mode of ${target} changed to ${node.mode || spec}.`);
       return true;
     }
@@ -705,6 +719,38 @@ DHCPACK of ${t.net.ip} from 10.10.10.1
 bound to ${t.net.ip} -- renewal in 1800 seconds.`);
       return true;
     }
+    case "getent": {
+      const database = (pos[0] || "").toLowerCase();
+      const name = (pos[1] || "").replace(/\.$/, "");
+      if (database !== "hosts" || !name) {
+        print("usage: getent hosts NAME (the simulator answers from the virtual /etc/hosts and the lab resolver)", "err");
+        return true;
+      }
+      t.flags.add("getent");
+      const hostsFile = getNode(t.fs, resolvePath(t, "/etc/hosts"));
+      const rows = (hostsFile?.type === "file" ? hostsFile.content || "" : "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith("#"));
+      const entry = rows
+        .map((line) => line.split(/\s+/))
+        .find((fields) => fields.slice(1).some((alias) => alias === name || alias === `${name}.lab`));
+      if (entry) {
+        t.flags.add("getent-hit");
+        print(`${entry[0]}       ${entry.slice(1).join(" ")}`);
+        print("# resolved through the simulated NSS order: /etc/hosts first, lab DNS second. dig bypasses this table.");
+        return true;
+      }
+      const host = t.hosts.find((item) => item.hostname === name || item.hostname === `${name}.lab`);
+      if (host) {
+        t.flags.add("getent-hit");
+        print(`${host.ip}       ${host.hostname}`);
+        print("# no /etc/hosts match; the lab resolver answered instead.");
+        return true;
+      }
+      print(`getent: '${name}': Unknown database entry`, "err");
+      return true;
+    }
     case "dig": {
       t.flags.add("dig");
       const reverse = rest.includes("-x");
@@ -770,6 +816,41 @@ bound to ${t.net.ip} -- renewal in 1800 seconds.`);
         };
         print("USER       PID %CPU %MEM    VSZ   RSS TTY      STAT  START   TIME COMMAND\n" + rows.map(auxRow).join("\n"));
       }
+      return true;
+    }
+    case "pgrep": {
+      t.flags.add("pgrep");
+      const pattern = pos[pos.length - 1] || "";
+      if (!pattern || /^-/.test(pattern)) {
+        print("usage: pgrep [-a] [-l] [-f] [-u USER] PATTERN", "err");
+        return true;
+      }
+      const fullLine = flags.has("f");
+      const wantedUser = (() => {
+        const index = rest.findIndex((argument) => argument === "-u");
+        return index >= 0 ? rest[index + 1] : "";
+      })();
+      const needle = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+      const matches = t.procs.filter((process) => {
+        if (!process.alive) return false;
+        if (wantedUser && process.user !== wantedUser) return false;
+        const haystack = fullLine ? process.cmd : process.cmd.split(" ")[0] || process.cmd;
+        return needle.test(haystack);
+      });
+      if (!matches.length) {
+        print(`pgrep: no virtual process matched '${pattern}' (exit status 1 in a real shell).`);
+        return true;
+      }
+      print(
+        matches
+          .map((process) => {
+            if (flags.has("a")) return `${process.pid} ${process.cmd}`;
+            if (flags.has("l")) return `${process.pid} ${(process.cmd.split(" ")[0] || process.cmd).slice(0, 15)}`;
+            return String(process.pid);
+          })
+          .join("\n"),
+      );
+      print("# pgrep answers with PIDs only, and never lists itself. Confirm before you signal anything.");
       return true;
     }
     case "top": {
@@ -871,14 +952,68 @@ bound to ${t.net.ip} -- renewal in 1800 seconds.`);
     }
     case "jobs": {
       t.flags.add("jobs");
+      if (flags.has("l")) t.flags.add("jobs-l");
       print(
         t.jobs
           .map((j, i) => {
             const marker = i === t.jobs.length - 1 ? "+" : i === t.jobs.length - 2 ? "-" : " ";
-            return `[${i + 1}]${marker} Running ${j.cmd} &`;
+            const label = flags.has("l") ? `${j.pid} Running` : "Running";
+            return `[${i + 1}]${marker} ${label} ${j.cmd} &`;
           })
           .join("\n") || "No active simulated background jobs.",
       );
+      if (flags.has("l")) print("# + marks the current job, - the previous one; fg/bg act on + unless you name a job.");
+      return true;
+    }
+    case "bg": {
+      t.flags.add("bg");
+      t.flags.add("bg-job");
+      const spec = pos[0] || "";
+      let index = t.jobs.length - 1;
+      if (/^%\d+$/.test(spec)) index = Number.parseInt(spec.slice(1), 10) - 1;
+      else if (spec === "%-") index = t.jobs.length - 2;
+      else if (spec !== "" && spec !== "%+" && spec !== "%%") index = -1;
+      const job = index >= 0 ? t.jobs[index] : undefined;
+      if (!job) {
+        print(t.jobs.length ? `bg: ${spec}: no such job` : "bg: no simulated background job to resume. Queue one with COMMAND & first.");
+        return true;
+      }
+      print(`[${index + 1}]+ ${job.cmd} &`);
+      print("# the virtual job continues in the background; a stopped editor keeps running without a terminal.");
+      return true;
+    }
+    case "disown": {
+      const spec = pos[0] || "";
+      let index = t.jobs.length - 1;
+      if (/^%\d+$/.test(spec)) index = Number.parseInt(spec.slice(1), 10) - 1;
+      const [job] = index >= 0 ? t.jobs.splice(index, 1) : [];
+      if (!job) {
+        print(t.jobs.length ? `disown: ${spec}: no such job` : "disown: the job table is empty; nothing to detach.");
+        return true;
+      }
+      t.flags.add("disown");
+      print(`${job.cmd} removed from the shell's job table; a closing shell no longer signals it (simulated).`);
+      return true;
+    }
+    case "nohup": {
+      const rawCommand = rest.join(" ").trim();
+      const redirect = rawCommand.match(/^(.*?)\s*>>?\s*(\S+)(?:\s*2>&1)?$/);
+      const target = redirect ? redirect[2] : "";
+      const command = (redirect ? redirect[1] : rawCommand).replace(/\s*2>&1\s*$/, "").trim();
+      if (!command) {
+        print("usage: nohup COMMAND [ARG]... (the virtual job is recorded, never executed on the host)", "err");
+        return true;
+      }
+      t.flags.add("nohup");
+      t.flags.add("nohup-immune");
+      const logName = target || "nohup.out";
+      writeFile(t, logName, `GameHack: simulated output of ${command} (SIGHUP is ignored)\n`, true);
+      print(
+        target
+          ? `nohup: ignoring input and redirecting output to '${target}'`
+          : "nohup: ignoring input and appending output to 'nohup.out'",
+      );
+      print(`The virtual job keeps its place after this shell closes: ${command} (recorded, not executed).`);
       return true;
     }
     case "fg": {
@@ -896,10 +1031,42 @@ bound to ${t.net.ip} -- renewal in 1800 seconds.`);
     }
     case "at": {
       t.flags.add("at");
+      const inspectIndex = rest.findIndex((argument) => argument === "-c" || argument === "-r");
+      if (rest.includes("-l")) {
+        t.flags.add("atq");
+        print(
+          t.atQueue
+            .map((job) => `${job.id}\t${job.time}\t${job.command}`)
+            .join("\n") || "No simulated jobs are queued.",
+        );
+        return true;
+      }
+      if (inspectIndex >= 0) {
+        const id = Number.parseInt(rest[inspectIndex + 1] || "", 10);
+        const job = t.atQueue.find((entry) => entry.id === id);
+        if (!job) {
+          print(`at: job ${Number.isFinite(id) ? id : "?"} not found in the virtual queue`, "err");
+          return true;
+        }
+        if (rest[inspectIndex] === "-r") {
+          t.atQueue = t.atQueue.filter((entry) => entry.id !== id);
+          t.flags.add("atrm");
+          print(`job ${id} removed from the virtual queue; nothing was executed.`);
+          return true;
+        }
+        t.flags.add("at-inspect");
+        print(
+          `#!/bin/sh\n# atrun uid=0 gid=0 (simulated; the environment below is what /bin/sh would inherit)\n` +
+            `HOME=${t.env.HOME || "/root"}\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n` +
+            `SHELL=/bin/sh\nPWD=${t.cwd}\n# the queued command:\n${job.command}`,
+        );
+        print("# at runs jobs through /bin/sh, not your interactive shell: use absolute paths and no aliases.");
+        return true;
+      }
       const time = pos[0] || "";
       const command = pos.slice(1).join(" ").trim();
       if (!time) {
-        print("usage: at TIME COMMAND... (simulated; command is recorded, never run on the host)", "err");
+        print("usage: at TIME COMMAND... | at -l | at -c JOB | at -r JOB (recorded, never run on the host)", "err");
         return true;
       }
       if (!command) {
@@ -910,6 +1077,29 @@ bound to ${t.net.ip} -- renewal in 1800 seconds.`);
       const id = t.atQueue.length + 1;
       t.atQueue.push({ id, time, command });
       print(`job ${id} queued for ${time}: ${command} (simulated; not executed)`);
+      return true;
+    }
+    case "atq": {
+      t.flags.add("atq");
+      print(
+        t.atQueue
+          .map((job) => `${job.id}\t${job.time}\t${job.command}`)
+          .join("\n") || "No simulated jobs are queued.",
+      );
+      print("# atq lists the pending queue; atrm JOB removes an entry without running it.");
+      return true;
+    }
+    case "atrm": {
+      const id = Number.parseInt(pos[0] || "", 10);
+      const job = t.atQueue.find((entry) => entry.id === id);
+      if (!job) {
+        if (!t.atQueue.length) print(`atrm: the virtual queue is empty (a real system answers "Can't find job ${pos[0] || "?"}").`);
+        else print(`atrm: job ${Number.isFinite(id) ? id : "?"} not found in the virtual queue`, "err");
+        return true;
+      }
+      t.atQueue = t.atQueue.filter((entry) => entry.id !== id);
+      t.flags.add("atrm");
+      print(`job ${id} (${job.time}: ${job.command}) removed from the virtual queue; nothing was executed.`);
       return true;
     }
     case "set": {
@@ -953,6 +1143,39 @@ bound to ${t.net.ip} -- renewal in 1800 seconds.`);
       delete t.shellVars[pos[0]];
       delete t.env[pos[0]];
       print(existed ? `Removed ${pos[0]} from the virtual shell.` : `${pos[0]} was not set.`);
+      return true;
+    }
+    case "apache2ctl": {
+      const action = pos[0] || "-S";
+      t.flags.add("apache2ctl");
+      if (action === "configtest" || action === "-t") {
+        t.flags.add("apache2ctl-configtest");
+        print("Syntax OK");
+        print("# configtest only parses /etc/apache2; it never opens a port.");
+        return true;
+      }
+      if (action === "-S" || action === "status") {
+        const state = t.services.apache2 || "stopped";
+        print(
+          `VirtualHost configuration (simulated):\n*:80  ${t.host} (/var/www/html)\nServerRoot: \"/etc/apache2\"\n` +
+            `apache2 is ${state === "running" ? "active and listening on 0.0.0.0:80" : "stopped; nothing is listening on port 80"}.`,
+        );
+        return true;
+      }
+      if (action === "start" || action === "restart" || action === "graceful") {
+        t.services.apache2 = "running";
+        t.flags.add("apache2ctl-start");
+        print(`${action === "graceful" ? "Performing a graceful restart of" : action === "restart" ? "Restarting" : "Starting"} the virtual apache2 service.`);
+        print("# the simulated listener is recorded in the lab state; no host port is opened.");
+        return true;
+      }
+      if (action === "stop") {
+        t.services.apache2 = "stopped";
+        t.flags.add("apache2ctl-stop");
+        print("Stopping the virtual apache2 service; port 80 is closed again.");
+        return true;
+      }
+      print("usage: apache2ctl start|stop|restart|graceful|configtest|-S (simulated)", "err");
       return true;
     }
     case "service": {
@@ -1066,16 +1289,66 @@ bound to ${t.net.ip} -- renewal in 1800 seconds.`);
     }
     case "ftp": {
       const host = (pos[0] || "ftp.gamehack.lab").toLowerCase();
-      if (host !== "ftp.gamehack.lab") {
+      const knownRoots: Record<string, { root: string; banner: string }> = {
+        "ftp.gamehack.lab": { root: "/srv/ftp", banner: "220 GameHack FTP server (simulated)" },
+        "192.168.1.9": { root: "/var/ftp", banner: "220 (vsFTPd 3.0.5)" },
+        "ubuntu-lab": { root: "/var/ftp", banner: "220 (vsFTPd 3.0.5)" },
+      };
+      const target = knownRoots[host];
+      if (!target) {
         t.flags.add("ftp-external-blocked");
-        print(`ftp: external host '${host}' is blocked in this lab. Use ftp ftp.gamehack.lab; no connection was attempted.`, "err");
+        print(`ftp: external host '${host}' is blocked in this lab. Use ftp ftp.gamehack.lab or the file-share target ftp 192.168.1.9; no connection was attempted.`, "err");
         return true;
       }
-      t.ftp = { host, user: null, cwd: "/", authenticated: false };
+      if (target.root === "/var/ftp" && t.services.vsftpd !== "running" && t.services.ftp !== "running") {
+        print(`ftp: connect to address ${host}: Connection refused\n# the daemon is not listening: apply the configuration with service vsftpd restart before enumerating.`, "err");
+        return true;
+      }
+      t.ftp = { host, user: null, cwd: "/", authenticated: false, root: target.root };
       t.flags.add("ftp");
-      print(`Connected to ${host}.
-220 GameHack FTP server (simulated)
-Name (${host}:root):`);
+      print(`Connected to ${host}.\n${target.banner}\nName (${host}:root):`);
+      return true;
+    }
+    case "smbclient": {
+      const target = (pos.find((value) => value.startsWith("//")) || pos[0] || "").replace(/^\/\//, "");
+      const guestLogin = flags.has("N") || rest.some((value) => value === "-N");
+      const listing = flags.has("L") || rest.some((value) => value === "-L");
+      const shareName = target.includes("/") ? target.slice(target.indexOf("/") + 1).replace(/\/$/, "") : null;
+      const host = target.split("/")[0];
+      if (!host) {
+        print("usage: smbclient -N -L //HOST  |  smbclient //HOST/SHARE -N", "err");
+        return true;
+      }
+      if (t.services.smbd !== "running" && t.services.samba !== "running") {
+        print(`Connection to ${host} failed: NT_STATUS_CONNECTION_REFUSED\n# the SMB daemon is not listening in this lab yet: apply the configuration with systemctl restart smbd first.`);
+        return true;
+      }
+      if (listing || !shareName) {
+        print(
+          [
+            guestLogin ? "Anonymous login successful" : "Enter WORKGROUP\\user password:",
+            "",
+            "\tSharename       Type      Comment",
+            "\t---------       ----      -------",
+            "\tprint$          Disk      Printer Drivers",
+            "\tshares          Disk      Lab file share",
+            "\tIPC$            IPC       IPC Service (Samba 4.17.7-Ubuntu)",
+            "Reconnecting with SMB1 for workgroup listing.",
+            "smbXcli_negprot_smb1_done: No compatible protocol selected by client, err=NT_STATUS_INVALID_PARAMETER",
+            "Unable to connect with SMB1 -- no workgroup available",
+            "# the SMB1 fallback failure is the good outcome: modern clients should negotiate SMB2 or SMB3.",
+          ].join("\n"),
+        );
+        t.flags.add("smbclient-list");
+        return true;
+      }
+      if (!guestLogin) {
+        print(`Enter WORKGROUP\\user password: \nNT_STATUS_LOGON_FAILURE listing \\\\${host}\\${shareName}\n# this share is guest-accessible in the lab: pass -N so no password is sent.`, "err");
+        return true;
+      }
+      t.smb = { target: host, share: shareName, guest: true, cwd: "/" };
+      t.flags.add("smbclient-open");
+      print(`Try "help" to get a list of possible commands.\nsmb: \\>`);
       return true;
     }
     case "volatility": {
@@ -1220,13 +1493,107 @@ Nmap scan report for 10.10.10.21 (db.lab)`);
   return true;
 }
 
+
+function smbShareRoot(t: Terminal, share: string): string {
+  const config = getNode(t.fs, "/etc/samba/smb.conf");
+  const text = config?.content || "";
+  const sections = text.split(/\r?\n(?=\[)/);
+  const section = sections.find((block) => block.trimStart().toLowerCase().startsWith(`[${share.toLowerCase()}]`));
+  const pathMatch = section?.match(/^\s*path\s*=\s*(.+)$/im);
+  return pathMatch ? pathMatch[1].trim().replace(/\/$/, "") || "/var/www" : "/var/www";
+}
+
+function handleSmbSession(t: Terminal, input: string, print: Ctx["print"]): boolean {
+  const line = input.trim();
+  const session = t.smb;
+  if (!session || !session.share) return false;
+  const root = smbShareRoot(t, session.share);
+
+  if (line === "ls" || line === "dir") {
+    const remotePath = normalize(`${root}/${session.cwd}`);
+    const directory = getNode(t.fs, remotePath);
+    if (!directory || directory.type !== "dir") {
+      print("NT_STATUS_NO_SUCH_FILE listing the share", "err");
+      return true;
+    }
+    const rows = Object.values(directory.children || {})
+      .filter((node) => node.name !== ".keep")
+      .map((node) => `  ${node.name.padEnd(38)}${node.type === "dir" ? "D" : "A"}       ${String((node.content || "").length).padStart(4)}  Sat Oct 10 12:14:22 2026`);
+    print(rows.join("\n") || "  (the share is empty)");
+    print("\n\t\t26632192 blocks of size 1024. 18874368 blocks available");
+    print("# A marks a normal file and D a directory; both were readable without any credential.");
+    t.flags.add("smb-ls");
+    return true;
+  }
+  if (line.startsWith("cd ")) {
+    const requested = line.slice(3).trim();
+    const remotePath = normalize(`${root}/${session.cwd}/${requested}`);
+    if (remotePath !== root && !remotePath.startsWith(`${root}/`)) {
+      print("NT_STATUS_OBJECT_PATH_INVALID: the path leaves the share root.", "err");
+      return true;
+    }
+    const destination = getNode(t.fs, remotePath);
+    if (!destination || destination.type !== "dir") {
+      print("NT_STATUS_OBJECT_NAME_NOT_FOUND", "err");
+      return true;
+    }
+    session.cwd = remotePath.slice(root.length) || "/";
+    print(`smb: \\${session.cwd === "/" ? "" : session.cwd}>`);
+    return true;
+  }
+  if (line.startsWith("get ")) {
+    const requested = line.slice(4).trim();
+    const remotePath = normalize(`${root}/${session.cwd}/${requested}`);
+    if (!remotePath.startsWith(`${root}/`)) {
+      print("NT_STATUS_OBJECT_PATH_INVALID", "err");
+      return true;
+    }
+    const remoteFile = getNode(t.fs, remotePath);
+    if (!remoteFile || remoteFile.type !== "file") {
+      print(`NT_STATUS_NO_SUCH_FILE opening remote file \\${session.share}\\${requested}`, "err");
+      return true;
+    }
+    const localName = requested.split("/").filter(Boolean).at(-1) || "download";
+    const localPath = normalize(`${t.cwd}/${localName}`);
+    if (!writeFile(t, localPath, remoteFile.content || "")) {
+      print(`NT_STATUS_ACCESS_DENIED writing ${localName} into the virtual working directory.`, "err");
+      return true;
+    }
+    t.flags.add("smb-get");
+    print(`getting file \\${requested} of size ${(remoteFile.content || "").length} as ${localName} (1.2 KiloBytes/sec) (average 1.2 KiloBytes/sec)`);
+    return true;
+  }
+  if (line === "exit" || line === "quit" || line === "bye") {
+    t.smb = null;
+    t.flags.add("smb-exit");
+    print("# session closed; the retrieved file stays in your virtual working directory.");
+    return true;
+  }
+  if (line === "help" || line === "?") {
+    print("ls, cd DIR, get FILE, help, exit");
+    return true;
+  }
+  print(`smb: \\> (try ls, get file.txt, exit)`);
+  return true;
+}
+
 function handleFtp(t: Terminal, input: string, print: Ctx["print"]): boolean {
   const line = input.trim();
   const session = t.ftp;
   if (!session) return false;
 
+  const root = session.root || "/srv/ftp";
   if (!session.user) {
     session.user = line || "anonymous";
+    if (session.user === "anonymous" && root === "/var/ftp") {
+      session.authenticated = true;
+      t.flags.add("ftp-user");
+      t.flags.add("ftp-anonymous");
+      t.flags.add("ftp-pass");
+      t.flags.add("ftp-login");
+      print("230 Login successful.\nRemote system type is UNIX.\nUsing binary mode to transfer files.\nftp>");
+      return true;
+    }
     print("331 Please specify the password.");
     t.flags.add("ftp-user");
     return true;
@@ -1245,39 +1612,43 @@ function handleFtp(t: Terminal, input: string, print: Ctx["print"]): boolean {
   }
 
   if (line === "ls" || line === "dir") {
-    const remotePath = normalize(`/srv/ftp/${session.cwd}`);
+    const remotePath = normalize(`${root}/${session.cwd}`);
     const directory = getNode(t.fs, remotePath);
     if (!directory || directory.type !== "dir") {
       print("550 Failed to list directory.", "err");
       return true;
     }
-    const rows = Object.values(directory.children || {}).map((node) =>
-      `${node.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--"}  ${node.name}`
-    );
+    const entries = Object.values(directory.children || {}).filter((node) => node.name !== "welcome.txt" && node.name !== ".keep");
+    const rows = root === "/var/ftp"
+      ? entries.map((node) => `${node.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--"}    2 ftp      ftp          ${String((node.content || "").length || 4096).padStart(4)} Feb 10 12:01 ${node.name}`)
+      : entries.map((node) => `${node.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--"}  ${node.name}`);
+    print(`229 Entering Extended Passive Mode (|||40217|).\n150 Here comes the directory listing.`);
     print(rows.join("\n") || "(empty directory)");
+    print("226 Directory send OK.");
+    if (root === "/var/ftp") print("# hide_ids=YES is why every row shows ftp:ftp, even for files created by root.");
     t.flags.add("ftp-ls");
     return true;
   }
   if (line.startsWith("cd ")) {
     const requested = line.slice(3).trim();
-    const remotePath = normalize(`/srv/ftp/${session.cwd}/${requested}`);
-    if (remotePath !== "/srv/ftp" && !remotePath.startsWith("/srv/ftp/")) {
+    const remotePath = normalize(`${root}/${session.cwd}/${requested}`);
+    if (remotePath !== root && !remotePath.startsWith(`${root}/`)) {
       print("550 Directory is outside the FTP fixture root.", "err");
       return true;
     }
     const destination = getNode(t.fs, remotePath);
     if (!destination || destination.type !== "dir") {
-      print("550 Directory not found.", "err");
+      print(`550 Failed to change directory.\n# ${requested} does not exist under the anonymous root ${root}; create it on the server side first.`, "err");
       return true;
     }
-    session.cwd = remotePath.slice("/srv/ftp".length) || "/";
+    session.cwd = remotePath.slice(root.length) || "/";
     print("250 Directory successfully changed.");
     return true;
   }
   if (line.startsWith("get ")) {
     const requested = line.slice(4).trim();
-    const remotePath = normalize(`/srv/ftp/${session.cwd}/${requested}`);
-    if (!remotePath.startsWith("/srv/ftp/")) {
+    const remotePath = normalize(`${root}/${session.cwd}/${requested}`);
+    if (!remotePath.startsWith(`${root}/`)) {
       print("550 File path is outside the FTP fixture root.", "err");
       return true;
     }
@@ -1293,7 +1664,7 @@ function handleFtp(t: Terminal, input: string, print: Ctx["print"]): boolean {
       return true;
     }
     t.flags.add("ftp-get");
-    print(`local: ${localName} remote: ${requested}\n226 Transfer complete.`);
+    print(`local: ${localName} remote: ${requested}\n229 Entering Extended Passive Mode (|||40271|).\n150 Opening BINARY mode data connection for ${requested} (${(remoteFile.content || "").length} bytes).\n226 Transfer complete.\n# FTP carries the username, the commands and these bytes in cleartext unless TLS is configured.`);
     return true;
   }
   if (line === "bye" || line === "quit" || line === "exit") {
@@ -1302,7 +1673,7 @@ function handleFtp(t: Terminal, input: string, print: Ctx["print"]): boolean {
     print("221 Goodbye.");
     return true;
   }
-  print("ftp> (try ls, cd ubuntu, cd release, get favicon.ico, bye)");
+  print(root === "/var/ftp" ? "ftp> (try ls, cd pub, get note.txt, bye)" : "ftp> (try ls, cd ubuntu, cd release, get favicon.ico, bye)");
   return true;
 }
 
