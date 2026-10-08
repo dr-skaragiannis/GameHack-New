@@ -185,6 +185,15 @@ export default function App() {
     };
   }, [accountMenuOpen]);
 
+  useEffect(() => {
+    if (!logoutConfirmOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLogoutConfirmOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [logoutConfirmOpen]);
+
   if (!authReady) {
     return <div className="gamehack-grid min-h-screen grid place-items-center text-sm text-iron-300">Checking session…</div>;
   }
@@ -253,15 +262,6 @@ export default function App() {
     setMobile(false);
     setLogoutConfirmOpen(true);
   };
-
-  useEffect(() => {
-    if (!logoutConfirmOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setLogoutConfirmOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [logoutConfirmOpen]);
 
   const go = (v: View) => {
     sound.nav();
