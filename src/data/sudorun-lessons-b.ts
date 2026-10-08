@@ -26,8 +26,8 @@ export const SUDO_RUN_MODULES_B: Module[] = [
       {
         heading: { en: "Search", el: "Αναζήτηση" },
         body: {
-          en: "apt-cache search hydra looks up a package name in the simulated index. search reads descriptions. It does not install the package and it does not run it. The rows you see are canned names from this lab, so you can practise reading a package list before you choose install.",
-          el: "Η apt-cache search hydra αναζητά ένα όνομα πακέτου στο εικονικό ευρετήριο. Το search διαβάζει περιγραφές. Δεν εγκαθιστά το πακέτο και δεν το εκτελεί. Οι γραμμές που βλέπεις είναι έτοιμα ονόματα αυτού του εργαστηρίου, ώστε να εξασκηθείς στο διάβασμα μιας λίστας πακέτων πριν διαλέξεις install.",
+          en: "apt-cache search hydra looks up a package name in the simulated index. search reads descriptions. It does not install the package and it does not run it. The rows you see are canned names from this lab, so you can practise reading a package list before you choose install.\n\nSearching before installing is the difference between a package you chose and a package you guessed at. The search step matches names and descriptions, which is why it returns several candidates; reading the short description of each tells you which one actually owns the functionality you need. Only then does the detailed view matter: dependencies, installed size, and the homepage of the project that will be running on your machine.",
+          el: "Η apt-cache search hydra αναζητά ένα όνομα πακέτου στο εικονικό ευρετήριο. Το search διαβάζει περιγραφές. Δεν εγκαθιστά το πακέτο και δεν το εκτελεί. Οι γραμμές που βλέπεις είναι έτοιμα ονόματα αυτού του εργαστηρίου, ώστε να εξασκηθείς στο διάβασμα μιας λίστας πακέτων πριν διαλέξεις install.\n\nΗ αναζήτηση πριν την εγκατάσταση είναι η διαφορά ανάμεσα σε ένα πακέτο που διάλεξες και ένα που μάντεψες. Το βήμα αναζήτησης ταιριάζει ονόματα και περιγραφές, γι’ αυτό επιστρέφει αρκετές υποψηφιότητες· διαβάζοντας τη σύντομη περιγραφή της καθεμιάς μαθαίνεις ποια κατέχει πραγματικά τη λειτουργικότητα που χρειάζεσαι. Μόνο τότε μετρά η λεπτομερής προβολή: εξαρτήσεις, μέγεθος εγκατάστασης και η σελίδα του έργου που θα τρέχει στο μηχάνημά σου.",
         },
         shots: [shot("apt-cache search hydra", ["hydra - very fast network logon cracker", "libhydra - hydra library (lab)", "qhydra - qt frontend"])],
       },
@@ -83,13 +83,13 @@ export const SUDO_RUN_MODULES_B: Module[] = [
     challenges: [
       {
         title: { en: "Read sources without nano", el: "Διάβασε χωρίς nano" },
-        brief: { en: "cat /etc/apt/sources.list", el: "cat /etc/apt/sources.list" },
+        brief: { en: "Open the repository list without an editor: cat /etc/apt/sources.list. Knowing where the package manager is told to fetch from is part of understanding what you installed, and reading beats editing when you only need to look.", el: "Άνοιξε τη λίστα αποθετηρίων χωρίς editor: cat /etc/apt/sources.list. Το να ξέρεις από πού λέει στον διαχειριστή πακέτων να κατεβάζει είναι μέρος της κατανόησης του τι εγκατέστησες, και η ανάγνωση υπερισχύει της επεξεργασίας όταν χρειάζεται μόνο να κοιτάξεις." },
         success: { en: "Same file, different tool.", el: "Το ίδιο αρχείο, με διαφορετικό εργαλείο." },
         check: (t) => t.filesRead.some((p) => p.includes("sources.list")) || t.flags.has("nano-sources"),
       },
       {
         title: { en: "Search then install", el: "Ψάξε μετά εγκατέστησε" },
-        brief: { en: "You already searched hydra and installed git — that is the full loop.", el: "Αναζήτηση και εγκατάσταση: ο πλήρης κύκλος." },
+        brief: { en: "Close the loop in the right order: search for the package first, then install it. Two commands, one decision — you chose a package you can name, instead of installing something because a tutorial told you to.", el: "Κλείσε τον κύκλο με τη σωστή σειρά: πρώτα αναζήτησε το πακέτο και μετά εγκατάστησέ το. Δύο εντολές, μία απόφαση — διάλεξες ένα πακέτο που μπορείς να κατονομάσεις, αντί να εγκαταστήσεις κάτι επειδή το έλεγε ένα tutorial." },
         success: { en: "Repo workflow complete.", el: "Ο κύκλος του αποθετηρίου ολοκληρώθηκε." },
         check: (t) => t.flags.has("apt-search") && t.flags.has("apt-install"),
       },
@@ -158,7 +158,7 @@ export const SUDO_RUN_MODULES_B: Module[] = [
         ],
       },
       {
-        heading: { en: "A shared folder, put together", el: "Ένας κοινόχρηστος φάκελος, ολοκληρωμένος" },
+        heading: { en: "A shared folder, put together", el: "Κοινόχρηστος φάκελος, ολοκληρωμένος" },
         body: {
           en: "The separate commands only matter together. A shared working folder wants four decisions: the group may write, new files inherit that group, one script runs for everyone but only its owner edits it, and a private key stays readable by its owner alone. That is mkdir, chgrp, chmod 2775 on the folder, chmod 755 on the script, and chmod 600 on the key.\n\nRead the result the same way you read a finding. drwxrwsr-x on the folder means group-writable with SGID, so anything added belongs to the team; 755 on the script means anyone runs it and only the owner changes it; 600 on the key is the shape SSH insists on before it will use a private key at all. In this lab the same chain applies to gamehack.txt and the ignite group, and every change stays inside your own virtual filesystem.",
           el: "Οι μεμονωμένες εντολές έχουν νόημα μόνο μαζί. Ένας κοινόχρηστος φάκελος εργασίας θέλει τέσσερις αποφάσεις: η ομάδα γράφει, τα νέα αρχεία κληρονομούν εκείνη την ομάδα, ένα σενάριο εκτελείται από όλους αλλά το επεξεργάζεται μόνο ο ιδιοκτήτης του, και ένα ιδιωτικό κλειδί διαβάζεται μόνο από τον ιδιοκτήτη του. Αυτό είναι mkdir, chgrp, chmod 2775 στον φάκελο, chmod 755 στο σενάριο και chmod 600 στο κλειδί.\n\nΔιάβασε το αποτέλεσμα όπως διαβάζεις ένα εύρημα. Το drwxrwsr-x στον φάκελο σημαίνει εγγράψιμος από την ομάδα με SGID, οπότε ό,τι προστίθεται ανήκει στην ομάδα, το 755 στο σενάριο σημαίνει ότι όλοι το εκτελούν και μόνο ο ιδιοκτήτης το αλλάζει, και το 600 στο κλειδί είναι το σχήμα που απαιτεί το SSH πριν δεχτεί να χρησιμοποιήσει ιδιωτικό κλειδί. Σε αυτό το εργαστήριο η ίδια αλυσίδα εφαρμόζεται στο gamehack.txt και στην ομάδα ignite, και κάθε αλλαγή μένει μέσα στο δικό σου εικονικό σύστημα αρχείων.",
@@ -203,13 +203,13 @@ export const SUDO_RUN_MODULES_B: Module[] = [
     challenges: [
       {
         title: { en: "Verify with ls -l", el: "Επιβεβαίωση ls -l" },
-        brief: { en: "ls -l gamehack.txt after the chown/chmod chain.", el: "Εκτέλεσε ls -l μετά τις αλλαγές." },
+        brief: { en: "After changing owner and mode, list the file with ls -l and read the left-hand columns back to yourself. Every permission change should end with this step, because the long listing is the only place the result is actually visible.", el: "Αφού αλλάξεις ιδιοκτήτη και δικαιώματα, παρέθεσε το αρχείο με ls -l και διάβασε ξανά στον εαυτό σου τις αριστερές στήλες. Κάθε αλλαγή δικαιωμάτων πρέπει να τελειώνει με αυτό το βήμα, γιατί η μακριά λίστα είναι το μόνο σημείο όπου το αποτέλεσμα είναι πραγματικά ορατό." },
         success: { en: "You can read the mode string.", el: "Διαβάζεις τη λειτουργία (mode)." },
         check: (t) => t.flags.has("ls-l"),
       },
       {
         title: { en: "Know the table", el: "Μάθε τον πίνακα" },
-        brief: { en: "chmod 755 on any file you created (e.g. gamehack-2.txt if it still exists, or touch one).", el: "Εκτέλεσε chmod 755 σε ένα αρχείο." },
+        brief: { en: "Apply mode 755 to a file you created — touch one if nothing survived — and translate the digits as you type them: owner reads, writes and executes; group and everyone else read and execute. Saying the table out loud is how it sticks.", el: "Εφάρμοσε δικαιώματα 755 σε ένα αρχείο που δημιούργησες — φτιάξε ένα αν δεν επέζησε κανένα — και μετάφρασε τα ψηφία καθώς τα πληκτρολογείς: ο ιδιοκτήτης διαβάζει, γράφει και εκτελεί· η ομάδα και όλοι οι υπόλοιποι διαβάζουν και εκτελούν. Λέγοντας τον πίνακα δυνατά είναι που κολλάει." },
         success: { en: "755 = rwxr-xr-x — classic executable.", el: "Το 755 αντιστοιχεί σε rwxr-xr-x." },
         check: (t) => usedCmd(t, /chmod\s+755/) || t.flags.has("chmod"),
       },

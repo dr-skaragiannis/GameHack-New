@@ -239,10 +239,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
     challenges: [
       {
         title: bi("Only the lab network", "Μόνο το δίκτυο του lab"),
-        brief: bi(
-          "Review the scanner source and confirm that its target is the fixed 10.10.10.0/24 fixture, not a public address.",
-          "Έλεγξε τον κώδικα του scanner και επιβεβαίωσε ότι ο στόχος είναι το σταθερό fixture 10.10.10.0/24, όχι δημόσια διεύθυνση.",
-        ),
+        brief: bi("Open the scanner source and confirm its target is the fixed 10.10.10.0/24 fixture rather than a public address, then run it so the sweep is recorded. Reading a script before executing it is the habit this lab exists to build.", "Άνοιξε τον κώδικα του scanner και επιβεβαίωσε ότι ο στόχος του είναι το σταθερό fixture 10.10.10.0/24 και όχι δημόσια διεύθυνση, και μετά τρέξε τον ώστε να καταγραφεί η σάρωση. Η ανάγνωση ενός script πριν την εκτέλεση είναι η συνήθεια που υπάρχει αυτό το lab για να χτίσει."),
         success: bi(
           "You identified the permitted fixture boundary and read the complete simulated host list.",
           "Εντόπισες τα όρια του επιτρεπόμενου fixture και διάβασες την πλήρη εικονική λίστα hosts.",
@@ -251,10 +248,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
       },
       {
         title: bi("Submit the script-builder flag", "Υποβολή σημαίας δημιουργού scripts"),
-        brief: bi(
-          "After reading and running the Bash examples, submit FLAG{linux_beginners_3_bash}.",
-          "Αφού διαβάσεις και εκτελέσεις τα παραδείγματα Bash, υπέβαλε FLAG{linux_beginners_3_bash}.",
-        ),
+        brief: bi("Once you have read the scanner source and run the Bash examples yourself, submit FLAG{linux_beginners_3_bash}. The flag records that you built and executed a script, not that you copied a string from somewhere.", "Αφού διαβάσεις τον κώδικα του scanner και εκτελέσεις μόνος σου τα παραδείγματα Bash, υπέβαλε το FLAG{linux_beginners_3_bash}. Το flag καταγράφει ότι έφτιαξες και εκτέλεσες script, και όχι ότι αντέγραψες μια συμβολοσειρά από κάπου."),
         success: bi(
           "The Bash lesson is complete; your scripts and their permissions remain in your virtual filesystem.",
           "Το μάθημα Bash ολοκληρώθηκε.",
@@ -478,10 +472,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
     challenges: [
       {
         title: bi("Distinguish user and system tables", "Διάκριση προσωπικού και system table"),
-        brief: bi(
-          "Use cat /etc/crontab and crontab -l to explain why one line has a username and the other does not.",
-          "Χρησιμοποίησε cat /etc/crontab και crontab -l για να εξηγήσεις γιατί η μία γραμμή έχει χρήστη και η άλλη όχι.",
-        ),
+        brief: bi("Read the system table with cat /etc/crontab and your own user table with crontab -l, then explain the difference: the system table carries a username field because it can run entries as any account, and the user table cannot.", "Διάβασε τον πίνακα συστήματος με cat /etc/crontab και τον δικό σου πίνακα χρήστη με crontab -l, και μετά εξήγησε τη διαφορά: ο πίνακας συστήματος κουβαλά πεδίο χρήστη γιατί μπορεί να τρέχει εγγραφές ως οποιοδήποτε λογαριασμό, ο πίνακας χρήστη όχι."),
         success: bi(
           "You can now read both cron formats without shifting the command into the wrong field.",
           "Μπορείς πλέον να διαβάζεις και τις δύο μορφές cron χωρίς να μετακινείς την εντολή σε λάθος πεδίο.",
@@ -490,10 +481,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
       },
       {
         title: bi("Submit the timekeeper flag", "Υποβολή σημαίας φύλακα χρόνου"),
-        brief: bi(
-          "After saving the schedule and reviewing simulated boot behavior, submit FLAG{linux_beginners_3_cron}.",
-          "Αφού αποθηκεύσεις το πρόγραμμα και ελέγξεις την εικονική εκκίνηση, υπέβαλε FLAG{linux_beginners_3_cron}.",
-        ),
+        brief: bi("Save the schedule, review how the simulated boot services behave, and then submit FLAG{linux_beginners_3_cron}. The point of the flag is that you can now tell a user schedule from a system one and say which runs when.", "Αποθήκευσε το πρόγραμμα, εξέτασε πώς συμπεριφέρονται οι εικονικές υπηρεσίες εκκίνησης και μετά υπέβαλε το FLAG{linux_beginners_3_cron}. Το νόημα του flag είναι ότι τώρα ξεχωρίζεις ένα πρόγραμμα χρήστη από ένα συστήματος και λες ποιο τρέχει πότε."),
         success: bi(
           "Cron and legacy boot configuration are understood; all changes remain local to your player state.",
           "Κατανόησες το cron και την παλιά ρύθμιση εκκίνησης.",
@@ -732,10 +720,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
     challenges: [
       {
         title: bi("Verify the local souvenir", "Έλεγχος του τοπικού αρχείου"),
-        brief: bi(
-          "After FTP has closed, use local ls to locate favicon.ico in the current course directory and read it with cat.",
-          "Αφού κλείσει το FTP, χρησιμοποίησε το τοπικό ls για να εντοπίσεις το favicon.ico στον τρέχοντα φάκελο και διάβασέ το με cat.",
-        ),
+        brief: bi("After the FTP session closes, find the file you retrieved in your working directory with ls and read it with cat. Proving the download landed locally is the last step of any transfer and the one people skip.", "Αφού κλείσει η συνεδρία FTP, βρες το αρχείο που κατέβασες στον φάκελο εργασίας σου με ls και διάβασέ το με cat. Η απόδειξη ότι η λήψη προσγειώθηκε τοπικά είναι το τελευταίο βήμα κάθε μεταφοράς και αυτό που παραλείπουν."),
         success: bi(
           "The download came from the VFS FTP fixture and is now a normal file in your persistent player workspace.",
           "Η λήψη προήλθε από το FTP fixture του VFS και τώρα είναι κανονικό αρχείο στον μόνιμο χώρο του παίκτη.",
@@ -744,10 +729,7 @@ export const LINUX_BEGINNERS_3_MODULES: Module[] = [
       },
       {
         title: bi("Submit the services flag", "Υποβολή σημαίας υπηρεσιών"),
-        brief: bi(
-          "After exploring Apache, SSH, telnet’s warning, and the local FTP fixture, submit FLAG{linux_beginners_3_services}.",
-          "Αφού εξερευνήσεις Apache, SSH, την προειδοποίηση του telnet και το τοπικό FTP fixture, υπέβαλε FLAG{linux_beginners_3_services}.",
-        ),
+        brief: bi("Once you have explored Apache, OpenSSH, read the telnet warning and worked through the local FTP fixture, submit FLAG{linux_beginners_3_services}. Each service taught you a different way a host talks to a network.", "Αφού εξερευνήσεις τον Apache, το OpenSSH, διαβάσεις την προειδοποίηση του telnet και δουλέψεις με το τοπικό FTP fixture, υπέβαλε το FLAG{linux_beginners_3_services}. Κάθε υπηρεσία σου δίδαξε έναν διαφορετικό τρόπο που ένας host μιλά σε ένα δίκτυο."),
         success: bi(
           "The service lesson is complete, and every page, state change, and transfer remained in the simulated player filesystem.",
           "Το μάθημα υπηρεσιών ολοκληρώθηκε.",

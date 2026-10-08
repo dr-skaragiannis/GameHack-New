@@ -50,9 +50,30 @@ export const SSH_DOC_SETUP_MODULE: Module = {
       ),
       [shot("cat /etc/ssh/sshd_config", ["Port 22", "PermitRootLogin no", "PasswordAuthentication yes", "PubkeyAuthentication yes"])],
     ),
+    section(
+      bi("Client and daemon are different packages", "Client και δαίμονας είναι διαφορετικά πακέτα"),
+      bi(
+        "Two halves get confused constantly. The client is what you type to reach another machine; it is installed almost everywhere. The daemon is what waits on port 22 and decides who comes in. A machine can hold one and not the other, which is why \"the ssh command works\" proves nothing about whether the host accepts incoming sessions.\n\nBefore you judge a host, establish three separate facts: is the daemon installed, is it running, and is it listening on the interface you think it is. Each question has its own command and its own answer, and an auditor will ask them in that order.",
+        "Δύο μισά συγχέονται διαρκώς. Ο client είναι αυτό που πληκτρολογείς για να φτάσεις σε άλλο μηχάνημα· είναι εγκατεστημένος σχεδόν παντού. Ο δαίμονας είναι αυτός που περιμένει στη θύρα 22 και κρίνει ποιος μπαίνει. Ένα μηχάνημα μπορεί να κρατά το ένα και όχι το άλλο, γι’ αυτό το \"η εντολή ssh δουλεύει\" δεν αποδεικνύει τίποτα για το αν ο host δέχεται εισερχόμενες συνεδρίες.\n\nΠριν κρίνεις έναν host, καθιέρωσε τρία ξεχωριστά γεγονότα: είναι εγκατεστημένος ο δαίμονας, τρέχει, και ακούει στη διεπαφή που νομίζεις. Κάθε ερώτηση έχει τη δική της εντολή και τη δική της απάντηση, και ένας ελεγκτής θα τις θέσει με αυτή τη σειρά.",
+      ),
+    ),
+    section(
+      bi("A configuration file is a wish, a listener is a fact", "Το αρχείο ρυθμίσεων είναι ευχή, η υποδοχή είναι γεγονός"),
+      bi(
+        "The policy file describes what the daemon should do the next time it starts. It does not describe what the running process is doing right now. Administrators edit the file, forget the reload, and then argue with an auditor about a control that never took effect. Two commands keep you honest: one validates the syntax before you trust the edit, the other reads the effective configuration the daemon would actually apply.\n\nThen look at the socket. A listening line on port 22 with the daemon named as its owner is evidence; the file alone is intention. In this lab you start the simulated daemon yourself so you can watch both halves line up.",
+        "Το αρχείο πολιτικής περιγράφει τι πρέπει να κάνει ο δαίμονας την επόμενη φορά που θα ξεκινήσει. Δεν περιγράφει τι κάνει αυτή τη στιγμή η διεργασία που τρέχει. Οι διαχειριστές επεξεργάζονται το αρχείο, ξεχνούν την επαναφόρτωση και μετά λογομαχούν με έναν ελεγκτή για έναν έλεγχο που δεν ίσχυσε ποτέ. Δύο εντολές σε κρατούν ειλικρινή: η μία επικυρώνει τη σύνταξη πριν εμπιστευτείς την αλλαγή, η άλλη διαβάζει την ενεργή διαμόρφωση που θα εφάρμοζε πραγματικά ο δαίμονας.\n\nΜετά κοίτα την υποδοχή. Μια γραμμή ακρόασης στη θύρα 22 με τον δαίμονα ως ιδιοκτήτη είναι στοιχείο· το αρχείο μόνο του είναι πρόθεση. Σε αυτό το lab ξεκινάς εσύ τον εικονικό δαίμονα για να δεις τα δύο μισά να ευθυγραμμίζονται.",
+      ),
+      [shot("ss -tlnp | grep :22", ["tcp   LISTEN 0      128    0.0.0.0:22          0.0.0.0:*         users:(('sshd',pid=612,fd=3))"])],
+    ),
   ],
   cheats: [
     { cmd: "cat /etc/ssh/sshd_config", desc: bi("read the simulated policy", "ανάγνωση της εικονικής πολιτικής") },
+    { cmd: "grep -nE \"^(#)?(Port|PermitRootLogin|PasswordAuthentication|PubkeyAuthentication)\" /etc/ssh/sshd_config", desc: bi("pull the four directives that matter", "τράβα τις τέσσερις οδηγίες που μετρούν") },
+    { cmd: "service ssh status", desc: bi("is the daemon running?", "τρέχει ο δαίμονας;") },
+    { cmd: "service ssh start", desc: bi("start the simulated daemon", "εκκίνηση του εικονικού δαίμονα") },
+    { cmd: "ss -tlnp | grep :22", desc: bi("prove something is listening on 22", "απόδειξε ότι κάτι ακούει στην 22") },
+    { cmd: "sshd -t", desc: bi("validate the configuration syntax", "επικύρωσε τη σύνταξη των ρυθμίσεων") },
+    { cmd: "id", desc: bi("which account and groups you hold", "ποιος λογαριασμός και ποιες ομάδες κρατάς") },
   ],
   tasks: [
     task(
@@ -65,17 +86,56 @@ export const SSH_DOC_SETUP_MODULE: Module = {
       ),
       (term) => term.flags.has("read-sshd") || usedCmd(term, /sshd_config/),
     ),
+    task(
+      "directives",
+      bi(
+        "Pull the four directives: grep -nE \"^(#)?(Port|PermitRootLogin|PasswordAuthentication|PubkeyAuthentication)\" /etc/ssh/sshd_config",
+        "Τράβα τις τέσσερις οδηγίες: grep -nE \"^(#)?(Port|PermitRootLogin|PasswordAuthentication|PubkeyAuthentication)\" /etc/ssh/sshd_config",
+      ),
+      bi(
+        "grep -nE \"^(#)?(Port|PermitRootLogin|PasswordAuthentication|PubkeyAuthentication)\" /etc/ssh/sshd_config",
+        "grep -nE \"^(#)?(Port|PermitRootLogin|PasswordAuthentication|PubkeyAuthentication)\" /etc/ssh/sshd_config",
+      ),
+      bi(
+        "Why: Reading the whole file hides the four lines an auditor actually cites. How: -n prints line numbers so a finding can point at a location, and the leading (#)? catches directives that are commented out and therefore not in force.",
+        "Γιατί: Διαβάζοντας όλο το αρχείο χάνεις τις τέσσερις γραμμές που επικαλείται πραγματικά ένας ελεγκτής. Πώς: Το -n τυπώνει αριθμούς γραμμής ώστε ένα εύρημα να δείχνει τοποθεσία, και το αρχικό (#)? πιάνει οδηγίες που είναι σχολιασμένες και άρα δεν ισχύουν.",
+      ),
+      (term) => usedCmd(term, /grep.*PermitRootLogin.*sshd_config/) || usedCmd(term, /grep.*PasswordAuthentication.*sshd_config/),
+    ),
+    task(
+      "listener",
+      bi(
+        "Prove the listener: service ssh start, then ss -tlnp | grep :22",
+        "Απόδειξε την ακρόαση: service ssh start και μετά ss -tlnp | grep :22",
+      ),
+      bi("service ssh start\nss -tlnp | grep :22", "service ssh start\nss -tlnp | grep :22"),
+      bi(
+        "Why: A configuration file is a wish; a listening socket is a fact. How: the first command starts the simulated daemon, the second filters the listener table down to port 22 so you can see the process that owns it.",
+        "Γιατί: Ένα αρχείο ρυθμίσεων είναι ευχή· μια υποδοχή που ακούει είναι γεγονός. Πώς: Η πρώτη εντολή ξεκινά τον εικονικό δαίμονα, η δεύτερη φιλτράρει τον πίνακα ακρόασης στη θύρα 22 για να δεις τη διεργασία που τον κατέχει.",
+      ),
+      (term) => term.flags.has("service-ssh-start") && usedCmd(term, /ss .*\|.*grep.*22/),
+    ),
+    task(
+      "validate",
+      bi("Validate before trusting it: sshd -t", "Επικύρωσε πριν το εμπιστευτείς: sshd -t"),
+      bi("sshd -t", "sshd -t"),
+      bi(
+        "Why: A malformed directive can stop the daemon from starting at the worst moment. How: sshd -t only parses and reports; it changes nothing and restarts nothing.",
+        "Γιατί: Μια κακοδιατυπωμένη οδηγία μπορεί να εμποδίσει τον δαίμονα να ξεκινήσει στην χειρότερη στιγμή. Πώς: Το sshd -t μόνο αναλύει και αναφέρει· δεν αλλάζει και δεν επανεκκινεί τίποτα.",
+      ),
+      (term) => usedCmd(term, /^\s*sshd\s+-t/),
+    ),
   ],
   challenges: pair(
     {
       title: bi("Find the password line", "Βρες τη γραμμή του κωδικού"),
-      brief: bi("The policy still says PasswordAuthentication yes.", "Η πολιτική λέει ακόμη PasswordAuthentication yes."),
+      brief: bi("Read the simulated policy file and put your finger on the line that still accepts passwords: cat /etc/ssh/sshd_config. Then say out loud which directive you would change first, and why that one before any other.", "Διάβασε το εικονικό αρχείο πολιτικής και δείξε τη γραμμή που ακόμα δέχεται κωδικούς: cat /etc/ssh/sshd_config. Μετά πες δυνατά ποια οδηγία θα άλλαζες πρώτη και γιατί αυτήν πριν από οποιαδήποτε άλλη."),
       success: bi("You can point at the weak starting line.", "Μπορείς να δείξεις την αδύναμη αρχική γραμμή."),
       check: (term) => term.flags.has("read-sshd"),
     },
     {
       title: bi("Stay inside the lab", "Μείνε μέσα στο εργαστήριο"),
-      brief: bi("Do not install the service on a computer you do not administer.", "Μην εγκαταστήσεις την υπηρεσία σε υπολογιστή που δεν διαχειρίζεσαι."),
+      brief: bi("Confirm you worked only against the fictional host: read the policy file on the simulated system and note that nothing here installed a package or reached a real mirror. Remote access on a machine you do not administer is the one mistake with no lab version.", "Επιβεβαίωσε ότι δούλεψες μόνο εναντίον του φανταστικού host: διάβασε το αρχείο πολιτικής στο εικονικό σύστημα και σημείωσε ότι τίποτα εδώ δεν εγκατέστησε πακέτο ούτε έφτασε σε πραγματικό καθρέφτη. Η απομακρυσμένη πρόσβαση σε μηχάνημα που δεν διαχειρίζεσαι είναι το ένα λάθος που δεν έχει εκδοχή σε lab."),
       success: bi("The sandbox did not contact a real package mirror.", "Το sandbox δεν επικοινώνησε με πραγματικό καθρέφτη πακέτων."),
       check: (term) => term.flags.has("read-sshd"),
     },
@@ -107,10 +167,29 @@ export const SSH_DOC_BOUNDARY_MODULE: Module = {
         "Μια έγκυρη σύνδεση SSH δεν είναι μόνο διαδραστικό shell. Το ίδιο ταυτοποιημένο κανάλι μπορεί να τρέξει μία εντολή και να επιστρέψει, να αντιγράψει αρχεία και προς τις δύο κατευθύνσεις, και να ζητήσει προώθηση προς υπηρεσία που ακούει μόνο στον ίδιο τον server. Ένα αντιγραμμένο ιδιωτικό κλειδί συνεχίζει να δουλεύει αφού κλείσουν οι κωδικοί, γιατί η απόφαση εμπιστοσύνης πέρασε στο κλειδί. Όποιος μπορεί να γράψει τη λίστα εμπιστοσύνης του server μπορεί να προσθέσει το δικό του δημόσιο κλειδί και να κρατήσει σύνδεση που δεν ζητά πια κωδικό. Μια έγκυρη συνεδρία μπορεί επίσης να δεχτεί εντολή να ανοίξει ακατέργαστη επιστροφή που δεν είναι καθόλου SSH.\n\nΑυτά είναι συνέπειες, όχι ασκήσεις. Αυτό το μονοπάτι δεν τρέχει πλαίσια απομακρυσμένου ελέγχου, δεν φτιάχνει shells επιστροφής, δεν σπάει συνθηματικές φράσεις κλειδιών, δεν αντιγράφει βάσεις λογαριασμών και δεν εισάγει κλειδί σε λίστα εμπιστοσύνης. Ο έλεγχος που μικραίνει όλες αυτές τις συνέπειες είναι ο ίδιος. Αφαίρεσε τον αδύναμο κωδικό, απαίτησε κλειδί με μακριά τυχαία συνθηματική φράση, μην επιτρέπεις προώθηση TCP εκτός αν τη χρειάζεται διαχειριστής, και παρακολούθησε απρόσμενες εξερχόμενες συνδέσεις.",
       ),
     ),
+    section(
+      bi("Scope is a list you can read", "Το πεδίο είναι μια λίστα που διαβάζεται"),
+      bi(
+        "Authorisation is not a feeling and not a verbal agreement you half remember. In real work it arrives as a document naming hosts, ranges and time windows; in this lab it is a plain file listing the fictional targets. Either way the test is the same and it takes one second: before you aim a tool at an address, confirm the address is on the list.\n\nThe reason this matters more than any technique in this path is that mistakes here are not recoverable. A wrong command against a lab host produces an error message. The same command against a machine you were not given produces an incident, and no amount of good intent afterwards changes what the logs will show.",
+        "Η εξουσιοδότηση δεν είναι αίσθηση ούτε προφορική συμφωνία που θυμάσαι μισή. Στην πραγματική δουλειά φτάνει ως έγγραφο που κατονομάζει hosts, εύρη και χρονικά παράθυρα· σε αυτό το lab είναι ένα απλό αρχείο με τους φανταστικούς στόχους. Όπως και να έχει, ο έλεγχος είναι ο ίδιος και παίρνει ένα δευτερόλεπτο: πριν στρέψεις εργαλείο σε μια διεύθυνση, επιβεβαίωσε ότι η διεύθυνση είναι στη λίστα.\n\nΟ λόγος που αυτό μετρά περισσότερο από οποιαδήποτε τεχνική σε αυτό το μονοπάτι είναι ότι τα λάθη εδώ δεν ανακτώνται. Μια λάθος εντολή σε lab host παράγει ένα μήνυμα σφάλματος. Η ίδια εντολή σε μηχάνημα που δεν σου δόθηκε παράγει συμβάν, και καλή πρόθεση εκ των υστέρων δεν αλλάζει όσα θα δείξουν οι καταγραφές.",
+      ),
+      [shot("cat targets.txt", ["10.10.10.5 raven.lab", "10.10.10.8 web.lab", "10.10.10.12 ssh.lab", "10.10.10.21 db.lab"])],
+    ),
+    section(
+      bi("A finding is something you report, not something you keep", "Το εύρημα αναφέρεται και δεν κρατιέται"),
+      bi(
+        "Every exercise in this path can produce a real result: a policy line that should not be there, a method list that still offers passwords, a key placed where it should not be. The moment you hold one you have a choice. Report it through the responsible channel and let the owner close it, or keep it because it is useful. Only the first of those is professional practice.\n\nReusing a credential you obtained in an exercise stops being practice the second you use it again without authorisation. It also destroys the value of the original finding, because nobody can tell afterwards whether the access came from the exercise or from somewhere else. Write it down, hand it over, and let it be fixed.",
+        "Κάθε άσκηση σε αυτό το μονοπάτι μπορεί να παράξει πραγματικό αποτέλεσμα: μια γραμμή πολιτικής που δεν έπρεπε να υπάρχει, μια λίστα μεθόδων που προσφέρει ακόμα κωδικούς, ένα κλειδί τοποθετημένο εκεί που δεν έπρεπε. Τη στιγμή που κρατάς ένα τέτοιο έχεις επιλογή. Να το αναφέρεις μέσω του αρμόδιου καναλιού και να αφήσεις τον ιδιοκτήτη να το κλείσει, ή να το κρατήσεις επειδή είναι χρήσιμο. Μόνο το πρώτο είναι επαγγελματική πρακτική.\n\nΗ επαναχρησιμοποίηση ενός διαπιστευτηρίου που πήρες σε άσκηση παύει να είναι εξάσκηση τη στιγμή που το ξαναχρησιμοποιείς χωρίς εξουσιοδότηση. Καταστρέφει επίσης την αξία του αρχικού ευρήματος, γιατί μετά κανείς δεν μπορεί να πει αν η πρόσβαση ήρθε από την άσκηση ή από αλλού. Γράψε το, παράδωσέ το, και άσε να διορθωθεί.",
+      ),
+    ),
   ],
   cheats: [
+    { cmd: "cat targets.txt", desc: bi("the hosts you are allowed to touch", "οι hosts που επιτρέπεται να αγγίξεις") },
+    { cmd: "cat /etc/hosts", desc: bi("the lab's own name list", "η λίστα ονομάτων του ίδιου του lab") },
+    { cmd: "getent hosts ssh.lab", desc: bi("check a name before you aim at it", "έλεγξε ένα όνομα πριν το στοχεύσεις") },
+    { cmd: "who am i", desc: bi("which session and which account you are", "ποια συνεδρία και ποιός λογαριασμός είσαι") },
+    { cmd: "id", desc: bi("your groups decide what a mistake can reach", "οι ομάδες σου κρίνουν τι αγγίζει ένα λάθος") },
     { cmd: "cat /etc/ssh/sshd_config", desc: bi("point at PasswordAuthentication", "δείξε το PasswordAuthentication") },
-    { cmd: "grep PasswordAuthentication /etc/ssh/sshd_config", desc: bi("keep only the policy line", "κράτα μόνο τη γραμμή πολιτικής") },
   ],
   tasks: [
     task(
@@ -137,13 +216,13 @@ export const SSH_DOC_BOUNDARY_MODULE: Module = {
   challenges: pair(
     {
       title: bi("Name the cause", "Ονόμασε την αιτία"),
-      brief: bi("The weak starting line is PasswordAuthentication yes.", "Η αδύναμη αρχική γραμμή είναι το PasswordAuthentication yes."),
+      brief: bi("Point at the single line that causes most SSH incidents: grep PasswordAuthentication /etc/ssh/sshd_config. Naming the cause precisely is what lets you hand someone a fix instead of a general warning about passwords.", "Δείξε τη μία γραμμή που προκαλεί τα περισσότερα SSH συμβάντα: grep PasswordAuthentication /etc/ssh/sshd_config. Το να κατονομάζεις την αιτία με ακρίβεια είναι αυτό που σε αφήνει να παραδώσεις σε κάποιον μια διόρθωση αντί για μια γενική προειδοποίηση περί κωδικών."),
       success: bi("You can state the cause without running a guess.", "Μπορείς να πεις την αιτία χωρίς να τρέξεις μαντεψιά."),
       check: (term) => usedCmd(term, /grep\s+PasswordAuthentication/) || term.flags.has("read-sshd"),
     },
     {
       title: bi("Leave the attacks out", "Άφησε τις επιθέσεις έξω"),
-      brief: bi("This module has no guessing tool, no callback, and no key injection.", "Αυτό το μάθημα δεν έχει εργαλείο μαντεψιάς, ούτε επιστροφή, ούτε εισαγωγή κλειδιού."),
+      brief: bi("Read the policy file and pull the password line out of it with grep, then stop there. This module deliberately contains no attack steps: the exercise is to name the weakness and the control, not to demonstrate an intrusion against any host.", "Διάβασε το αρχείο πολιτικής και τράβηξε από μέσα τη γραμμή του κωδικού με grep, και μετά σταμάτα εκεί. Αυτή η ενότητα επίτηδες δεν περιέχει βήματα επίθεσης: η άσκηση είναι να κατονομάσεις την αδυναμία και τον έλεγχο, όχι να επιδείξεις εισβολή σε οποιονδήποτε host."),
       success: bi("You finished the reading without an attack command.", "Ολοκλήρωσες την ανάγνωση χωρίς εντολή επίθεσης."),
       check: (term) => term.flags.has("read-sshd") && usedCmd(term, /grep\s+PasswordAuthentication/),
     },
@@ -194,8 +273,13 @@ export const SSH_SERVICE_MODULES: Module[] = [
       ),
     ],
     cheats: [
+      { cmd: "cat targets.txt", desc: bi("the authorised lab target list", "η εξουσιοδοτημένη λίστα στόχων του lab") },
+      { cmd: "ping -c 2 10.10.10.12", desc: bi("is the host reachable at all?", "είναι καν προσβάσιμος ο host;") },
+      { cmd: "getent hosts ssh.lab", desc: bi("resolve the name before you scan it", "ανάλυσε το όνομα πριν το σαρώσεις") },
+      { cmd: "nmap -p 22 10.10.10.12", desc: bi("is the port open or filtered?", "είναι η θύρα ανοιχτή ή φιλτραρισμένη;") },
       { cmd: "nmap -sV -p 22 10.10.10.12", desc: bi("version scan of the fictional SSH lab", "σάρωση έκδοσης του φανταστικού SSH lab") },
-      { cmd: "cat targets.txt", desc: bi("list the simulated lab hosts", "λίστα των εικονικών hosts") },
+      { cmd: "cat /etc/hosts", desc: bi("what the lab resolver already knows", "τι ξέρει ήδη ο resolver του lab") },
+      { cmd: "hostname", desc: bi("confirm which machine you are on", "επιβεβαίωσε σε ποιο μηχάνημα βρίσκεσαι") },
     ],
     tasks: [
       task(
@@ -208,17 +292,37 @@ export const SSH_SERVICE_MODULES: Module[] = [
         ),
         (term) => term.flags.has("nmap-ssh") && (term.flags.has("nmap-sv") || usedCmd(term, /nmap\s+.*-sV/)),
       ),
+      task(
+        "scope",
+        bi("Confirm the target is in scope: cat targets.txt", "Επιβεβαίωσε ότι ο στόχος είναι εντός πεδίου: cat targets.txt"),
+        bi("cat targets.txt", "cat targets.txt"),
+        bi(
+          "Why: Scanning a host you were not given is the mistake that ends an engagement, not a technique detail. How: the lab keeps its authorised list in a plain file, so checking costs one command and takes one second.",
+          "Γιατί: Η σάρωση ενός host που δεν σου δόθηκε είναι το λάθος που τερματίζει ένα engagement και όχι τεχνική λεπτομέρεια. Πώς: Το lab κρατά την εξουσιοδοτημένη λίστα του σε απλό αρχείο, οπότε ο έλεγχος κοστίζει μία εντολή και ένα δευτερόλεπτο.",
+        ),
+        (term) => usedCmd(term, /cat\s+.*targets\.txt/) || term.filesRead.some((path) => path.includes("targets.txt")),
+      ),
+      task(
+        "resolve",
+        bi("Resolve before you scan: getent hosts ssh.lab", "Ανάλυσε πριν σαρώσεις: getent hosts ssh.lab"),
+        bi("getent hosts ssh.lab\nping -c 2 10.10.10.12", "getent hosts ssh.lab\nping -c 2 10.10.10.12"),
+        bi(
+          "Why: A scan against the wrong address produces confident nonsense. How: resolution tells you which address the name maps to, and two ping packets prove the host answers before you read any service output.",
+          "Γιατί: Μια σάρωση σε λάθος διεύθυνση παράγει σίγουρες ανοησίες. Πώς: Η ανάλυση σου λέει σε ποια διεύθυνση αντιστοιχεί το όνομα, και δύο πακέτα ping αποδεικνύουν ότι ο host απαντά πριν διαβάσεις οποιαδήποτε έξοδο υπηρεσίας.",
+        ),
+        (term) => usedCmd(term, /getent\s+hosts/) && usedCmd(term, /ping\s+-c\s*\d+\s+10\.10\.10\.12/),
+      ),
     ],
     challenges: pair(
       {
         title: bi("Name the daemon", "Ονόμασε τον daemon"),
-        brief: bi("The scan report must show OpenSSH on ssh.lab.", "Η αναφορά πρέπει να δείχνει OpenSSH στο ssh.lab."),
+        brief: bi("Run the version scan against the fictional target and record exactly what the banner claims: nmap -sV -p 22 10.10.10.12. Write down the daemon and version, and remember that a banner is a claim made by the service, not a measurement of it.", "Τρέξε τη σάρωση έκδοσης εναντίον του φανταστικού στόχου και κατέγραψε ακριβώς τι ισχυρίζεται το banner: nmap -sV -p 22 10.10.10.12. Σημείωσε τον δαίμονα και την έκδοση, και θυμήσου ότι ένα banner είναι ισχυρισμός της υπηρεσίας και όχι μέτρησή της."),
         success: bi("The lab banner is recorded.", "Το banner του εργαστηρίου καταγράφηκε."),
         check: (term) => term.flags.has("nmap-ssh") && term.flags.has("nmap-sv"),
       },
       {
         title: bi("Stay on the lab map", "Μείνε στον χάρτη του εργαστηρίου"),
-        brief: bi("Read targets.txt and confirm 10.10.10.12 is ssh.lab.", "Διάβασε το targets.txt και επιβεβαίωσε ότι το 10.10.10.12 είναι το ssh.lab."),
+        brief: bi("Before any scan, prove the address is yours to touch: cat targets.txt and confirm that 10.10.10.12 is the fictional ssh.lab host. Checking scope costs one command and one second, and it is what separates practice from an incident.", "Πριν από οποιαδήποτε σάρωση, απόδειξε ότι η διεύθυνση είναι δική σου να αγγίξεις: cat targets.txt και επιβεβαίωσε ότι το 10.10.10.12 είναι ο φανταστικός host ssh.lab. Ο έλεγχος πεδίου κοστίζει μία εντολή και ένα δευτερόλεπτο, και είναι αυτό που χωρίζει την εξάσκηση από το συμβάν."),
         success: bi("You used the fictional target list, not a real network.", "Χρησιμοποίησες τη φανταστική λίστα στόχων, όχι πραγματικό δίκτυο."),
         check: (term) => usedCmd(term, /cat\s+.*targets\.txt/) || term.filesRead.some((path) => path.includes("targets.txt")),
       },
@@ -256,10 +360,31 @@ export const SSH_SERVICE_MODULES: Module[] = [
           "|_    password",
         ])],
       ),
+      section(
+        bi("The file records intent, the daemon records fact", "Το αρχείο καταγράφει πρόθεση, ο δαίμονας γεγονός"),
+        bi(
+          "A configuration file holds everything anyone ever wrote in it, including directives that are commented out and therefore not in force. Reading it line by line, you can convince yourself that password login is disabled because the active-looking line says no, while a later line re-enables it. Order matters in this file, and the last matching directive wins.\n\nThe way out is to ask the daemon what it would actually apply. Printing the effective configuration collapses all of that into three lowercased lines you can compare side by side: the port, whether root may log in, and whether passwords are still accepted. That output is the one you quote in a report.",
+          "Ένα αρχείο ρυθμίσεων κρατά ό,τι έγραψε ποτέ οποιοσδήποτε μέσα του, μαζί με οδηγίες που είναι σχολιασμένες και άρα δεν ισχύουν. Διαβάζοντάς το γραμμή προς γραμμή, μπορείς να πείσεις τον εαυτό σου ότι η σύνδεση με κωδικό είναι κλειστή επειδή η γραμμή που μοιάζει ενεργή λέει no, ενώ μια μεταγενέστερη την ξανανοίγει. Η σειρά μετρά σε αυτό το αρχείο και η τελευταία αντίστοιχη οδηγία υπερισχύει.\n\nΗ διέξοδος είναι να ρωτήσεις τον δαίμονα τι θα εφάρμοζε πραγματικά. Η εκτύπωση της ενεργής διαμόρφωσης τα συμπυκνώνει όλα σε τρεις γραμμές με πεζά που συγκρίνονται δίπλα δίπλα: η θύρα, αν επιτρέπεται σύνδεση ως root, και αν γίνονται ακόμα δεκτοί κωδικοί. Αυτή η έξοδος είναι που παραθέτεις σε αναφορά.",
+        ),
+      ),
+      section(
+        bi("A key without a passphrase is a file that is the credential", "Κλειδί χωρίς φράση πρόσβασης: το αρχείο είναι το διαπιστευτήριο"),
+        bi(
+          "Public-key authentication replaces something you know with something you hold. That is a real improvement, but only while the private half stays private. A key file with no passphrase means anyone who copies the file has your access: there is no second question to answer. The protection then depends entirely on filesystem permissions, and permissions are the control people forget first.\n\nSo the passphrase is not ceremony. It is the difference between a stolen laptop and a usable credential. Generate the pair, look at what permissions it was created with, and treat the private half as a secret from the first second it exists.",
+          "Η ταυτοποίηση με δημόσιο κλειδί αντικαθιστά κάτι που ξέρεις με κάτι που κρατάς. Αυτό είναι πραγματική βελτίωση, αλλά μόνο όσο το ιδιωτικό μισό μένει ιδιωτικό. Ένα αρχείο κλειδιού χωρίς φράση πρόσβασης σημαίνει ότι όποιος αντιγράψει το αρχείο έχει την πρόσβασή σου: δεν υπάρχει δεύτερη ερώτηση να απαντήσει. Η προστασία τότε εξαρτάται εξ ολοκλήρου από τα δικαιώματα του συστήματος αρχείων, και τα δικαιώματα είναι ο έλεγχος που ξεχνιέται πρώτος.\n\nΟπότε η φράση πρόσβασης δεν είναι τελετουργία. Είναι η διαφορά ανάμεσα σε ένα κλεμμένο laptop και σε ένα χρήσιμο διαπιστευτήριο. Δημιούργησε το ζεύγος, κοίτα με ποια δικαιώματα φτιάχτηκε, και αντιμετώπισε το ιδιωτικό μισό ως μυστικό από το πρώτο δευτερόλεπτο που υπάρχει.",
+        ),
+        [shot("ls -l ~/.ssh/", ["total 2", "-rw-r--r-- 1 root root  108 config"])],
+      ),
     ],
     cheats: [
       { cmd: "nmap --script ssh-auth-methods -p 22 10.10.10.12", desc: bi("list lab auth methods", "λίστα μεθόδων του lab") },
       { cmd: "cat /etc/ssh/sshd_config", desc: bi("read the simulated server policy", "ανάγνωση της εικονικής πολιτικής") },
+      { cmd: "grep -n \"PasswordAuthentication\" /etc/ssh/sshd_config", desc: bi("the line that decides guessing", "η γραμμή που κρίνει την εικασία") },
+      { cmd: "grep -n \"PubkeyAuthentication\" /etc/ssh/sshd_config", desc: bi("is the key path switched on?", "είναι ενεργή η διαδρομή κλειδιών;") },
+      { cmd: "sshd -T | grep -E \"passwordauthentication|pubkeyauthentication|permitrootlogin\"", desc: bi("the effective policy, not the file", "η ενεργή πολιτική και όχι το αρχείο") },
+      { cmd: "ssh-keygen -t ed25519", desc: bi("create a simulated key pair", "δημιουργία εικονικού ζεύγους κλειδιών") },
+      { cmd: "ls -l ~/.ssh/", desc: bi("what key material exists here", "τι υλικό κλειδιών υπάρχει εδώ") },
+      { cmd: "ssh-copy-id operator@10.10.10.12", desc: bi("place the public half on the lab host", "τοποθέτησε το δημόσιο μισό στον lab host") },
     ],
     tasks: [
       task(
@@ -275,17 +400,43 @@ export const SSH_SERVICE_MODULES: Module[] = [
         ),
         (term) => term.flags.has("ssh-auth-methods"),
       ),
+      task(
+        "effective",
+        bi(
+          "Read the effective policy: sshd -T | grep -E \"passwordauthentication|pubkeyauthentication|permitrootlogin\"",
+          "Διάβασε την ενεργή πολιτική: sshd -T | grep -E \"passwordauthentication|pubkeyauthentication|permitrootlogin\"",
+        ),
+        bi(
+          "sshd -T | grep -E \"passwordauthentication|pubkeyauthentication|permitrootlogin\"",
+          "sshd -T | grep -E \"passwordauthentication|pubkeyauthentication|permitrootlogin\"",
+        ),
+        bi(
+          "Why: The file records intent, including lines that are commented out and therefore not in force. How: sshd -T prints the configuration the daemon would actually apply, lowercased, so the three directives that matter can be compared in one place.",
+          "Γιατί: Το αρχείο καταγράφει πρόθεση, μαζί με γραμμές που είναι σχολιασμένες και άρα δεν ισχύουν. Πώς: Το sshhd -T τυπώνει τη διαμόρφωση που θα εφάρμοζε πραγματικά ο δαίμονας, με πεζά, ώστε οι τρεις οδηγίες που μετρούν να συγκριθούν σε ένα σημείο.",
+        ),
+        (term) => usedCmd(term, /sshd\s+-T/) && usedCmd(term, /grep/),
+      ),
+      task(
+        "keypair",
+        bi("Create the alternative to a password: ssh-keygen -t ed25519", "Φτιάξε την εναλλακτική στον κωδικό: ssh-keygen -t ed25519"),
+        bi("ssh-keygen -t ed25519\nls -l ~/.ssh/", "ssh-keygen -t ed25519\nls -l ~/.ssh/"),
+        bi(
+          "Why: Keys-only access is the goal, and you cannot compare methods you have never held. How: the first command records an ed25519 pair inside the sandbox, the second shows what key material now exists and with which permissions.",
+          "Γιατί: Η πρόσβαση μόνο με κλειδιά είναι ο στόχος και δεν συγκρίνεις μεθόδους που δεν έχεις κρατήσει ποτέ. Πώς: Η πρώτη εντολή καταγράφει ένα ζεύγος ed25519 μέσα στο sandbox, η δεύτερη δείχνει τι υλικό κλειδιών υπάρχει τώρα και με ποια δικαιώματα.",
+        ),
+        (term) => term.flags.has("ssh-keygen-ed25519") && usedCmd(term, /ls\s+-l\s+~?\/?\.ssh/),
+      ),
     ],
     challenges: pair(
       {
         title: bi("Read the policy file", "Διάβασε το αρχείο πολιτικής"),
-        brief: bi("cat /etc/ssh/sshd_config and find PasswordAuthentication.", "cat /etc/ssh/sshd_config και βρες το PasswordAuthentication."),
+        brief: bi("Open the server policy and locate the directive that decides whether guessing a password is even possible: cat /etc/ssh/sshd_config, then find PasswordAuthentication. Reading the file turns a vague concern into a citable line number.", "Άνοιξε την πολιτική του server και εντόπισε την οδηγία που κρίνει αν είναι καν δυνατή η εικασία κωδικού: cat /etc/ssh/sshd_config και μετά βρες το PasswordAuthentication. Η ανάγνωση του αρχείου μετατρέπει μια αόριστη ανησυχία σε παραπέμψιμο αριθμό γραμμής."),
         success: bi("The lab policy is visible.", "Η πολιτική του εργαστηρίου είναι ορατή."),
         check: (term) => term.flags.has("read-sshd"),
       },
       {
         title: bi("Name the weak method", "Ονόμασε την αδύναμη μέθοδο"),
-        brief: bi("The script result must include password as an offered method.", "Το αποτέλεσμα πρέπει να περιλαμβάνει το password ως προσφερόμενη μέθοδο."),
+        brief: bi("List what the lab server offers and identify the method that should not survive hardening: nmap --script ssh-auth-methods -p 22 10.10.10.12. If password appears in that list, keys-only access is not yet the state of this host.", "Παράθεσε τι προσφέρει ο lab server και αναγνώρισε τη μέθοδο που δεν πρέπει να επιβιώσει της σκλήρυνσης: nmap --script ssh-auth-methods -p 22 10.10.10.12. Αν το password εμφανίζεται σε αυτή τη λίστα, η πρόσβαση μόνο με κλειδιά δεν είναι ακόμα η κατάσταση αυτού του host."),
         success: bi("You can see why keys-only is the goal.", "Βλέπεις γιατί ο στόχος είναι μόνο κλειδιά."),
         check: (term) => term.flags.has("ssh-auth-methods"),
       },
@@ -444,6 +595,13 @@ export const SSH_SERVICE_MODULES: Module[] = [
     ],
     cheats: [
       { cmd: "ssh-keygen -t ed25519", desc: bi("record a simulated key pair", "καταγραφή εικονικού ζεύγους κλειδιών") },
+      { cmd: "chmod 600 ~/.ssh/id_ed25519", desc: bi("owner-only on the private half", "μόνο ο ιδιοκτήτης στο ιδιωτικό μισό") },
+      { cmd: "ssh-copy-id operator@10.10.10.12", desc: bi("publish the public half to the lab host", "δημοσίευσε το δημόσιο μισό στον lab host") },
+      { cmd: "echo ssh-ed25519 AAAAC3Nz operator@kali >> ~/.ssh/authorized_keys", desc: bi("how an authorised key is recorded", "πώς καταγράφεται ένα εξουσιοδοτημένο κλειδί") },
+      { cmd: "cat ~/.ssh/authorized_keys", desc: bi("audit which keys are trusted here", "έλεγξε ποια κλειδιά είναι έμπιστα εδώ") },
+      { cmd: "nano /etc/ssh/sshd_config", desc: bi("open the policy for editing", "άνοιξε την πολιτική για επεξεργασία") },
+      { cmd: "sshd -t", desc: bi("validate before you reload", "επικύρωσε πριν επαναφορτώσεις") },
+      { cmd: "service ssh restart", desc: bi("make the edit take effect", "κάνε την αλλαγή να ισχύσει") },
       { cmd: "scp notes.txt labuser@10.10.10.12:/tmp/notes.txt", desc: bi("simulated file copy", "εικονική αντιγραφή αρχείου") },
       { cmd: "ssh -L 8080:127.0.0.1:8080 labuser@10.10.10.12", desc: bi("record a forward request, no socket", "καταγραφή αιτήματος προώθησης, χωρίς socket") },
     ],
@@ -471,17 +629,36 @@ export const SSH_SERVICE_MODULES: Module[] = [
         ),
         (term) => term.flags.has("scp"),
       ),
+      task(
+        "protect",
+        bi(
+          "Protect the private half, then publish the public one: chmod 600 ~/.ssh/id_ed25519, then ssh-copy-id operator@10.10.10.12",
+          "Προστάτεψε το ιδιωτικό μισό και μετά δημοσίευσε το δημόσιο: chmod 600 ~/.ssh/id_ed25519 και μετά ssh-copy-id operator@10.10.10.12",
+        ),
+        bi(
+          "chmod 600 ~/.ssh/id_ed25519\nssh-copy-id operator@10.10.10.12",
+          "chmod 600 ~/.ssh/id_ed25519\nssh-copy-id operator@10.10.10.12",
+        ),
+        bi(
+          "Why: The private half is the credential, and the public half is the only part that belongs on a server. How: the first command narrows the private key to its owner, the second places the public key on the lab host so a future login needs no password.",
+          "Γιατί: Το ιδιωτικό μισό είναι το διαπιστευτήριο και το δημόσιο μισό είναι το μόνο μέρος που ανήκει σε έναν server. Πώς: Η πρώτη εντολή περιορίζει το ιδιωτικό κλειδί στον ιδιοκτήτη του, η δεύτερη τοποθετεί το δημόσιο κλειδί στον lab host ώστε μια μελλοντική σύνδεση να μην χρειάζεται κωδικό.",
+        ),
+        (term) => usedCmd(term, /chmod\s+600\s+~?\/?\.ssh\/id_ed25519/) && term.flags.has("ssh-copy-id"),
+      ),
     ],
     challenges: pair(
       {
         title: bi("Record the forward, then stop", "Κατέγραψε την προώθηση και σταμάτα"),
-        brief: bi("ssh -L 8080:127.0.0.1:8080 labuser@10.10.10.12", "ssh -L 8080:127.0.0.1:8080 labuser@10.10.10.12"),
+        brief: bi("Ask for a local port forward and let the simulation record the request: ssh -L 8080:127.0.0.1:8080 labuser@10.10.10.12. Notice that no socket opens — the point is to see what forwarding asks for, not to build a tunnel into anything.", "Ζήτα μια τοπική προώθηση θύρας και άσε την προσομοίωση να καταγράψει το αίτημα: ssh -L 8080:127.0.0.1:8080 labuser@10.10.10.12. Πρόσεξε ότι δεν ανοίγει καμία υποδοχή — το ζητούμενο είναι να δεις τι ζητά η προώθηση, όχι να φτιάξεις τούνελ προς οπουδήποτε."),
         success: bi("The request was recorded. No tunnel was opened.", "Το αίτημα καταγράφηκε. Δεν άνοιξε τούνελ."),
         check: (term) => term.flags.has("ssh-forward"),
       },
       {
         title: bi("Point at the weak lines", "Δείξε τις αδύναμες γραμμές"),
-        brief: bi("Read /etc/ssh/sshd_config again.", "Διάβασε ξανά το /etc/ssh/sshd_config."),
+        brief: bi(
+          "Generate an ed25519 key pair with ssh-keygen -t ed25519, then read /etc/ssh/sshd_config again and compare what you now have with what the policy still allows.",
+          "Δημιούργησε ζεύγος κλειδιών ed25519 με ssh-keygen -t ed25519 και μετά διάβασε ξανά το /etc/ssh/sshd_config και σύγκρινε αυτό που έχεις τώρα με αυτό που επιτρέπει ακόμα η πολιτική.",
+        ),
         success: bi("Port 22 and password authentication are still the lab's starting policy.", "Η θύρα 22 και η ταυτοποίηση με κωδικό είναι ακόμη η αρχική πολιτική του lab."),
         check: (term) => term.flags.has("read-sshd") && term.flags.has("ssh-keygen-ed25519"),
       },
@@ -627,7 +804,7 @@ export const SSH_DOC_AUDIT_MODULE: Module = {
       ),
     ),
     section(
-      bi("Rate limits, evidence and revocation drills", "Όριο ρυθμού, αποδείξεις και πρόβες ανάκλησης"),
+      bi("Rate limits, evidence and revocation drills", "Ρυθμιστικό όριο, αποδείξεις και πρόβες ανάκλησης"),
       bi(
         "Rate limiting and blocking buy time and produce evidence. A filter that watches the authentication log denies an address after a handful of failures, which turns a noisy guessing run into a fight with a ban list; a firewall that permits SSH only from known management ranges is stronger still, and an intrusion-prevention layer at the network edge adds another. None of these replaces an authentication policy, but applied together they make a successful online guessing run unlikely.\n\nOrchestration and auditing are what turn the whole chain from invisible into obvious: a weekly check that no authorized_keys file changed, an alert on sessions that open forwarding, and a report for every host with more than a handful of failed logins. Assume breach and rehearse revocation. An incident plan that cannot answer which machines trusted a given key has not actually been tested.",
         "Το όριο ρυθμού και το μπλοκάρισμα αγοράζουν χρόνο και παράγουν αποδείξεις. Ένα φίλτρο που παρακολουθεί το αρχείο καταγραφής ταυτοποίησης απαγορεύει μια διεύθυνση μετά από μερικές αποτυχίες, που μετατρέπει μια θορυβώδη προσπάθεια μαντεψιάς σε μάχη με τη λίστα απαγόρευσης, ένα firewall που επιτρέπει SSH μόνο από γνωστά εύρη διαχείρισης είναι ακόμα ισχυρότερο και ένα στρώμα πρόληψης εισβολής στην άκρη του δικτύου προσθέτει άλλο ένα. Τίποτα από αυτά δεν αντικαθιστά την πολιτική ταυτοποίησης, αλλά μαζί καθιστούν την επιτυχημένη online μαντεψιά απίθανη.\n\nΗ ενοργάνωση και ο έλεγχος είναι αυτά που μετατρέπουν ολόκληρη την αλυσίδα από αόρατη σε προφανή: εβδομαδιαίος έλεγχος ότι κανένα αρχείο authorized_keys δεν άλλαξε, συναγερμός σε συνεδρίες που ανοίγουν προώθηση και αναφορά για κάθε host με περισσότερες από μερικές αποτυχημένες συνδέσεις. Υποθέσε παραβίαση και πρόβαρε την ανάκληση. Ένα σχέδιο αντιμετώπισης περιστατικού που δεν μπορεί να απαντήσει ποια μηχανήματα εμπιστεύονταν ένα συγκεκριμένο κλειδί δεν έχει δοκιμαστεί πραγματικά.",
@@ -760,16 +937,13 @@ export const SSH_DOC_AUDIT_MODULE: Module = {
   challenges: pair(
     {
       title: bi("Order the controls", "Βάλε τους ελέγχους σε σειρά"),
-      brief: bi(
-        "Prove a key login before you would remove password authentication, using the lab key pair and the trust list.",
-        "Απόδειξε τη σύνδεση με κλειδί πριν αφαιρούσες την ταυτοποίηση με κωδικό, χρησιμοποιώντας το εικονικό ζεύγος και τη λίστα εμπιστοσύνης.",
-      ),
+      brief: bi("Put the controls in the order they belong: create an ed25519 pair with ssh-keygen -t ed25519, publish the public half with ssh-copy-id operator@10.10.10.12, and only then consider closing password login. Keys first, removal second.", "Βάλε τους ελέγχους στη σειρά που τους αρμόζει: δημιούργησε ζεύγος ed25519 με ssh-keygen -t ed25519, δημοσίευσε το δημόσιο μισό με ssh-copy-id operator@10.10.10.12, και μόνο τότε σκέψου το κλείσιμο της σύνδεσης με κωδικό. Πρώτα τα κλειδιά, μετά η αφαίρεση."),
       success: bi("The key was created and its public half recorded before any policy change.", "Το κλειδί δημιουργήθηκε και το δημόσιο μισό του καταγράφηκε πριν από κάθε αλλαγή πολιτικής."),
       check: (term) => term.flags.has("ssh-keygen-ed25519") && term.flags.has("ssh-copy-id"),
     },
     {
       title: bi("Audit every trust list", "Έλεγξε κάθε λίστα εμπιστοσύνης"),
-      brief: bi("find / -name authorized_keys, then read the file you found.", "find / -name authorized_keys και μετά διάβασε το αρχείο που βρήκες."),
+      brief: bi("Trust lists hide inside home directories, so find them all and read at least one: find / -name authorized_keys, then cat one of the results. Every key in those files is a standing login, and an audit that skips them has not audited access.", "Οι λίστες εμπιστοσύνης κρύβονται μέσα σε προσωπικούς καταλόγους, οπότε βρες τες όλες και διάβασε τουλάχιστον μία: find / -name authorized_keys και μετά cat σε ένα από τα αποτελέσματα. Κάθε κλειδί σε αυτά τα αρχεία είναι μια μόνιμη σύνδεση, και ένας έλεγχος που τις παραλείπει δεν έχει ελέγξει την πρόσβαση."),
       success: bi("You can now say which keys are trusted and who owns the file that decides.", "Τώρα μπορείς να πεις ποια κλειδιά είναι αξιόπιστα και ποιος κατέχει το αρχείο που κρίνει."),
       check: (term) => usedCmd(term, /find\s+\/\s+-name\s+authorized_keys/) && term.filesRead.some((path) => path.endsWith("/authorized_keys")),
     },

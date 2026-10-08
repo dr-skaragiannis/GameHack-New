@@ -112,13 +112,13 @@ export const SUDO_RUN_MODULES: Module[] = [
     challenges: [
       {
         title: { en: "Home again", el: "Πίσω στο home" },
-        brief: { en: "cd ~ or cd /root and pwd again.", el: "Εκτέλεσε cd ~ ή cd /root και μετά pwd." },
+        brief: { en: "Move back to the administrative home with cd ~ or cd /root, then run pwd and read the path it prints. The habit is the point: after every move, confirm where you actually landed instead of assuming it.", el: "Γύρνα πίσω στον διαχειριστικό προσωπικό κατάλογο με cd ~ ή cd /root και μετά τρέξε pwd και διάβασε τη διαδρομή που τυπώνει. Η συνήθεια είναι το ζητούμενο: μετά από κάθε μετακίνηση, επιβεβαίωσε πού πραγματικά βρέθηκες αντί να το υποθέσεις." },
         success: { en: "You can move and know where you landed.", el: "Γνωρίζεις πλέον πού βρίσκεσαι." },
         check: (t) => usedCmd(t, /^\s*cd\s+(\/root|~)\s*$/) || t.cwd === "/root",
       },
       {
         title: { en: "Read the desktop CTF note", el: "Διάβασε το CTF note" },
-        brief: { en: "cat Desktop/CTF-notes.txt from /root (or cat CTF-notes.txt if you are already in Desktop).", el: "Διάβασε το CTF-notes.txt με cat" },
+        brief: { en: "Open the note left on the simulated desktop: cat Desktop/CTF-notes.txt from /root, or cat CTF-notes.txt if you already moved into Desktop. Read it before you continue, because this is the kind of file that decides what a lab expects from you.", el: "Άνοιξε τη σημείωση που αφήθηκε στην εικονική επιφάνεια εργασίας: cat Desktop/CTF-notes.txt από το /root, ή cat CTF-notes.txt αν έχεις ήδη μπει στο Desktop. Διάβασέ την πριν συνεχίσεις, γιατί είναι το είδος αρχείου που καθορίζει τι περιμένει από εσένα ένα εργαστήριο." },
         success: { en: "You found a Sudo_Run flag on the desktop.", el: "Βρήκες ένα flag στην επιφάνεια εργασίας." },
         check: (t) => t.filesRead.some((p) => p.includes("CTF-notes")),
       },
@@ -146,8 +146,8 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "man — manual pages", el: "man — εγχειρίδια" },
         body: {
-          en: "man COMMAND is the command you type. On a real terminal, q leaves the page and /word searches inside it. This lab prints the page and returns to the prompt, so there is no pager to quit. The useful habit is the same: read NAME and SYNOPSIS before you invent flags. A synopsis in square brackets is optional. Words in capitals are placeholders you replace. A flag you did not see in the synopsis is a guess, and guesses on a destructive command are how people delete the wrong tree.",
-          el: "Το man COMMAND είναι η εντολή που πληκτρολογείς. Σε πραγματικό τερματικό, το q φεύγει από τη σελίδα και το /word ψάχνει μέσα της. Αυτό το εργαστήριο τυπώνει τη σελίδα και γυρίζει στο prompt, οπότε δεν υπάρχει pager για να κλείσεις. Η χρήσιμη συνήθεια είναι η ίδια: διάβασε NAME και SYNOPSIS πριν επινοήσεις επιλογές. Μια σύνοψη σε αγκύλες είναι προαιρετική. Οι λέξεις με κεφαλαία είναι θέσεις που αντικαθιστάς. Μια επιλογή που δεν είδες στη σύνοψη είναι εικασία, και οι εικασίες σε καταστροφική εντολή είναι ο τρόπος που σβήνει κανείς λάθος δέντρο.",
+          en: "man COMMAND is the command you type. On a real terminal, q leaves the page and /word searches inside it. This lab prints the page and returns to the prompt, so there is no pager to quit. The useful habit is the same: read NAME and SYNOPSIS before you invent flags. A synopsis in square brackets is optional. Words in capitals are placeholders you replace. A flag you did not see in the synopsis is a guess, and guesses on a destructive command are how people delete the wrong tree.\n\nA manual page has a fixed shape, and learning it saves time on every command you meet. NAME says what the tool is in one line. SYNOPSIS is the grammar: brackets mean optional, capitals mean you substitute your own value, and three dots mean repeatable. DESCRIPTION explains behaviour, OPTIONS lists every flag, and EXAMPLES, when it exists, is the fastest way in. Reading SYNOPSIS first tells you whether the command can even do what you intend before you experiment on real data.",
+          el: "Το man COMMAND είναι η εντολή που πληκτρολογείς. Σε πραγματικό τερματικό, το q φεύγει από τη σελίδα και το /word ψάχνει μέσα της. Αυτό το εργαστήριο τυπώνει τη σελίδα και γυρίζει στο prompt, οπότε δεν υπάρχει pager για να κλείσεις. Η χρήσιμη συνήθεια είναι η ίδια: διάβασε NAME και SYNOPSIS πριν επινοήσεις επιλογές. Μια σύνοψη σε αγκύλες είναι προαιρετική. Οι λέξεις με κεφαλαία είναι θέσεις που αντικαθιστάς. Μια επιλογή που δεν είδες στη σύνοψη είναι εικασία, και οι εικασίες σε καταστροφική εντολή είναι ο τρόπος που σβήνει κανείς λάθος δέντρο.\n\nΜια σελίδα εγχειριδίου έχει σταθερή δομή, και μαθαίνοντάς την κερδίζεις χρόνο σε κάθε εντολή που συναντάς. Το NAME λέει τι είναι το εργαλείο σε μία γραμμή. Το SYNOPSIS είναι η γραμματική: οι αγκύλες σημαίνουν προαιρετικό, τα κεφαλαία σημαίνουν ότι αντικαθιστάς με δική σου τιμή, και οι τρεις τελείες σημαίνουν επανάληψη. Το DESCRIPTION εξηγεί τη συμπεριφορά, το OPTIONS παραθέτει κάθε flag, και το EXAMPLES, όταν υπάρχει, είναι ο γρηγορότερος δρόμος. Διαβάζοντας πρώτα το SYNOPSIS μαθαίνεις αν η εντολή μπορεί καν να κάνει αυτό που θέλεις, πριν πειραματιστείς σε πραγματικά δεδομένα.",
         },
         shots: [shot("man ls", ["LS(1)                         GameHack USER COMMANDS                         LS(1)", "NAME", "       ls - List virtual directory contents.", "SYNOPSIS", "       ls [OPTIONS] [PATH...]"])],
       },
@@ -218,13 +218,13 @@ export const SUDO_RUN_MODULES: Module[] = [
     challenges: [
       {
         title: { en: "Page the locate dump", el: "Σελιδοποίησε το locate" },
-        brief: { en: "Run locate CTF | more (pipe).", el: "locate CTF | more" },
+        brief: { en: "Pipe a keyword search into a pager so a long result stops scrolling past you: locate CTF | more. Watch the output wait for you instead of vanishing, and notice that the pipe is what joins the two tools.", el: "Σωλήνωσε μια αναζήτηση λέξης-κλειδιού σε σελιδοποιητή ώστε ένα μεγάλο αποτέλεσμα να σταματήσει να κυλά από μπροστά σου: locate CTF | more. Δες την έξοδο να σε περιμένει αντί να χάνεται, και πρόσεξε ότι η σωλήνωση είναι αυτή που ενώνει τα δύο εργαλεία." },
         success: { en: "You combined locate with a pager.", el: "Συνδύασες locate με pager." },
         check: (t) => usedCmd(t, /locate.*\|/) || t.flags.has("pipe"),
       },
       {
         title: { en: "Read git's man file path", el: "Δες το man του git" },
-        brief: { en: "cat /usr/share/man/man1/git.1", el: "cat /usr/share/man/man1/git.1" },
+        brief: { en: "whereis told you where the manual page lives on disk; now read that file directly with cat /usr/share/man/man1/git.1. Comparing the rendered page with the raw file shows what a manual page actually is underneath.", el: "Το whereis σου είπε πού βρίσκεται η σελίδα εγχειριδίου στον δίσκο· τώρα διάβασε το ίδιο το αρχείο με cat /usr/share/man/man1/git.1. Συγκρίνοντας τη στοιχειοθετημένη σελίδα με το ακατέργαστο αρχείο βλέπεις τι είναι πραγματικά μια σελίδα εγχειριδίου από κάτω." },
         success: { en: "whereis told you where the page lives.", el: "Το whereis έδειξε τη σελίδα." },
         check: (t) => t.filesRead.some((p) => p.includes("git.1")) || t.flags.has("whereis-git"),
       },
@@ -271,8 +271,15 @@ export const SUDO_RUN_MODULES: Module[] = [
     ],
     cheats: [
       { cmd: 'grep -i "echo" simple_bash.sh', desc: { en: "search a file, ignoring case", el: "αναζήτηση αρχείου, χωρίς διάκριση πεζών" } },
+      { cmd: 'grep -n "Accepted" /var/log/auth.log', desc: { en: "line numbers make a finding citable", el: "οι αριθμοί γραμμής κάνουν ένα εύρημα παραπέμψιμο" } },
+      { cmd: 'grep -c "Accepted" /var/log/auth.log', desc: { en: "count matches instead of eyeballing them", el: "μέτρα τα ευρήματα αντί να τα εκτιμάς με το μάτι" } },
+      { cmd: 'grep -v "sshd" /var/log/auth.log', desc: { en: "invert: keep everything except these lines", el: "αντιστροφή: κράτα τα πάντα εκτός από αυτές τις γραμμές" } },
+      { cmd: 'grep -nE "[0-9]{2}:[0-9]{2}" /var/log/auth.log', desc: { en: "regular expression: find the timestamps", el: "κανονική έκφραση: βρες τις χρονοσημάνσεις" } },
       { cmd: "ifconfig | grep inet", desc: { en: "filter command output", el: "φίλτρο εξόδου" } },
       { cmd: "find / -type f -name gamehack", desc: { en: "hunt by name", el: "κυνήγι ονόματος" } },
+      { cmd: 'find /root -type f -name "*.txt"', desc: { en: "a whole family of files by pattern", el: "ολόκληρη οικογένεια αρχείων με μοτίβο" } },
+      { cmd: "find / -type d -name Documents", desc: { en: "directories only", el: "μόνο κατάλογοι" } },
+      { cmd: "find /home/operator -perm 600", desc: { en: "hunt by permission instead of name", el: "κυνήγι με δικαιώματα αντί για όνομα" } },
     ],
     tasks: [
       {
@@ -300,13 +307,13 @@ export const SUDO_RUN_MODULES: Module[] = [
     challenges: [
       {
         title: { en: "Silence permission denied", el: "Σίγαση permission denied" },
-        brief: { en: 'find / -type f -name gamehack 2>&1 | grep -v "Permission Denied"', el: "find … 2>&1 | grep -v" },
+        brief: { en: "Search the whole filesystem for the marker and keep the error stream out of your results: find / -type f -name gamehack 2>&1 | grep -v \"Permission Denied\". Redirecting and then filtering is what turns a noisy sweep into a readable answer.", el: "Ψάξε σε όλο το σύστημα αρχείων για τον δείκτη και κράτα τη ροή σφαλμάτων έξω από τα αποτελέσματά σου: find / -type f -name gamehack 2>&1 | grep -v \"Permission Denied\". Η ανακατεύθυνση και μετά το φιλτράρισμα είναι αυτό που μετατρέπει έναν θορυβώδη έλεγχο σε αναγνώσιμη απάντηση." },
         success: { en: "You redirected stderr and filtered it.", el: "Ανακατεύθυνες το stderr." },
         check: (t) => usedCmd(t, /2>&1/) || t.flags.has("find-gamehack"),
       },
       {
         title: { en: "Read the marker", el: "Διάβασε τον δείκτη" },
-        brief: { en: "cat /opt/labs/gamehack", el: "cat /opt/labs/gamehack" },
+        brief: { en: "The search returned a path; now prove it exists by reading it. Run cat /opt/labs/gamehack and check the contents match what you expected, because a filename in a list is a claim and the file itself is the evidence.", el: "Η αναζήτηση επέστρεψε μια διαδρομή· τώρα απόδειξε ότι υπάρχει διαβάζοντάς την. Τρέξε cat /opt/labs/gamehack και έλεγξε αν τα περιεχόμενα ταιριάζουν με ό,τι περίμενες, γιατί ένα όνομα αρχείου σε μια λίστα είναι ισχυρισμός ενώ το ίδιο το αρχείο είναι το στοιχείο." },
         success: { en: "find led you to a GameHack flag.", el: "Η εντολή find σε οδήγησε στο flag." },
         check: (t) => t.filesRead.some((p) => p.includes("/opt/labs/gamehack")),
       },
@@ -326,8 +333,8 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "cat", el: "cat" },
         body: {
-          en: "cat prints a file exactly as it is stored. The name is short for concatenate, because several files are printed one after another. The everyday use is one file: cat gamehack.txt from /root. It does not number lines, page them, or change the file. That rawness is why it is useful, and why it is the wrong tool for a long log. For more than a screen, use less in the next lesson. cat -n numbers lines on a real system. This lab's cat prints the bytes and leaves numbering to nl.",
-          el: "Η cat τυπώνει ένα αρχείο ακριβώς όπως είναι αποθηκευμένο. Το όνομα είναι σύντμηση του concatenate, γιατί πολλά αρχεία τυπώνονται το ένα μετά το άλλο. Η καθημερινή χρήση είναι ένα αρχείο: cat gamehack.txt από το /root. Δεν αριθμεί γραμμές, δεν τις σελιδοποιεί, και δεν αλλάζει το αρχείο. Αυτή η ωμότητα είναι ο λόγος που είναι χρήσιμη, και ο λόγος που είναι το λάθος εργαλείο για ένα μακρύ αρχείο καταγραφής. Για περισσότερα από μία οθόνη, χρησιμοποίησε less στο επόμενο μάθημα. Το cat -n αριθμεί γραμμές σε πραγματικό σύστημα. Η cat αυτού του εργαστηρίου τυπώνει τα bytes και αφήνει την αρίθμηση στην nl.",
+          en: "cat prints a file exactly as it is stored. The name is short for concatenate, because several files are printed one after another. The everyday use is one file: cat gamehack.txt from /root. It does not number lines, page them, or change the file. That rawness is why it is useful, and why it is the wrong tool for a long log. For more than a screen, use less in the next lesson. cat -n numbers lines on a real system. This lab's cat prints the bytes and leaves numbering to nl.\n\nThere are two moments when cat is the wrong tool. The first is length: a file longer than a screen scrolls past and you lose the top, so a pager is the better choice. The second is content you cannot read: printing a binary dumps unreadable bytes into your terminal and can even confuse its state. The safety habit matters just as much as the mechanics — a file you can read is data, not instructions, and nothing about cat makes the text inside it trustworthy.",
+          el: "Η cat τυπώνει ένα αρχείο ακριβώς όπως είναι αποθηκευμένο. Το όνομα είναι σύντμηση του concatenate, γιατί πολλά αρχεία τυπώνονται το ένα μετά το άλλο. Η καθημερινή χρήση είναι ένα αρχείο: cat gamehack.txt από το /root. Δεν αριθμεί γραμμές, δεν τις σελιδοποιεί, και δεν αλλάζει το αρχείο. Αυτή η ωμότητα είναι ο λόγος που είναι χρήσιμη, και ο λόγος που είναι το λάθος εργαλείο για ένα μακρύ αρχείο καταγραφής. Για περισσότερα από μία οθόνη, χρησιμοποίησε less στο επόμενο μάθημα. Το cat -n αριθμεί γραμμές σε πραγματικό σύστημα. Η cat αυτού του εργαστηρίου τυπώνει τα bytes και αφήνει την αρίθμηση στην nl.\n\nΥπάρχουν δύο στιγμές που η cat είναι λάθος εργαλείο. Η πρώτη είναι το μήκος: ένα αρχείο μεγαλύτερο από μία οθόνη κυλά και χάνεις την αρχή, οπότε ένας σελιδοποιητής είναι καλύτερη επιλογή. Η δεύτερη είναι περιεχόμενο που δεν διαβάζεται: τυπώνοντας ένα δυαδικό αρχείο ρίχνεις ακατανόητα bytes στο τερματικό σου και μπορεί ακόμα να μπερδέψεις την κατάστασή του. Η συνήθεια ασφαλείας μετρά όσο και η μηχανική — ένα αρχείο που μπορείς να διαβάσεις είναι δεδομένα και όχι οδηγίες, και τίποτα στην cat δεν κάνει το κείμενο μέσα του αξιόπιστο.",
         },
         shots: [shot("cat gamehack.txt", ["Welcome to GameHack — Linux for Beginners (Sudo_Run).", "Keep notes here. Practice every command in the lab, not on the internet."])],
       },
@@ -423,13 +430,13 @@ export const SUDO_RUN_MODULES: Module[] = [
     challenges: [
       {
         title: { en: "Rebuild ignite", el: "Δημιούργησε ξανά το ignite" },
-        brief: { en: "If you removed Documents/ignite, mkdir it again. ls Documents to prove it.", el: "Δημιούργησε ξανά τον φάκελο με mkdir και επιβεβαίωσε με ls Documents" },
+        brief: { en: "If your earlier cleanup removed Documents/ignite, create it again with mkdir and then list Documents to prove the directory is back. Recreating what you deleted is the cheapest way to learn what a removal actually took away.", el: "Αν ο προηγούμενος καθαρισμός σου αφαίρεσε το Documents/ignite, ξαναφτιάξ’ το με mkdir και μετά παρέθεσε το Documents για να αποδείξεις ότι ο κατάλογος επέστρεψε. Η αναδημιουργία όσων διέγραψες είναι ο φθηνότερος τρόπος να μάθεις τι πήρε πραγματικά μια αφαίρεση." },
         success: { en: "You can create on demand.", el: "Δημιουργείς κατ' απαίτηση." },
         check: (t) => t.flags.has("mkdir-ignite") || usedCmd(t, /ls\s+.*Documents/),
       },
       {
         title: { en: "Recursive reminder", el: "Υπενθύμιση -r" },
-        brief: { en: "Read the tip: run ls ignite_screenshots or confirm rmdir already succeeded.", el: "Επιβεβαίωσε ότι το rmdir πέτυχε." },
+        brief: { en: "Empty directories come out with rmdir; anything holding files needs the recursive form. Try one now and watch what the tool refuses to do — the refusal is the lesson, because it is the same guard that stops a careless recursive delete.", el: "Οι άδειοι κατάλογοι βγαίνουν με rmdir· ό,τι κρατά αρχεία χρειάζεται την αναδρομική μορφή. Δοκίμασε ένα από τα δύο τώρα και δες τι αρνείται να κάνει το εργαλείο — η άρνηση είναι το μάθημα, γιατί είναι το ίδιο φρένο που σταματά μια απρόσεκτη αναδρομική διαγραφή." },
         success: { en: "Empty directory gone.", el: "Ο άδειος φάκελος έφυγε." },
         check: (t) => t.flags.has("rmdir") || usedCmd(t, /rm\s+-r/),
       },
@@ -456,8 +463,8 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "head & tail", el: "head & tail" },
         body: {
-          en: "head FILE shows the first ten lines. That default is useful because a configuration file often starts with a comment that explains the format. tail FILE shows the last ten, which is where a log usually puts the newest event. head -n 3 FILE, or the older head -3 FILE, asks for a different count. This lab honours both forms, up to one hundred lines. The same file lives at /etc/ettercap/etter.dns and /etc/Ettercap/etter.dns.",
-          el: "Η head FILE δείχνει τις πρώτες δέκα γραμμές. Εκείνη η προεπιλογή είναι χρήσιμη γιατί ένα αρχείο ρυθμίσεων συχνά αρχίζει με σχόλιο που εξηγεί τη μορφή. Η tail FILE δείχνει τις τελευταίες δέκα, εκεί που ένα αρχείο καταγραφής συνήθως βάζει το νεότερο γεγονός. Το head -n 3 FILE, ή το παλαιότερο head -3 FILE, ζητά διαφορετικό πλήθος. Αυτό το εργαστήριο τιμά και τις δύο μορφές, μέχρι εκατό γραμμές. Το ίδιο αρχείο ζει στο /etc/ettercap/etter.dns και στο /etc/Ettercap/etter.dns.",
+          en: "head FILE shows the first ten lines. That default is useful because a configuration file often starts with a comment that explains the format. tail FILE shows the last ten, which is where a log usually puts the newest event. head -n 3 FILE, or the older head -3 FILE, asks for a different count. This lab honours both forms, up to one hundred lines. The same file lives at /etc/ettercap/etter.dns and /etc/Ettercap/etter.dns.\n\nBoth take -n to change how many lines they show, and both accept a pipe, which is where they earn their keep: counting matches is useless until you can see the first few. tail -f keeps reading as the file grows, which is how you watch a log while you reproduce a problem instead of guessing afterwards. Remember that head and tail count lines, not matches — a file with one enormous line will not behave the way you expect.",
+          el: "Η head FILE δείχνει τις πρώτες δέκα γραμμές. Εκείνη η προεπιλογή είναι χρήσιμη γιατί ένα αρχείο ρυθμίσεων συχνά αρχίζει με σχόλιο που εξηγεί τη μορφή. Η tail FILE δείχνει τις τελευταίες δέκα, εκεί που ένα αρχείο καταγραφής συνήθως βάζει το νεότερο γεγονός. Το head -n 3 FILE, ή το παλαιότερο head -3 FILE, ζητά διαφορετικό πλήθος. Αυτό το εργαστήριο τιμά και τις δύο μορφές, μέχρι εκατό γραμμές. Το ίδιο αρχείο ζει στο /etc/ettercap/etter.dns και στο /etc/Ettercap/etter.dns.\n\nΚαι οι δύο δέχονται -n για να αλλάξεις πόσες γραμμές δείχνουν, και οι δύο δέχονται σωλήνωση, και εκεί πιάνουν την αξία τους: η καταμέτρηση ευρημάτων είναι άχρηστη μέχρι να δεις τα πρώτα. Η tail -f συνεχίζει να διαβάζει όσο το αρχείο μεγαλώνει, και έτσι παρακολουθείς μια καταγραφή ενώ αναπαράγεις ένα πρόβλημα αντί να μαντεύεις εκ των υστέρων. Θυμήσου ότι η head και η tail μετρούν γραμμές και όχι ευρήματα — ένα αρχείο με μία τεράστια γραμμή δεν θα συμπεριφερθεί όπως περιμένεις.",
         },
         shots: [
           shot("head /etc/ettercap/etter.dns", ["# etter.dns — GameHack lab copy of a DNS spoof config (educational)", "# This file is a TEXT example. Never use spoofing outside a lab you own.", "microsoft.com A 10.10.10.8"]),
@@ -467,24 +474,24 @@ export const SUDO_RUN_MODULES: Module[] = [
       {
         heading: { en: "nl — number lines", el: "nl — αρίθμηση" },
         body: {
-          en: "nl FILE prints the file with a line number in front of each line. That is how you turn a vague 'near the top' into a place another person can find. cat -n does a similar job on a real system. In this lab, use nl. wc -l FILE counts the lines instead of printing them, and this lab implements it, so wc -l /etc/ettercap/etter.dns answers with a single number.",
-          el: "Η nl FILE τυπώνει το αρχείο με έναν αριθμό γραμμής μπροστά από κάθε γραμμή. Έτσι ένα αόριστο «κοντά στην αρχή» γίνεται σημείο που μπορεί να βρει και άλλος. Το cat -n κάνει παρόμοια δουλειά σε πραγματικό σύστημα. Σε αυτό το εργαστήριο, χρησιμοποίησε nl. Το wc -l FILE μετρά τις γραμμές αντί να τις τυπώνει και αυτό το εργαστήριο το υλοποιεί, οπότε το wc -l /etc/ettercap/etter.dns απαντά με έναν μόνο αριθμό.",
+          en: "nl FILE prints the file with a line number in front of each line. That is how you turn a vague 'near the top' into a place another person can find. cat -n does a similar job on a real system. In this lab, use nl. wc -l FILE counts the lines instead of printing them, and this lab implements it, so wc -l /etc/ettercap/etter.dns answers with a single number.\n\nNumbering is not decoration. When you report a finding, a line number is what lets someone else open the same file and see the same thing you saw, and it is what lets you say whether a directive appears once or twice. Numbers also expose surprises: a gap in the sequence usually means a blank line or a comment you skipped while reading.",
+          el: "Η nl FILE τυπώνει το αρχείο με έναν αριθμό γραμμής μπροστά από κάθε γραμμή. Έτσι ένα αόριστο «κοντά στην αρχή» γίνεται σημείο που μπορεί να βρει και άλλος. Το cat -n κάνει παρόμοια δουλειά σε πραγματικό σύστημα. Σε αυτό το εργαστήριο, χρησιμοποίησε nl. Το wc -l FILE μετρά τις γραμμές αντί να τις τυπώνει και αυτό το εργαστήριο το υλοποιεί, οπότε το wc -l /etc/ettercap/etter.dns απαντά με έναν μόνο αριθμό.\n\nΗ αρίθμηση δεν είναι διακόσμηση. Όταν αναφέρεις ένα εύρημα, ο αριθμός γραμμής είναι αυτό που επιτρέπει σε κάποιον άλλον να ανοίξει το ίδιο αρχείο και να δει το ίδιο πράγμα, και είναι αυτό που σε αφήνει να πεις αν μια οδηγία εμφανίζεται μία ή δύο φορές. Οι αριθμοί αποκαλύπτουν και εκπλήξεις: ένα κενό στην ακολουθία συνήθως σημαίνει κενή γραμμή ή σχόλιο που προσπέρασες διαβάζοντας.",
         },
         shots: [shot("nl /etc/ettercap/etter.dns", ["     1  # etter.dns — GameHack lab copy of a DNS spoof config (educational)"])],
       },
       {
         heading: { en: "sed — find & replace", el: "sed — εύρεση & αντικατάσταση" },
         body: {
-          en: "sed reads a stream and can substitute text as it prints. s/WWW/www/g means: find WWW, write www, and do it for every match on the line because of g. sed s/WWW/www/g gamehack.in prints the changed lines. It does not edit the file. A real sed changes the file only if you add an in-place option or redirect the output onto a new name. Check the printed result before you ever do that. A substitution that looks right on one line can rewrite a comment you meant to keep.",
-          el: "Η sed διαβάζει μια ροή και μπορεί να αντικαταστήσει κείμενο καθώς το τυπώνει. Το s/WWW/www/g σημαίνει: βρες WWW, γράψε www, και κάν' το για κάθε ταίριασμα στη γραμμή λόγω του g. Το sed s/WWW/www/g gamehack.in τυπώνει τις αλλαγμένες γραμμές. Δεν επεξεργάζεται το αρχείο. Μια πραγματική sed αλλάζει το αρχείο μόνο αν προσθέσεις επιλογή επιτόπιας αλλαγής ή ανακατευθύνεις την έξοδο σε νέο όνομα. Έλεγξε το τυπωμένο αποτέλεσμα πριν το κάνεις ποτέ. Μια αντικατάσταση που φαίνεται σωστή σε μία γραμμή μπορεί να ξαναγράψει ένα σχόλιο που ήθελες να κρατήσεις.",
+          en: "sed reads a stream and can substitute text as it prints. s/WWW/www/g means: find WWW, write www, and do it for every match on the line because of g. sed s/WWW/www/g gamehack.in prints the changed lines. It does not edit the file. A real sed changes the file only if you add an in-place option or redirect the output onto a new name. Check the printed result before you ever do that. A substitution that looks right on one line can rewrite a comment you meant to keep.\n\nsed is a stream editor: it reads a copy, transforms it, and prints the result while the original stays untouched. That is the safe default, and you should keep it. Print the transformation first and read it, then decide whether you really want the in-place form. Editing a configuration file without a preview is how a working host stops answering, and the mistake is invisible until the next restart.",
+          el: "Η sed διαβάζει μια ροή και μπορεί να αντικαταστήσει κείμενο καθώς το τυπώνει. Το s/WWW/www/g σημαίνει: βρες WWW, γράψε www, και κάν' το για κάθε ταίριασμα στη γραμμή λόγω του g. Το sed s/WWW/www/g gamehack.in τυπώνει τις αλλαγμένες γραμμές. Δεν επεξεργάζεται το αρχείο. Μια πραγματική sed αλλάζει το αρχείο μόνο αν προσθέσεις επιλογή επιτόπιας αλλαγής ή ανακατευθύνεις την έξοδο σε νέο όνομα. Έλεγξε το τυπωμένο αποτέλεσμα πριν το κάνεις ποτέ. Μια αντικατάσταση που φαίνεται σωστή σε μία γραμμή μπορεί να ξαναγράψει ένα σχόλιο που ήθελες να κρατήσεις.\n\nΗ sed είναι επεξεργαστής ροής: διαβάζει ένα αντίγραφο, το μετασχηματίζει και τυπώνει το αποτέλεσμα ενώ το πρωτότυπο μένει ανέπαφο. Αυτή είναι η ασφαλής προεπιλογή και πρέπει να την κρατήσεις. Τύπωσε πρώτα τον μετασχηματισμό και διάβασέ τον, και μετά αποφάσισε αν πραγματικά θέλεις τη μορφή επιτόπου επεξεργασίας. Η επεξεργασία ενός αρχείου ρυθμίσεων χωρίς προεπισκόπηση είναι ο τρόπος που ένας λειτουργικός host σταματά να απαντά, και το λάθος είναι αόρατο μέχρι την επόμενη επανεκκίνηση.",
         },
         shots: [shot("sed s/WWW/www/g gamehack.in", ["Visit www.gamehack.lab for the lab portal.", "www banners should be rewritten to www with sed.", "Linux training portal (simulated)."])],
       },
       {
         heading: { en: "more and less", el: "more και less" },
         body: {
-          en: "more FILE and less FILE are pagers. On a real terminal they show one screen and wait. Enter or space moves forward. In less, /keyword searches and q quits. less is the one to learn, because you can move backward as well as forward. This lab has no pager keystrokes. Both commands print the file and return to the prompt, so you can practise the names. When a real page is longer than the window, prefer less over cat.",
-          el: "Τα more FILE και less FILE είναι σελιδοποιητές. Σε πραγματικό τερματικό δείχνουν μία οθόνη και περιμένουν. Το Enter ή το space προχωρά. Στην less, το /keyword ψάχνει και το q βγαίνει. Η less είναι αυτή που αξίζει να μάθεις, γιατί μπορείς να κινηθείς και προς τα πίσω. Αυτό το εργαστήριο δεν έχει πλήκτρα σελιδοποιητή. Και οι δύο εντολές τυπώνουν το αρχείο και γυρίζουν στο prompt, ώστε να εξασκηθείς στα ονόματα. Όταν μια πραγματική σελίδα είναι μακρύτερη από το παράθυρο, προτίμησε την less από την cat.",
+          en: "more FILE and less FILE are pagers. On a real terminal they show one screen and wait. Enter or space moves forward. In less, /keyword searches and q quits. less is the one to learn, because you can move backward as well as forward. This lab has no pager keystrokes. Both commands print the file and return to the prompt, so you can practise the names. When a real page is longer than the window, prefer less over cat.\n\nA pager exists so that output you cannot fit on a screen stops being lost. Space moves a page, the arrow keys move a line, a slash searches forward, and q quits — four keys that make any long output readable. Reaching for a pager instead of scrolling is also a habit that transfers: on a real host, a hundred lines of log arriving at once is normal, and the person who can navigate it finds the answer while everyone else scrolls.",
+          el: "Τα more FILE και less FILE είναι σελιδοποιητές. Σε πραγματικό τερματικό δείχνουν μία οθόνη και περιμένουν. Το Enter ή το space προχωρά. Στην less, το /keyword ψάχνει και το q βγαίνει. Η less είναι αυτή που αξίζει να μάθεις, γιατί μπορείς να κινηθείς και προς τα πίσω. Αυτό το εργαστήριο δεν έχει πλήκτρα σελιδοποιητή. Και οι δύο εντολές τυπώνουν το αρχείο και γυρίζουν στο prompt, ώστε να εξασκηθείς στα ονόματα. Όταν μια πραγματική σελίδα είναι μακρύτερη από το παράθυρο, προτίμησε την less από την cat.\n\nΈνας σελιδοποιητής υπάρχει ώστε η έξοδος που δεν χωρά στην οθόνη να μην χάνεται. Το κενό προχωρά μία σελίδα, τα βελάκια μία γραμμή, η κάθετος ψάχνει προς τα κάτω, και το q βγαίνει — τέσσερα πλήκτρα που κάνουν κάθε μεγάλη έξοδο αναγνώσιμη. Η επιλογή σελιδοποιητή αντί για κύλιση είναι και συνήθεια που μεταφέρεται: σε έναν πραγματικό host, εκατό γραμμές καταγραφής που φτάνουν μαζί είναι φυσιολογικό, και όποιος ξέρει να τις διασχίζει βρίσκει την απάντηση ενώ οι υπόλοιποι κυλούν.",
         },
         shots: [shot("more /etc/ettercap/etter.dns", ["# etter.dns — GameHack lab copy …", "(page 1 — Enter would continue on a TTY)"])],
       },
@@ -588,13 +595,13 @@ export const SUDO_RUN_MODULES: Module[] = [
     challenges: [
       {
         title: { en: "Both etter paths", el: "Και τα δύο etter paths" },
-        brief: { en: "head /etc/Ettercap/etter.dns  (capital E, as in some installs)", el: "head /etc/Ettercap/etter.dns" },
+        brief: { en: "Installations disagree about capitalisation, so read the path exactly as it is written: head /etc/Ettercap/etter.dns with a capital E. Treating a path as a guess instead of a fact is how you lose twenty minutes to a file that was always there.", el: "Οι εγκαταστάσεις διαφωνούν ως προς τα κεφαλαία, οπότε διάβασε τη διαδρομή ακριβώς όπως είναι γραμμένη: head /etc/Ettercap/etter.dns με κεφαλαίο E. Το να αντιμετωπίζεις μια διαδρομή ως υπόθεση και όχι ως γεγονός είναι ο τρόπος που χάνεις είκοσι λεπτά σε ένα αρχείο που ήταν πάντα εκεί." },
         success: { en: "Linux paths are case-sensitive. We aliased both.", el: "Τα paths είναι case-sensitive." },
         check: (t) => usedCmd(t, /Ettercap/) || t.flags.has("etter"),
       },
       {
         title: { en: "Prove sed", el: "Απόδειξε sed" },
-        brief: { en: "Re-run sed so WWW becomes www on gamehack.in", el: "Ξανά sed στο gamehack.in" },
+        brief: { en: "Run the substitution again on gamehack.in so the uppercase WWW becomes lowercase www, and read the printed result before you accept it. A stream editor shows you the transformed copy while the original stays untouched, so check both.", el: "Ξανατρέξε την αντικατάσταση στο gamehack.in ώστε το κεφαλαίο WWW να γίνει πεζό www, και διάβασε το τυπωμένο αποτέλεσμα πριν το δεχτείς. Ένας επεξεργαστής ροής σου δείχνει το μετασχηματισμένο αντίγραφο ενώ το πρωτότυπο μένει ανέπαφο, οπότε έλεγξε και τα δύο." },
         success: { en: "Substitution is non-destructive unless you redirect.", el: "Χωρίς redirect δεν αλλάζει το αρχείο." },
         check: (t) => t.flags.has("sed"),
       },

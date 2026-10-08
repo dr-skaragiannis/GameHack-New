@@ -141,7 +141,7 @@ In GameHack you play both roles from one sandbox terminal. You configure the ser
       },
       {
         title: bi("Know where you are", "Ξέρε πού βρίσκεσαι"),
-        brief: bi("whoami, hostname, pwd", "whoami, hostname, pwd"),
+        brief: bi("Before you touch a share, establish your own position: whoami names the account whose privileges every later mistake will carry, pwd names the directory you are standing in, and hostname names the machine that is.", "Πριν αγγίξεις ένα share, καθιέρωσε την ίδια σου τη θέση: το whoami κατονομάζει τον λογαριασμό του οποίου τα δικαιώματα θα κουβαλά κάθε μεταγενέστερο λάθος, το pwd τον κατάλογο όπου στέκεσαι, και το hostname το μηχάνημα στο οποίο βρίσκονται."),
         success: bi("You are the ordinary operator inside the sandbox, not root on a production host.", "Είσαι ο απλός χρήστης μέσα στο sandbox και όχι root σε host παραγωγής."),
         check: (term) => term.flags.has("whoami") && term.flags.has("pwd"),
       },
@@ -354,13 +354,13 @@ Two details belong in the report. First, FTP transmits the username, the command
     challenges: pair(
       {
         title: bi("Read what hide_ids hides", "Διάβασε τι κρύβει το hide_ids"),
-        brief: bi("Open the anonymous session and list the root, then explain what the ownership column is not telling you.", "Άνοιξε την anonymous συνεδρία και εμφάνισε τη ρίζα, μετά εξήγησε τι δεν σου λέει η στήλη ιδιοκτησίας."),
+        brief: bi("Inside the anonymous session, list the directory and read what the masking changes and what it does not: the owner column shows one account for everything, while permissions and the ability to download stay exactly as they were.", "Μέσα στην anonymous συνεδρία, παρέθεσε τον κατάλογο και διάβασε τι αλλάζει η απόκρυψη και τι όχι: η στήλη ιδιοκτήτη δείχνει έναν λογαριασμό για όλα, ενώ τα δικαιώματα και η δυνατότητα λήψης μένουν ακριβώς όπως ήταν."),
         success: bi("Every row shows ftp:ftp, which is a privacy setting and not an access control.", "Κάθε γραμμή δείχνει ftp:ftp, που είναι ρύθμιση ιδιωτικότητας και όχι έλεγχος πρόσβασης."),
         check: (term) => term.flags.has("ftp-ls"),
       },
       {
         title: bi("Prove the listener yourself", "Απόδειξε μόνος σου την υποδοχή ακρόασης"),
-        brief: bi("service vsftpd restart, then ss -tlnp | grep :21", "service vsftpd restart και μετά ss -tlnp | grep :21"),
+        brief: bi("Do not take the banner's word for it: restart the service with service vsftpd restart, then read the listener table with ss -tlnp and confirm a process is actually bound to port 21. A claim and a socket are different evidence.", "Μην παίρνεις το banner για λόγο του: επανεκκίνησε την υπηρεσία με service vsftpd restart και μετά διάβασε τον πίνακα ακρόασης με ss -tlnp και επιβεβαίωσε ότι μια διεργασία είναι πραγματικά δεσμευμένη στη θύρα 21. Ένας ισχυρισμός και μια υποδοχή είναι διαφορετικά στοιχεία."),
         success: bi("Port 21 is bound by vsftpd, so the service can be enumerated at all.", "Η θύρα 21 είναι δεσμευμένη από το vsftpd, άρα η υπηρεσία μπορεί καν να απαριθμηθεί."),
         check: (term) => term.flags.has("service-vsftpd-restart") && usedCmd(term, /ss\s+-/),
       },
@@ -588,13 +588,13 @@ Because the export is writable, the same session could also upload or overwrite 
     challenges: pair(
       {
         title: bi("Name the writable setting", "Ονόμασε τη ρύθμιση εγγραφής"),
-        brief: bi("Validate the configuration and find the line that permits writes.", "Επικύρωσε τη ρύθμιση και βρες τη γραμμή που επιτρέπει εγγραφές."),
+        brief: bi("Ask the server itself which shares it will publish and with which options: testparm -s. Its normalised output is the effective share state, and the setting that permits writes is the one you should be able to name without hesitating.", "Ρώτα τον ίδιο τον server ποια shares θα δημοσιεύσει και με ποιες επιλογές: testparm -s. Η κανονικοποιημένη του έξοδος είναι η ενεργή κατάσταση των share, και η ρύθμιση που επιτρέπει εγγραφές είναι αυτή που πρέπει να κατονομάζεις χωρίς δισταγμό."),
         success: bi("read only = No in the normalised output is the writable state, however it was spelled in the file.", "Το read only = No στην κανονικοποιημένη έξοδο είναι η κατάσταση εγγραφής, όπως κι αν γράφτηκε στο αρχείο."),
         check: (term) => term.flags.has("testparm"),
       },
       {
         title: bi("Cross-check two tools", "Διασταύρωσε δύο εργαλεία"),
-        brief: bi("nxc smb 192.168.1.9 --shares -u 'guest' -p '' and smbclient -N -L //192.168.1.9", "nxc smb 192.168.1.9 --shares -u 'guest' -p '' και smbclient -N -L //192.168.1.9"),
+        brief: bi("Enumerate the same shares twice with different tools — nxc smb 192.168.1.9 --shares -u 'guest' -p '' and smbclient -N -L //192.168.1.9 — and compare the two lists. Agreement between independent tools is what makes an enumeration trustworthy.", "Απαρίθμησε τα ίδια shares δύο φορές με διαφορετικά εργαλεία — nxc smb 192.168.1.9 --shares -u 'guest' -p '' και smbclient -N -L //192.168.1.9 — και σύγκρινε τις δύο λίστες. Η συμφωνία ανάμεσα σε ανεξάρτητα εργαλεία είναι αυτό που κάνει μια απαρίθμηση αξιόπιστη."),
         success: bi("Both inventories agree, so the finding survives review.", "Οι δύο απογραφές συμφωνούν, άρα το εύρημα αντέχει στην αναθεώρηση."),
         check: (term) => term.flags.has("nxc-smb-shares") && term.flags.has("smbclient-list"),
       },
@@ -833,13 +833,13 @@ Because of no_root_squash, operations performed as root through this mount retai
     challenges: pair(
       {
         title: bi("Explain root escape", "Εξήγησε το root escape"),
-        brief: bi("Enumerate the exports and read the flag NetExec prints next to the options.", "Απαρίθμησε τις εξαγωγές και διάβασε την ένδειξη που τυπώνει το NetExec δίπλα στις επιλογές."),
+        brief: bi("Run the NFS enumeration and read the line that summarises the whole finding: nxc nfs 192.168.1.9 --enum-shares. When it reports root escape as true it is telling you that a writable export and unsquashed remote root are both present.", "Τρέξε την απαρίθμηση NFS και διάβασε τη γραμμή που συνοψίζει ολόκληρο το εύρημα: nxc nfs 192.168.1.9 --enum-shares. Όταν αναφέρει το root escape ως true, σου λέει ότι υπάρχουν μαζί μια εγγράψιμη εξαγωγή και απομακρυσμένος root χωρίς squash."),
         success: bi("Writable access plus no_root_squash means a remote root keeps root identity on the exported files.", "Η εγγραφή μαζί με no_root_squash σημαίνει ότι ένας απομακρυσμένος root διατηρεί root ταυτότητα στα εξαγόμενα αρχεία."),
         check: (term) => term.flags.has("nxc-nfs-root-escape"),
       },
       {
         title: bi("Leave the lab clean", "Καθάρισε το εργαστήριο"),
-        brief: bi("Mount the export, read the marker through it, then umount and verify the mount point is empty.", "Προσάρτησε την εξαγωγή, διάβασε τον δείκτη μέσω αυτής, μετά κάνε umount και επαλήθευσε ότι το σημείο προσάρτησης είναι άδειο."),
+        brief: bi("Mount the export, read the marker inside it, and then unmount: mount -t nfs 192.168.1.9:/srv/nfs/public /tmp/nfs, then umount /tmp/nfs. Leaving a mount behind is how a finished exercise keeps touching a system it should no longer reach.", "Προσάρτησε την εξαγωγή, διάβασε τον δείκτη μέσα της και μετά αποπροσάρτησε: mount -t nfs 192.168.1.9:/srv/nfs/public /tmp/nfs και μετά umount /tmp/nfs. Το να αφήνεις μια προσάρτηση πίσω είναι ο τρόπος που μια τελειωμένη άσκηση συνεχίζει να αγγίζει ένα σύστημα που δεν πρέπει πια να φτάνει."),
         success: bi("No stale mount is left behind to confuse the next test.", "Δεν μένει πίσω παλιά προσάρτηση που να μπερδέψει τον επόμενο έλεγχο."),
         check: (term) => term.flags.has("nfs-mount") && term.flags.has("nfs-umount"),
       },
@@ -1003,13 +1003,13 @@ Defenders win by treating file-share configuration as security-critical infrastr
     challenges: pair(
       {
         title: bi("One search per file", "Μία αναζήτηση ανά αρχείο"),
-        brief: bi("Find the risky directives in the FTP and Samba configuration files.", "Βρες τις επικίνδυνες οδηγίες στα αρχεία ρυθμίσεων FTP και Samba."),
+        brief: bi("Audit the two configurations with one search each, because a multi-file search only reads the first: grep -n 'anonymous_enable' /etc/vsftpd.conf, then grep -n 'map to guest' /etc/samba/smb.conf. Report each result with its file and line number.", "Έλεγξε τις δύο διαμορφώσεις με μία αναζήτηση η καθεμία, γιατί η αναζήτηση σε πολλά αρχεία διαβάζει μόνο το πρώτο: grep -n 'anonymous_enable' /etc/vsftpd.conf και μετά grep -n 'map to guest' /etc/samba/smb.conf. Ανάφερε κάθε αποτέλεσμα με το αρχείο και τον αριθμό γραμμής του."),
         success: bi("anonymous_enable, guest ok and map to guest are all visible without opening an editor.", "Τα anonymous_enable, guest ok και map to guest φαίνονται όλα χωρίς να ανοίξεις editor."),
         check: (term) => usedCmd(term, /grep.*anonymous_enable/) && usedCmd(term, /grep.*guest/),
       },
       {
         title: bi("Prove the fix", "Απόδειξε τη διόρθωση"),
-        brief: bi("Close anonymous FTP, restart the daemon and re-run the scan that first found it.", "Κλείσε το anonymous FTP, επανεκκίνησε τον δαίμονα και ξανατρέξε τη σάρωση που το βρήκε πρώτα."),
+        brief: bi("Close anonymous FTP in the configuration and verify the change from the outside: after appending anonymous_enable=NO, scan again with nmap -A -p 21 192.168.1.9 and confirm the script now reports the login as denied.", "Κλείσε το anonymous FTP στις ρυθμίσεις και επαλήθευσε την αλλαγή από έξω: αφού προσθέσεις anonymous_enable=NO, σάρωσε ξανά με nmap -A -p 21 192.168.1.9 και επιβεβαίωσε ότι το script αναφέρει τώρα τη σύνδεση ως αρνούμενη."),
         success: bi("The ftp-anon line now reports that anonymous login is not allowed.", "Η γραμμή ftp-anon αναφέρει πλέον ότι η anonymous σύνδεση δεν επιτρέπεται."),
         check: (term) => term.flags.has("nmap-ftp-anon-denied"),
       },
