@@ -17,7 +17,14 @@ globalThis.Event = dom.window.Event;
 globalThis.MouseEvent = dom.window.MouseEvent;
 globalThis.KeyboardEvent = dom.window.KeyboardEvent;
 globalThis.Node = dom.window.Node;
+globalThis.SVGElement = dom.window.SVGElement;
 globalThis.getComputedStyle = dom.window.getComputedStyle;
+dom.window.matchMedia = (query) => ({
+  matches: false, media: query, onchange: null,
+  addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {},
+  dispatchEvent: () => false,
+});
+globalThis.matchMedia = dom.window.matchMedia;
 globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
 globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -236,7 +243,48 @@ try {
   assert.equal(greekWarnings.includes("The lab has no title."), false, "no English leaks into the Greek banner");
   assert.match(greekWarnings, /Ο στόχος 1 δεν έχει έλεγχο ολοκλήρωσης/, "the Greek warning names the objective position");
 
-  console.log("Content editor UI checks passed: creating a learning path, adding and writing a lab with XP and a completion test, reaching the player catalog, and deleting without leaving dangling references.");
+  // ── The educator reaches all of this from the dashboard ───────────────────
+  const [{ default: EducatorDashboard }, db] = await Promise.all([
+    server.ssrLoadModule("/src/components/EducatorDashboard.tsx"),
+    server.ssrLoadModule("/src/lib/db.ts"),
+  ]);
+  db.resetAll();
+  const dashContainer = document.createElement("div");
+  document.body.appendChild(dashContainer);
+  const dashRoot = createRoot(dashContainer);
+  act(() => {
+    dashRoot.render(React.createElement(EducatorDashboard, {
+      user: db.allEducators()[0],
+      lang: "en",
+      onProfile: () => {},
+      onOpenLab: () => {},
+      onShowMap: () => {},
+    }));
+  });
+  const tabButtons = [...dashContainer.querySelectorAll(".educator-tabs button")];
+  const authoringTab = tabButtons.find((button) => button.textContent.includes("Build and edit the course"));
+  assert.ok(authoringTab, "the dashboard offers a course-authoring tab");
+  act(() => { authoringTab.click(); });
+  assert.ok(dashContainer.querySelector(".content-editor"), "the tab opens the authoring editor");
+  assert.deepEqual(
+    db.getContentOverlay(),
+    { modules: {}, paths: [] },
+    "opening the editor writes nothing on its own",
+  );
+  const dashNewPath = [...dashContainer.querySelectorAll(".content-editor button")]
+    .find((button) => button.textContent.trim() === "New learning path");
+  assert.ok(dashNewPath, "the dashboard-hosted editor can create a path");
+  act(() => { dashNewPath.click(); });
+  assert.equal(db.getContentOverlay().paths.length, 1, "creating a path from the dashboard persists it");
+  assert.equal(
+    db.getContentOverlay().modules && Object.keys(db.getContentOverlay().modules).length,
+    0,
+    "an empty path carries no labs yet",
+  );
+  act(() => { dashRoot.unmount(); });
+  dashContainer.remove();
+
+  console.log("Content editor UI checks passed: creating a learning path, adding and writing a lab with XP and a completion test, reaching the player catalog, deleting without leftovers, bilingual warnings, and reaching it all from the educator dashboard.");
 } finally {
   await server.close();
 }
