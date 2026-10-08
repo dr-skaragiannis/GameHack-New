@@ -3140,6 +3140,20 @@ button.player-quick-stats__item:hover {
   outline: 2px solid var(--color-cyan-400);
   outline-offset: 3px;
 }
+/*
+ * The objectives column is a fixed 320px track, and objective text is full of
+ * unbreakable runs - shell one-liners, regexes such as
+ * "^(#)?(Port|PermitRootLogin|PasswordAuthentication|...)", absolute paths -
+ * the longest measured at 73 characters. `break-word` alone is not enough here:
+ * it does not change an element's min-content width, so a flex child still
+ * refuses to shrink and pushes its text outside the panel. `anywhere` does
+ * affect min-content sizing, which is what this column needs.
+ */
+.module-objectives {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 @media (min-width: 1024px) {
   .terminal-window {
     position: sticky;

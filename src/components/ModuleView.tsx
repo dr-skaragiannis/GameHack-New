@@ -375,7 +375,7 @@ export default function ModuleView({
                       <span className="h-2 w-2 rounded-full bg-neon-green/80" />
                       <span className="ml-2 tracking-wider text-iron-400">screenshot, GameHack lab</span>
                     </div>
-                    <pre className="px-3 py-3 text-zinc-200 whitespace-pre-wrap leading-relaxed">
+                    <pre className="px-3 py-3 text-zinc-200 whitespace-pre-wrap break-words leading-relaxed">
                       {sh.cmd && <span className="text-cyan-400">root@kali:~# {sh.cmd}{"\n"}</span>}
                       {sh.lines.join("\n")}
                     </pre>
@@ -529,7 +529,10 @@ export default function ModuleView({
                           <span className={cn("mt-0.5", ok ? "text-neon-green" : "text-iron-500")}>
                             {ok ? "●" : "○"}
                           </span>
-                          <div className="flex-1">
+                          {/* min-w-0: without it this flex child keeps its
+                              min-content width and long commands spill out of
+                              the objectives panel. */}
+                          <div className="min-w-0 flex-1">
                             {collapsed ? (
                               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                                 <span className="text-zinc-500 line-through">

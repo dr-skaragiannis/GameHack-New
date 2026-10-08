@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { JSDOM } from "jsdom";
 import { createServer } from "vite";
 
@@ -283,7 +284,58 @@ try {
   );
   unmount(tryView);
 
-  console.log(`Lab completion checks passed: an authored lab with no quiz completes directly, a quiz-backed lab still routes through its quiz, the prompt only shows on a finished lab, both languages are labelled, a revealed hint renders in the reader's language, ${tabMounts} lab mounts across all ${lessons.LEARNING_PATHS.length} learning paths show Lab then Theory with no Study guide, the Theory tab renders its sections before the command deep dives, and Try in terminal still prefills the terminal from the Theory deep dives.`);
+
+  // ── Long commands must not spill out of the objectives panel ──────────────
+  //
+  // The objectives column is a fixed 320px grid track, and objective text
+  // contains unbreakable runs up to 73 characters - shell one-liners, regexes,
+  // absolute paths. A flex child keeps its min-content width unless it is told
+  // otherwise, so the text used to overflow the panel. jsdom does no layout, so
+  // this pins the two things that make wrapping possible: the min-w-0 on the
+  // flex child, and the overflow-wrap rule on the panel.
+  const widest = lessons.LEARNING_PATHS.flatMap((campaign) => campaign.modules)
+    .flatMap((mod) => mod.tasks.map((task) => ({ mod, longest: Math.max(...String(task.instruction.en).split(/\s+/).map((token) => token.length)) })))
+    .sort((a, b) => b.longest - a.longest)[0];
+  assert.ok(widest.longest > 40, `expected a lab whose objectives carry a long unbreakable run, found ${widest.longest}`);
+
+  const wideView = mount({ module: widest.mod, campaignId: "path-1", done: [], moduleCompleted: false });
+  const panel = wideView.container.querySelector(".module-objectives");
+  assert.ok(panel, "the objectives panel is rendered");
+  const rows = [...panel.querySelectorAll(".min-w-0.flex-1")];
+  assert.ok(rows.length >= widest.mod.tasks.length, "every objective row can shrink below its min-content width");
+  assert.equal(
+    [...panel.querySelectorAll(".flex-1")].filter((el) => !el.className.includes("min-w-0")).length,
+    0,
+    "no objective row is left as a bare flex-1",
+  );
+  unmount(wideView);
+
+  // The same class of bug, one tab over: terminal transcripts sit inside an
+  // overflow-hidden frame, so a long unbreakable run is clipped rather than
+  // wrapped unless the pre is allowed to break it.
+  const withShots = lessons.LEARNING_PATHS.flatMap((campaign) => campaign.modules)
+    .find((mod) => mod.theory.some((section) => section.shots?.length));
+  assert.ok(withShots, "expected a lab with a terminal transcript");
+  const shotsView = mount({ module: withShots, campaignId: "path-1", done: [], moduleCompleted: false, initialTab: "theory" });
+  const transcripts = [...shotsView.container.querySelectorAll("pre.whitespace-pre-wrap")];
+  assert.ok(transcripts.length > 0, "the theory tab renders its terminal transcripts");
+  assert.equal(
+    transcripts.filter((pre) => !pre.className.includes("break-words")).length,
+    0,
+    "every terminal transcript can break a long unbreakable run instead of clipping it",
+  );
+  unmount(shotsView);
+
+  const stylesheet = await readFile(new URL("../src/index.css", import.meta.url), "utf8");
+  assert.match(stylesheet, /\.module-objectives\s*\{[^}]*min-width:\s*0/s, "the objectives panel opts out of min-content sizing");
+  assert.match(stylesheet, /\.module-objectives\s*\{[^}]*overflow-wrap:\s*anywhere/s, "the objectives panel breaks unbreakable runs");
+  assert.match(
+    stylesheet,
+    /break-word(?!s)/,
+    "break-word alone is still used somewhere, which is why the panel needs anywhere",
+  );
+
+  console.log(`Lab completion checks passed: an authored lab with no quiz completes directly, a quiz-backed lab still routes through its quiz, the prompt only shows on a finished lab, both languages are labelled, a revealed hint renders in the reader's language, ${tabMounts} lab mounts across all ${lessons.LEARNING_PATHS.length} learning paths show Lab then Theory with no Study guide, the Theory tab renders its sections before the command deep dives, and Try in terminal still prefills the terminal from the Theory deep dives. Long shell commands, regexes and paths in the objectives can no longer overflow the panel: every objective row is a min-w-0 flex child and the panel itself breaks unbreakable runs.`);
 } finally {
   await server.close();
 }
