@@ -15,6 +15,7 @@
     "test:authoring": "node scripts/test-content-authoring.mjs",
     "test:editor": "node scripts/test-content-editor.mjs",
     "test:completion": "node scripts/test-lab-completion.mjs",
+    "test:challenges": "node scripts/test-challenge-replay.mjs",
     "test:auth": "node scripts/test-auth.mjs",
     "preview": "npm start",
     "start": "node server/index.mjs"
