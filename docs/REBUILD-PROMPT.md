@@ -58,7 +58,7 @@ src/
     playerTerminal.ts          per-player terminal persistence
   components/
     AuthScreen, HomePage, InteractiveMap, LearningMap, ModuleView, TerminalView,
-    QuizPopup, AssessmentPopup, CommandStudyGuide, CommandResultPopup,
+    QuizPopup, AssessmentPopup, CommandResultPopup,
     ContentEditor, EducatorDashboard, PlayerDashboard, ProfileView, SettingsView,
     TeamsView, ActivityView, Tickets, Messages, BadgeModal, OverallScoreboardPopup, ...
 scripts/

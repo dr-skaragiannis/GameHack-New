@@ -33,7 +33,7 @@ import type { User } from "./lib/db";
 import { learningPaths, moduleById } from "./lib/catalog";
 
 type View = "dashboard" | "educator" | "campaigns" | "map" | "module" | "messages" | "tickets" | "profile" | "teams" | "activity" | "settings";
-type ModuleTab = "theory" | "guide" | "lab";
+type ModuleTab = "lab" | "theory";
 type ThemeName = "cyan" | "warm";
 
 const THEME_STORAGE_KEY = "gamehack.theme";
@@ -293,7 +293,7 @@ export default function App() {
       (user.role === "educator" || index === 0 || !!user.progress[modules[index - 1].id]?.completed)
     );
     const selectedModule = firstAvailable || modules[0];
-    if (selectedModule) openModule(cid, selectedModule.id, "theory");
+    if (selectedModule) openModule(cid, selectedModule.id, "lab");
   };
 
   const awardMetricBadges = () => {

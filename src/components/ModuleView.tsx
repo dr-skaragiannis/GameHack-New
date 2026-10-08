@@ -19,7 +19,6 @@ import {
 } from "../data/commandGuide";
 import { findLinuxCommand } from "../lib/linuxCommandCatalog";
 import { theoryBlocksForCommand } from "../data/commandTheory";
-import CommandStudyGuide from "./CommandStudyGuide";
 import CommandResultPopup from "./CommandResultPopup";
 import DfirVisual from "./DfirVisual";
 import WhyHowPopup from "./WhyHowPopup";
@@ -164,7 +163,7 @@ export default function ModuleView({
   userId: string;
   campaignId: string;
   lang: Lang;
-  initialTab?: "theory" | "guide" | "lab";
+  initialTab?: "lab" | "theory";
   topbarTools: ReactNode;
   done: string[];
   moduleCompleted: boolean;
@@ -183,7 +182,7 @@ export default function ModuleView({
   onCompleteLab: () => void;
   onBack: () => void;
 }) {
-  const [tab, setTab] = useState<"theory" | "guide" | "lab">(initialTab || (done.length ? "lab" : "theory"));
+  const [tab, setTab] = useState<"lab" | "theory">(initialTab || "lab");
   // Finished objectives collapse; this holds the ones the player opened again.
   const [shown, setShown] = useState<Record<string, boolean>>({});
   const theoryCommands = useMemo(() => theoryItemsForModule(module), [module]);
@@ -331,7 +330,7 @@ export default function ModuleView({
           </div>
 
           <nav className="module-topbar__tabs" aria-label={lang === "el" ? "Ενότητες μαθήματος" : "Module sections"}>
-            {(["theory", "guide", "lab"] as const).map((k) => (
+            {(["lab", "theory"] as const).map((k) => (
               <button
                 key={k}
                 type="button"
@@ -433,18 +432,6 @@ export default function ModuleView({
               {t("beginLab", lang)}
             </button>
           </div>
-        )}
-
-        {tab === "guide" && (
-          <CommandStudyGuide
-            module={module}
-            lang={lang}
-            onTry={(command) => {
-              setCommandSuggestion(command);
-              setTab("lab");
-              sound.popup();
-            }}
-          />
         )}
 
         {tab === "lab" && (

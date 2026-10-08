@@ -65,9 +65,6 @@ export const UI: Dict = {
   start_module: { en: "Start", el: "Έναρξη" },
   review: { en: "Review", el: "Επανάληψη" },
   theory: { en: "Theory", el: "Θεωρία" },
-  guide: { en: "Study guide", el: "Οδηγός μελέτης" },
-  studyGuide: { en: "Study guide", el: "Οδηγός μελέτης" },
-  studyGuideDescription: { en: "Command references with syntax, examples, and result interpretation.", el: "Αναφορές εντολών με σύνταξη, παραδείγματα και ερμηνεία αποτελεσμάτων." },
   commandDeepDives: { en: "Command deep dives", el: "Αναλυτική επεξήγηση εντολών" },
   commandDeepDivesDescription: {
     en: "Understand what each command does, how it works, and what its output can prove before using it in the lab.",
@@ -80,8 +77,6 @@ export const UI: Dict = {
   commandBoundary: { en: "Boundary", el: "Όριο" },
   commandExample: { en: "Example", el: "Παράδειγμα" },
   commandSyntax: { en: "Syntax", el: "Σύνταξη" },
-  tryInTerminal: { en: "Try in terminal", el: "Δοκίμασέ την στο τερματικό" },
-  noGuideEntry: { en: "See the command description in the cheat sheet.", el: "Δες την περιγραφή της εντολής στον συνοπτικό οδηγό." },
   lab: { en: "Lab", el: "Εργαστήριο" },
   objectives: { en: "Objectives", el: "Στόχοι" },
   learningPaths: { en: "Learning paths", el: "Μαθησιακές διαδρομές" },

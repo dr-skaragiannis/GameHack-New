@@ -55,10 +55,11 @@ const server = await createServer({
 });
 
 try {
-  const [{ default: ModuleView }, authoring, quizProgress] = await Promise.all([
+  const [{ default: ModuleView }, authoring, quizProgress, lessons] = await Promise.all([
     server.ssrLoadModule("/src/components/ModuleView.tsx"),
     server.ssrLoadModule("/src/lib/contentAuthoring.ts"),
     server.ssrLoadModule("/src/lib/quizProgress.ts"),
+    server.ssrLoadModule("/src/data/lessons.ts"),
   ]);
 
   // An educator-authored lab: no shipped quiz, no shipped assessment.
@@ -213,7 +214,34 @@ try {
     unmount(view);
   }
 
-  console.log("Lab completion checks passed: an authored lab with no quiz completes directly, a quiz-backed lab still routes through its quiz, the prompt only shows on a finished lab, both languages are labelled, and a revealed hint renders in the reader's language.");
+  // ── The tab bar: Lab first, then Theory, and no Study guide ───────────────
+  // Every lab on every path renders through this one ModuleView, so sweeping all
+  // of them is what backs the claim that the change applies everywhere.
+  const TABS = { en: ["Lab", "Theory"], el: ["Εργαστήριο", "Θεωρία"] };
+  let tabMounts = 0;
+  for (const path of lessons.LEARNING_PATHS) {
+    for (const mod of path.modules) {
+      for (const lang of ["en", "el"]) {
+        const view = mount({
+          module: mod, campaignId: path.id, lang,
+          initialTab: undefined, done: [], hasQuiz: true, hasAssessment: true,
+        });
+        const tabs = [...view.container.querySelectorAll(".module-topbar__tab")]
+          .map((b) => b.textContent.trim());
+        assert.deepEqual(tabs, TABS[lang], `${mod.id}/${lang}: the tabs should read Lab then Theory`);
+        const active = view.container.querySelector(".module-topbar__tab.is-active");
+        assert.equal(active?.textContent.trim(), TABS[lang][0], `${mod.id}/${lang}: Lab should open first`);
+        assert.ok(
+          !/Study guide|Οδηγός μελέτης/.test(view.container.textContent),
+          `${mod.id}/${lang}: the Study guide tab should be gone`,
+        );
+        unmount(view);
+        tabMounts += 1;
+      }
+    }
+  }
+
+  console.log(`Lab completion checks passed: an authored lab with no quiz completes directly, a quiz-backed lab still routes through its quiz, the prompt only shows on a finished lab, both languages are labelled, a revealed hint renders in the reader's language, and ${tabMounts} lab mounts across all ${lessons.LEARNING_PATHS.length} learning paths show Lab then Theory with no Study guide.`);
 } finally {
   await server.close();
 }
