@@ -176,6 +176,8 @@ export default function ModuleView({
   onBack: () => void;
 }) {
   const [tab, setTab] = useState<"theory" | "guide" | "lab">(initialTab || (done.length ? "lab" : "theory"));
+  // Finished objectives collapse; this holds the ones the player opened again.
+  const [shown, setShown] = useState<Record<string, boolean>>({});
   const theoryCommands = useMemo(() => theoryItemsForModule(module), [module]);
   const [term, setTerm] = useState<Terminal>(() =>
     activateTerminalForModule(loadPlayerTerminal(userId), module.id, module.scenario || "lab")
@@ -504,6 +506,7 @@ export default function ModuleView({
                 <ol className="space-y-3">
                   {module.tasks.map((task, idx) => {
                     const ok = done.includes(task.id) || task.check(term);
+                    const collapsed = ok && !shown[task.id];
                     return (
                       <li key={task.id} className="text-sm">
                         <div className="flex items-start gap-2">
@@ -511,6 +514,22 @@ export default function ModuleView({
                             {ok ? "●" : "○"}
                           </span>
                           <div className="flex-1">
+                            {collapsed ? (
+                              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                                <span className="text-zinc-500 line-through">
+                                  {idx + 1}. {bi(task.instruction, lang)}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setShown((current) => ({ ...current, [task.id]: true }))}
+                                  aria-expanded={false}
+                                  className="text-sm text-cyan-400 hover:underline"
+                                >
+                                  {t("showObjective", lang)}
+                                </button>
+                              </div>
+                            ) : (
+                              <>
                             <div className={ok ? "text-zinc-500 line-through" : "text-zinc-200"}>
                               {idx + 1}. {bi(task.instruction, lang)}
                             </div>
@@ -528,6 +547,16 @@ export default function ModuleView({
                                   {hints[task.id]
                                     ? t("hintRevealed", lang)
                                     : t("showExactHint", lang).replace("{xp}", String(HINT_XP_PENALTY))}
+                                </button>
+                              )}
+                              {ok && (
+                                <button
+                                  type="button"
+                                  onClick={() => setShown((current) => ({ ...current, [task.id]: false }))}
+                                  aria-expanded
+                                  className="text-sm text-cyan-400 hover:underline"
+                                >
+                                  {t("hideObjective", lang)}
                                 </button>
                               )}
                               <button
@@ -549,6 +578,8 @@ export default function ModuleView({
                                   {task.hint.en.trim()}
                                 </pre>
                               </div>
+                            )}
+                              </>
                             )}
                           </div>
                         </div>

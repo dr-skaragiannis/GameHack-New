@@ -84,6 +84,8 @@ export const UI: Dict = {
   noGuideEntry: { en: "See the command description in the cheat sheet.", el: "Δες την περιγραφή της εντολής στον συνοπτικό οδηγό." },
   lab: { en: "Lab", el: "Εργαστήριο" },
   objectives: { en: "Objectives", el: "Στόχοι" },
+  showObjective: { en: "Show objective", el: "Εμφάνιση στόχου" },
+  hideObjective: { en: "Hide objective", el: "Απόκρυψη στόχου" },
   briefing: { en: "Briefing", el: "Ενημέρωση" },
   beginLab: { en: "Begin Lab", el: "Έναρξη Εργαστηρίου" },
   hint: { en: "Hint", el: "Υπόδειξη" },
