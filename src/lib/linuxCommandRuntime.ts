@@ -600,6 +600,47 @@ tmpfs           512M     0  512M   0% /tmp`);
       print(stdin.replace(/\n$/, ""));
       return true;
     }
+    case "tree": {
+      // -L takes a value, and that value lands in pos[] because it is not a
+      // flag, so the real target is the first positional that is not the level.
+      const limitAt = rest.indexOf("-L");
+      const levelArg = limitAt >= 0 ? rest[limitAt + 1] : undefined;
+      const asked = Number.parseInt(levelArg || "", 10);
+      const depth = Number.isFinite(asked) && asked > 0 ? asked : 2;
+      const wanted = pos.find((value) => value !== levelArg) || ".";
+      const target = resolvePath(t, wanted);
+      const node = getNode(t.fs, target);
+      if (!node) {
+        print(`${cmd}: ${wanted}: No such file or directory`, "err");
+        return true;
+      }
+      if (node.type !== "dir") {
+        print(`${node.name}\n\n0 directories, 1 file`);
+        return true;
+      }
+      let dirs = 0;
+      let files = 0;
+      const lines: string[] = [displayPath(t, target)];
+      const walk = (current: FileNode, prefix: string, level: number) => {
+        if (level > depth || !current.children) return;
+        const kids = Object.values(current.children).sort((a, b) => a.name.localeCompare(b.name));
+        kids.forEach((kid, index) => {
+          const last = index === kids.length - 1;
+          lines.push(`${prefix}${last ? "└── " : "├── "}${kid.name}`);
+          if (kid.type === "dir") {
+            dirs += 1;
+            walk(kid, `${prefix}${last ? "    " : "│   "}`, level + 1);
+          } else {
+            files += 1;
+          }
+        });
+      };
+      walk(node, "", 1);
+      lines.push("");
+      lines.push(`${dirs} ${dirs === 1 ? "directory" : "directories"}, ${files} ${files === 1 ? "file" : "files"}`);
+      print(lines.join("\n"));
+      return true;
+    }
     case "tar": {
       const listArchive = rest.some((value) => value.startsWith("-") && value.includes("t"));
       const archivePath = pos[0];

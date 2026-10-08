@@ -1154,6 +1154,36 @@ export const COMMAND_GUIDE: CommandLesson[] = [
     output: both("Nothing on success. A target is busy message means something still holds it open, and the fix is to leave the directory rather than force the unmount.", "Τίποτα στην επιτυχία. Το μήνυμα target is busy σημαίνει ότι κάτι ακόμα το κρατά ανοιχτό και η λύση είναι να βγεις από τον κατάλογο, όχι να επιβάλεις την αποπροσάρτηση."),
     syntax: "umount TARGET", example: "umount /tmp/nfs",
   },
+  {
+    key: "tee", aliases: ["tee"], title: both("See the output and keep a copy", "Δες την έξοδο και κράτα αντίγραφο"),
+    purpose: both("Watch a pipeline result on screen while the same bytes land in a file you can quote later.", "Παρακολούθησε το αποτέλεσμα μιας διαδοχής στην οθόνη ενώ τα ίδια bytes πέφτουν σε αρχείο που μπορείς να παραθέσεις αργότερα."),
+    mechanics: both("tee sits in the middle of a pipe: it reads standard input, writes it to every file you name, and passes the same text on to the next command. -a appends instead of overwriting. Because it forwards what it received, the stage after tee still filters the full stream rather than the file.", "Η tee κάθεται στη μέση μιας διαδοχής: διαβάζει την standard input, τη γράφει σε κάθε αρχείο που ονομάζεις και προωθεί το ίδιο κείμενο στην επόμενη εντολή. Η -a προσθέτει αντί να αντικαθιστά. Επειδή προωθεί ό,τι παρέλαβε, το στάδιο μετά την tee φιλτράρει ακόμα την πλήρη ροή και όχι το αρχείο."),
+    output: both("The same text again on screen, plus a file that now holds it. That file is your evidence: it records what the command printed, not what you remember it printing.", "Το ίδιο κείμενο ξανά στην οθόνη, συν ένα αρχείο που τώρα το περιέχει. Αυτό το αρχείο είναι το τεκμήριό σου: καταγράφει τι τύπωσε η εντολή, όχι τι θυμάσαι ότι τύπωσε."),
+    syntax: "tee [-a] FILE...", example: "ifconfig | tee /tmp/net.txt | grep inet",
+    caution: both("Every file you name is created or truncated, so a typo in the path costs you the previous contents.", "Κάθε αρχείο που ονομάζεις δημιουργείται ή μηδενίζεται, οπότε ένα τυπογραφικό στη διαδρομή σου κοστίζει τα προηγούμενα περιεχόμενα."),
+  },
+  {
+    key: "tree", aliases: ["tree"], title: both("Draw the directory shape", "Σχεδίαση της δομής καταλόγων"),
+    purpose: both("See the layout of a directory tree at a glance instead of paging through repeated ls calls.", "Δες τη διάταξη ενός δέντρου καταλόγων με μία ματιά αντί να ξεφυλλίζεις επαναλαμβανόμενες ls."),
+    mechanics: both("tree walks a directory recursively and prints it indented, one line per entry, with directory and file totals at the end. -L N stops the walk N levels down, which is what keeps the output readable on a real system. With no path it starts at the current directory.", "Η tree διασχίζει έναν κατάλογο αναδρομικά και τον εμφανίζει με εσοχή, μία γραμμή ανά στοιχείο, με τα σύνολα καταλόγων και αρχείων στο τέλος. Η -L N σταματά τη διαδρομή N επίπεδα κάτω, που είναι αυτό που κρατά την έξοδο αναγνώσιμη σε ένα πραγματικό σύστημα. Χωρίς διαδρομή ξεκινά από τον τρέχοντα κατάλογο."),
+    output: both("The tree, then a closing line such as 3 directories, 12 files. Compare that shape against what the service is supposed to hold; an unexpected branch is a lead worth opening.", "Το δέντρο και μετά μια καταληκτική γραμμή όπως 3 directories, 12 files. Σύγκρινε αυτό το σχήμα με ό,τι υποτίθεται ότι κρατά η υπηρεσία· ένας απρόσμενος κλάδος είναι ένδειξη που αξίζει να ανοίξεις."),
+    syntax: "tree [-L LEVEL] [DIR]", example: "tree -L 2 /etc",
+  },
+  {
+    key: "type", aliases: ["type"], title: both("Ask the shell what a name really is", "Ρώτα το shell τι είναι πραγματικά ένα όνομα"),
+    purpose: both("Learn whether a name resolves to a real executable, a shell builtin, an alias or a function before you trust how it behaves.", "Μάθε αν ένα όνομα αντιστοιχεί σε πραγματικό εκτελέσιμο, σε ενσωματωμένη εντολή του shell, σε ψευδώνυμο ή σε συνάρτηση, πριν εμπιστευτείς πώς συμπεριφέρεται."),
+    mechanics: both("type asks the shell itself, so it reports what the shell will actually run, including builtins and aliases that which and whereis cannot see. That difference matters: which searches $PATH, while type reports the resolution order the shell really uses.", "Η type ρωτά το ίδιο το shell, οπότε αναφέρει τι θα εκτελέσει πραγματικά, συμπεριλαμβανομένων ενσωματωμένων εντολών και ψευδωνύμων που η which και η whereis δεν βλέπουν. Αυτή η διαφορά μετράει: η which ψάχνει στο $PATH, ενώ η type αναφέρει τη σειρά επίλυσης που χρησιμοποιεί πραγματικά το shell."),
+    output: both("One line naming the kind and, for a real file, its path. is /usr/bin/ls means a file on disk; is a shell builtin means there is no file to inspect.", "Μία γραμμή που ονομάζει το είδος και, για πραγματικό αρχείο, τη διαδρομή του. Το is /usr/bin/ls σημαίνει αρχείο στον δίσκο· το is a shell builtin σημαίνει ότι δεν υπάρχει αρχείο να επιθεωρήσεις."),
+    syntax: "type NAME...", example: "type ls",
+  },
+  {
+    key: "umask", aliases: ["umask"], title: both("The mask behind new-file permissions", "Η μάσκα πίσω από τα δικαιώματα των νέων αρχείων"),
+    purpose: both("Understand why a file you just created came out 644, and change that default before you create something sensitive.", "Κατάλαβε γιατί ένα αρχείο που μόλις δημιούργησες βγήκε 644 και άλλαξε αυτή την προεπιλογή πριν δημιουργήσεις κάτι ευαίσθητο."),
+    mechanics: both("The kernel starts from a base of 666 for files and 777 for directories and removes the bits set in your umask. With the usual 022 that yields 644 and 755, which is exactly why touch produced -rw-r--r--. umask alone prints the current value; umask 077 makes everything you create from then on private to you.", "Ο πυρήνας ξεκινά από βάση 666 για αρχεία και 777 για καταλόγους και αφαιρεί τα bits που είναι ενεργά στη umask σου. Με τη συνηθισμένη 022 αυτό δίνει 644 και 755, που είναι ακριβώς ο λόγος που η touch παρήγαγε -rw-r--r--. Η umask μόνη της εμφανίζει την τρέχουσα τιμή· η umask 077 κάνει ό,τι δημιουργήσεις από εδώ και πέρα ιδιωτικό σε εσένα."),
+    output: both("A four-digit octal value such as 0022. Read it as what is removed, not as what is granted.", "Μια τετραψήφια οκταδική τιμή όπως 0022. Διάβασέ την ως αυτό που αφαιρείται, όχι ως αυτό που χορηγείται."),
+    syntax: "umask [NNN]", example: "umask 077",
+    caution: both("The mask only affects files created after you set it; files that already exist keep the permissions they have.", "Η μάσκα επηρεάζει μόνο αρχεία που δημιουργούνται μετά τον ορισμό της· τα αρχεία που ήδη υπάρχουν κρατούν τα δικαιώματα που έχουν."),
+  },
 ];
 
 export function commandLessonForName(name: string): CommandLesson | undefined {
