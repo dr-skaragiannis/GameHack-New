@@ -10,12 +10,20 @@ const section = (heading: Bi, body: Bi, shots?: Section["shots"], tip?: Bi): Sec
   ...(shots ? { shots } : {}),
   ...(tip ? { tip } : {}),
 });
-const task = (id: string, instruction: Bi, hint: Bi, explain: Bi, check: (term: CheckCtx) => boolean): Task => ({
+const task = (
+  id: string,
+  instruction: Bi,
+  hint: Bi,
+  explain: Bi,
+  check: (term: CheckCtx) => boolean,
+  material?: Bi,
+): Task => ({
   id,
   instruction,
   hint,
   explain,
   check,
+  ...(material ? { material } : {}),
 });
 const pair = (first: Challenge, second: Challenge): [Challenge, Challenge] => [first, second];
 
@@ -114,6 +122,10 @@ In GameHack you play both roles from one sandbox terminal. You configure the ser
           "Γιατί: Ένας απρόσιτος στόχος κάνει κάθε σφάλμα υπηρεσίας παραπλανητικό, οπότε η συνδεσιμότητα αποδεικνύεται πρώτη. Πώς: το εικονικό ping απαντά από τον πίνακα host του εργαστηρίου και το apt update ανανεώνει τον φανταστικό κατάλογο. Τίποτα δεν φεύγει από το sandbox.",
         ),
         (term) => term.flags.has("ping") && term.flags.has("apt"),
+        bi(
+          "A round-trip under one millisecond usually means two virtual machines on the same host or the same lab segment. If the ping fails, fix the virtual networking before anything else: an unreachable target makes every service-specific error misleading.",
+          "Χρόνος round-trip κάτω από ένα millisecond σημαίνει συνήθως δύο εικονικές μηχανές στον ίδιο host ή στο ίδιο τμήμα εργαστηρίου. Αν το ping αποτύχει, διόρθωσε πρώτα το virtual networking: ένας απρόσιτος στόχος κάνει κάθε σφάλμα υπηρεσίας παραπλανητικό.",
+        ),
       ),
       task(
         "map-the-exposure",
@@ -127,6 +139,30 @@ In GameHack you play both roles from one sandbox terminal. You configure the ser
           "Γιατί: Η θύρα 21 είναι FTP, οι 139 και 445 είναι SMB, η 2049 είναι NFS και η 111 είναι ο RPC portmapper τον οποίο ρωτούν οι clients για να βρουν τους δαίμονες NFS και mount, αν αφήσεις την 111 έξω από τον έλεγχο κρύβεις την υπηρεσία που εξηγεί τις υπόλοιπες. Πώς: η εικονική σάρωση αναφέρει κατάσταση και έκδοση ανά θύρα από την εγγραφή host του εργαστηρίου.",
         ),
         (term) => term.flags.has("nmap-share-ports") && term.flags.has("nmap-sv"),
+        bi(
+          "Port 111 is the RPC portmapper that NFS clients query to locate the NFS and mount daemons. Leave it out of the scan and you hide the one service that explains the others; a firewall rule for 2049 alone is never sufficient.",
+          "Η θύρα 111 είναι ο RPC portmapper τον οποίο ρωτούν οι NFS clients για να εντοπίσουν τους δαίμονες NFS και mount. Αν την αφήσεις έξω από τη σάρωση κρύβεις την υπηρεσία που εξηγεί τις υπόλοιπες: ένας κανόνας firewall μόνο για την 2049 δεν αρκεί ποτέ.",
+        ),
+      ),
+      task(
+        "build-the-range",
+        bi(
+          "Stand up all three file-sharing services and name the process behind every listener.",
+          "Στήσε και τις τρεις υπηρεσίες κοινόχρηστων αρχείων και κατονόμασε τη διεργασία πίσω από κάθε υποδοχή ακρόασης.",
+        ),
+        bi(
+          'apt install vsftpd\napt install samba\napt install nfs-kernel-server -y\nservice vsftpd restart\nsystemctl restart smbd\nsystemctl restart nfs-kernel-server\nss -tlnp',
+          'apt install vsftpd\napt install samba\napt install nfs-kernel-server -y\nservice vsftpd restart\nsystemctl restart smbd\nsystemctl restart nfs-kernel-server\nss -tlnp',
+        ),
+        bi(
+          "Why: Installing a package does not by itself open a port, so the listener inventory is the only honest statement of what a host actually exposes, and knowing which process owns each port is what turns a scan result into a finding someone can act on. How: install the three packages, start each daemon, then read ss -tlnp, which prints the owning process and its pid beside every listening socket. Nothing leaves the sandbox.",
+          "Γιατί: Η εγκατάσταση ενός πακέτου δεν ανοίγει από μόνη της θύρα, οπότε η απογραφή των υποδοχών ακρόασης είναι η μόνη ειλικρινής δήλωση του τι εκθέτει πραγματικά ένας host, και το να ξέρεις ποια διεργασία κατέχει κάθε θύρα είναι αυτό που μετατρέπει ένα αποτέλεσμα σάρωσης σε εύρημα που μπορεί κάποιος να αξιοποιήσει. Πώς: Εγκατάστησε τα τρία πακέτα, εκκίνησε κάθε δαίμονα και μετά διάβασε το ss -tlnp, που τυπώνει την ιδιοκτήτρια διεργασία και το pid της δίπλα σε κάθε υποδοχή ακρόασης. Τίποτα δεν βγαίνει έξω από το sandbox.",
+        ),
+        (term) => usedCmd(term, /apt\s+install\s+vsftpd/) && usedCmd(term, /apt\s+install\s+samba/) && usedCmd(term, /apt\s+install\s+nfs-kernel-server/) && usedCmd(term, /ss\s+-tlnp/),
+        bi(
+          "Five listeners, four processes: smbd owns both 139 and 445, rpcbind owns 111 and nfsd owns 2049. That split is exactly why port 111 cannot be left out of an NFS firewall rule — clients resolve the mount daemon's port through the portmapper before they ever reach 2049.",
+          "Πέντε υποδοχές ακρόασης, τέσσερις διεργασίες: το smbd κατέχει και την 139 και την 445, το rpcbind την 111 και το nfsd την 2049. Αυτός ο διαχωρισμός είναι ακριβώς ο λόγος που η θύρα 111 δεν μπορεί να λείπει από έναν κανόνα firewall για NFS: οι clients επιλύουν τη θύρα του δαίμονα mount μέσω του portmapper πριν φτάσουν ποτέ στην 2049.",
+        ),
       ),
     ],
     challenges: pair(
@@ -317,6 +353,10 @@ Two details belong in the report. First, FTP transmits the username, the command
           "Γιατί: Δεν μπορείς να ελέγξεις μια κακορύθμιση που δεν έχεις δει ποτέ από μέσα, και η κατασκευή της κάνει κάθε μεταγενέστερο έλεγχο συγκεκριμένο. Πώς: τα mkdir και chown ετοιμάζουν τον συμβατικό φάκελο εναπόθεσης, το echo τοποθετεί τον δείκτη και προσθέτει τις τέσσερις οδηγίες, το restart τις εφαρμόζει και το ss αποδεικνύει ότι η θύρα 21 είναι δεσμευμένη. Το εργαστήριο καταγράφει κάθε αλλαγή μόνο μέσα στο εικονικό σύστημα αρχείων.",
         ),
         (term) => usedCmd(term, /chown\s+nobody:nogroup/) && term.flags.has("service-vsftpd-restart") && usedCmd(term, /anonymous_enable=YES/),
+        bi(
+          "Worth adding next: pasv_min_port=40000 with pasv_max_port=50000 constrains the passive-mode data connections to a predictable range, which is what makes the share firewallable at all. Note that hide_ids=YES is a privacy setting, not an access control.",
+          "Αξίζει να προσθέσεις στη συνέχεια: pasv_min_port=40000 με pasv_max_port=50000 περιορίζει τις συνδέσεις δεδομένων passive λειτουργίας σε προβλέψιμο εύρος, κι αυτό κάνει το κοινόχρηστο στοιχειωδώς firewallable. Πρόσεξε ότι το hide_ids=YES είναι ρύθμιση ιδιωτικότητας, όχι έλεγχος πρόσβασης.",
+        ),
       ),
       task(
         "prove-anonymous-ftp",
@@ -333,6 +373,10 @@ Two details belong in the report. First, FTP transmits the username, the command
           "Γιατί: Το αποτέλεσμα του script λέει ότι η σύνδεση γίνεται αποδεκτή, η ανάγνωση των ακριβών bytes αποδεικνύει ότι δεδομένα έφυγαν από τον server. Πώς: το script ftp-anon επιβεβαιώνει τον κωδικό 230, η συνεδρία εμφανίζει την anonymous ρίζα, μπαίνει στο pub, κατεβάζει τον δείκτη και κλείνει με bye, μετά το cat συγκρίνει το τοπικό αντίγραφο με αυτό που τοποθετήθηκε. Η μεταφορά γίνεται μέσα στο εικονικό σύστημα αρχείων.",
         ),
         (term) => term.flags.has("nmap-ftp-anon") && term.flags.has("ftp-get") && term.filesRead.some((path) => path.endsWith("/note.txt")),
+        bi(
+          "Two details belong in the report. FTP carries the username, the commands, the listing and the file contents in cleartext unless TLS is configured. And hide_ids=YES is visible in that listing: everything shows as ftp:ftp even though root created the marker, so ownership masking made the listing less informative without preventing the disclosure.",
+          "Δύο λεπτομέρειες ανήκουν στην αναφορά. Το FTP μεταφέρει το username, τις εντολές, τη λίστα και τα περιεχόμενα των αρχείων χωρίς κρυπτογράφηση, εκτός αν έχει ρυθμιστεί TLS. Και το hide_ids=YES φαίνεται σε εκείνη τη λίστα: όλα εμφανίζονται ως ftp:ftp παρότι το marker το δημιούργησε ο root, οπότε η απόκρυψη ιδιοκτησίας έκανε τη λίστα λιγότερο πληροφοριακή χωρίς να αποτρέψει την αποκάλυψη.",
+        ),
       ),
       task(
         "close-anonymous-ftp",
@@ -349,6 +393,10 @@ Two details belong in the report. First, FTP transmits the username, the command
           "Γιατί: Η τελευταία ενεργή οδηγία υπερισχύει, οπότε η επαναφορά του NO αφαιρεί ολόκληρη τη διαδρομή αναγνώρισης χωρίς να αγγίξει το δίκτυο. Πώς: η προσθήκη της περιοριστικής γραμμής, η επανεκκίνηση του δαίμονα και η επανάληψη της ίδιας σάρωσης δείχνουν την αλλαγμένη έξοδο, που είναι το στοιχείο που χρειάζεται ένα ticket σκλήρυνσης. Τίποτα εδώ δεν επικοινωνεί με πραγματικό host.",
         ),
         (term) => term.flags.has("nmap-ftp-anon-denied"),
+        bi(
+          "The durable fix is not a flag. Where file transfer must survive across an untrusted network, prefer SFTP over SSH: it authenticates and encrypts by default. If plain FTP has to stay, set ssl_enable=YES together with force_local_logins_ssl=YES and force_local_data_ssl=YES.",
+          "Η μόνιμη διόρθωση δεν είναι ένα flag. Όπου η μεταφορά αρχείων πρέπει να επιζήσει σε μη έμπιστο δίκτυο, προτίμησε το SFTP πάνω από SSH: αυθεντικοποιεί και κρυπτογραφεί από προεπιλογή. Αν το απλό FTP πρέπει να μείνει, όρισε ssl_enable=YES μαζί με force_local_logins_ssl=YES και force_local_data_ssl=YES.",
+        ),
       ),
     ],
     challenges: pair(
@@ -500,6 +548,27 @@ Because the export is writable, the same session could also upload or overwrite 
           shot("get file.txt", ["getting file \\file.txt of size 25 as file.txt (1.2 KiloBytes/sec)"]),
         ],
       ),
+      section(
+        bi("Where a directive actually lands: the stanza problem", "Πού καταλήγει πραγματικά μια οδηγία: το πρόβλημα των stanzas"),
+        bi(
+          "smb.conf is an INI file, so every directive belongs to the section sitting above it. When you append a line to the end of the file with echo ... >>, it does not go into [global]: it goes into the last stanza in the file, which on a stock Samba install is [print$] or one of your own shares.\n\nThe result is a hardening setting that looks correct in the file and changes nothing. testparm -s is the only way to see this, because it prints the normalised configuration section by section: if map to guest = Never shows up under [print$] while [global] still says Bad User, the change did not take. The correct practice is to edit the existing line inside the section you mean, and always read testparm before restarting.",
+          "Το smb.conf είναι αρχείο INI, οπότε κάθε οδηγία ανήκει στην ενότητα που βρίσκεται από πάνω της. Όταν προσθέτεις μια γραμμή στο τέλος του αρχείου με echo ... >>, δεν πάει στο [global]: πάει στο τελευταίο stanza του αρχείου, που σε μια τυπική εγκατάσταση Samba είναι το [print$] ή ένα δικό σου share.\n\nΤο αποτέλεσμα είναι μια ρύθμιση σκλήρυνσης που δείχνει σωστή μέσα στο αρχείο και δεν αλλάζει τίποτα. Το testparm -s είναι ο μόνος τρόπος να το δεις, επειδή τυπώνει την κανονικοποιημένη ρύθμιση ανά ενότητα: αν το map to guest = Never εμφανιστεί κάτω από το [print$] ενώ το [global] εξακολουθεί να λέει Bad User, η αλλαγή δεν έπιασε. Η σωστή πρακτική είναι να επεξεργάζεσαι την υπάρχουσα γραμμή μέσα στην ενότητα που εννοείς, και πάντα να διαβάζεις το testparm πριν την επανεκκίνηση.",
+        ),
+        [
+          shot('echo "map to guest = Never" >> /etc/samba/smb.conf', ["# appended at the end of the file, so it joined the last stanza"]),
+          shot("testparm -s", [
+            "Loaded services file OK.",
+            "[global]",
+            "\tmap to guest = Bad User",
+            "[print$]",
+            "\tmap to guest = Never",
+          ]),
+        ],
+        bi(
+          "Read testparm section by section rather than line by line: where a directive sits matters as much as its value.",
+          "Διάβασε το testparm ανά ενότητα και όχι γραμμή προς γραμμή: η θέση μιας οδηγίας είναι εξίσου σημαντική με την τιμή της.",
+        ),
+      ),
     ],
     cheats: [
       { cmd: "apt install samba", desc: bi("install Samba and its libraries", "εγκατάσταση Samba και βιβλιοθηκών") },
@@ -535,6 +604,10 @@ Because the export is writable, the same session could also upload or overwrite 
           "Γιατί: Κάθε γραμμή αυτής της ενότητας συμβάλλει στην έκθεση, οπότε η κατασκευή της δείχνει ποια μεμονωμένη οδηγία θα αφαιρούσες πρώτη. Πώς: οι προστιθέμενες γραμμές σχηματίζουν το share, το testparm επικυρώνει το αποτέλεσμα, το restart το εφαρμόζει και το ss αποδεικνύει ότι οι θύρες 139 και 445 είναι δεσμευμένες. Ο δείκτης δίνει στη μεταγενέστερη ανάκτηση κάτι ακριβές να επαληθεύσει.",
         ),
         (term) => term.flags.has("testparm-shares") && usedCmd(term, /systemctl\s+restart\s+smbd/) && usedCmd(term, /guest ok = yes/),
+        bi(
+          "read only = no and writable = yes are inverse forms of the same option, so either one alone would have allowed writes. Publishing /var/www is what turns this from exposure into a write-anywhere primitive behind an HTTP endpoint: never let a share root back onto another service.",
+          "Το read only = no και το writable = yes είναι αντίστροφες μορφές της ίδιας επιλογής, άρα οποιοδήποτε από τα δύο μόνο του θα επέτρεπε εγγραφές. Η δημοσίευση του /var/www είναι που μετατρέπει την έκθεση σε write-anywhere primitive πίσω από ένα HTTP endpoint: μην αφήνεις ποτέ τη ρίζα ενός κοινόχρηστου να στηρίζει άλλη υπηρεσία.",
+        ),
       ),
       task(
         "map-guest-shares",
@@ -551,6 +624,10 @@ Because the export is writable, the same session could also upload or overwrite 
           "Γιατί: Η συμφωνία δύο ανεξάρτητων εργαλείων είναι αυτό που κάνει ένα εύρημα αναφέρσιμο, και η σύγκριση δείχνει ποια shares δεν θα έπρεπε ποτέ να είναι προσβάσιμα από client χωρίς ταυτοποίηση. Πώς: Το NetExec εμφανίζει τα shares με ενδείξεις δικαιωμάτων και το smbclient τον ίδιο πίνακα συν το αποτέλεσμα διαπραγμάτευσης SMB1. Και τα δύο διαβάζουν την εικονική υπηρεσία.",
         ),
         (term) => term.flags.has("nxc-smb-shares") && term.flags.has("smbclient-list"),
+        bi(
+          "print$ is the default printer-driver share and IPC$ the interprocess-communication share, so neither is a finding by itself. NetExec marks informational lines with [*], successes with [+] and failures with [-], which is what makes multi-host output scannable rather than merely readable.",
+          "Το print$ είναι το προεπιλεγμένο κοινόχρηστο οδηγών εκτυπωτή και το IPC$ το κοινόχρηστο διαδραστικής επικοινωνίας, οπότε κανένα από τα δύο δεν είναι από μόνο του εύρημα. Το NetExec σημειώνει τις πληροφοριακές γραμμές με [*], τις επιτυχίες με [+] και τις αποτυχίες με [-], κι αυτό κάνει την έξοδο πολλαπλών host σαρώσιμη και όχι απλώς αναγνώσιμη.",
+        ),
       ),
       task(
         "retrieve-over-smb",
@@ -567,6 +644,10 @@ Because the export is writable, the same session could also upload or overwrite 
           "Γιατί: Η εμφάνιση ενός ονόματος αρχείου δεν είναι στοιχείο, η ανάγνωση των ακριβών bytes είναι. Πώς: Η συνεδρία ανοίγει χωρίς κωδικό, το ls δείχνει τις ιδιότητες A και D, το get αντιγράφει τον δείκτη στον εικονικό κατάλογο εργασίας και το cat τον συγκρίνει με αυτόν που τοποθετήθηκε. Δεν αγγίζεται κανένα πραγματικό σύστημα αρχείων.",
         ),
         (term) => term.flags.has("smb-get") && term.filesRead.some((path) => path.endsWith("/file.txt")),
+        bi(
+          "In that listing A marks a regular file and D a directory. Because the export is writable, the same session could upload or replace files; in an authorised test demonstrate that with a uniquely named marker you remove immediately afterwards, not by touching anything real.",
+          "Σε εκείνη τη λίστα το A δηλώνει κανονικό αρχείο και το D κατάλογο. Επειδή η εξαγωγή είναι εγγράψιμη, η ίδια συνεδρία θα μπορούσε να ανεβάσει ή να αντικαταστήσει αρχεία: σε εξουσιοδοτημένο έλεγχο δείξε το με έναν δείκτη μοναδικής ονομασίας που αφαιρείς αμέσως μετά, όχι αγγίζοντας οτιδήποτε πραγματικό.",
+        ),
       ),
       task(
         "remove-guest-access",
@@ -579,10 +660,14 @@ Because the export is writable, the same session could also upload or overwrite 
           'echo "map to guest = Never" >> /etc/samba/smb.conf\ntestparm -s\nsystemctl restart smbd\nsmbclient -N -L //192.168.1.9',
         ),
         bi(
-          "Why: Removing guest ok and public from the share and setting map to guest = Never is the control that closes the whole category; the change is visible in the enumeration output before anything else changes. How: append the global directive, validate with testparm, restart smbd and re-run smbclient. The lab reads its own configuration to decide what an unauthenticated client may do.",
-          "Γιατί: Η αφαίρεση των guest ok και public από το share και η ρύθμιση map to guest = Never είναι ο έλεγχος που κλείνει ολόκληρη την κατηγορία, η αλλαγή φαίνεται στην έξοδο αναγνώρισης πριν αλλάξει οτιδήποτε άλλο. Πώς: Πρόσθεσε την global οδηγία, επικύρωσε με testparm, επανεκκίνησε το smbd και ξανατρέξε το smbclient. Το εργαστήριο διαβάζει τη δική του ρύθμιση για να αποφασίσει τι επιτρέπεται σε έναν client χωρίς ταυτοποίηση.",
+          "Why: Removing guest ok and public from the share stanza and setting map to guest = Never inside [global] is the control that closes the whole category. How: Samba applies directives per stanza, so appending to the end of smb.conf puts the line in the last stanza rather than in [global]. Read testparm -s before restarting: it prints the normalised configuration section by section, which is how you confirm which stanza actually received the directive. An unauthenticated client loses the share only once the share stanza itself no longer carries guest ok or public.",
+          "Γιατί: Η αφαίρεση των guest ok και public από το stanza του κοινόχρηστου και η ρύθμιση map to guest = Never μέσα στο [global] είναι ο έλεγχος που κλείνει ολόκληρη την κατηγορία. Πώς: Το Samba εφαρμόζει τις οδηγίες ανά stanza, οπότε η προσθήκη στο τέλος του smb.conf τοποθετεί τη γραμμή στο τελευταίο stanza και όχι στο [global]. Διάβασε το testparm -s πριν την επανεκκίνηση: τυπώνει την κανονικοποιημένη ρύθμιση ανά ενότητα, κι έτσι επιβεβαιώνεις ποιο stanza παρέλαβε πραγματικά την οδηγία. Ο client χωρίς ταυτοποίηση χάνει το κοινόχρηστο μόνο όταν το ίδιο το stanza του κοινόχρηστου δεν φέρει πια guest ok ή public.",
         ),
         (term) => usedCmd(term, /map to guest = Never/) && term.flags.has("testparm") && usedCmd(term, /systemctl\s+restart\s+smbd/),
+        bi(
+          "public = yes is legacy syntax for the same intent as guest ok = yes, so removing only one of them leaves the share open. The trailing SMB1 negotiation failure in the smbclient output is a welcome default, not a fault: obsolete-dialect fallback should stay disabled.",
+          "Το public = yes είναι παλαιότερη σύνταξη για την ίδια πρόθεση με το guest ok = yes, οπότε αν αφαιρέσεις μόνο το ένα το κοινόχρηστο μένει ανοιχτό. Η τελική αποτυχία διαπραγμάτευσης SMB1 στην έξοδο του smbclient είναι καλοδεχούμενη προεπιλογή και όχι σφάλμα: η αναδίπλωση σε ξεπερασμένη διάλεκτο πρέπει να μένει απενεργοποιημένη.",
+        ),
       ),
     ],
     challenges: pair(
@@ -745,7 +830,10 @@ Because of no_root_squash, operations performed as root through this mount retai
       { cmd: "nxc nfs 192.168.1.9 --enum-shares", desc: bi("discover exports and the root escape flag", "ανακάλυψη εξαγωγών και της ένδειξης root escape") },
       { cmd: "nxc nfs 192.168.1.9 --share '/srv/nfs/public' --ls '/'", desc: bi("list the export root without mounting", "εμφάνιση της ρίζας εξαγωγής χωρίς προσάρτηση") },
       { cmd: "nxc nfs 192.168.1.9 --share /srv/nfs/public/ --get-file data.txt data.txt", desc: bi("download one file, no mount", "λήψη ενός αρχείου, χωρίς προσάρτηση") },
+      { cmd: "mkdir -p /tmp/nfs", desc: bi("create the mount point first", "δημιούργησε πρώτα το σημείο προσάρτησης") },
       { cmd: "mount -t nfs 192.168.1.9:/srv/nfs/public /tmp/nfs", desc: bi("full filesystem semantics", "πλήρης σημασιολογία συστήματος αρχείων") },
+      { cmd: "ls -la /tmp/nfs", desc: bi("the export seen as a local directory", "η εξαγωγή σαν τοπικός κατάλογος") },
+      { cmd: "cat /tmp/nfs/data.txt", desc: bi("read the marker through the mount", "διάβασε τον δείκτη μέσω της προσάρτησης") },
       { cmd: "umount /tmp/nfs", desc: bi("clean up the mount point", "καθαρισμός του σημείου προσάρτησης") },
     ],
     tasks: [
@@ -764,6 +852,10 @@ Because of no_root_squash, operations performed as root through this mount retai
           "Γιατί: Οι τέσσερις επιλογές σε αυτή τη μία γραμμή είναι ολόκληρο το εύρημα, και το exportfs -v δείχνει τι εφαρμόζει πραγματικά ο kernel και όχι τι πληκτρολόγησες. Πώς: Τα mkdir και chmod φτιάχνουν τον κατάλογο, το echo τοποθετεί τον δείκτη και προσθέτει την εξαγωγή, το exportfs επαναφορτώνει και επαληθεύει, το restart εφαρμόζει την ευρύτερη κατάσταση υπηρεσίας και το ss αποδεικνύει ότι οι θύρες 111 και 2049 είναι δεσμευμένες.",
         ),
         (term) => term.flags.has("exportfs-verify") && term.flags.has("exportfs-no-root-squash") && usedCmd(term, /chmod\s+777/),
+        bi(
+          "Use commas between the options. A missing comma or a stray space can change the parsing or stop the export loading, and the resulting failure looks like a network problem when it is really a one-character configuration error. World-writable 777 is dangerous alone; paired with no_root_squash it lets a remote root write files that keep root ownership on the server.",
+          "Χρησιμοποίησε κόμματα μεταξύ των επιλογών. Ένα κόμμα που λείπει ή ένα κατά λάθος κενό μπορεί να αλλάξει το parsing ή να εμποδίσει τη φόρτωση της εξαγωγής, και η αποτυχία που προκύπτει μοιάζει με πρόβλημα δικτύου ενώ είναι σφάλμα ρύθμισης ενός χαρακτήρα. Το world-writable 777 είναι από μόνο του επικίνδυνο: σε ζεύγος με το no_root_squash επιτρέπει σε απομακρυσμένο root να γράφει αρχεία που διατηρούν root ownership στον server.",
+        ),
       ),
       task(
         "classic-discovery",
@@ -780,6 +872,10 @@ Because of no_root_squash, operations performed as root through this mount retai
           "Γιατί: Η λίστα εξαγωγών ονομάζει την ευπαθή διαδρομή και τον wildcard προσδιορισμό client, ενώ ο πίνακας RPC δείχνει τον portmapper, το mountd και το NFS. Πώς: Το showmount ρωτά απευθείας τον στόχο και το rpcinfo διαβάζει τον portmapper, οι δυναμικές θύρες mountd είναι ο λόγος που ένας κανόνας firewall μόνο για την 2049 δεν αρκεί.",
         ),
         (term) => term.flags.has("showmount-export") && term.flags.has("rpcinfo"),
+        bi(
+          "Dynamic mountd ports in that RPC table are normal unless the administrator pins them, and their presence is exactly why NFS firewalling is more involved than opening port 2049 alone. Pin the RPC services to stable ports where firewall policy requires it.",
+          "Οι δυναμικές θύρες mountd σε εκείνον τον πίνακα RPC είναι φυσιολογικές εκτός αν ο διαχειριστής τις καρφιτσώσει, και η παρουσία τους εξηγεί ακριβώς γιατί το firewalling του NFS είναι πιο περίπλοκο από το άνοιγμα της θύρας 2049 μόνο. Καθήλωσε τις υπηρεσίες RPC σε σταθερές θύρες όπου το απαιτεί η πολιτική firewall.",
+        ),
       ),
       task(
         "netexec-nfs",
@@ -796,6 +892,10 @@ Because of no_root_squash, operations performed as root through this mount retai
           "Γιατί: Το root escape: True είναι η σύνοψη μιας εγγράψιμης εξαγωγής με no_root_squash, και η εμφάνιση αποδεικνύει ότι δεν χρειάστηκαν διαπιστευτήρια. Πώς: Η πρώτη εντολή ανακαλύπτει την εξαγωγή και τις επιλογές της, η δεύτερη εμφανίζει τη ρίζα της εξαγωγής. Και οι δύο διαβάζουν τον εικονικό πίνακα εξαγωγών.",
         ),
         (term) => term.flags.has("nxc-nfs-enum") && term.flags.has("nxc-nfs-ls"),
+        bi(
+          "root escape: True is NetExec summarising the dangerous pair: writable access together with no_root_squash. It means files written through this export can carry ownership and permission bits that would normally require local root to create, which is a persistence and privilege-escalation surface rather than a mere read exposure.",
+          "Το root escape: True είναι η σύνοψη του NetExec για το επικίνδυνο ζεύγος: εγγράψιμη πρόσβαση μαζί με no_root_squash. Σημαίνει ότι αρχεία που γράφονται μέσω αυτής της εξαγωγής μπορούν να φέρουν ownership και permission bits που κανονικά απαιτούν τοπικό root για να δημιουργηθούν, δηλαδή επιφάνεια persistence και privilege escalation και όχι απλή αποκάλυψη ανάγνωσης.",
+        ),
       ),
       task(
         "download-and-mount",
@@ -812,6 +912,10 @@ Because of no_root_squash, operations performed as root through this mount retai
           "Γιατί: Η λήψη αφήνει ένα αρχείο και καθόλου κατάσταση συστήματος αρχείων, ενώ η προσάρτηση εκθέτει ολόκληρη την εξαγωγή με την ιδιοκτησία του server άθικτη, που είναι το σημείο όπου το no_root_squash γίνεται μηχανισμός δικαιωμάτων. Πώς: Το NetExec γράφει ένα τοπικό αρχείο, η προσάρτηση κατοπτρίζει την εξαγωγή μέσα στο εικονικό σύστημα αρχείων και το umount αδειάζει ξανά το σημείο προσάρτησης. Δεν αγγίζεται κανένας πραγματικός πίνακας προσαρτήσεων.",
         ),
         (term) => term.flags.has("nxc-nfs-get") && term.flags.has("nfs-mount") && term.flags.has("nfs-umount"),
+        bi(
+          "One-shot download creates no mount point and changes no persistent filesystem state, which makes it the cleanest method for evidence handling. A mount gives full filesystem semantics instead. Clean up after yourself: a forgotten mount confuses later tests, retains stale file handles and leaves misleading contents in /tmp.",
+          "Η λήψη μιας φοράς δεν δημιουργεί σημείο προσάρτησης και δεν αλλάζει μόνιμη κατάσταση συστήματος αρχείων, γι' αυτό είναι η καθαρότερη μέθοδος για διαχείριση στοιχείων. Η προσάρτηση δίνει αντ' αυτού πλήρη σημασιολογία συστήματος αρχείων. Καθάρισε μετά: μια ξεχασμένη προσάρτηση μπερδεύει τους επόμενους ελέγχους, κρατά ξεπερασμένους file handlers και αφήνει παραπλανητικά περιεχόμενα στο /tmp.",
+        ),
       ),
       task(
         "audit-the-export-table",
@@ -828,6 +932,30 @@ Because of no_root_squash, operations performed as root through this mount retai
           "Γιατί: Κάθε σημαντική κακορύθμιση NFS σε αυτή την παρουσίαση φαίνεται με μία αναζήτηση σε ένα αρχείο, και η ίδια γραμμή ανήκει σε έναν περιοδικό έλεγχο. Πώς: Το grep αριθμεί τις προβληματικές γραμμές, το exportfs -v δείχνει τις εφαρμοζόμενες επιλογές και το showmount επιβεβαιώνει τι διαφημίζει ο στόχος στο δίκτυο. Μόνο για ανάγνωση και ασφαλές σε host που διαχειρίζεσαι.",
         ),
         (term) => usedCmd(term, /grep\s+-nE\s+.*no_root_squash/) && term.flags.has("exportfs-verify"),
+        bi(
+          "The default root_squash maps remote root requests to the unprivileged nobody account and removes the ownership vector entirely. Replace the wildcard client with explicit addresses or CIDR ranges, and where the network is not trusted use NFSv4 with Kerberos security such as sec=krb5p: the default UID-trust model is unsuitable for hostile networks.",
+          "Η προεπιλεγμένη root_squash αντιστοιχίζει τα αιτήματα απομακρυσμένου root στον μη προνομιούχο λογαριασμό nobody και αφαιρεί εντελώς το διάνυσμα ιδιοκτησίας. Αντικατάστησε το wildcard client με ρητές διευθύνσεις ή εύρη CIDR, και όπου το δίκτυο δεν είναι έμπιστο χρησιμοποίησε NFSv4 με ασφάλεια Kerberos όπως sec=krb5p: το προεπιλεγμένο μοντέλο εμπιστοσύνης UID είναι ακατάλληλο για εχθρικά δίκτυα.",
+        ),
+      ),
+      task(
+        "restore-safe-export",
+        bi(
+          "Replace the wildcard with one explicit client, drop the dangerous options, reload and re-enumerate.",
+          "Αντικατάστησε το wildcard με έναν ρητό client, αφαίρεσε τις επικίνδυνες επιλογές, επαναφόρτωσε και απαρίθμησε ξανά.",
+        ),
+        bi(
+          'echo "/srv/nfs/public 192.168.1.17(rw,sync,no_subtree_check,root_squash)" >> /etc/exports\nexportfs -a\nexportfs -v\nnxc nfs 192.168.1.9 --enum-shares',
+          'echo "/srv/nfs/public 192.168.1.17(rw,sync,no_subtree_check,root_squash)" >> /etc/exports\nexportfs -a\nexportfs -v\nnxc nfs 192.168.1.9 --enum-shares',
+        ),
+        bi(
+          "Why: A hardening change is only real once the attacker's own tool reports it, so editing the export table has to be followed by the same enumeration that found the problem in the first place. How: add an entry naming a single client with root_squash in place of no_root_squash, reload the whole table with exportfs -a, confirm the enforced options with exportfs -v, then re-run the enumeration and compare the root escape value between the two entries. Read-only against a host you administer.",
+          "Γιατί: Μια αλλαγή σκλήρυνσης είναι πραγματική μόνο όταν την αναφέρει το ίδιο το εργαλείο του επιτιθέμενου, οπότε η επεξεργασία του πίνακα εξαγωγών πρέπει να ακολουθείται από την ίδια απαρίθμηση που βρήκε εξαρχής το πρόβλημα. Πώς: Πρόσθεσε μια εγγραφή που κατονομάζει έναν μόνο client με root_squash στη θέση του no_root_squash, επαναφόρτωσε ολόκληρο τον πίνακα με exportfs -a, επιβεβαίωσε τις εφαρμοζόμενες επιλογές με exportfs -v και μετά ξανατρέξε την απαρίθμηση συγκρίνοντας την τιμή root escape μεταξύ των δύο εγγραφών. Μόνο για ανάγνωση απέναντι σε host που διαχειρίζεσαι.",
+        ),
+        (term) => usedCmd(term, /no_subtree_check,root_squash\)/) && term.flags.has("exportfs-apply") && term.flags.has("nxc-nfs-enum"),
+        bi(
+          "Appending is a lab shortcut, not the real fix: a wildcard line left behind in the file still matches every client, so both entries show up in exportfs -v and the permissive one keeps working for anyone outside your list. On a host you administer, edit the existing line in place, reload, and confirm the wildcard is gone.",
+          "Η προσθήκη γραμμής είναι συντόμευση εργαστηρίου και όχι η πραγματική διόρθωση: μια γραμμή με wildcard που μένει πίσω στο αρχείο εξακολουθεί να ταιριάζει με κάθε client, οπότε και οι δύο εγγραφές εμφανίζονται στο exportfs -v και η επιεικής συνεχίζει να δουλεύει για οποιονδήποτε βρίσκεται εκτός της λίστας σου. Σε host που διαχειρίζεσαι, επεξεργάσου την υπάρχουσα γραμμή επί τόπου, επαναφόρτωσε και επιβεβαίωσε ότι το wildcard έφυγε.",
+        ),
       ),
     ],
     challenges: pair(
@@ -950,6 +1078,10 @@ Defenders win by treating file-share configuration as security-critical infrastr
           "Γιατί: Κάθε κακορύθμιση FTP και SMB σε αυτή τη διαδρομή φαίνεται με μία αναζήτηση ανά αρχείο, οπότε ο έλεγχος είναι αρκετά φθηνός για να προγραμματιστεί. Πώς: Το grep αριθμεί τις καθοριστικές οδηγίες και το cat δείχνει το γύρω πλαίσιο. Και τα δύο διαβάζουν μόνο την εικονική ρύθμιση.",
         ),
         (term) => usedCmd(term, /grep.*anonymous_enable/) && usedCmd(term, /grep.*map to guest/) && term.filesRead.some((path) => path.endsWith("/vsftpd.conf")),
+        bi(
+          "Every misconfiguration in this path is visible with one search per file, so pair these checks with a periodic scan of ports 21, 111, 139, 445 and 2049 from an untrusted segment. A quarterly audit of /etc/vsftpd.conf, /etc/samba/smb.conf and /etc/exports closes every primitive demonstrated here.",
+          "Κάθε λανθασμένη ρύθμιση σε αυτή τη διαδρομή φαίνεται με μία αναζήτηση ανά αρχείο, οπότε ζεύγαρε αυτούς τους ελέγχους με περιοδική σάρωση των θυρών 21, 111, 139, 445 και 2049 από μη έμπιστο τμήμα. Ένας τριμηνιαίος έλεγχος των /etc/vsftpd.conf, /etc/samba/smb.conf και /etc/exports κλείνει κάθε primitive που αποδείχθηκε εδώ.",
+        ),
       ),
       task(
         "harden-ftp",
@@ -966,6 +1098,10 @@ Defenders win by treating file-share configuration as security-critical infrastr
           "Γιατί: Ο έλεγχος και η απόδειξη είναι τα ίδια δύο αρχεία και μία σάρωση, που είναι ακριβώς ό,τι πρέπει να περιέχει ένα ticket σκλήρυνσης. Πώς: Πρόσθεσε την περιοριστική οδηγία, επανεκκίνησε τον δαίμονα, ξανατρέξε τη σάρωση και σύγκρινε τη γραμμή ftp-anon με το προηγούμενο αποτέλεσμα. Τίποτα δεν επικοινωνεί με πραγματικό host.",
         ),
         (term) => term.flags.has("nmap-ftp-anon-denied"),
+        bi(
+          "Also limit the network exposure: bind vsftpd to internal interfaces where possible, restrict port 21 to known management subnets with a host firewall, and open only the configured passive-port range. A share that cannot be reached from an untrusted segment cannot be enumerated from it.",
+          "Περιορίστε επίσης την έκθεση στο δίκτυο: δέστε το vsftpd σε εσωτερικές διεπαφές όπου γίνεται, περιορίστε τη θύρα 21 σε γνωστά υποδίκτυα διαχείρισης με host firewall και ανοίξτε μόνο το ρυθμισμένο εύρος passive θυρών. Ένα κοινόχρηστο που δεν προσεγγίζεται από μη έμπιστο τμήμα δεν μπορεί να απαριθμηθεί από αυτό.",
+        ),
       ),
       task(
         "harden-smb",
@@ -978,10 +1114,14 @@ Defenders win by treating file-share configuration as security-critical infrastr
           'echo "map to guest = Never" >> /etc/samba/smb.conf\necho "min protocol = SMB2" >> /etc/samba/smb.conf\ntestparm -s\nsystemctl restart smbd\nsmbclient -N -L //192.168.1.9',
         ),
         bi(
-          "Why: Removing guest mapping and refusing SMB1 close the category and the legacy path at once, and testparm proves the file still parses before it is applied. How: append both global directives, validate, restart smbd, then re-run the guest enumeration to see the changed answer.",
-          "Γιατί: Η αφαίρεση της guest αντιστοίχισης και η άρνηση του SMB1 κλείνουν την κατηγορία και την παλιά διαδρομή μαζί, και το testparm αποδεικνύει ότι το αρχείο εξακολουθεί να διαβάζεται πριν εφαρμοστεί. Πώς: Πρόσθεσε και τις δύο global οδηγίες, επικύρωσε, επανεκκίνησε το smbd και μετά ξανατρέξε την guest απαρίθμηση για να δεις την αλλαγμένη απάντηση.",
+          "Why: Removing guest mapping and refusing SMB1 close the category and the legacy path at once, and testparm proves the file still parses before it is applied. How: append both directives, validate, restart smbd, then read the testparm -s output stanza by stanza to see where each one actually landed. Appending to the end of the file drops them into the last stanza; a directive only governs the whole server when it sits inside [global].",
+          "Γιατί: Η αφαίρεση της guest αντιστοίχισης και η άρνηση του SMB1 κλείνουν την κατηγορία και την παλιά διαδρομή μαζί, και το testparm αποδεικνύει ότι το αρχείο εξακολουθεί να διαβάζεται πριν εφαρμοστεί. Πώς: Πρόσθεσε και τις δύο οδηγίες, επικύρωσε, επανεκκίνησε το smbd και μετά διάβασε την έξοδο του testparm -s ανά stanza για να δεις πού κατέληξε πραγματικά η καθεμία. Η προσθήκη στο τέλος του αρχείου τις ρίχνει στο τελευταίο stanza: μια οδηγία κυβερνά ολόκληρο τον server μόνο όταν βρίσκεται μέσα στο [global].",
         ),
         (term) => usedCmd(term, /min protocol = SMB2/) && term.flags.has("testparm") && usedCmd(term, /systemctl\s+restart\s+smbd/),
+        bi(
+          "Never publish /var/www, /etc, home directories or backup roots. Use isolated share roots such as /srv/samba/<sharename> so an access-control mistake has a smaller blast radius, and pair that layout with filesystem permissions that deny writes unless writes are explicitly required.",
+          "Μην δημοσιεύετε ποτέ τα /var/www, /etc, home directories ή ρίζες αντιγράφων ασφαλείας. Χρησιμοποιήστε απομονωμένες ρίζες κοινόχρηστων όπως /srv/samba/<sharename>, ώστε ένα λάθος ελέγχου πρόσβασης να έχει μικρότερο blast radius, και ζευγαρώστε τη διάταξη με δικαιώματα συστήματος αρχείων που αρνούνται εγγραφές εκτός αν απαιτούνται ρητά.",
+        ),
       ),
       task(
         "network-view",
@@ -998,6 +1138,10 @@ Defenders win by treating file-share configuration as security-critical infrastr
           "Γιατί: Η σάρωση δείχνει τι φτάνει ένας γείτονας και ο πίνακας υποδοχών δείχνει τι νομίζει ο host ότι εξυπηρετεί, η διαφορά των δύο είναι εκεί που κρύβονται τα ευρήματα. Πώς: Η σάρωση πολλών θυρών αναφέρει κατάσταση και έκδοση ανά θύρα και το ss εμφανίζει τις εικονικές υποδοχές ακρόασης με τις διεργασίες ιδιοκτήτη τους.",
         ),
         (term) => term.flags.has("nmap-share-ports") && usedCmd(term, /ss\s+-/),
+        bi(
+          "An open port is only the beginning: follow it with the same anonymous and guest checks used earlier in this path. Verify the exposure from an untrusted segment rather than only from localhost, because a host firewall can hide the very listener you are trying to prove is reachable.",
+          "Μια ανοιχτή θύρα είναι μόνο η αρχή: ακολούθησέ την με τους ίδιους ελέγχους anonymous και guest που χρησιμοποιήθηκαν νωρίτερα σε αυτή τη διαδρομή. Επαλήθευσε την έκθεση από μη έμπιστο τμήμα και όχι μόνο από το localhost, επειδή ένα host firewall μπορεί να κρύψει ακριβώς τον listener που προσπαθείς να αποδείξεις ότι προσεγγίζεται.",
+        ),
       ),
     ],
     challenges: pair(
