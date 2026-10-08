@@ -218,7 +218,50 @@ try {
   await act(async () => { root.unmount(); });
   container.remove();
 
-  console.log(`Data export checks passed: the learning-paths JSON carries all ${counts.paths} paths, ${counts.labs} labs, ${counts.objectives} objectives, ${counts.quiz} quizzes and ${counts.assessment} assessments with objective tests marked rather than dropped; a self export covers one account, mints a recovery key only on the opt-in, and imports back cleanly; and the real profile renders the download, the password change and the recovery key with the opt-in off by default.`);
+  // ── Regression: a stored record missing its arrays ────────────────────────
+  // "Extract players" threw "s.hobbies is not iterable" on any account written
+  // by an older schema. getDB() validated the top-level collections but passed
+  // the user records through verbatim, and nearly every consumer spreads them,
+  // so the crash landed in the archive rather than where the data was bad.
+  db.resetAll();
+  const legacyId = "legacy-schema@ionio.gr";
+  localStorage.setItem("gamehack.platform.v1", JSON.stringify({
+    users: [{
+      id: legacyId, username: legacyId, password: "hunter2hunter2", role: "player",
+      displayName: "Legacy Schema", avatar: "terminal", bio: "", createdAt: 1,
+      lang: "en", accepted: true, metrics: { xp: 42 },
+      // deliberately no interests, hobbies, badges or progress
+    }],
+    sessionUserId: legacyId, feed: [], tickets: [], messages: [], chats: [], teams: [],
+    teamApplications: [], commandLog: [], contentOverlay: { modules: {}, paths: [] },
+  }));
+
+  const legacy = db.getDB().users.find((candidate) => candidate.id === legacyId);
+  assert.ok(legacy, "a record missing its arrays must still load");
+  assert.deepEqual(legacy.interests, [], "missing interests should become an empty list");
+  assert.deepEqual(legacy.hobbies, [], "missing hobbies should become an empty list");
+  assert.deepEqual(legacy.badges, [], "missing badges should become an empty list");
+  assert.deepEqual(legacy.progress, {}, "missing progress should become an empty map");
+  assert.equal(legacy.metrics.xp, 42, "metrics that are present must be preserved");
+  assert.equal(legacy.metrics.commandsRun, 0, "missing metric fields must be filled, not left undefined");
+
+  const legacyArchive = db.extractPlayerArchive();
+  const legacyEntry = legacyArchive.players.find((player) => player.id === legacyId);
+  assert.ok(legacyEntry, "the repaired account must appear in the player archive");
+  assert.deepEqual(legacyEntry.hobbies, []);
+  assert.deepEqual(legacyEntry.badges, []);
+  assert.ok(db.extractOwnArchive(legacyId), "the self export must not crash on the same record");
+
+  // passwordHash is deliberately left out of that normalisation. Writing an
+  // empty string would look like an already-migrated hash, so the legacy
+  // plaintext password would be dropped instead of upgraded. The migration runs
+  // inside the export, so that is where it has to be observable.
+  const migrated = db.getDB().users.find((candidate) => candidate.id === legacyId);
+  assert.equal(migrated.password, undefined, "the legacy plaintext field must be removed once migrated");
+  assert.match(migrated.passwordHash, /^scrypt\$/i, "a legacy plaintext password must still be migrated to scrypt");
+  assert.equal(db.login(legacyId, "hunter2hunter2").ok, true, "the migrated password must still log the user in");
+
+  console.log(`Data export checks passed: the learning-paths JSON carries all ${counts.paths} paths, ${counts.labs} labs, ${counts.objectives} objectives, ${counts.quiz} quizzes and ${counts.assessment} assessments with objective tests marked rather than dropped; a self export covers one account, mints a recovery key only on the opt-in, and imports back cleanly; the real profile renders the download, the password change and the recovery key with the opt-in off by default; and a stored record missing its interests, hobbies, badges and progress now loads with empty collections, keeps its migrated password and exports cleanly instead of throwing.`);
 } finally {
   await server.close();
 }

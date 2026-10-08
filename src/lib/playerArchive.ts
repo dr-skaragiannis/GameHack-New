@@ -93,14 +93,14 @@ export function entryFromUser(user: User, file: RecoveryKeyFileRecord | null = n
     role: user.role === "educator" ? "educator" : "player",
     avatar: user.avatar,
     bio: user.bio,
-    interests: [...user.interests],
-    hobbies: [...user.hobbies],
+    interests: stringList(user.interests),
+    hobbies: stringList(user.hobbies),
     createdAt: user.createdAt,
     teamId: user.teamId,
     lang: user.lang,
     progress: structuredClone(user.progress),
     metrics: { ...user.metrics },
-    badges: [...user.badges],
+    badges: stringList(user.badges),
     passwordHash,
     recoveryKeyHash: user.recoveryKeyHash || null,
     recoveryKeyFile: file,
@@ -108,7 +108,10 @@ export function entryFromUser(user: User, file: RecoveryKeyFileRecord | null = n
 }
 
 export function buildPlayerArchive(users: User[], now = new Date()): { archive: PlayerArchive; users: User[] } {
-  const nextUsers = users.map((user) => ({ ...user, interests: [...user.interests], hobbies: [...user.hobbies], badges: [...user.badges], progress: { ...user.progress }, metrics: { ...user.metrics } }));
+  // Defensive copies rather than spreads: this is the serialisation boundary,
+  // and a record missing one of these arrays must produce an empty list in the
+  // archive rather than abort the whole export.
+  const nextUsers = users.map((user) => ({ ...user, interests: stringList(user.interests), hobbies: stringList(user.hobbies), badges: stringList(user.badges), progress: { ...(user.progress || {}) }, metrics: { ...(user.metrics || {}) } }));
   const players = nextUsers.map((user) => {
     const universityAccount = user.id.toLowerCase().endsWith("@ionio.gr");
     if (user.recoveryKeyHash || universityAccount) return entryFromUser(user, null);

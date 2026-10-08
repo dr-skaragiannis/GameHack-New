@@ -749,12 +749,47 @@ function ensureDemoAccounts(db: DB): boolean {
   return changed;
 }
 
+/**
+ * A stored user record can arrive from an older schema, from the legacy storage
+ * key, or from a hand-edited payload, and any of those may be missing the
+ * collection fields. Almost every consumer spreads them, so one missing array
+ * is a crash waiting to happen somewhere unrelated — the player archive export
+ * is merely where it surfaced. Fill them in here instead of guarding at each
+ * call site.
+ *
+ * Only the fields that get spread or iterated are normalised. `passwordHash` in
+ * particular is left alone on purpose: upgradePasswordHashes() migrates a
+ * legacy plaintext `password` into it, and writing an empty string here would
+ * look like an already-migrated value and destroy that login.
+ */
+function normalizeStoredUser(value: unknown): User | null {
+  if (!value || typeof value !== "object") return null;
+  const stored = value as Partial<User>;
+  if (typeof stored.id !== "string" || !stored.id) return null;
+  const stringList = (candidate: unknown): string[] =>
+    Array.isArray(candidate) ? candidate.filter((item): item is string => typeof item === "string") : [];
+  return {
+    ...stored,
+    id: stored.id,
+    interests: stringList(stored.interests),
+    hobbies: stringList(stored.hobbies),
+    badges: stringList(stored.badges),
+    progress: stored.progress && typeof stored.progress === "object" ? stored.progress : {},
+    metrics: {
+      ...freshMetrics(),
+      ...(stored.metrics && typeof stored.metrics === "object" ? stored.metrics : {}),
+    },
+  } as User;
+}
+
 function normalizeStoredDB(value: unknown): DB | null {
   if (!value || typeof value !== "object") return null;
   const stored = value as Partial<DB>;
   if (!Array.isArray(stored.users)) return null;
   return {
-    users: stored.users,
+    users: stored.users
+      .map((user) => normalizeStoredUser(user))
+      .filter((user): user is User => user !== null),
     sessionUserId: typeof stored.sessionUserId === "string" ? stored.sessionUserId : null,
     feed: Array.isArray(stored.feed) ? stored.feed : [],
     tickets: Array.isArray(stored.tickets) ? stored.tickets : [],
