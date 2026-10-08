@@ -418,6 +418,66 @@ try {
   assert.equal(restored.activeModuleId, term.activeModuleId);
   assert.deepEqual(restored.history, term.history);
 
+  // ── The sandbox behaves like a real terminal across a reload ──────────────
+  //
+  // Everything the player did has to still be there, and everything they
+  // removed has to still be gone. A reload merges in any shipped fixture the
+  // tree is missing, so a removal needs a record of its own or it is silently
+  // undone the next time the lab opens. Revert lab is the only thing meant to
+  // bring a file back.
+  const persistUser = "persist-check@example.ionio.gr";
+  const persistTerm = playerTerminal.createPlayerTerminal();
+  const persistRun = (command) => terminal.runCommand(persistTerm, command);
+
+  persistRun("apt install metasploit");
+  assert.ok(persistTerm.packages.has("metasploit"), "apt install takes effect");
+  persistRun("rm /home/operator/notes.txt");
+  assert.equal(terminal.getNode(persistTerm.fs, "/home/operator/notes.txt"), null, "rm removes the file in the session");
+  persistRun("mv /home/operator/welcome.txt /home/operator/moved.txt");
+  assert.equal(terminal.getNode(persistTerm.fs, "/home/operator/welcome.txt"), null, "mv clears the source path");
+  persistRun("mkdir /home/operator/emptydir");
+  persistRun("rmdir /home/operator/emptydir");
+
+  playerTerminal.savePlayerTerminal(persistUser, persistTerm);
+  const reloadedTerm = playerTerminal.loadPlayerTerminal(persistUser);
+  assert.ok(reloadedTerm.packages.has("metasploit"), "an installed package survives a reload");
+  assert.equal(terminal.getNode(reloadedTerm.fs, "/home/operator/notes.txt"), null, "a file the player deleted stays deleted across a reload");
+  assert.ok(terminal.getNode(reloadedTerm.fs, "/home/operator/moved.txt"), "the moved file is at its destination after a reload");
+  assert.equal(terminal.getNode(reloadedTerm.fs, "/home/operator/welcome.txt"), null, "a moved-away source stays gone after a reload");
+
+  // Recreating a path lifts the removal, so it is treated as a normal file again
+  // and stops being carried around as a deletion forever.
+  assert.ok(
+    reloadedTerm.deletedPaths.includes("/home/operator/notes.txt"),
+    "the removal of a shipped fixture is recorded",
+  );
+  terminal.runCommand(reloadedTerm, "touch /home/operator/notes.txt");
+  playerTerminal.savePlayerTerminal(persistUser, reloadedTerm);
+  const recreated = playerTerminal.loadPlayerTerminal(persistUser);
+  assert.ok(terminal.getNode(recreated.fs, "/home/operator/notes.txt"), "recreating a deleted path keeps it after a reload");
+  assert.equal(
+    recreated.deletedPaths.includes("/home/operator/notes.txt"),
+    false,
+    "a path that exists again is no longer carried as a removal",
+  );
+
+  // The merge that brings new shipped fixtures to existing players still works:
+  // it is only the recorded removals that hold a path back.
+  const unrecorded = playerTerminal.loadPlayerTerminal(persistUser);
+  terminal.runCommand(unrecorded, "rm /home/operator/notes.txt");
+  unrecorded.deletedPaths = [];
+  playerTerminal.savePlayerTerminal(persistUser, unrecorded);
+  assert.ok(
+    terminal.getNode(playerTerminal.loadPlayerTerminal(persistUser).fs, "/home/operator/notes.txt"),
+    "with no removal on record the shipped fixture is merged back in",
+  );
+
+  // And Revert lab still returns the whole tree to its first state.
+  const resetBack = playerTerminal.resetPlayerTerminal(playerTerminal.loadPlayerTerminal(persistUser), persistUser);
+  assert.ok(terminal.getNode(resetBack.fs, "/home/operator/notes.txt"), "revert restores a deleted shipped fixture");
+  assert.ok(terminal.getNode(resetBack.fs, "/home/operator/welcome.txt"), "revert restores a moved-away shipped fixture");
+  assert.equal(resetBack.packages.has("metasploit"), false, "revert un-installs what the player installed");
+
   const preCourseTerm = playerTerminal.createPlayerTerminal();
   const preCourseRoot = terminal.getNode(preCourseTerm.fs, "/root");
   assert.ok(preCourseRoot?.children);

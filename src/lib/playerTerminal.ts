@@ -93,13 +93,20 @@ function mergeAccountLines(existing: string, incoming: string): string {
   return [...accounts.values()].join("\n") + (accounts.size ? "\n" : "");
 }
 
-function mergeMissingNodes(target: FileNode, source: FileNode): void {
+function mergeMissingNodes(target: FileNode, source: FileNode, deleted?: Set<string>, prefix = ""): void {
   if (target.type !== "dir" || source.type !== "dir") return;
   target.children ||= {};
   for (const [name, sourceNode] of Object.entries(source.children || {})) {
+    const path = `${prefix}/${name}`;
     const existing = target.children[name];
-    if (!existing) target.children[name] = cloneNode(sourceNode);
-    else if (existing.type === "dir" && sourceNode.type === "dir") mergeMissingNodes(existing, sourceNode);
+    if (!existing) {
+      // Missing because the player deleted it, or missing because this release
+      // added it? Only the first is knowable, and it is recorded - so honour it.
+      if (deleted?.has(path)) continue;
+      target.children[name] = cloneNode(sourceNode);
+    } else if (existing.type === "dir" && sourceNode.type === "dir") {
+      mergeMissingNodes(existing, sourceNode, deleted, path);
+    }
   }
 }
 
@@ -458,7 +465,11 @@ export function loadPlayerTerminal(userId: string): Terminal {
 
     const fs = parsed.version === 1 ? migrateLegacyFileSystem(parsed.fs) : parsed.fs;
     migrateLegacyBranding(fs);
-    mergeMissingNodes(fs, createPlayerFileSystem());
+    // A path the player has since recreated is no longer a removal.
+    const deletedPaths = (Array.isArray(parsed.deletedPaths) ? parsed.deletedPaths : [])
+      .filter((path): path is string => typeof path === "string")
+      .filter((path) => !getNode(fs, normalize(path), false));
+    mergeMissingNodes(fs, createPlayerFileSystem(), new Set(deletedPaths));
     const env = parsed.env && typeof parsed.env === "object" ? parsed.env : fresh.env;
     const shellVars = parsed.shellVars && typeof parsed.shellVars === "object"
       ? parsed.shellVars
@@ -508,6 +519,7 @@ export function loadPlayerTerminal(userId: string): Terminal {
         ? parsed.filesRead.filter((value): value is string => typeof value === "string").map(replaceLegacyBrand).slice(-MAX_SAVED_READS)
         : fresh.filesRead,
       env,
+      deletedPaths,
       activeModuleId: typeof parsed.activeModuleId === "string" ? parsed.activeModuleId : undefined,
     } as Terminal;
     savePlayerTerminal(userId, restored);

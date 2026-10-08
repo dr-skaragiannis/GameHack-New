@@ -101,6 +101,13 @@ export type Terminal = {
   sshReturn: { user: string; host: string; cwd: string; home: string; isRoot: boolean; scenario: string } | null;
   /** Results the active lab supplies for exact command lines. */
   commandFixtures?: LabCommandFixture[];
+  /**
+   * Paths the player has deleted. A reload merges in any shipped fixture the
+   * tree is missing, so without this record a removal would be silently undone
+   * the next time the lab is opened and the sandbox would stop behaving like a
+   * terminal. Revert lab is the only thing meant to bring a file back.
+   */
+  deletedPaths?: string[];
   activeModuleId?: string;
 };
 
@@ -406,6 +413,7 @@ export function createTerminal(opts?: {
     crontabEditorPending: false,
     sshReturn: null,
     commandFixtures: opts?.commandFixtures || [],
+    deletedPaths: [],
   };
 }
 
@@ -717,6 +725,19 @@ export function flattenFileTree(root: FileNode): LabFileSeed[] {
 /** Seed a terminal's filesystem. See {@link seedFilesInto} for the semantics. */
 export function seedLabFiles(t: Terminal, seeds: LabFileSeed[] | undefined): number {
   return seedFilesInto(t.fs, seeds);
+}
+
+/** Record that the player removed a path, so a reload leaves it removed. */
+export function markPathDeleted(t: Terminal, path: string): void {
+  const normalized = normalize(path);
+  if (!t.deletedPaths) t.deletedPaths = [];
+  if (!t.deletedPaths.includes(normalized)) t.deletedPaths.push(normalized);
+}
+
+/** Forget a removal once something exists at that path again. */
+export function liftPathDeleted(t: Terminal, path: string): void {
+  const normalized = normalize(path);
+  if (t.deletedPaths?.length) t.deletedPaths = t.deletedPaths.filter((entry) => entry !== normalized);
 }
 
 /**

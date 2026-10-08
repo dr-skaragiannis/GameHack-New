@@ -3,6 +3,8 @@ import {
   displayPath,
   file,
   getNode,
+  liftPathDeleted,
+  markPathDeleted,
   normalize,
   parentAndName,
   resolvePath,
@@ -505,6 +507,8 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
       }
       destDir.children[destinationName] = { ...copyNode(src), name: destinationName };
       delete sdir.children[sn];
+      markPathDeleted(t, srcP);
+      liftPathDeleted(t, destP);
       t.flags.add("mv");
       print(`Moved ${pos[0]} to ${pos[1]} in the virtual filesystem.`);
       return true;
@@ -524,6 +528,7 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
         return true;
       }
       delete dirn.children[name];
+      markPathDeleted(t, p);
       t.flags.add("rm");
       print(`Removed virtual ${node.type}: ${pos[0]}`);
       return true;
@@ -543,6 +548,10 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
         return true;
       }
       if (dirn?.children) delete dirn.children[name];
+      // Recorded for symmetry with rm. No shipped fixture is an empty
+      // directory today, so nothing can currently exercise this branch; it is
+      // here so an empty fixture added later behaves the same way.
+      markPathDeleted(t, p);
       t.flags.add("rmdir");
       print(`Removed empty virtual directory: ${pos[0]}`);
       return true;
