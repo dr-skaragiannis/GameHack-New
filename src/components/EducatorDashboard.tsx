@@ -22,6 +22,8 @@ import {
 
 import { type ContentOverlay } from "../lib/contentAuthoring";
 import { getContentOverlay, saveContentOverlay } from "../lib/db";
+import { flattenFileTree } from "../lib/terminal";
+import { createPlayerFileSystem } from "../lib/playerTerminal";
 import ContentEditor from "./ContentEditor";
 import { parsePlayerArchive, type PlayerArchive } from "../lib/playerArchive";
 import {
@@ -527,7 +529,11 @@ export default function EducatorDashboard({
             </div>
             <div className="educator-archive__actions">
               <button type="button" className="educator-lab-map dashboard-action" onClick={() => {
-                downloadJsonFile(courseExportFilename(), serialiseCourseExport(exportCourseCatalog(getContentOverlay())));
+                // The fixture tree is handed in from here: it lives in the
+                // player-terminal module, which the database layer cannot
+                // import without a cycle.
+                const sandbox = flattenFileTree(createPlayerFileSystem());
+                downloadJsonFile(courseExportFilename(), serialiseCourseExport(exportCourseCatalog(getContentOverlay(), sandbox)));
                 setCourseMessage(t("learningPathsSaved", lang));
               }}>
                 <Icon name="download" className="h-4 w-4" />{t("learningPathsExport", lang)}

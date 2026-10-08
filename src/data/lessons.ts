@@ -1,4 +1,4 @@
-import type { Terminal } from "../lib/terminal";
+import type { LabCommandFixture, LabFileSeed, Terminal } from "../lib/terminal";
 import { usedCmd } from "../lib/terminal";
 import { SUDO_RUN_ALL } from "./sudorun-lessons";
 import { DFIR_MODULES } from "./dfir-lessons";
@@ -60,6 +60,13 @@ export type Module = {
   challenges: [Challenge, Challenge];
   tool?: "terminal" | "browser" | "both";
   scenario?: "lab" | "raven" | "ssh" | "sudorun" | "dfir";
+  /**
+   * Files this lab places into the shared player filesystem, and results it
+   * supplies for exact command lines. Empty for shipped labs, whose fixtures
+   * live in the simulator itself.
+   */
+  files?: LabFileSeed[];
+  commands?: LabCommandFixture[];
 };
 
 export type Campaign = {

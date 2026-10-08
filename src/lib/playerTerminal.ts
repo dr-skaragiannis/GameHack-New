@@ -8,11 +8,15 @@ import {
   sshFS,
   getNode,
   normalize,
+  seedFilesInto,
+  seedLabFiles,
   type FileNode,
   type Terminal,
 } from "./terminal";
 import { dfirFS } from "./dfir";
 import { sudoRunFS } from "./sudorun";
+import { moduleById as catalogModuleById } from "./catalog";
+import { getContentOverlay } from "./db";
 
 const STORAGE_PREFIX = "gamehack.player-terminal.v2:";
 const LEGACY_STORAGE_PREFIX = "gamehack.player-terminal.v1:";
@@ -305,6 +309,9 @@ export function createPlayerFileSystem(): FileNode {
   mergeScenario(root, "raven", ravenFS());
   mergeScenario(root, "ssh", sshFS());
   mergeScenario(root, "dfir", dfirFS());
+  // An imported catalogue carries its own fixture tree; it fills gaps rather
+  // than overwriting, so a shipped fixture is never silently replaced.
+  seedFilesInto(root, getContentOverlay().filesystem);
   return root;
 }
 
@@ -315,6 +322,13 @@ export function createPlayerTerminal(): Terminal {
 export function activateTerminalForModule(term: Terminal, moduleId: string, scenario: string): Terminal {
   const scenarioChanged = term.scenario !== scenario;
   if (scenarioChanged) setTerminalScenario(term, scenario);
+
+  // Bring the lab's own sandbox with it. Resolved from the catalog rather than
+  // passed in, so no call site can forget it and an authored or imported lab is
+  // as playable as a shipped one. Files already present are left alone.
+  const lab = catalogModuleById(moduleId);
+  seedLabFiles(term, lab?.files);
+  term.commandFixtures = (lab?.commands || []).map((fixture) => ({ ...fixture }));
 
   if (scenario === "sudorun" && moduleId === "sr-proc") {
     const trainingProcesses = [

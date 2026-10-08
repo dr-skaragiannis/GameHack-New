@@ -384,7 +384,133 @@ try {
   assert.equal(QUIZZES["imported-lab"], undefined, "resetting the overlay must drop the imported questions");
   assert.ok(QUIZZES["sr-intro"]?.length, "resetting the overlay must restore the shipped questions");
 
-  console.log(`Data export checks passed: the learning-paths JSON carries all ${counts.paths} paths, ${counts.labs} labs, ${counts.objectives} objectives, ${counts.quiz} quizzes and ${counts.assessment} assessments with objective tests marked rather than dropped; a self export covers one account, mints a recovery key only on the opt-in, and imports back cleanly; the real profile renders the download, the password change and the recovery key with the opt-in off by default; a stored record missing its interests, hobbies, badges and progress now loads with empty collections, keeps its migrated password and exports cleanly instead of throwing; and the exported file documents its own structure in a leading readme, imports back without losing its terminal screenshots, can edit a built-in lab while keeping that lab's real objective tests, can add a whole new learning path with its quiz and assessment, and both survive a save/load cycle while the shipped question banks stay intact.`);
+
+  // ── The export carries the sandbox, and importing it makes a lab playable ──
+  assert.ok(exported.readme.labFile, "the readme must document lab files");
+  assert.ok(exported.readme.commandFixture, "the readme must document command results");
+  assert.match(exported.readme.labFile.path.en, /absolute path/i, "the readme must say a lab file path is absolute");
+  assert.match(exported.readme.commandFixture.command.el, /ακριβ/, "the Greek readme must say matching is exact");
+
+  const sandboxCatalog = {
+    readme: exported.readme,
+    format: courseExport.COURSE_EXPORT_FORMAT,
+    version: courseExport.COURSE_EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    note: "hand written",
+    filesystem: [{ path: "/srv/baseline/notes.txt", content: "baseline from the catalogue\n" }],
+    paths: [{
+      id: "path-sandbox",
+      title: { en: "Sandbox path", el: "Μονοπάτι sandbox" },
+      subtitle: { en: "Seeded", el: "Με αρχεία" },
+      blurb: { en: "A lab with its own files.", el: "Εργαστήριο με δικά του αρχεία." },
+      scenario: "lab",
+      accent: "cyan",
+      modules: [{
+        id: "sandbox-lab",
+        order: 1,
+        icon: "terminal",
+        color: "from-cyan-400 to-sky-900",
+        difficulty: 2,
+        scenario: "lab",
+        title: { en: "Sandbox lab", el: "Εργαστήριο sandbox" },
+        subtitle: { en: "Files and fixtures", el: "Αρχεία και fixtures" },
+        badge: { en: "Seeder", el: "Σπορέας" },
+        theory: [{ id: "sandbox-theory", heading: { en: "Why", el: "Γιατί" }, body: { en: "Because.\n\nSecond.", el: "Διότι.\n\nΔεύτερο." } }],
+        cheats: [],
+        tasks: [],
+        challenges: [],
+        quiz: [],
+        assessment: [],
+        files: [
+          { path: "/srv/custom/report.txt", content: "TOP SECRET\nthe answer is 42\n" },
+          { path: "/srv/custom/deep/nested/keys.txt", content: "root:toor\n", mode: "-rw-------", owner: "root" },
+        ],
+        commands: [
+          { command: "mytool --scan 10.0.0.5", output: "PORT   STATE\n22/tcp open", exit: 0, flag: "scanned" },
+          { command: "cat /etc/shadow", output: "cat: /etc/shadow: Permission denied", exit: 1 },
+        ],
+      }],
+    }],
+  };
+
+  // The exporter itself must emit the sandbox it is handed, and each lab's own
+  // files and command results, or the import side has nothing to read.
+  const seededOverlay = courseExport.buildOverlayFromCourseExport(sandboxCatalog, { modules: {}, paths: [] }).overlay;
+  const fullExport = db.exportCourseCatalog(seededOverlay, [
+    { path: "/srv/baseline/notes.txt", content: "baseline from the catalogue\n" },
+  ]);
+  assert.equal(fullExport.filesystem?.length, 1, "the exporter emits the filesystem snapshot it is given");
+  assert.equal(fullExport.filesystem?.[0].path, "/srv/baseline/notes.txt", "and keeps its path");
+  const exportedLab = fullExport.paths.flatMap((path) => path.modules).find((mod) => mod.id === "sandbox-lab");
+  assert.ok(exportedLab, "the lab carrying a sandbox is in the export");
+  assert.equal(exportedLab.files?.length, 2, "a lab's files are exported with it");
+  assert.equal(exportedLab.files?.[1].owner, "root", "including ownership");
+  assert.equal(exportedLab.commands?.[0].flag, "scanned", "a lab's command results are exported with it");
+  assert.equal(db.exportCourseCatalog(seededOverlay).filesystem, undefined, "an export with no snapshot carries no baseline rather than an empty one");
+
+  const sandboxRoundTrip = courseExport.parseCourseExport(courseExport.serialiseCourseExport(sandboxCatalog));
+  assert.ok(sandboxRoundTrip, "a catalogue that carries a sandbox still parses");
+  assert.equal(sandboxRoundTrip.filesystem.length, 1, "the shared baseline survives the round trip");
+  const sandboxImport = courseExport.buildOverlayFromCourseExport(sandboxRoundTrip, db.getContentOverlay());
+  assert.equal(sandboxImport.summary.files, 2, "the summary counts the lab's files");
+  assert.equal(sandboxImport.summary.commands, 2, "the summary counts the lab's command results");
+  assert.equal(sandboxImport.summary.baselineFiles, 1, "the summary counts the baseline it replaces");
+
+  db.saveContentOverlay(sandboxImport.overlay);
+  const reloadedSandbox = db.getContentOverlay();
+  assert.equal(reloadedSandbox.modules["sandbox-lab"].files.length, 2, "lab files survive storage");
+  assert.equal(reloadedSandbox.modules["sandbox-lab"].files[1].mode, "-rw-------", "file permissions survive storage");
+  assert.equal(reloadedSandbox.modules["sandbox-lab"].commands[0].flag, "scanned", "command fixtures survive storage");
+  assert.equal(reloadedSandbox.filesystem[0].path, "/srv/baseline/notes.txt", "the baseline survives storage");
+
+  // The point of all of it: the lab is actually playable in the terminal.
+  const playerTerminal = await server.ssrLoadModule("/src/lib/playerTerminal.ts");
+  const terminal = await server.ssrLoadModule("/src/lib/terminal.ts");
+  const term = playerTerminal.createPlayerTerminal();
+  playerTerminal.activateTerminalForModule(term, "sandbox-lab", "lab");
+  const run = (command) => {
+    const lines = terminal.runCommand(term, command);
+    return { exit: term.lastExit, text: lines.filter((line) => line.kind !== "in").map((line) => line.text).join("\n") };
+  };
+
+  const read = run("cat /srv/custom/report.txt");
+  assert.equal(read.exit, 0, "a seeded file can be read");
+  assert.match(read.text, /the answer is 42/, "the seeded content is exactly what the educator wrote");
+
+  const nested = run("ls -la /srv/custom/deep/nested");
+  assert.equal(nested.exit, 0, "parent directories are created for a deeply nested seed");
+  assert.match(nested.text, /-rw-------/, "the permissions the educator set are the ones ls shows");
+
+  const searched = run("grep answer /srv/custom/report.txt");
+  assert.equal(searched.exit, 0, "the real simulator operates on seeded files");
+  assert.match(searched.text, /the answer is 42/, "grep finds what was seeded");
+
+  const fixture = run("mytool --scan 10.0.0.5");
+  assert.equal(fixture.exit, 0, "a command the simulator never implemented now answers");
+  assert.match(fixture.text, /22\/tcp open/, "and prints what the educator wrote");
+  assert.ok(term.flags.has("scanned"), "the fixture records its flag so a completion test can require it");
+
+  const overridden = run("cat /etc/shadow");
+  assert.equal(overridden.exit, 1, "a lab may restate what a built-in tool prints");
+  assert.match(overridden.text, /Permission denied/, "and the restatement is what the player sees");
+
+  assert.equal(run("totally-unknown-command").exit, 127, "commands with no fixture and no implementation still fail");
+
+  // Seeding must not destroy what the player already has.
+  terminal.runCommand(term, "echo edited by the player > /srv/custom/report.txt");
+  playerTerminal.activateTerminalForModule(term, "sandbox-lab", "lab");
+  assert.match(run("cat /srv/custom/report.txt").text, /edited by the player/, "reopening a lab does not overwrite the player's file");
+
+  // A file the catalogue omits keeps whatever baseline is already in place.
+  const noBaseline = courseExport.buildOverlayFromCourseExport(
+    { ...sandboxRoundTrip, filesystem: undefined },
+    { modules: {}, paths: [], filesystem: [{ path: "/srv/kept/old.txt", content: "kept\n" }] },
+  );
+  assert.deepEqual(noBaseline.overlay.filesystem, [{ path: "/srv/kept/old.txt", content: "kept\n" }], "omitting the baseline keeps the existing one");
+
+  db.saveContentOverlay({ modules: {}, paths: [] });
+
+  console.log(`Data export checks passed: the learning-paths JSON carries all ${counts.paths} paths, ${counts.labs} labs, ${counts.objectives} objectives, ${counts.quiz} quizzes and ${counts.assessment} assessments with objective tests marked rather than dropped; a self export covers one account, mints a recovery key only on the opt-in, and imports back cleanly; the real profile renders the download, the password change and the recovery key with the opt-in off by default; a stored record missing its interests, hobbies, badges and progress now loads with empty collections, keeps its migrated password and exports cleanly instead of throwing; and the exported file documents its own structure in a leading readme, imports back without losing its terminal screenshots, can edit a built-in lab while keeping that lab's real objective tests, can add a whole new learning path with its quiz and assessment, and both survive a save/load cycle while the shipped question banks stay intact. The export also carries the sandbox: the shared filesystem baseline, each lab's files with their contents and permissions, and canned results for exact command lines, so importing a file yields a lab whose files can really be read, whose directories are created, whose fixtures answer - including restating a built-in tool - while an unfixed unknown command still fails, and while seeding never overwrites a file the player has edited.`);
 } finally {
   await server.close();
 }

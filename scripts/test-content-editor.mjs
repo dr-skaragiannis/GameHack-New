@@ -367,7 +367,32 @@ try {
   assert.equal(overlay.modules[shippedLab.id], undefined, "reverting drops the authored copy of the lab");
   assert.equal(labelled("Lab title — EN", "textarea").value, shippedLab.title.en, "and the form falls back to the shipped lab");
 
-  console.log("Content editor UI checks passed: creating a learning path, adding and writing a lab with XP and a completion test, reaching the player catalog, deleting without leftovers, bilingual warnings, and reaching it all from the educator dashboard; plus editing and removing a learning path or lab that ships with the app - the edit is layered over an untouched original, every removal is listed with a restore, and reverting hands the shipped version back.");
+
+  // ── The educator gives a new lab its own sandbox ──────────────────────────
+  overlay = authoring.emptyOverlay();
+  render();
+  clickButton("New learning path");
+  clickButton("New lab");
+
+  clickButton("Add file");
+  type(labelled("Path", "input"), "/srv/malware/notes.txt");
+  type(labelled("Contents", "textarea"), "indicator: bad.exe\n");
+  type(labelled("Permissions", "input"), "-rw-r--r--");
+
+  clickButton("Add command result");
+  type(labelled("Command line", "input"), "strings bad.exe");
+  type(labelled("Output", "textarea"), "http://evil.lab/drop");
+
+  clickButton("Save lab");
+  const authoredLabId = Object.keys(overlay.modules).find((id) => overlay.modules[id].files?.length);
+  assert.ok(authoredLabId, "saving a lab keeps the files the educator wrote");
+  assert.equal(overlay.modules[authoredLabId].files[0].path, "/srv/malware/notes.txt", "the file path is stored");
+  assert.equal(overlay.modules[authoredLabId].files[0].content, "indicator: bad.exe\n", "the file contents are stored");
+  assert.equal(overlay.modules[authoredLabId].files[0].mode, "-rw-r--r--", "the permissions are stored");
+  assert.equal(overlay.modules[authoredLabId].commands[0].command, "strings bad.exe", "the command line is stored");
+  assert.equal(overlay.modules[authoredLabId].commands[0].output, "http://evil.lab/drop", "the canned output is stored");
+
+  console.log("Content editor UI checks passed: creating a learning path, adding and writing a lab with XP and a completion test, reaching the player catalog, deleting without leftovers, bilingual warnings, and reaching it all from the educator dashboard; plus editing and removing a learning path or lab that ships with the app - the edit is layered over an untouched original, every removal is listed with a restore, and reverting hands the shipped version back; and a new lab can be given its own sandbox in the editor - files with contents and permissions, plus canned command results - all of which reach the stored overlay.");
 } finally {
   await server.close();
 }

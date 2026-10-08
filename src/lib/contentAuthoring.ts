@@ -1,4 +1,4 @@
-import { usedCmd, type Terminal } from "./terminal";
+import { usedCmd, type LabCommandFixture, type LabFileSeed, type Terminal } from "./terminal";
 import type { AssessmentQ } from "../data/assessments";
 import type { QuizQ } from "../data/quizzes";
 import {
@@ -84,6 +84,14 @@ export type AuthoredModule = {
   cheats: AuthoredCheat[];
   tasks: AuthoredTask[];
   challenges: AuthoredChallenge[];
+  /**
+   * The lab's slice of the sandbox: files with their contents, and canned
+   * results for exact command lines. Without these an authored or imported lab
+   * cannot be completed, because its objectives refer to files the shipped
+   * fixtures do not contain.
+   */
+  files?: LabFileSeed[];
+  commands?: LabCommandFixture[];
 };
 
 export type AuthoredPath = {
@@ -123,6 +131,12 @@ export type ContentOverlay = {
   hiddenPaths?: string[];
   /** Lab ids removed from whichever path lists them. */
   hiddenModules?: string[];
+  /**
+   * Replacement for the shared player filesystem baseline. A full catalogue
+   * export carries the whole fixture tree here, so an imported file describes
+   * the sandbox the labs run in and not just their prose.
+   */
+  filesystem?: LabFileSeed[];
 };
 
 export const emptyOverlay = (): ContentOverlay => ({ modules: {}, paths: [] });
@@ -272,6 +286,8 @@ export function snapshotModule(module: Module): AuthoredModule {
       success: { ...challenge.success },
       check: { kind: "builtin" } as AuthoredCheck,
     })),
+    ...(module.files?.length ? { files: module.files.map((seed) => ({ ...seed })) } : {}),
+    ...(module.commands?.length ? { commands: module.commands.map((fixture) => ({ ...fixture })) } : {}),
   };
 }
 
@@ -329,6 +345,8 @@ export function compileModule(authored: AuthoredModule): Module {
     ),
     challenges,
     scenario: authored.scenario,
+    ...(authored.files?.length ? { files: authored.files.map((seed) => ({ ...seed })) } : {}),
+    ...(authored.commands?.length ? { commands: authored.commands.map((fixture) => ({ ...fixture })) } : {}),
   };
 }
 

@@ -1,6 +1,7 @@
 import { ASSESSMENTS, type AssessmentQ } from "../data/assessments";
 import { QUIZZES, type QuizQ } from "../data/quizzes";
 import { LEARNING_PATHS, moduleById, type Bi, type Campaign, type Challenge, type Module, type Task } from "../data/lessons";
+import type { LabFileSeed } from "./terminal";
 import {
   effectiveLearningPaths,
   type AuthoredModule,
@@ -41,6 +42,13 @@ export type CourseExport = {
   exportedAt: string;
   note: string;
   paths: ExportedPath[];
+  /**
+   * The shared player filesystem every lab runs against, flattened to one
+   * record per file. The player tree is shared rather than per-lab, so this is
+   * a property of the catalogue and not of any single lab; a lab adds to it
+   * through its own `files`.
+   */
+  filesystem?: LabFileSeed[];
 };
 
 const NOTE =
@@ -70,6 +78,7 @@ export const COURSE_EXPORT_README = {
     readme: { en: "This documentation. Ignored by the importer.", el: "Αυτή η τεκμηρίωση. Ο εισαγωγέας την αγνοεί." },
     note: { en: "One-line summary of what the file contains and what is marked rather than serialised.", el: "Σύνοψη μιας γραμμής: τι περιέχει το αρχείο και τι σημειώνεται αντί να σειριοποιηθεί." },
     paths: { en: "The learning paths, in display order. Each is one row on the platform's home screen.", el: "Τα μονοπάτια εκμάθησης, με τη σειρά εμφάνισης. Το καθένα είναι μία γραμμή στην αρχική οθόνη." },
+    filesystem: { en: "The shared simulated filesystem every lab runs against, one record per file. The player tree is shared rather than per-lab, so this describes the sandbox as a whole; a lab adds to it through its own files. Omit it to keep whatever baseline is already in place.", el: "Το κοινό προσομοιωμένο filesystem στο οποίο τρέχουν όλα τα εργαστήρια, μία εγγραφή ανά αρχείο. Το δέντρο του παίκτη είναι κοινό και όχι ανά εργαστήριο, οπότε αυτό περιγράφει το sandbox συνολικά· ένα εργαστήριο προσθέτει σε αυτό μέσω των δικών του files. Παράλειψέ το για να κρατήσεις όποιο baseline υπάρχει ήδη." },
   },
   path: {
     id: { en: "Stable identifier. Importing a path whose id already exists replaces it; a new id creates a new path.", el: "Σταθερό αναγνωριστικό. Η εισαγωγή μονοπατιού με id που υπάρχει ήδη το αντικαθιστά· ένα νέο id δημιουργεί νέο μονοπάτι." },
@@ -94,6 +103,8 @@ export const COURSE_EXPORT_README = {
     cheats: { en: "Command-sheet rows: a command plus a one-line {en, el} description.", el: "Γραμμές του φύλλου εντολών: μία εντολή και μια περιγραφή μιας γραμμής {en, el}." },
     tasks: { en: "Objectives the player completes in the terminal, each worth XP.", el: "Στόχοι που ολοκληρώνει ο παίκτης στο τερματικό, ο καθένας με XP." },
     challenges: { en: "The final challenges that gate lab completion.", el: "Οι τελικές προκλήσεις που ξεκλειδώνουν την ολοκλήρωση του εργαστηρίου." },
+    files: { en: "Files this lab places into the sandbox, each described by labFile below. Without them the lab's objectives point at files that do not exist.", el: "Αρχεία που τοποθετεί αυτό το εργαστήριο στο sandbox, το καθένα περιγράφεται από το labFile παρακάτω. Χωρίς αυτά, οι στόχοι του εργαστηρίου δείχνουν σε αρχεία που δεν υπάρχουν." },
+    commands: { en: "Canned results for exact command lines, each described by commandFixture below. Empty for shipped labs, whose outputs the simulator computes.", el: "Έτοιμα αποτελέσματα για ακριβείς γραμμές εντολών, το καθένα περιγράφεται από το commandFixture παρακάτω. Άδειο για τα ενσωματωμένα εργαστήρια, των οποίων τα αποτελέσματα τα υπολογίζει ο προσομοιωτής." },
     quiz: { en: "Quick quiz asked before the lab counts as complete.", el: "Γρήγορο κουίζ που τίθεται πριν το εργαστήριο μετρήσει ως ολοκληρωμένο." },
     assessment: { en: "Scenario assessment asked after it.", el: "Αξιολόγηση σεναρίου που τίθεται μετά." },
   },
@@ -132,14 +143,40 @@ export const COURSE_EXPORT_README = {
     answer: { en: "Zero-based index of the correct choice.", el: "Δείκτης της σωστής επιλογής, με αρίθμηση από το μηδέν." },
     why: { en: "{en, el} reasoning behind the correct answer.", el: "Η αιτιολόγηση πίσω από τη σωστή απάντηση {en, el}." },
   },
+  labFile: {
+    path: { en: "Absolute path in the lab filesystem. Parent directories are created automatically.", el: "Απόλυτη διαδρομή στο filesystem του εργαστηρίου. Οι γονικοί φάκελοι δημιουργούνται αυτόματα." },
+    content: { en: "The file's contents, exactly as `cat` will print them.", el: "Τα περιεχόμενα του αρχείου, ακριβώς όπως θα τα τυπώσει η cat." },
+    mode: { en: "Optional permission string as shown by `ls -l`, for example -rw-r--r--.", el: "Προαιρετικό string δικαιωμάτων όπως το δείχνει η ls -l, π.χ. -rw-r--r--." },
+    owner: { en: "Optional owner name.", el: "Προαιρετικό όνομα κατόχου." },
+    group: { en: "Optional group name.", el: "Προαιρετικό όνομα ομάδας." },
+    note: { en: "Files already present are never overwritten, so a player's edits survive reopening the lab. Revert lab restores the pristine tree.", el: "Τα αρχεία που υπάρχουν ήδη δεν αντικαθίστανται ποτέ, οπότε οι αλλαγές του παίκτη επιβιώνουν όταν ξανανοίξει το εργαστήριο. Το Revert lab επαναφέρει το αρχικό δέντρο." },
+  },
+  commandFixture: {
+    command: { en: "The exact command line to match, as the player would type it. Matching is exact, not a prefix or a pattern, so a fixture never fires on a command the author did not write out in full.", el: "Η ακριβής γραμμή εντολής προς ταίριασμα, όπως θα την πληκτρολογούσε ο παίκτης. Το ταίριασμα είναι ακριβές, όχι πρόθεμα ή pattern, οπότε ένα fixture δεν ενεργοποιείται ποτέ σε εντολή που ο συγγραφέας δεν έγραψε ολόκληρη." },
+    output: { en: "What the command prints. Newlines become separate output lines.", el: "Τι τυπώνει η εντολή. Οι αλλαγές γραμμής γίνονται ξεχωριστές γραμμές εξόδου." },
+    exit: { en: "Optional exit code, default 0. A non-zero code makes the command read as failed.", el: "Προαιρετικός κωδικός εξόδου, προεπιλογή 0. Ένας μη μηδενικός κωδικάς κάνει την εντολή να φαίνεται ως αποτυχημένη." },
+    flag: { en: "Optional flag name recorded when the command runs, so a completion test can require it.", el: "Προαιρετικό όνομα flag που καταγράφεται όταν τρέξει η εντολή, ώστε ένας έλεγχος ολοκλήρωσης να μπορεί να την απαιτεί." },
+    note: { en: "A fixture answers before the shared simulator, so it can also restate what a built-in tool prints inside this lab only.", el: "Ένα fixture απαντά πριν από τον κοινό προσομοιωτή, οπότε μπορεί και να διατυπώσει εκ νέου τι τυπώνει ένα ενσωματωμένο εργαλείο, μόνο μέσα σε αυτό το εργαστήριο." },
+  },
   importing: {
     en: "Educator dashboard -> Learning paths (JSON) -> Import. Labs whose id matches a built-in lab are edited in place and keep their real tests; unknown ids become new authored content, so one file can also add whole new learning paths. Objective tests cannot be imported, so a brand-new lab needs its tests written in the content editor before its objectives can be completed.",
     el: "Πίνακας εκπαιδευτή -> Μονοπάτια εκμάθησης (JSON) -> Εισαγωγή. Τα εργαστήρια με id που ταιριάζει με ενσωματωμένο εργαστήριο επεξεργάζονται επί τόπου και κρατούν τους πραγματικούς ελέγχους τους· τα άγνωστα id γίνονται νέο περιεχόμενο συγγραφέα, οπότε ένα αρχείο μπορεί και να προσθέσει ολόκληρα νέα μονοπάτια. Οι έλεγχοι των στόχων δεν εισάγονται, οπότε ένα ολοκαίνουργιο εργαστήριο χρειάζεται τους ελέγχους του γραμμένους στον επεξεργαστή περιεχομένου πριν ολοκληρωθούν οι στόχοι του.",
   },
 } as const;
 
-/** The effective catalogue — what a player actually sees — as plain JSON data. */
-export function buildCourseExport(overlay: ContentOverlay, now = new Date()): CourseExport {
+/**
+ * The effective catalogue — what a player actually sees — as plain JSON data.
+ *
+ * The filesystem is passed in rather than read here: the fixture tree lives in
+ * the player-terminal module, which depends on the database layer, and this
+ * module is imported by that same layer. Components sit above both, so they
+ * supply the snapshot.
+ */
+export function buildCourseExport(
+  overlay: ContentOverlay,
+  now = new Date(),
+  filesystem?: LabFileSeed[],
+): CourseExport {
   const paths: ExportedPath[] = effectiveLearningPaths(overlay).map((path) => ({
     ...path,
     modules: path.modules.map((module) => ({
@@ -160,6 +197,8 @@ export function buildCourseExport(overlay: ContentOverlay, now = new Date()): Co
     exportedAt: now.toISOString(),
     note: NOTE,
     paths,
+    // The sandbox the labs run in, so an imported file is playable on its own.
+    ...(filesystem?.length ? { filesystem } : {}),
   };
 }
 
@@ -295,6 +334,27 @@ export function authoredModuleFromExported(module: ExportedModule): AuthoredModu
       success: asBi(challenge.success),
       check: { kind: "builtin" } as const,
     })),
+    ...(module.files?.length
+      ? {
+          files: module.files.map((seed) => ({
+            path: String(seed.path ?? ""),
+            content: typeof seed.content === "string" ? seed.content : "",
+            ...(seed.mode ? { mode: String(seed.mode) } : {}),
+            ...(seed.owner ? { owner: String(seed.owner) } : {}),
+            ...(seed.group ? { group: String(seed.group) } : {}),
+          })),
+        }
+      : {}),
+    ...(module.commands?.length
+      ? {
+          commands: module.commands.map((fixture) => ({
+            command: String(fixture.command ?? ""),
+            output: typeof fixture.output === "string" ? fixture.output : "",
+            ...(Number.isFinite(Number(fixture.exit)) ? { exit: Number(fixture.exit) } : {}),
+            ...(fixture.flag ? { flag: String(fixture.flag) } : {}),
+          })),
+        }
+      : {}),
   };
 }
 
@@ -303,6 +363,11 @@ export type CourseImportSummary = {
   newPaths: number;
   labs: number;
   newLabs: number;
+  /** Lab files carried into the sandbox, and command results carried with them. */
+  files: number;
+  commands: number;
+  /** Files in the shared filesystem baseline the import replaces. */
+  baselineFiles: number;
   objectives: number;
   /** Objectives on labs that do not exist in the shipped catalogue, so their
    *  tests could not be borrowed and must be authored before they can complete. */
@@ -330,6 +395,7 @@ export function buildOverlayFromCourseExport(
 
   const summary: CourseImportSummary = {
     paths: 0, newPaths: 0, labs: 0, newLabs: 0, objectives: 0, objectivesNeedingTests: 0, quiz: 0, assessment: 0,
+    files: 0, commands: 0, baselineFiles: 0,
   };
 
   for (const path of exported.paths) {
@@ -352,6 +418,8 @@ export function buildOverlayFromCourseExport(
         assessment[module.id] = module.assessment;
         summary.assessment += module.assessment.length;
       }
+      summary.files += module.files?.length ?? 0;
+      summary.commands += module.commands?.length ?? 0;
     }
 
     if (shippedPath) continue;
@@ -372,5 +440,22 @@ export function buildOverlayFromCourseExport(
     }
   }
 
-  return { overlay: { modules, paths, quizzes: quiz, assessments: assessment }, summary };
+  // The baseline sandbox travels with the catalogue. A file that omits it
+  // leaves the previous baseline in place rather than wiping it.
+  const filesystem = Array.isArray(exported.filesystem)
+    ? exported.filesystem.filter((seed) => seed && typeof seed.path === "string" && seed.path.startsWith("/"))
+    : undefined;
+  if (filesystem?.length) summary.baselineFiles = filesystem.length;
+
+  return {
+    overlay: {
+      modules,
+      paths,
+      quizzes: quiz,
+      assessments: assessment,
+      ...(base.filesystem ? { filesystem: base.filesystem } : {}),
+      ...(filesystem?.length ? { filesystem } : {}),
+    },
+    summary,
+  };
 }

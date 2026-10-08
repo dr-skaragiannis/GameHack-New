@@ -19,6 +19,7 @@ import {
   type ContentOverlay,
 } from "../lib/contentAuthoring";
 import { t, type Lang } from "../i18n";
+import type { LabCommandFixture, LabFileSeed } from "../lib/terminal";
 import { moduleById } from "../data/lessons";
 
 const ICONS = ["terminal", "cpu", "lock", "key", "share", "hard-drive", "folder", "shield", "radar", "scan", "globe", "layers", "database", "book", "settings", "file-text"];
@@ -284,6 +285,25 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
   const patchTask = (index: number, patch: Partial<AuthoredTask>) =>
     setDraft((current) => current && { ...current, tasks: current.tasks.map((task, i) => (i === index ? { ...task, ...patch } : task)) });
 
+  const patchFile = (index: number, patch: Partial<LabFileSeed>) =>
+    setDraft((current) =>
+      current && { ...current, files: (current.files || []).map((seed, i) => (i === index ? { ...seed, ...patch } : seed)) },
+    );
+
+  const patchCommand = (index: number, patch: Partial<LabCommandFixture>) =>
+    setDraft((current) =>
+      current && {
+        ...current,
+        commands: (current.commands || []).map((fixture, i) => (i === index ? { ...fixture, ...patch } : fixture)),
+      },
+    );
+
+  const addFile = () =>
+    setDraft((current) => current && { ...current, files: [...(current.files || []), { path: "/srv/", content: "" }] });
+
+  const addCommand = () =>
+    setDraft((current) => current && { ...current, commands: [...(current.commands || []), { command: "", output: "" }] });
+
   const patchSection = (index: number, patch: Partial<AuthoredSection>) =>
     setDraft((current) => current && { ...current, theory: current.theory.map((section, i) => (i === index ? { ...section, ...patch } : section)) });
 
@@ -473,6 +493,81 @@ export default function ContentEditor({ lang, overlay, onCommit }: {
           ))}
           <button type="button" className="educator-primary-button" onClick={() => patchDraft({ theory: [...draft.theory, emptySection()] })}>
             {t("addTheorySection", lang)}
+          </button>
+
+          <h3>{t("labFiles", lang)}</h3>
+          <p className="content-lede">{t("labFilesNote", lang)}</p>
+          {(draft.files || []).map((seed, index) => (
+            <div key={`${seed.path}-${index}`} className="content-block">
+              <div className="content-block__head">
+                <strong>{seed.path || `#${index + 1}`}</strong>
+                <button
+                  type="button"
+                  className="content-danger"
+                  onClick={() => patchDraft({ files: (draft.files || []).filter((_, i) => i !== index) })}
+                >
+                  {t("remove", lang)}
+                </button>
+              </div>
+              <Field label={t("filePath", lang)} value={seed.path} onChange={(path) => patchFile(index, { path })} />
+              <Area
+                label={t("fileContents", lang)}
+                value={seed.content}
+                rows={5}
+                onChange={(content) => patchFile(index, { content })}
+              />
+              <div className="content-row">
+                <Field label={t("fileMode", lang)} value={seed.mode || ""} onChange={(mode) => patchFile(index, { mode })} />
+                <Field label={t("fileOwner", lang)} value={seed.owner || ""} onChange={(owner) => patchFile(index, { owner })} />
+              </div>
+            </div>
+          ))}
+          <button type="button" className="educator-primary-button" onClick={addFile}>
+            {t("addFile", lang)}
+          </button>
+
+          <h3>{t("commandResults", lang)}</h3>
+          <p className="content-lede">{t("commandResultsNote", lang)}</p>
+          {(draft.commands || []).map((fixture, index) => (
+            <div key={`${fixture.command}-${index}`} className="content-block">
+              <div className="content-block__head">
+                <strong>{fixture.command || `#${index + 1}`}</strong>
+                <button
+                  type="button"
+                  className="content-danger"
+                  onClick={() => patchDraft({ commands: (draft.commands || []).filter((_, i) => i !== index) })}
+                >
+                  {t("remove", lang)}
+                </button>
+              </div>
+              <Field
+                label={t("commandLine", lang)}
+                value={fixture.command}
+                onChange={(command) => patchCommand(index, { command })}
+              />
+              <Area
+                label={t("fixtureOutput", lang)}
+                value={fixture.output}
+                rows={4}
+                onChange={(output) => patchCommand(index, { output })}
+              />
+              <div className="content-row">
+                <label className="content-field">
+                  <span>{t("commandExit", lang)}</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={255}
+                    value={fixture.exit ?? 0}
+                    onChange={(event) => patchCommand(index, { exit: Number(event.target.value) })}
+                  />
+                </label>
+                <Field label={t("commandFlag", lang)} value={fixture.flag || ""} onChange={(flag) => patchCommand(index, { flag })} />
+              </div>
+            </div>
+          ))}
+          <button type="button" className="educator-primary-button" onClick={addCommand}>
+            {t("addCommandResult", lang)}
           </button>
 
           <h3>{t("cheats", lang)}</h3>

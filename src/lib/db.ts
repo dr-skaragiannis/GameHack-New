@@ -15,6 +15,7 @@ import {
 import { emptyOverlay, type AuthoredModule, type AuthoredPath, type AuthoredSection, type ContentOverlay } from "./contentAuthoring";
 import { buildCourseExport, type CourseExport } from "./courseExport";
 import type { AssessmentQ } from "../data/assessments";
+import type { LabCommandFixture, LabFileSeed } from "./terminal";
 import type { QuizQ } from "../data/quizzes";
 import { applyCourseQuizOverrides } from "./courseQuizOverrides";
 
@@ -929,6 +930,31 @@ function sanitizeShots(value: unknown): AuthoredSection["shots"] {
   return shots.length ? shots : undefined;
 }
 
+/** Files a lab seeds into the sandbox. Content is the point, so it is kept whole. */
+function sanitizeFileSeeds(value: unknown, limit: number): LabFileSeed[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const seeds = value.slice(0, limit).map((raw: Record<string, unknown>) => ({
+    path: typeof raw?.path === "string" ? raw.path.slice(0, 400) : "",
+    content: typeof raw?.content === "string" ? raw.content.slice(0, 200_000) : "",
+    ...(typeof raw?.mode === "string" ? { mode: raw.mode.slice(0, 20) } : {}),
+    ...(typeof raw?.owner === "string" ? { owner: raw.owner.slice(0, 60) } : {}),
+    ...(typeof raw?.group === "string" ? { group: raw.group.slice(0, 60) } : {}),
+  })).filter((seed: LabFileSeed) => seed.path.startsWith("/"));
+  return seeds.length ? seeds : undefined;
+}
+
+/** Canned command results for a lab. Matching is exact, so the key is the line. */
+function sanitizeCommandFixtures(value: unknown, limit: number): LabCommandFixture[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const fixtures = value.slice(0, limit).map((raw: Record<string, unknown>) => ({
+    command: typeof raw?.command === "string" ? raw.command.slice(0, 400) : "",
+    output: typeof raw?.output === "string" ? raw.output.slice(0, 100_000) : "",
+    ...(Number.isFinite(Number(raw?.exit)) ? { exit: Math.max(0, Math.min(255, Number(raw.exit))) } : {}),
+    ...(typeof raw?.flag === "string" && raw.flag ? { flag: raw.flag.slice(0, 80) } : {}),
+  })).filter((fixture: LabCommandFixture) => fixture.command.trim().length > 0);
+  return fixtures.length ? fixtures : undefined;
+}
+
 function stringIdList(value: unknown, limit: number): string[] {
   if (!Array.isArray(value)) return [];
   return (value as unknown[]).filter((entry): entry is string => typeof entry === "string" && !!entry).slice(0, limit).map((entry) => entry.slice(0, 80));
@@ -1027,6 +1053,8 @@ function sanitizeOverlay(value: unknown): ContentOverlay {
               check: sanitizeCheck(challenge?.check),
             }))
           : [],
+        ...(sanitizeFileSeeds(raw.files, 400) ? { files: sanitizeFileSeeds(raw.files, 400) } : {}),
+        ...(sanitizeCommandFixtures(raw.commands, 200) ? { commands: sanitizeCommandFixtures(raw.commands, 200) } : {}),
       };
     }
   }
@@ -1036,6 +1064,7 @@ function sanitizeOverlay(value: unknown): ContentOverlay {
   const pathEdits = sanitizePathEdits(record.pathEdits);
   const hiddenPaths = stringIdList(record.hiddenPaths, 20);
   const hiddenModules = stringIdList(record.hiddenModules, 200);
+  const filesystem = sanitizeFileSeeds(record.filesystem, 4000);
   const quizzes = sanitizeQuestionBank<QuizQ>(record.quizzes);
   const assessments = sanitizeQuestionBank<AssessmentQ>(record.assessments);
   return {
@@ -1044,6 +1073,7 @@ function sanitizeOverlay(value: unknown): ContentOverlay {
     ...(pathEdits ? { pathEdits } : {}),
     ...(hiddenPaths.length ? { hiddenPaths } : {}),
     ...(hiddenModules.length ? { hiddenModules } : {}),
+    ...(filesystem ? { filesystem } : {}),
     ...(quizzes ? { quizzes } : {}),
     ...(assessments ? { assessments } : {}),
   };
@@ -1599,8 +1629,8 @@ export function extractOwnArchive(
 /** The full effective course catalogue — built-in paths merged with authored
  *  edits — as plain JSON. Objective tests are closures, so they are marked
  *  rather than silently dropped. */
-export function exportCourseCatalog(overlay?: ContentOverlay): CourseExport {
-  return buildCourseExport(overlay ?? getDB().contentOverlay);
+export function exportCourseCatalog(overlay?: ContentOverlay, filesystem?: LabFileSeed[]): CourseExport {
+  return buildCourseExport(overlay ?? getDB().contentOverlay, new Date(), filesystem);
 }
 
 export async function importPlayerArchive(archive: PlayerArchive, currentUserId?: string): Promise<number> {

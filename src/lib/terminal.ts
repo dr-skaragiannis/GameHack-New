@@ -21,6 +21,35 @@ export type FileNode = {
   children?: Record<string, FileNode>;
 };
 
+/**
+ * A file an educator places into the shared player filesystem for a lab. This
+ * is what lets an authored or imported lab be completable at all: without it,
+ * `cat /srv/lab/report.txt` in a new lab is simply "No such file or directory".
+ */
+export type LabFileSeed = {
+  /** Absolute path in the lab filesystem. Parent directories are created. */
+  path: string;
+  content: string;
+  mode?: string;
+  owner?: string;
+  group?: string;
+};
+
+/**
+ * A canned result for one command line. It lets a lab simulate a tool the
+ * shared runtime does not implement, or restate the output of one that it does.
+ */
+export type LabCommandFixture = {
+  /** The exact command line to match, as the player would type it. */
+  command: string;
+  /** What the command prints. Newlines become separate output lines. */
+  output: string;
+  /** Exit code, default 0. */
+  exit?: number;
+  /** Optional flag name, so a completion check can require this command. */
+  flag?: string;
+};
+
 export type Proc = {
   pid: number;
   user: string;
@@ -70,6 +99,8 @@ export type Terminal = {
   crontab: string[];
   crontabEditorPending: boolean;
   sshReturn: { user: string; host: string; cwd: string; home: string; isRoot: boolean; scenario: string } | null;
+  /** Results the active lab supplies for exact command lines. */
+  commandFixtures?: LabCommandFixture[];
   activeModuleId?: string;
 };
 
@@ -312,7 +343,13 @@ function defaultProcs(): Proc[] {
   ];
 }
 
-export function createTerminal(opts?: { fs?: FileNode; user?: string; host?: string; scenario?: string }): Terminal {
+export function createTerminal(opts?: {
+  fs?: FileNode;
+  user?: string;
+  host?: string;
+  scenario?: string;
+  commandFixtures?: LabCommandFixture[];
+}): Terminal {
   const user = opts?.user || "operator";
   const isDfir = opts?.scenario === "dfir";
   const rooty = user === "root" || opts?.scenario === "sudorun";
@@ -368,6 +405,7 @@ export function createTerminal(opts?: { fs?: FileNode; user?: string; host?: str
     crontab: ["# m h dom mon dow command"],
     crontabEditorPending: false,
     sshReturn: null,
+    commandFixtures: opts?.commandFixtures || [],
   };
 }
 
@@ -595,6 +633,103 @@ function parseRedirect(input: string): { left: string; operator: ">" | ">>"; des
   return null;
 }
 
+function ensureDirPath(root: FileNode, path: string): FileNode | null {
+  const target = normalize(path);
+  if (target === "/") return root;
+  let current = root;
+  for (const part of target.split("/").filter(Boolean)) {
+    current.children ||= {};
+    const existing = current.children[part];
+    if (existing && existing.type === "dir") {
+      current = existing;
+      continue;
+    }
+    if (existing) return null;
+    const created = dir(part);
+    current.children[part] = created;
+    current = created;
+  }
+  return current;
+}
+
+/**
+ * Place a lab's files into the shared player filesystem.
+ *
+ * Existing paths are left untouched on purpose: the player filesystem is one
+ * persistent tree for every lab, so rewriting a file the player has edited, or
+ * that a challenge already consumed, every time they open the lab would destroy
+ * their work. Revert lab is the explicit way back to the pristine tree.
+ *
+ * Returns how many files it actually created.
+ */
+export function seedFilesInto(root: FileNode, seeds: LabFileSeed[] | undefined): number {
+  if (!seeds?.length) return 0;
+  let created = 0;
+  for (const seed of seeds) {
+    if (!seed || typeof seed.path !== "string") continue;
+    const path = normalize(seed.path.trim());
+    if (!path.startsWith("/") || path === "/") continue;
+    if (getNode(root, path, false)) continue;
+    const { parent, name } = parentAndName(path);
+    const parentNode = ensureDirPath(root, parent);
+    if (!parentNode) continue;
+    parentNode.children ||= {};
+    parentNode.children[name] = {
+      name,
+      type: "file",
+      content: typeof seed.content === "string" ? seed.content : "",
+      ...(seed.mode ? { mode: seed.mode } : {}),
+      ...(seed.owner ? { owner: seed.owner } : {}),
+      ...(seed.group ? { group: seed.group } : {}),
+    };
+    created += 1;
+  }
+  return created;
+}
+
+/**
+ * Flatten a filesystem tree into the seed records an export carries, so an
+ * imported catalogue describes the sandbox its labs run in and not only prose.
+ * Directories are implied by the paths, and symlinks are skipped: a link is
+ * only meaningful against the tree it was written for.
+ */
+export function flattenFileTree(root: FileNode): LabFileSeed[] {
+  const seeds: LabFileSeed[] = [];
+  const walk = (node: FileNode, prefix: string) => {
+    const path = `${prefix}/${node.name}`;
+    if (node.type === "dir") {
+      for (const child of Object.values(node.children || {})) walk(child, node.name === "/" ? "" : path);
+      return;
+    }
+    if (node.linkTarget) return;
+    seeds.push({
+      path: node.name === "/" ? path : path,
+      content: node.content ?? "",
+      ...(node.mode ? { mode: node.mode } : {}),
+      ...(node.owner ? { owner: node.owner } : {}),
+      ...(node.group ? { group: node.group } : {}),
+    });
+  };
+  for (const child of Object.values(root.children || {})) walk(child, "");
+  return seeds;
+}
+
+/** Seed a terminal's filesystem. See {@link seedFilesInto} for the semantics. */
+export function seedLabFiles(t: Terminal, seeds: LabFileSeed[] | undefined): number {
+  return seedFilesInto(t.fs, seeds);
+}
+
+/**
+ * Match the exact command line against the active lab's fixtures. Exact rather
+ * than prefix or pattern matching, so a fixture can never fire on something the
+ * educator did not write out in full.
+ */
+function matchCommandFixture(t: Terminal, input: string): LabCommandFixture | undefined {
+  const wanted = input.trim();
+  if (!wanted || !t.commandFixtures?.length) return undefined;
+  return t.commandFixtures.find((fixture) => fixture.command.trim() === wanted);
+}
+
 export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean; stdin?: string | null }): TermLine[] {
   let input = raw.replace(/\s+$/, "");
   if (!input.trim()) return [];
@@ -639,6 +774,18 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
       return out;
     }
     out.push({ kind: "out", text: "Choose 1 for nano or 2 for vim.tiny, or type q to cancel." });
+    return out;
+  }
+
+  // A lab's own result for this command line, if it declares one. Placed after
+  // the interactive `at`/`crontab -e` prompts so a fixture cannot swallow the
+  // answer to a question the simulator asked, and before the shared runtime so
+  // a lab can restate what a built-in tool prints.
+  const fixture = matchCommandFixture(t, input);
+  if (fixture) {
+    for (const line of String(fixture.output ?? "").split("\n")) out.push({ kind: "out", text: line });
+    t.lastExit = Number.isFinite(Number(fixture.exit)) ? Number(fixture.exit) : 0;
+    if (fixture.flag) t.flags.add(fixture.flag);
     return out;
   }
 
