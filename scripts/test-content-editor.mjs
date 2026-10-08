@@ -142,6 +142,8 @@ try {
   type(labelled("Instruction — EL", "textarea"), "Δείξε τις είκοσι τελευταίες γραμμές του auth log.");
   type(labelled("Hint — EN", "textarea"), "tail -n 20 /var/log/auth.log");
   type(labelled("Hint — EL", "textarea"), "tail -n 20 /var/log/auth.log");
+  type(labelled("Additional material — EN", "textarea"), "Compare -n 20 with -f to follow the log live.");
+  type(labelled("Additional material — EL", "textarea"), "Σύγκρινε το -n 20 με το -f για να ακολουθείς το αρχείο ζωντανά.");
 
   // Set the XP for this objective.
   const xpField = labelled("XP reward", "input");
@@ -178,6 +180,12 @@ try {
   assert.match(savedLab.theory[0].body.en, /first place you look/, "the theory body is saved");
   assert.equal(savedLab.tasks[0].instruction.en, "Show the last twenty lines of the auth log.");
   assert.equal(savedLab.tasks[0].hint.en, "tail -n 20 /var/log/auth.log");
+  assert.equal(
+    savedLab.tasks[0].material.en,
+    "Compare -n 20 with -f to follow the log live.",
+    "the educator's additional material is saved",
+  );
+  assert.match(savedLab.tasks[0].material.el, /ζωντανά/, "additional material is saved in Greek too");
   assert.equal(savedLab.tasks[0].reward, 25, "the educator's XP value is saved");
   assert.deepEqual(savedLab.tasks[0].check, { kind: "command", pattern: "^tail " }, "the completion test is saved");
   assert.deepEqual(
@@ -189,6 +197,11 @@ try {
   // ── What the player sees ──────────────────────────────────────────────────
   const compiled = authoring.compileModule(savedLab);
   assert.equal(compiled.tasks[0].reward, 25);
+  assert.deepEqual(
+    compiled.tasks[0].material,
+    savedLab.tasks[0].material,
+    "additional material reaches the lab the player opens",
+  );
   const term = { ran: ["tail -n 20 /var/log/auth.log"], flags: new Set(), filesRead: [] };
   assert.equal(compiled.tasks[0].check(term), true, "the authored objective completes on the command it asks for");
   const playerPaths = authoring.effectiveLearningPaths(overlay);
