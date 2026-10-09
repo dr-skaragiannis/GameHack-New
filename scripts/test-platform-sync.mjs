@@ -104,6 +104,40 @@ const PROGRESS = { "sr-intro": { completed: true, done: ["cat", "ls"] }, "sr-hel
 try {
   await waitForServer();
 
+  // ── The case that actually broke: a browser copy from before the server ───
+  // Such an install identified the demo player as "nova", not as an address.
+  // The seeded browser store is exactly that shape, so it stands in for it.
+  const deviceF = await freshDevice("f");
+  const legacyNova = deviceF.db.allPlayers().find((user) => user.username === "nova");
+  assert.ok(legacyNova, "the pre-server browser copy identifies the player by bare username");
+  const legacyId = String(legacyNova.id);
+  const legacyProgress = { "sr-files": { completed: true, done: ["cat", "cp"] } };
+  deviceF.db.updateUser(legacyNova.id, { progress: legacyProgress, badges: ["veteran"] });
+
+  await signIn("nova@ionio.gr", "demodemo");
+  deviceF.db.establishAuthenticatedUser("nova@ionio.gr", "Nova Reyes", "player");
+  await deviceF.db.hydrateFromServer();
+  await deviceF.db.flushPlatformWrites();
+
+  const adopted = deviceF.db.userById("nova@ionio.gr");
+  assert.ok(adopted, "signing in creates the server identity");
+  assert.equal(
+    deviceF.db.allPlayers().filter((user) => user.username === "nova" || user.id === legacyId).length,
+    0,
+    "the old bare-username record is adopted, not left behind as a twin",
+  );
+  assert.deepEqual(adopted.progress, legacyProgress, "the progress earned before the server existed follows the player");
+  assert.deepEqual(adopted.badges, ["veteran"], "so do the badges");
+
+  const afterAdopt = await (await fetch("/api/platform")).json();
+  const adoptedOnServer = afterAdopt.platform.users.find((user) => user.id === "nova@ionio.gr");
+  assert.ok(adoptedOnServer, "the adopted record reached the server");
+  assert.deepEqual(adoptedOnServer.progress, legacyProgress, "and it reached the server with the old progress intact");
+  assert.ok(
+    !afterAdopt.platform.users.some((user) => user.id === "nova"),
+    "no bare-username twin is published to the server",
+  );
+
   // ── Device 1: the demo player earns some progress ────────────────────────
   const deviceA = await freshDevice("a");
   const nova = await signIn("nova@ionio.gr", "demodemo");
@@ -187,7 +221,7 @@ try {
     "a ticket the educator posts reaches the other players",
   );
 
-  console.log("Platform sync checks passed: progress and badges written in the app reach the server, a player who returns on a device with no localStorage gets them back from the server, another player can read them, one player's write does not disturb another's record, and a ticket the educator posts reaches the other players.");
+  console.log("Platform sync checks passed: progress and badges written in the app reach the server, a player who returns on a device with no localStorage gets them back from the server, another player can read them, one player's write does not disturb another's record, a ticket the educator posts reaches the other players, and a browser copy from before the server keeps its progress when the player signs in.");
 } catch (error) {
   console.error(error);
   if (logs) console.error("--- server log ---\n" + logs.slice(-1200));

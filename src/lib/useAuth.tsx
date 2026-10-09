@@ -70,7 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cached,
       authLink,
       serverAccountId: hasUniversityId(cached) ? cached.id : null,
-      shouldRestoreServerSession: !authLink && (!cached || hasUniversityId(cached)),
+      // Always ask the server. A cached browser copy says nothing about whether
+      // a session exists, and skipping the round trip is what left a returning
+      // player stranded on localStorage.
+      shouldRestoreServerSession: !authLink,
     };
   });
   const [user, setUser] = useState<User | null>(

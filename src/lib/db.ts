@@ -1235,6 +1235,21 @@ export function establishAuthenticatedUser(email: string, nickname: string, role
   const db = getDB();
   let user = db.users.find((item) => item.id.toLowerCase() === normalizedEmail);
   if (!user) {
+    // Installs from before the server identified a player by bare username.
+    // That record is the same person, so adopt it - progress, badges and all -
+    // instead of creating a second, empty one beside it.
+    const localPart = normalizedEmail.split("@")[0];
+    const legacy = db.users.find(
+      (item) => item.id.trim().toLowerCase() === localPart || item.username.trim().toLowerCase() === localPart,
+    );
+    if (legacy) {
+      legacy.id = normalizedEmail;
+      legacy.username = normalizedEmail;
+      legacy.displayName = legacy.displayName || normalizedNickname;
+      user = legacy;
+    }
+  }
+  if (!user) {
     user = {
       id: normalizedEmail,
       username: normalizedEmail,

@@ -271,6 +271,9 @@ export const UI: Dict = {
   whatHappened: { en: "What just happened", el: "Τι μόλις συνέβη" },
   quickQuiz: { en: "Quick quiz — 3 questions", el: "Σύντομο κουίζ — 3 ερωτήσεις" },
   startQuickQuiz: { en: "Start quick quiz", el: "Έναρξη σύντομου κουίζ" },
+  syncOnline: { en: "Saved on the server", el: "Αποθηκεύτηκε στον διακομιστή" },
+  syncOffline: { en: "Server unreachable — saved on this device only", el: "Ο διακομιστής δεν είναι προσβάσιμος — αποθήκευση μόνο σε αυτή τη συσκευή" },
+  syncIdle: { en: "Not connected yet", el: "Δεν έχει συνδεθεί ακόμα" },
   previousLab: { en: "Previous lab", el: "Προηγούμενο εργαστήριο" },
   nextLab: { en: "Next lab", el: "Επόμενο εργαστήριο" },
   quizLockedHint: {

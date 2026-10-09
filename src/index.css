@@ -2905,6 +2905,31 @@ body.is-map-panning * {
 }
 /* Lab navigation sits in the topbar, immediately left of the language switch,
    so the quiz trigger can never be covered by the terminal window again. */
+/* Where the state actually lives: green once a write reached the server, amber
+   when it could not and the browser copy is all there is. */
+.module-topbar__sync {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+}
+.module-topbar__sync > i {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgb(113 113 122);
+}
+.module-topbar__sync.is-online > i {
+  background: rgb(34 197 94);
+  box-shadow: 0 0 6px rgb(34 197 94 / 0.7);
+}
+.module-topbar__sync.is-offline > i {
+  background: rgb(245 158 11);
+  box-shadow: 0 0 6px rgb(245 158 11 / 0.7);
+}
 .module-topbar__lab-nav {
   flex: 0 1 auto;
   display: flex;

@@ -454,6 +454,26 @@ export default function App() {
       <Icon name="git" className="w-5 h-5" />
     </button>
   );
+  // Whether the last write reached the server. Without this a dead backend is
+  // indistinguishable from a working one, and the app quietly runs on the
+  // browser copy again.
+  const sync = db.platformSyncState();
+  const syncLabel = t(sync === "online" ? "syncOnline" : sync === "offline" ? "syncOffline" : "syncIdle", lang);
+  const syncBadge = (
+    <span
+      className={cn(
+        "module-topbar__sync",
+        sync === "online" && "is-online",
+        sync === "offline" && "is-offline",
+      )}
+      title={syncLabel}
+      aria-label={syncLabel}
+      role="status"
+    >
+      <i aria-hidden="true" />
+    </span>
+  );
+
   const renderAccountTools = (leading?: ReactNode) => (
     <div className="module-topbar__account-tools">
       <button
@@ -466,6 +486,7 @@ export default function App() {
       >
         <Icon name="palette" className="h-4 w-4" />
       </button>
+      {syncBadge}
       {leading}
       <button
         type="button"
