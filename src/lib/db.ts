@@ -2,6 +2,14 @@ import type { Lang } from "../i18n";
 import { AVATAR_COLORS, AVATAR_ICONS } from "./avatarCatalog";
 import { hashPassword, isScryptHash, verifyPassword } from "./passwordHash";
 import {
+  fetchPlatform,
+  flushPlatformWrites,
+  platformSyncState,
+  pushSharedCollections,
+  queueOwnPush,
+  queueSharedPush,
+} from "./platformSync";
+import {
   buildPlayerArchive,
   entryFromUser,
   hashRecoveryKey,
@@ -1129,20 +1137,95 @@ export function getDB(): DB {
   return cache;
 }
 
+/** The record the server may hold: never a credential. */
+function publicUserRecord(user: User): Record<string, unknown> {
+  const { passwordHash, recoveryKeyHash, ...rest } = user;
+  void passwordHash;
+  void recoveryKeyHash;
+  return rest as unknown as Record<string, unknown>;
+}
+
 export function saveDB(): boolean {
   if (!cache) return false;
   let saved = false;
   try {
+    // localStorage is now only an offline cache. The server holds the state
+    // that other players see and that survives a new device or a redeploy.
     localStorage.setItem(KEY, JSON.stringify(cache));
     saved = true;
   } catch {
-    /* Keep the legacy copy if storage is unavailable or full. */
+    /* A full or blocked store must not stop the write-through below. */
+  }
+  const me = cache.sessionUserId ? cache.users.find((user) => user.id === cache?.sessionUserId) : null;
+  if (me) queueOwnPush({ user: publicUserRecord(me) });
+  // Tickets, messages, teams and the authored course are shared state: only an
+  // educator may publish them, and the server enforces that independently.
+  if (me?.role === "educator") {
+    queueSharedPush({
+      tickets: cache.tickets,
+      messages: cache.messages,
+      chats: cache.chats,
+      teams: cache.teams,
+      teamApplications: cache.teamApplications,
+      contentOverlay: cache.contentOverlay,
+    });
   }
   notifyDBChange();
   return saved;
 }
 
-export function establishAuthenticatedUser(email: string, nickname: string): User {
+/**
+ * Replace the browser's copy with the server's document. The server is the
+ * source of truth for everybody else's progress, and for the shared
+ * collections; a local-only user is kept so a fresh device still has the demo
+ * cohort until that account signs in and publishes itself.
+ */
+export async function hydrateFromServer(): Promise<boolean> {
+  const platform = await fetchPlatform();
+  if (!platform) return false;
+  const db = getDB();
+  const byId = new Map(db.users.map((user) => [user.id.toLowerCase(), user]));
+  for (const incoming of platform.users) {
+    const user = normalizeStoredUser(incoming);
+    if (!user) continue;
+    byId.set(user.id.toLowerCase(), user);
+  }
+  db.users = [...byId.values()];
+  // An empty server collection means nobody has published yet, so a local
+  // educator's work is kept and pushed up rather than discarded.
+  const adopt = <T,>(local: T[], remote: unknown[]): T[] =>
+    remote.length ? (remote as T[]) : local;
+  db.feed = adopt(db.feed, platform.feed);
+  db.tickets = adopt(db.tickets, platform.tickets);
+  db.messages = adopt(db.messages, platform.messages);
+  db.chats = adopt(db.chats, platform.chats);
+  db.teams = adopt(db.teams, platform.teams);
+  db.teamApplications = adopt(db.teamApplications, platform.teamApplications);
+  db.commandLog = adopt(db.commandLog, platform.commandLog);
+  if (platform.contentOverlay && Object.keys(platform.contentOverlay).length) {
+    db.contentOverlay = platform.contentOverlay as DB["contentOverlay"];
+  }
+  applyCourseQuizOverrides(db.contentOverlay);
+  saveDB();
+  return true;
+}
+
+/** Publish the shared collections now - used by the educator dashboard. */
+export function publishSharedState(): void {
+  if (!cache) return;
+  queueSharedPush({
+    tickets: cache.tickets,
+    messages: cache.messages,
+    chats: cache.chats,
+    teams: cache.teams,
+    teamApplications: cache.teamApplications,
+    contentOverlay: cache.contentOverlay,
+  });
+}
+
+export { flushPlatformWrites, platformSyncState, pushSharedCollections };
+
+export function establishAuthenticatedUser(email: string, nickname: string, role?: "player" | "educator"): User {
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedNickname = nickname.trim();
   if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@ionio\.gr$/i.test(normalizedEmail) || !normalizedNickname) {
@@ -1156,7 +1239,7 @@ export function establishAuthenticatedUser(email: string, nickname: string): Use
       id: normalizedEmail,
       username: normalizedEmail,
       passwordHash: "",
-      role: "player",
+      role: role === "educator" ? "educator" : "player",
       displayName: normalizedNickname,
       avatar: randomIconAvatar(),
       bio: "",
@@ -1173,7 +1256,9 @@ export function establishAuthenticatedUser(email: string, nickname: string): Use
     pushFeed(user, "join", `${user.displayName} joined GameHack`);
   } else {
     user.username = normalizedEmail;
-    user.role = "player";
+    // The server decides the role; taking it from the account is what stops a
+    // returning educator being silently downgraded on every login.
+    user.role = role === "educator" ? "educator" : "player";
     if (!user.displayName) user.displayName = normalizedNickname;
   }
 

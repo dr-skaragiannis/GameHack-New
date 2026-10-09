@@ -46,12 +46,118 @@ const mailer = smtpHost && mailFrom && (!!smtpUser === !!smtpPass)
     })
   : null;
 
-let store = { accounts: [] };
+let store = { accounts: [], platform: null };
 let saveQueue = Promise.resolve();
+
+/**
+ * Everything the platform used to keep in the browser's localStorage: player
+ * progress, profiles, badges, tickets, messages, teams and the authored course
+ * overlay. It lives here so a cohort shares one state and a redeploy or a
+ * different device does not lose it.
+ */
+const PLATFORM_COLLECTIONS = [
+  "users", "feed", "tickets", "messages", "chats", "teams", "teamApplications", "commandLog",
+];
+
+function defaultPlatform() {
+  const base = { revision: 0, contentOverlay: {}, updatedAt: 0 };
+  for (const name of PLATFORM_COLLECTIONS) base[name] = [];
+  return base;
+}
+
+/**
+ * Whether a store file was actually on disk at boot. The demo logins are
+ * provisioned when it is missing, so an account count can never be zero again -
+ * this flag is what still tells an operator their volume is not attached.
+ */
+let storeFileExisted = false;
+
+// A whole classroom travels as one document, so the auth body limit is far too
+// small. This is the ceiling for platform payloads.
+const PLATFORM_BODY_LIMIT = 8 * 1024 * 1024;
+
+async function readLargeJson(req, limit) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > limit) throw Object.assign(new Error("body-too-large"), { statusCode: 413 });
+    chunks.push(chunk);
+  }
+  if (!chunks.length) return {};
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } catch {
+    throw Object.assign(new Error("invalid-json"), { statusCode: 400 });
+  }
+}
+
+/** Emails that may write the shared collections (tickets, teams, overlay...). */
+function educatorEmails() {
+  return String(process.env.EDUCATOR_EMAILS || "")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isEducatorAccount(account) {
+  const email = String(account.email || "").trim().toLowerCase();
+  return account.role === "educator" || educatorEmails().includes(email);
+}
+
+/**
+ * A player may only ever write their own record. Whatever else the client
+ * claims, the identity, credentials and role stay what the server already has.
+ */
+function sanitizeSelfUser(incoming, existing, account) {
+  const base = existing ? { ...existing } : {};
+  const safe = { ...base, ...incoming };
+  safe.id = base.id || incoming.id;
+  safe.username = base.username || incoming.username;
+  safe.displayName = base.displayName || incoming.displayName;
+  // Never accept authority or credentials from the browser.
+  delete safe.passwordHash;
+  delete safe.recoveryKeyHash;
+  safe.role = base.role || (isEducatorAccount(account) ? "educator" : "player");
+  if (existing) {
+    safe.passwordHash = existing.passwordHash;
+    safe.recoveryKeyHash = existing.recoveryKeyHash;
+    safe.role = existing.role || safe.role;
+  }
+  safe.email = account.email;
+  return safe;
+}
+
+/**
+ * Personal activity logs are append-only per player: a client can add its own
+ * entries but cannot rewrite or delete somebody else's history.
+ */
+function mergeOwnEntries(list, incoming, ownerId) {
+  if (!Array.isArray(incoming)) return 0;
+  const mine = new Set(
+    list.filter((item) => String(item?.userId || "").toLowerCase() === ownerId)
+      .map((item) => item.id),
+  );
+  let added = 0;
+  for (const entry of incoming) {
+    if (!entry || typeof entry !== "object") continue;
+    if (String(entry.userId || "").toLowerCase() !== ownerId) continue;
+    if (entry.id && mine.has(entry.id)) continue;
+    list.push(entry);
+    if (entry.id) mine.add(entry.id);
+    added += 1;
+  }
+  return added;
+}
 
 try {
   const parsed = JSON.parse(await fs.readFile(dataFile, "utf8"));
-  if (parsed && Array.isArray(parsed.accounts)) store = parsed;
+  if (parsed && Array.isArray(parsed.accounts)) store = { ...parsed };
+  storeFileExisted = true;
+  if (!store.platform || typeof store.platform !== "object") store.platform = defaultPlatform();
+  for (const name of PLATFORM_COLLECTIONS) {
+    if (!Array.isArray(store.platform[name])) store.platform[name] = [];
+  }
 } catch (error) {
   if (error.code !== "ENOENT") {
     console.error(`Could not read auth data at ${dataFile}:`, error);
@@ -86,7 +192,13 @@ function cleanNickname(value) {
 }
 
 function publicAccount(account) {
-  return { email: account.email, nickname: account.nickname, role: "player" };
+  // The role is decided here, never by the client, so the browser cannot claim
+  // authority it does not have.
+  return {
+    email: account.email,
+    nickname: account.nickname,
+    role: isEducatorAccount(account) ? "educator" : "player",
+  };
 }
 
 function sendJson(res, status, body, headers = {}) {
@@ -556,11 +668,86 @@ async function handleHealth(req, res) {
   });
 }
 
+/**
+ * The shared platform document. Any signed-in player can read all of it, which
+ * is what makes other players, their progress and the leaderboard visible to
+ * everybody. Writes are scoped: a player may replace only their own record and
+ * append to their own activity, while the shared collections need an educator.
+ */
+async function handlePlatform(req, res, pathname) {
+  const session = authenticatedSession(req);
+  if (!session) return sendJson(res, 401, { error: "authenticationRequired" });
+  const account = session.account;
+  if (!store.platform) store.platform = defaultPlatform();
+  const identity = String(account.email || "").trim().toLowerCase();
+
+  if (req.method === "GET" && pathname === "/api/platform") {
+    return sendJson(res, 200, { ok: true, platform: store.platform });
+  }
+
+  if (req.method === "PUT" && pathname === "/api/platform/self") {
+    const body = await readLargeJson(req, PLATFORM_BODY_LIMIT);
+    const incoming = body && body.user;
+    if (!incoming || typeof incoming !== "object") return sendJson(res, 400, { error: "userRequired" });
+    const claimed = String(incoming.id || "").trim().toLowerCase();
+    if (claimed && claimed !== identity) {
+      return sendJson(res, 403, { error: "cannotWriteAnotherPlayer" });
+    }
+    const list = store.platform.users;
+    const index = list.findIndex((item) => String(item.id || "").toLowerCase() === identity);
+    const safe = sanitizeSelfUser(incoming, index >= 0 ? list[index] : null, account);
+    safe.id = identity;
+    safe.username = safe.username || identity;
+    if (index >= 0) list[index] = safe; else list.push(safe);
+    const addedLog = mergeOwnEntries(store.platform.commandLog, body.commandLog, identity);
+    const addedFeed = mergeOwnEntries(store.platform.feed, body.feed, identity);
+    store.platform.revision += 1;
+    store.platform.updatedAt = Date.now();
+    await saveStore();
+    return sendJson(res, 200, {
+      ok: true,
+      revision: store.platform.revision,
+      user: safe,
+      addedLog,
+      addedFeed,
+    });
+  }
+
+  if (req.method === "PUT" && pathname === "/api/platform/shared") {
+    if (!isEducatorAccount(account)) return sendJson(res, 403, { error: "educatorOnly" });
+    const body = await readLargeJson(req, PLATFORM_BODY_LIMIT);
+    const applied = [];
+    for (const name of ["tickets", "messages", "chats", "teams", "teamApplications"]) {
+      if (Array.isArray(body?.[name])) {
+        store.platform[name] = body[name];
+        applied.push(name);
+      }
+    }
+    if (body?.contentOverlay && typeof body.contentOverlay === "object") {
+      store.platform.contentOverlay = body.contentOverlay;
+      applied.push("contentOverlay");
+    }
+    if (Array.isArray(body?.feed)) {
+      store.platform.feed = body.feed;
+      applied.push("feed");
+    }
+    store.platform.revision += 1;
+    store.platform.updatedAt = Date.now();
+    await saveStore();
+    return sendJson(res, 200, { ok: true, revision: store.platform.revision, applied });
+  }
+
+  return sendJson(res, 405, { error: "methodNotAllowed" });
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", "http://localhost");
     if (url.pathname === "/api/health") return await handleHealth(req, res);
     if (url.pathname.startsWith("/api/auth/")) return await handleAuth(req, res, url.pathname);
+    if (url.pathname === "/api/platform" || url.pathname.startsWith("/api/platform/")) {
+      return await handlePlatform(req, res, url.pathname);
+    }
     return await serveStatic(req, res, url.pathname);
   } catch (error) {
     console.error("Request failed:", error);
@@ -587,6 +774,51 @@ async function upgradePlaintextPasswords() {
 
 await upgradePlaintextPasswords();
 
+/**
+ * The two logins the platform must always offer: a player account for trying it
+ * out and the instructor account. They are provisioned here rather than in the
+ * browser, so a cohort shares one identity for them and their progress persists
+ * on the server exactly like everybody else's.
+ */
+const DEMO_ACCOUNTS = [
+  { email: "nova@ionio.gr", nickname: "Nova Reyes", password: "demodemo", role: "player" },
+  { email: "educator@ionio.gr", nickname: "Dr. Mara Vance", password: "teach123", role: "educator" },
+];
+
+async function ensureDemoAccounts() {
+  let changed = false;
+  for (const demo of DEMO_ACCOUNTS) {
+    const existing = store.accounts.find((item) => item.email === demo.email);
+    if (existing) {
+      if (existing.role !== demo.role) {
+        existing.role = demo.role;
+        changed = true;
+      }
+      continue;
+    }
+    const now = Date.now();
+    store.accounts.push({
+      email: demo.email,
+      nickname: demo.nickname,
+      passwordHash: await hashPassword(demo.password),
+      role: demo.role,
+      createdAt: now,
+      activatedAt: now,
+      activationTokenHash: null,
+      activationExpiresAt: null,
+      recoveryKeyHash: null,
+      resetTokenHash: null,
+      resetExpiresAt: null,
+      sessionVersion: 0,
+    });
+    changed = true;
+    console.log(`Provisioned the ${demo.role} demo account ${demo.email}.`);
+  }
+  if (changed) await saveStore();
+}
+
+await ensureDemoAccounts();
+
 // Credentials and recovery keys live only in this file. Report where it is, and
 // shout when it is empty or unwritable, before announcing that the service is
 // up — an operator reading the boot log should hit the diagnosis first, and
@@ -596,8 +828,8 @@ console.log(`Account store: ${persistence.path} (${persistence.accounts} account
 if (!persistence.writable) {
   console.warn(`The account store directory ${persistence.directory} is not writable. Registrations, password changes and recovery keys will be lost on restart. Mount persistent storage there or set AUTH_DATA_FILE to a durable path.`);
 }
-if (persistence.accounts === 0) {
-  console.warn(`No accounts were found at ${persistence.path}. If this service was deployed before, the previous store was not attached — every registered account and recovery key from it is gone. Mount persistent storage at ${persistence.directory} (see README "Production deployment") so accounts survive a redeploy.`);
+if (!storeFileExisted) {
+  console.warn(`No accounts were found on disk at ${persistence.path}; the store file did not exist, so the demo logins were provisioned from scratch. If this service was deployed before, the previous store was not attached — every registered account, recovery key and all player progress from it is gone. Mount persistent storage at ${persistence.directory} (see README "Production deployment") so it survives a redeploy.`);
 }
 if (!process.env.AUTH_DATA_FILE && persistence.directory.startsWith(rootDir)) {
   console.warn(`AUTH_DATA_FILE is not set, so the store defaults to ${persistence.path} inside the application directory. In a container that path is part of the image layer and is discarded on every deploy. Set AUTH_DATA_FILE to a mounted volume.`);

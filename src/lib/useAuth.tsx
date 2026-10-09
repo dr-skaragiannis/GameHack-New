@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import * as db from "./db";
 import type { User } from "./db";
+import { flushPlatformWrites } from "./platformSync";
 
 type AuthResult = {
   ok: boolean;
@@ -96,11 +97,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!initialSession.shouldRestoreServerSession) return;
     let cancelled = false;
     getRemoteSession()
-      .then((account) => {
+      .then(async (account) => {
         if (cancelled) return;
         if (account) {
-          db.establishAuthenticatedUser(account.email, account.nickname);
-          setUser(snapshot());
+          db.establishAuthenticatedUser(account.email, account.nickname, account.role);
+          // Pull the shared document before the first render reads it, so the
+          // cohort's progress and tickets are there rather than a stale copy.
+          await db.hydrateFromServer().catch(() => false);
+          if (!cancelled) setUser(snapshot());
         } else if (initialSession.serverAccountId) {
           db.logout();
           setUser(null);
@@ -114,12 +118,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [initialSession]);
 
-  const doLogin = useCallback(async (identity: string, password: string): Promise<AuthResult> => {
-    if (identity.includes("@")) {
-      const result = await postAuth("/api/auth/login", { email: identity, password });
-      if (!result.ok || !result.account) return { ok: false, error: result.error || "invalidCredentials" };
+  /**
+   * Every sign-in goes to the server, which holds the platform state. A bare
+   * username is a university address without the domain, so it is completed
+   * rather than treated as a separate local identity - that split is what used
+   * to leave progress stranded in one browser's localStorage.
+   */
+  const serverSignIn = useCallback(async (identity: string, password: string): Promise<AuthResult> => {
+    const email = identity.includes("@") ? identity.trim() : `${identity.trim().toLowerCase()}@ionio.gr`;
+    const result = await postAuth("/api/auth/login", { email, password });
+    if (result.ok && result.account) {
       try {
-        db.establishAuthenticatedUser(result.account.email, result.account.nickname);
+        db.establishAuthenticatedUser(result.account.email, result.account.nickname, result.account.role);
+        await db.hydrateFromServer();
         setUser(snapshot());
         setVersion((value) => value + 1);
         return { ok: true };
@@ -127,14 +138,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { ok: false, error: "authServerUnavailable" };
       }
     }
+    return { ok: false, error: result.error || "invalidCredentials" };
+  }, []);
 
-    const result = db.login(identity, password);
+  const doLogin = useCallback(async (identity: string, password: string): Promise<AuthResult> => {
+    const viaServer = await serverSignIn(identity, password);
+    if (viaServer.ok || viaServer.error !== "authServerUnavailable") return viaServer;
+    // The server is unreachable, not the credentials wrong. Fall back to the
+    // browser copy so a classroom without a network is not locked out, and let
+    // the sync-state badge say the work is local only.
+    const result = db.login(identity.trim(), password);
     if (result.ok) {
       setUser(snapshot());
       setVersion((value) => value + 1);
     }
     return { ok: result.ok, error: result.error };
-  }, []);
+  }, [serverSignIn]);
 
   const doLoginWithRecoveryKey = useCallback(async (email: string, recoveryKey: string): Promise<AuthResult> => {
     const result = await postAuth("/api/auth/login-with-key", { email, recoveryKey });
@@ -163,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     postAuth("/api/auth/recovery-key/rotate", {}), []);
 
   const doLogout = useCallback(() => {
+    void flushPlatformWrites().catch(() => undefined);
     void fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => {});
     db.logout();
     setUser(null);

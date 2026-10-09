@@ -23,7 +23,9 @@
     "test:persistence": "node scripts/test-persistence.mjs",
     "preview": "npm start",
     "start": "node server/index.mjs",
-    "test:labnav": "node scripts/test-lab-nav.mjs"
+    "test:labnav": "node scripts/test-lab-nav.mjs",
+    "test:platform": "node scripts/test-platform-store.mjs",
+    "test:sync": "node scripts/test-platform-sync.mjs"
   },
   "dependencies": {
     "@noble/hashes": "^1.8.0",

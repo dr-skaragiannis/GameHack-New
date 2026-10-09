@@ -102,7 +102,8 @@ try {
 
   const healthBefore = await first.health();
   assert.equal(healthBefore.status, 200, "health should answer");
-  assert.equal(healthBefore.body.persistence.accounts, 0, "a fresh volume starts empty");
+  assert.equal(healthBefore.body.persistence.accounts, 2,
+    "a fresh volume holds only the two provisioned demo accounts");
 
   const registered = await first.request("/api/auth/register", { email, password, nickname: "Persist Check" });
   assert.equal(registered.status, 201, `registration should succeed: ${JSON.stringify(registered.body)}`);
@@ -111,13 +112,19 @@ try {
 
   // The store has to be on disk before the process dies, or nothing persists.
   const stored = JSON.parse(await fs.readFile(path.join(volume, "accounts.json"), "utf8"));
-  assert.equal(stored.accounts.length, 1, "the account must be written to the store file");
-  assert.ok(!("password" in stored.accounts[0]), "no plaintext password may be stored");
-  assert.ok(!("recoveryKey" in stored.accounts[0]), "no plaintext recovery key may be stored");
-  assert.ok(stored.accounts[0].recoveryKeyHash, "the recovery key must be stored as a hash");
+  assert.ok(
+    stored.accounts.some((account) => account.email === email),
+    "the account must be written to the store file",
+  );
+  assert.ok(stored.accounts.every((account) => !("password" in account)), "no plaintext password may be stored");
+  assert.ok(stored.accounts.every((account) => !("recoveryKey" in account)), "no plaintext recovery key may be stored");
+  assert.ok(
+    stored.accounts.find((account) => account.email === email)?.recoveryKeyHash,
+    "the recovery key must be stored as a hash",
+  );
 
   const healthAfter = await first.health();
-  assert.equal(healthAfter.body.persistence.accounts, 1, "health should report the stored account");
+  assert.equal(healthAfter.body.persistence.accounts, 3, "health should report the stored account");
   assert.equal(healthAfter.body.persistence.persisted, true, "health should report the file on disk");
   assert.equal(healthAfter.body.persistence.writable, true, "health should report the store writable");
   assert.equal(healthAfter.body.stableSessions, true, "AUTH_SESSION_SECRET should be reported as set");
@@ -128,7 +135,7 @@ try {
   // This is the case that was failing.
   const second = startServer({ dataFile: path.join(volume, "accounts.json"), port: nextPort++ });
   await second.ready();
-  assert.equal((await second.health()).body.persistence.accounts, 1, "the redeploy should find the account");
+  assert.equal((await second.health()).body.persistence.accounts, 3, "the redeploy should find the account");
 
   const login = await second.request("/api/auth/login", { email, password });
   assert.equal(login.status, 200, `the same credentials must work after a redeploy: ${JSON.stringify(login.body)}`);

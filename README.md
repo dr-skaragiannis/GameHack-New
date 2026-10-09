@@ -21,7 +21,7 @@ Deploy this as a Node web service, not as a static-only site:
 
 ### Accounts must be on persistent storage
 
-Every registered account, its scrypt password hash and its recovery-key hash live in one JSON file at `AUTH_DATA_FILE` (default `.data/accounts.json`). The container filesystem is discarded on every deploy, so **if that path is not a mounted volume, every credential is lost on redeploy** and nobody can sign in any more.
+Every registered account, its scrypt password hash and its recovery-key hash — and the whole platform document: player progress, profiles, badges, tickets, messages, teams and the authored course overlay — live in one JSON file at `AUTH_DATA_FILE` (default `.data/accounts.json`). Nothing of it is kept in the browser any more; localStorage is only an offline cache, which is what lets one player see another's progress and lets a player return on a different device. The container filesystem is discarded on every deploy, so **if that path is not a mounted volume, every credential is lost on redeploy** and nobody can sign in any more.
 
 The repo ships the deployment config that gets this right:
 
@@ -50,6 +50,7 @@ Configure these in the hosting dashboard; do not commit real credentials:
 - `APP_ORIGIN` (the public HTTPS origin used in password-reset links)
 - `AUTH_SESSION_SECRET` (a long random secret — without it every restart logs everyone out)
 - `AUTH_DATA_FILE` (place this on persistent storage, for example `/var/data/accounts.json`)
+- `EDUCATOR_EMAILS` (comma-separated addresses allowed to publish the shared collections — tickets, messages, teams and the course overlay; the two demo logins are provisioned on boot, and `educator@ionio.gr` already carries the role)
 
 ### What still lives in the browser
 
