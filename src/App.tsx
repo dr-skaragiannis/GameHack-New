@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { t, uppercaseLabel, type Lang } from "./i18n";
 import * as db from "./lib/db";
@@ -7,7 +7,6 @@ import { useAuth } from "./lib/useAuth";
 import { sound } from "./lib/sound";
 import { passesQuickQuiz } from "./lib/quizProgress";
 import { QUIZZES } from "./data/quizzes";
-import { ASSESSMENTS } from "./data/assessments";
 import { cn } from "./utils/cn";
 import AuthScreen from "./components/AuthScreen";
 import HomePage from "./components/HomePage";
@@ -120,6 +119,7 @@ export default function App() {
   const [badgeId, setBadgeId] = useState<string | null>(null);
   const [quizFor, setQuizFor] = useState<string | null>(null);
   const [assessmentFor, setAssessmentFor] = useState<string | null>(null);
+  const [labWorkComplete, setLabWorkComplete] = useState(false);
   const [scoreboardOpen, setScoreboardOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -454,7 +454,7 @@ export default function App() {
       <Icon name="git" className="w-5 h-5" />
     </button>
   );
-  const accountTools = (
+  const renderAccountTools = (leading?: ReactNode) => (
     <div className="module-topbar__account-tools">
       <button
         type="button"
@@ -466,6 +466,7 @@ export default function App() {
       >
         <Icon name="palette" className="h-4 w-4" />
       </button>
+      {leading}
       <button
         type="button"
         onClick={() => setLang(lang === "en" ? "el" : "en")}
@@ -614,12 +615,56 @@ export default function App() {
       onOpenScoreboard={() => setScoreboardOpen(true)}
     />
   );
+  // Previous / next lab, plus the quiz trigger that used to sit under the
+  // terminal. Next stays locked until the current lab is actually complete.
+  const labIndex = active ? campaign.modules.findIndex((module) => module.id === active.id) : -1;
+  const previousLab = labIndex > 0 ? campaign.modules[labIndex - 1] : undefined;
+  const nextLab = labIndex >= 0 && labIndex < campaign.modules.length - 1 ? campaign.modules[labIndex + 1] : undefined;
+  const currentLabCompleted = !!active && !!user.progress[active.id]?.completed;
+  const labNav: ReactNode = active ? (
+    <div className="module-topbar__lab-nav" role="group" aria-label={lang === "el" ? "Εργαστήριο και κουίζ" : "Lab and quiz"}>
+      {(QUIZZES[active.id]?.length || 0) > 0 && (
+        <button
+          type="button"
+          className="module-topbar__quiz"
+          disabled={!labWorkComplete}
+          title={labWorkComplete ? t("quickQuiz", lang) : t("quizLockedHint", lang)}
+          onClick={() => {
+            setQuizFor(active.id);
+            sound.popup();
+          }}
+        >
+          {t("startQuickQuiz", lang)}
+        </button>
+      )}
+      <button
+        type="button"
+        className="module-topbar__step"
+        disabled={!previousLab}
+        onClick={() => previousLab && openModule(campaign.id, previousLab.id)}
+      >
+        <Icon name="chevron" className="h-3.5 w-3.5 -rotate-180" />
+        {t("previousLab", lang)}
+      </button>
+      <button
+        type="button"
+        className="module-topbar__step"
+        disabled={!nextLab || !currentLabCompleted}
+        title={currentLabCompleted ? undefined : t("nextLabLockedHint", lang)}
+        onClick={() => nextLab && openModule(campaign.id, nextLab.id)}
+      >
+        {t("nextLab", lang)}
+        <Icon name="chevron" className="h-3.5 w-3.5 rotate-180" />
+      </button>
+    </div>
+  ) : undefined;
+
   const moduleTopbarTools = (
     <div className="module-topbar__meta-row">
       {quickStats}
       <div className="module-topbar__app-tools">
         {mobileMenuButton}
-        {accountTools}
+        {renderAccountTools(labNav)}
       </div>
     </div>
   );
@@ -766,7 +811,7 @@ export default function App() {
           <header className="app-topbar sticky top-0 z-20 flex min-h-16 items-center gap-2 px-3 py-2 sm:gap-3 sm:px-4 border-b border-gamehack-border bg-gamehack-bg/80 backdrop-blur">
             {mobileMenuButton}
             {quickStats}
-            {accountTools}
+            {renderAccountTools()}
           </header>
         )}
 
@@ -902,18 +947,9 @@ export default function App() {
                   progress: { ...u.progress, [active.id]: { ...mp, hinted: true } },
                 });
               }}
-              onStartQuiz={() => {
-                setQuizFor(active.id);
-                sound.popup();
-              }}
-              onStartAssessment={() => {
-                setAssessmentFor(active.id);
-                sound.popup();
-              }}
-              assessmentTaken={!!user.progress[active.id]?.assessed}
               hasQuiz={(QUIZZES[active.id]?.length || 0) > 0}
-              hasAssessment={(ASSESSMENTS[active.id]?.length || 0) > 0}
               onCompleteLab={() => finishLabWithoutQuiz(active.id)}
+              onWorkComplete={setLabWorkComplete}
               onBack={() => go("map")}
             />
           )}

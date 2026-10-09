@@ -271,6 +271,16 @@ export const UI: Dict = {
   whatHappened: { en: "What just happened", el: "Τι μόλις συνέβη" },
   quickQuiz: { en: "Quick quiz — 3 questions", el: "Σύντομο κουίζ — 3 ερωτήσεις" },
   startQuickQuiz: { en: "Start quick quiz", el: "Έναρξη σύντομου κουίζ" },
+  previousLab: { en: "Previous lab", el: "Προηγούμενο εργαστήριο" },
+  nextLab: { en: "Next lab", el: "Επόμενο εργαστήριο" },
+  quizLockedHint: {
+    en: "Finish every objective and both challenges to unlock the quiz",
+    el: "Ολοκλήρωσε όλους τους στόχους και τις δύο προκλήσεις για να ξεκλειδώσεις το κουίζ",
+  },
+  nextLabLockedHint: {
+    en: "Complete this lab to move on to the next one",
+    el: "Ολοκλήρωσε αυτό το εργαστήριο για να πας στο επόμενο",
+  },
   continueToNextLab: { en: "Continue to next lab", el: "Συνέχεια στο επόμενο εργαστήριο" },
   quizPassRequirement: { en: "Answer at least 2 of the 3 questions correctly to pass.", el: "Απάντησε σωστά σε τουλάχιστον 2 από τις 3 ερωτήσεις για να περάσεις." },
   quizPassed: { en: "Assessment passed", el: "Η αξιολόγηση ολοκληρώθηκε με επιτυχία" },

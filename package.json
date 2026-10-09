@@ -22,7 +22,8 @@
     "test:export": "node scripts/test-data-export.mjs",
     "test:persistence": "node scripts/test-persistence.mjs",
     "preview": "npm start",
-    "start": "node server/index.mjs"
+    "start": "node server/index.mjs",
+    "test:labnav": "node scripts/test-lab-nav.mjs"
   },
   "dependencies": {
     "@noble/hashes": "^1.8.0",

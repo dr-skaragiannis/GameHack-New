@@ -151,12 +151,9 @@ export default function ModuleView({
   onTask,
   onCommandMetric,
   onHint,
-  onStartQuiz,
-  onStartAssessment,
-  assessmentTaken,
   hasQuiz,
-  hasAssessment,
   onCompleteLab,
+  onWorkComplete,
   onBack,
 }: {
   module: Module;
@@ -172,12 +169,10 @@ export default function ModuleView({
   onTask: (taskId: string, hintUsed: boolean) => void;
   onCommandMetric: (pasted: boolean, typo: boolean, execution: CommandExecutionInput) => void;
   onHint: () => void;
-  onStartQuiz: () => void;
-  onStartAssessment: () => void;
-  assessmentTaken?: boolean;
   /** False for an authored lab: the educator wrote no quiz for it yet. */
   hasQuiz?: boolean;
-  hasAssessment?: boolean;
+  /** Tells the shell when the lab's own work is done, to gate the topbar quiz. */
+  onWorkComplete?: (complete: boolean) => void;
   /** Marks the lab complete without a quiz. */
   onCompleteLab: () => void;
   onBack: () => void;
@@ -254,6 +249,10 @@ export default function ModuleView({
   const ch1 = done.includes("ch-0") || module.challenges[0].check(term);
   const ch2 = done.includes("ch-1") || module.challenges[1].check(term);
   const moduleComplete = allTasks && ch1 && ch2;
+
+  useEffect(() => {
+    onWorkComplete?.(moduleComplete);
+  }, [moduleComplete, onWorkComplete]);
 
   const progress = useMemo(() => {
     const total = module.tasks.length + 2;
@@ -650,28 +649,9 @@ export default function ModuleView({
                   {hasQuiz
                     ? <p className="mt-1 text-sm leading-relaxed text-zinc-400">{t("quizPassRequirement", lang)}</p>
                     : <p className="mt-1 text-sm leading-relaxed text-zinc-400">{t("noQuizForLab", lang)}</p>}
-                  {hasAssessment && <p className="mt-1 text-sm leading-relaxed text-iron-500">{t("assessmentPrompt", lang)}</p>}
-                </div>
-                <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                  {hasAssessment && (
-                    <button
-                      type="button"
-                      onClick={onStartAssessment}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-500/50 px-4 py-2.5 font-semibold text-violet-200 transition hover:border-violet-400 hover:text-violet-100"
-                    >
-                      {assessmentTaken ? t("assessmentTaken", lang) : t("startAssessment", lang)}
-                    </button>
-                  )}
-                  {hasQuiz ? (
-                    <button
-                      type="button"
-                      onClick={onStartQuiz}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 font-semibold text-white transition hover:bg-cyan-500"
-                    >
-                      {t("startQuickQuiz", lang)}
-                      <Icon name="chevron" className="h-4 w-4" />
-                    </button>
-                  ) : (
+                  </div>
+                {!hasQuiz && (
+                  <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
                     <button
                       type="button"
                       onClick={onCompleteLab}
@@ -680,8 +660,8 @@ export default function ModuleView({
                       {t("markLabComplete", lang)}
                       <Icon name="chevron" className="h-4 w-4" />
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </section>
             )}
           </div>

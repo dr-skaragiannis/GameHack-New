@@ -108,8 +108,7 @@ try {
         onTask: () => {},
         onCommandMetric: () => {},
         onHint: () => {},
-        onStartQuiz: () => calls.push("quiz"),
-        onStartAssessment: () => calls.push("assessment"),
+        onWorkComplete: (complete) => calls.push(`work:${complete}`),
         onCompleteLab: () => calls.push("complete"),
         onBack: () => {},
         ...overrides,
@@ -137,21 +136,29 @@ try {
     "the player is told why there is no quiz",
   );
   act(() => { open.label("Mark lab complete").click(); });
-  assert.deepEqual(open.calls, ["complete"], "the completion button reports back exactly once");
+  assert.deepEqual(open.calls, ["work:true", "complete"], "the completion button reports back exactly once");
   unmount(open);
 
-  // ── A lab that does have a quiz keeps the old gate ────────────────────────
+  // ── A quiz-backed lab routes through the topbar, not an inline button ─────
   const gated = mount({ hasQuiz: true, hasAssessment: true });
-  assert.ok(gated.label("Start quick quiz"), "a lab with a quiz still routes through it");
-  assert.ok(gated.label("Start lab assessment"), "a lab with an assessment still offers it");
+  assert.equal(gated.label("Start quick quiz"), undefined,
+    "the quiz trigger lives in the shell topbar now, never under the terminal");
+  assert.equal(gated.label("Start lab assessment"), undefined,
+    "the lab assessment entry point was removed");
   assert.equal(gated.label("Mark lab complete"), undefined, "a quiz-backed lab does not complete directly");
-  act(() => { gated.label("Start quick quiz").click(); });
-  assert.deepEqual(gated.calls, ["quiz"], "the quiz button reports back exactly once");
+  assert.deepEqual(gated.calls, ["work:true"],
+    "a finished lab reports its work as complete so the shell can unlock the quiz and the next lab");
+  assert.ok(
+    gated.container.textContent.includes("Answer at least 2 of the 3 questions correctly"),
+    "the player is still told what the quiz requires",
+  );
   unmount(gated);
 
   // ── The prompt only appears once the lab is actually finished ─────────────
   const partway = mount({ hasQuiz: false, hasAssessment: false, done: [authored.tasks[0].id] });
   assert.equal(partway.label("Mark lab complete"), undefined, "an unfinished lab offers no completion");
+  assert.deepEqual(partway.calls, ["work:false"],
+    "an unfinished lab reports incomplete work, which is what keeps the next-lab button disabled");
   unmount(partway);
 
   const finished = mount({ hasQuiz: false, hasAssessment: false, moduleCompleted: true });
@@ -335,7 +342,7 @@ try {
     "break-word alone is still used somewhere, which is why the panel needs anywhere",
   );
 
-  console.log(`Lab completion checks passed: an authored lab with no quiz completes directly, a quiz-backed lab still routes through its quiz, the prompt only shows on a finished lab, both languages are labelled, a revealed hint renders in the reader's language, ${tabMounts} lab mounts across all ${lessons.LEARNING_PATHS.length} learning paths show Lab then Theory with no Study guide, the Theory tab renders its sections before the command deep dives, and Try in terminal still prefills the terminal from the Theory deep dives. Long shell commands, regexes and paths in the objectives can no longer overflow the panel: every objective row is a min-w-0 flex child and the panel itself breaks unbreakable runs.`);
+  console.log(`Lab completion checks passed: an authored lab with no quiz completes directly, a quiz-backed lab defers to the topbar and reports its work as complete, the prompt only shows on a finished lab, both languages are labelled, a revealed hint renders in the reader's language, ${tabMounts} lab mounts across all ${lessons.LEARNING_PATHS.length} learning paths show Lab then Theory with no Study guide, the Theory tab renders its sections before the command deep dives, and Try in terminal still prefills the terminal from the Theory deep dives. Long shell commands, regexes and paths in the objectives can no longer overflow the panel: every objective row is a min-w-0 flex child and the panel itself breaks unbreakable runs.`);
 } finally {
   await server.close();
 }
