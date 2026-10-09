@@ -6,6 +6,7 @@ import { LINUX_BEGINNERS_2_MODULES } from "./linux-beginners-2";
 import { LINUX_BEGINNERS_3_MODULES } from "./linux-beginners-3";
 import { SSH_DOC_AUDIT_MODULE, SSH_DOC_BOUNDARY_MODULE, SSH_DOC_SETUP_MODULE, SSH_SERVICE_MODULES } from "./ssh-service-lessons";
 import { FILE_SHARE_MODULES } from "./file-share-lessons";
+import { DFI_INTRO_MODULES } from "./dfi-intro-lessons";
 
 export type Bi = { en: string; el: string };
 
@@ -1297,6 +1298,25 @@ export const LEARNING_PATHS: Campaign[] = [
     scenario: "lab",
     accent: "lime",
     modules: numbered(FILE_SHARE_MODULES),
+  },
+  {
+    id: "dfi-intro",
+    pathNumber: 6,
+    title: {
+      en: "Introduction to Digital Forensics",
+      el: "Εισαγωγή στην ψηφιακή ερευνητική εμπειρογνωμοσύνη",
+    },
+    subtitle: {
+      en: "Artifacts, integrity, and the commands that read a case",
+      el: "Τεκμήρια, ακεραιότητα, και οι εντολές που διαβάζουν μια υπόθεση",
+    },
+    blurb: {
+      en: "Path 06. Work case IR-2404 end to end on an imaged evidence tree: read the custody register, map the tree, identify files from their bytes rather than their names, seal them with hashes, capture live state, and diagnose a corrupted image without ever editing the original.",
+      el: "Διαδρομή 06. Δούλεψε την υπόθεση IR-2404 από άκρη σε άκρη σε ειδωλοποιημένο δέντρο τεκμηρίων: διάβασε το μητρώο διατήρησης, χαρτογράφησε το δέντρο, ταυτοποίησε αρχεία από τα byte τους και όχι από τα ονόματά τους, σφράγισέ τα με hash, κατέγραψε τη ζωντανή κατάσταση και διάγνωσε μια κατεστραμμένη εικόνα χωρίς ποτέ να επεξεργαστείς το πρωτότυπο.",
+    },
+    scenario: "dfir",
+    accent: "amber",
+    modules: numbered(DFI_INTRO_MODULES),
   },
 ];
 

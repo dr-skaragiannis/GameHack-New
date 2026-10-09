@@ -245,7 +245,54 @@ function digestFor(algorithm: string, content: string | undefined): string {
   return `fixture-only-${algorithm}-digest-not-computed`;
 }
 
+/**
+ * A shipped binary file carries real bytes, while the older fixtures are text
+ * that merely describes a file. Control bytes outside the text whitespace set
+ * are the tell: no simulated fixture begins with one.
+ */
+function isBinaryContent(content: string): boolean {
+  const head = content.slice(0, 64);
+  for (let i = 0; i < head.length; i += 1) {
+    const code = head.charCodeAt(i);
+    if (code < 32 && code !== 9 && code !== 10 && code !== 13) return true;
+    if (code > 126) return true;
+  }
+  return false;
+}
+
+/** Format real bytes the way xxd prints them: offset, hex pairs, printable form. */
+function realHexDump(content: string, limit = 256): string {
+  const bytes = Array.from(content.slice(0, limit)).map((c) => c.charCodeAt(0) & 0xff);
+  const rows: string[] = [];
+  for (let offset = 0; offset < bytes.length; offset += 16) {
+    const row = bytes.slice(offset, offset + 16);
+    const hex = row.map((b) => b.toString(16).padStart(2, "0")).join("");
+    const grouped = hex.replace(/(.{4})/g, "$1 ").trim().padEnd(39, " ");
+    const printable = row.map((b) => (b >= 32 && b <= 126 ? String.fromCharCode(b) : ".")).join("");
+    rows.push(`${offset.toString(16).padStart(8, "0")}: ${grouped} ${printable}`);
+  }
+  return rows.join("\n") || "(empty file)";
+}
+
+/** Name a file from its leading bytes, so real evidence is identified for real. */
+function magicType(content: string): string | null {
+  const b = (i: number) => content.charCodeAt(i) & 0xff;
+  if (content.length >= 8 && b(0) === 0x89 && b(1) === 0x50 && b(2) === 0x4e && b(3) === 0x47) {
+    return "PNG image data, valid signature at offset 0";
+  }
+  if (content.length >= 8 && b(2) === 0x4e && b(3) === 0x47 && b(4) === 0x0d && b(5) === 0x0a && b(6) === 0x1a && b(7) === 0x0a) {
+    return `PNG image data, corrupted signature; expected 89 50 at offset 0, found ${b(0).toString(16).padStart(2, "0")} ${b(1).toString(16).padStart(2, "0")}`;
+  }
+  if (content.length >= 2 && b(0) === 0xff && b(1) === 0xd8) return "JPEG image data";
+  if (content.length >= 4 && b(0) === 0x7f && b(1) === 0x45 && b(2) === 0x4c && b(3) === 0x46) {
+    return "ELF 64-bit LSB executable, dynamically linked";
+  }
+  return null;
+}
+
 function fileType(path: string, content: string, t: Terminal) {
+  const magic = isBinaryContent(content) ? magicType(content) : null;
+  if (magic) return magic;
   if (path.endsWith("/usr/bin/cat") && content.includes("ELF")) return "ELF 64-bit LSB pie executable, x86-64, dynamically linked (virtual command catalog)";
   if (path.endsWith("challenge-corrupt.png")) {
     return t.flags.has("dfir-magic-fixed")
@@ -350,7 +397,9 @@ export function handleDfirCommand(t: Terminal, context: DfirContext): boolean {
         return true;
       }
       mark(t, "dfir-xxd", "dfir-xxd:" + path);
-      if (path.endsWith("challenge-corrupt.png")) {
+      if (isBinaryContent(node.content ?? "")) {
+        print(realHexDump(node.content ?? ""));
+      } else if (path.endsWith("challenge-corrupt.png")) {
         print(t.flags.has("dfir-magic-fixed")
           ? "00000000: 8950 4e47 0d0a 1a0a 0000 0000 0000 0000  .PNG............"
           : "00000000: 0000 0000 504e 470d 0a1a 0a00 0000 0000  ....PNG.........");
@@ -361,6 +410,30 @@ export function handleDfirCommand(t: Terminal, context: DfirContext): boolean {
     }
     case "hexedit": {
       const { path, node } = fileAt(t, pathArg);
+      const content = node?.content ?? "";
+      const writable = !!node && (path.includes("/working-copy/") || path.startsWith("/home/"));
+      // A real binary gets a real repair: the two damaged signature bytes are
+      // rewritten in place and nothing else in the file is touched.
+      if (writable && isBinaryContent(content)) {
+        const hex = (n: number) => n.toString(16).padStart(2, "0");
+        const b0 = content.charCodeAt(0) & 0xff;
+        const b1 = content.charCodeAt(1) & 0xff;
+        const pngTail = (content.charCodeAt(2) & 0xff) === 0x4e && (content.charCodeAt(3) & 0xff) === 0x47
+          && (content.charCodeAt(4) & 0xff) === 0x0d && (content.charCodeAt(5) & 0xff) === 0x0a;
+        if (b0 === 0x89 && b1 === 0x50) {
+          print("No change needed: the signature at offset 0 is already 89 50.", "ok");
+          mark(t, "dfir-hexedit", "dfir-magic-fixed");
+          return true;
+        }
+        if (pngTail) {
+          node.content = String.fromCharCode(0x89, 0x50) + content.slice(2);
+          mark(t, "dfir-hexedit", "dfir-magic-fixed");
+          print(`Wrote 89 50 at offset 0 (was ${hex(b0)} ${hex(b1)}). Bytes 2 onward are untouched.`, "ok");
+          return true;
+        }
+        print("hexedit: no recognisable signature to repair at offset 0.", "err");
+        return true;
+      }
       if (!node || !path.endsWith("challenge-corrupt.png") || !path.includes("/working-copy/")) {
         print("hexedit: source evidence is read-only; choose /cases/IR-2404/working-copy/challenge-corrupt.png", "err");
         return true;

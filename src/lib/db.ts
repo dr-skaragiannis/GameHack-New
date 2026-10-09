@@ -936,6 +936,9 @@ function sanitizeFileSeeds(value: unknown, limit: number): LabFileSeed[] | undef
   const seeds = value.slice(0, limit).map((raw: Record<string, unknown>) => ({
     path: typeof raw?.path === "string" ? raw.path.slice(0, 400) : "",
     content: typeof raw?.content === "string" ? raw.content.slice(0, 200_000) : "",
+    ...(typeof raw?.contentBase64 === "string" && raw.contentBase64.trim()
+      ? { contentBase64: raw.contentBase64.replace(/[^A-Za-z0-9+/=]/g, "").slice(0, 400_000) }
+      : {}),
     ...(typeof raw?.mode === "string" ? { mode: raw.mode.slice(0, 20) } : {}),
     ...(typeof raw?.owner === "string" ? { owner: raw.owner.slice(0, 60) } : {}),
     ...(typeof raw?.group === "string" ? { group: raw.group.slice(0, 60) } : {}),

@@ -111,13 +111,14 @@ try {
   assert.ok(linuxPart3, "Linux for Beginners #3 should be registered as a learning path");
   assert.equal(learningPath.pathNumber, 3);
   assert.equal(linuxPart3.pathNumber, 4);
-  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.id), ["linux-part-01", "linux-part-02", "linux-part-03", "ssh-port-22", "file-shares"]);
-  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.pathNumber), [1, 2, 3, 4, 5]);
+  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.id), ["linux-part-01", "linux-part-02", "linux-part-03", "ssh-port-22", "file-shares", "dfi-intro"]);
+  assert.deepEqual(lessons.LEARNING_PATHS.map((path) => path.pathNumber), [1, 2, 3, 4, 5, 6]);
   assert.deepEqual(lessons.LEARNING_PATHS[0].modules.map((module) => module.id), ["sr-intro", "sr-help", "sr-search", "sr-files", "sr-text", "sr-apt", "sr-perms"]);
   assert.deepEqual(lessons.LEARNING_PATHS[1].modules.map((module) => module.id), ["sr-net", "sr-proc", "sr-env"]);
   assert.deepEqual(lessons.LEARNING_PATHS[2].modules.map((module) => module.id), ["sr-bash", "sr-cron", "sr-svc"]);
   assert.deepEqual(lessons.LEARNING_PATHS[3].modules.map((module) => module.id), ["ssh-doc-setup", "ssh-svc-recon", "ssh-svc-auth", "ssh-doc-boundary", "ssh-svc-harden", "ssh-doc-audit"]);
   assert.deepEqual(lessons.LEARNING_PATHS[4].modules.map((module) => module.id), ["share-doc-intro", "share-ftp", "share-smb", "share-nfs", "share-harden"]);
+  assert.deepEqual(lessons.LEARNING_PATHS[5].modules.map((module) => module.id), ["dfi-intro", "dfi-navigate", "dfi-content", "dfi-integrity", "dfi-live"]);
   assert.doesNotMatch(JSON.stringify(lessons.LEARNING_PATHS[3]), /hydra -l|netexec|meterpreter|ssh2john/i);
   for (const hiddenId of ["gamehack", "raven", "wirewalk", "sudorun", "linux-beginners-2", "linux-beginners-3", "dfir-fieldwork", "ssh-service"]) {
     assert.equal(lessons.LEARNING_PATHS.some((path) => path.id === hiddenId), false, `${hiddenId} should stay off the visible map`);
@@ -174,6 +175,49 @@ try {
       assert.ok(paragraphs.length >= 2, `${section.heading.en} should have two ${language} paragraphs`);
     }
   }
+  const dfiIntro = lessons.campaignById("dfi-intro");
+  assert.ok(dfiIntro, "Introduction to Digital Forensics should be registered as a learning path");
+  assert.equal(dfiIntro.pathNumber, 6);
+  assert.equal(dfiIntro.scenario, "dfir");
+  const dfiLabels = [
+    dfiIntro.title.el,
+    dfiIntro.subtitle.el,
+    ...dfiIntro.modules.flatMap((module) => [
+      module.title.el,
+      module.subtitle.el,
+      module.badge.el,
+      ...module.theory.map((section) => section.heading.el),
+    ]),
+  ];
+  for (const label of dfiLabels) {
+    assert.doesNotMatch(label, /[\u0386\u0388\u0389\u038a\u038c\u038e\u038f\u03aa\u03ab]/, `Greek label should not put a tonos on a capital: ${label}`);
+  }
+  for (const section of dfiIntro.modules.flatMap((module) => module.theory)) {
+    for (const language of ["en", "el"]) {
+      const paragraphs = section.body[language].split(/\n\s*\n/).filter((paragraph) => paragraph.trim());
+      assert.ok(paragraphs.length >= 2, `${section.heading.en} should have two ${language} paragraphs`);
+    }
+  }
+  // Every objective on the new path must complete from its exact hint inside the
+  // real player terminal, so no objective can point at a command the sandbox does not run.
+  const dfiTerm = playerTerminal.createPlayerTerminal();
+  for (const module of dfiIntro.modules) {
+    playerTerminal.activateTerminalForModule(dfiTerm, module.id, "dfir");
+    for (const cheat of module.cheats) {
+      const result = terminal.runCommand(dfiTerm, cheat.cmd);
+      const problems = result.filter((line) => line.kind === "err" && line.text.trim());
+      assert.deepEqual(problems.map((line) => line.text), [], `${module.id} cheat should run cleanly: ${cheat.cmd}`);
+      assert.notEqual(dfiTerm.lastExit, 127, `${module.id} cheat is not runnable: ${cheat.cmd}`);
+    }
+    for (const objective of module.tasks) {
+      for (const command of objective.hint.en.split(/\r?\n/).filter(Boolean)) terminal.runCommand(dfiTerm, command);
+      assert.ok(objective.check(dfiTerm), `${module.id}/${objective.id} should complete from its exact hint`);
+    }
+    for (const challenge of module.challenges) {
+      assert.equal(typeof challenge.check, "function", `${module.id} challenge needs a test`);
+    }
+  }
+  assert.ok(dfiTerm.fs && terminal.getNode(dfiTerm.fs, "/cases/IR-2404/chain_of_custody.csv"), "the custody register should exist in the dfir evidence tree");
   const sshLab = playerTerminal.createPlayerTerminal();
   playerTerminal.activateTerminalForModule(sshLab, "ssh-svc-auth", "lab");
   const authScan = terminal.runCommand(sshLab, "nmap --script ssh-auth-methods -p 22 10.10.10.12").map((line) => line.text).join("\n");

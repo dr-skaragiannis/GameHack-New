@@ -484,7 +484,11 @@ export const LINUX_BEGINNERS_2_MODULES: Module[] = [
           "Why: Niceness helps the scheduler share CPU when processes compete. How: a positive value lowers a process's relative priority; renice applies an absolute value to the selected PID. The simulator changes only its in-memory process table and never starts ssh-agent on the host.",
           "Γιατί: Η niceness βοηθά τον scheduler να μοιράζει την CPU όταν ανταγωνίζονται διεργασίες. Πώς: μια θετική τιμή μειώνει τη σχετική προτεραιότητα, η renice εφαρμόζει απόλυτη τιμή στο επιλεγμένο PID. Ο προσομοιωτής αλλάζει μόνο τον εικονικό πίνακα διεργασιών και δεν ξεκινά ssh-agent στον υπολογιστή σου.",
         ),
-        (term) => term.flags.has("nice") && term.flags.has("renice"),
+        (term) =>
+          term.flags.has("nice") &&
+          term.flags.has("renice") &&
+          usedCmd(term, /^\s*renice\s+\S+\s+\d+/) &&
+          usedCmd(term, /^\s*nice\s+-n\s+\S+/),
       ),
       task(
         "signals",

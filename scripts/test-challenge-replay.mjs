@@ -78,6 +78,16 @@ const CHALLENGE_PLANS = {
     "pwd",
     "hostname",
   ],
+  "dfi-intro[1]": [
+    "cat /cases/IR-2404/evidence/01-intake/triage-notes.txt",
+  ],
+  // The brief names the repair and both confirmations; the objectives supply the
+  // diagnosis and the copy.
+  "dfi-live[1]": [
+    "file /cases/IR-2404/evidence/01-intake/challenge.png",
+    "hexedit /home/operator/recovered.png",
+    "file /home/operator/recovered.png",
+  ],
 };
 
 const server = await createServer({
@@ -136,7 +146,30 @@ try {
     assert.ok(everyModule.has(key), `the plan for ${key} still matches a live challenge`);
   }
 
-  assert.equal(total, 48, "every live lab contributes exactly two final challenges");
+  // An objective must not be satisfiable by typing the command name alone: the
+  // player has to supply the arguments the objective asked for, and usually see
+  // the resulting output. Two objectives are legitimately bare-command shapes -
+  // `volatility` prints its help either way, and the FTP login still supplies
+  // the anonymous username and password.
+  const BARE_OK = new Set(["sr-help/vol", "sr-svc/ftp-connect"]);
+  const trivial = [];
+  for (const path of lessons.LEARNING_PATHS) {
+    for (const mod of path.modules) {
+      for (const objective of mod.tasks) {
+        const hints = objective.hint.en.split(/\r?\n/).filter(Boolean);
+        if (!hints.some((command) => command.split(/\s+/).length > 1)) continue;
+        const lazy = playerTerminal.createPlayerTerminal();
+        playerTerminal.activateTerminalForModule(lazy, mod.id, mod.scenario);
+        for (const command of hints) terminal.runCommand(lazy, command.split(/\s+/)[0]);
+        if (objective.check(lazy) && !BARE_OK.has(`${mod.id}/${objective.id}`)) {
+          trivial.push(`${mod.id}/${objective.id}`);
+        }
+      }
+    }
+  }
+  assert.deepEqual(trivial, [], "no objective should complete from the bare command with no arguments");
+
+  assert.equal(total, 58, "every live lab contributes exactly two final challenges");
   console.log(`Challenge replay checks passed: all ${total} final challenges complete, ${Object.keys(CHALLENGE_PLANS).length} of them from the commands their own brief names.`);
 } finally {
   await server.close();

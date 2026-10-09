@@ -477,11 +477,7 @@ export default function ModuleView({
                 if (!raw.trim()) return;
                 const cwd = term.cwd;
                 const lines = runCommand(term, raw);
-                if (raw.trim() === "clear") {
-                  term.lines = [];
-                } else {
-                  term.lines = [...term.lines, ...lines];
-                }
+                // runCommand keeps term.lines itself; nothing to append here.
                 for (const line of lines) {
                   const flags = line.text.match(/FLAG\{[^}]+\}/g) || [];
                   flags.forEach((flag) => term.flags.add(`saw:${flag}`));

@@ -30,6 +30,12 @@ export type LabFileSeed = {
   /** Absolute path in the lab filesystem. Parent directories are created. */
   path: string;
   content: string;
+  /**
+   * Optional base64 payload for genuine binary evidence. When present it wins
+   * over `content`, and is decoded to a byte string so hex tools read the real
+   * bytes instead of a description of them.
+   */
+  contentBase64?: string;
   mode?: string;
   owner?: string;
   group?: string;
@@ -670,6 +676,22 @@ function ensureDirPath(root: FileNode, path: string): FileNode | null {
  *
  * Returns how many files it actually created.
  */
+/**
+ * Resolve a seed's payload. A base64 field decodes to a byte string - one
+ * character per byte, code points 0-255 - which is the shape the hex tools
+ * already read, so a shipped binary file dumps identically to the original.
+ */
+function decodeSeedContent(seed: LabFileSeed): string {
+  if (typeof seed.contentBase64 === "string" && seed.contentBase64.trim()) {
+    try {
+      return atob(seed.contentBase64.replace(/\s+/g, ""));
+    } catch {
+      return typeof seed.content === "string" ? seed.content : "";
+    }
+  }
+  return typeof seed.content === "string" ? seed.content : "";
+}
+
 export function seedFilesInto(root: FileNode, seeds: LabFileSeed[] | undefined): number {
   if (!seeds?.length) return 0;
   let created = 0;
@@ -685,7 +707,7 @@ export function seedFilesInto(root: FileNode, seeds: LabFileSeed[] | undefined):
     parentNode.children[name] = {
       name,
       type: "file",
-      content: typeof seed.content === "string" ? seed.content : "",
+      content: decodeSeedContent(seed),
       ...(seed.mode ? { mode: seed.mode } : {}),
       ...(seed.owner ? { owner: seed.owner } : {}),
       ...(seed.group ? { group: seed.group } : {}),
@@ -751,7 +773,7 @@ function matchCommandFixture(t: Terminal, input: string): LabCommandFixture | un
   return t.commandFixtures.find((fixture) => fixture.command.trim() === wanted);
 }
 
-export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean; stdin?: string | null }): TermLine[] {
+function runCommandInner(t: Terminal, raw: string, inner?: { capture?: boolean; stdin?: string | null }): TermLine[] {
   let input = raw.replace(/\s+$/, "");
   if (!input.trim()) return [];
   t.lastExit = 0;
@@ -802,6 +824,27 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
   // the interactive `at`/`crontab -e` prompts so a fixture cannot swallow the
   // answer to a question the simulator asked, and before the shared runtime so
   // a lab can restate what a built-in tool prints.
+  // Shell sequences. Each part runs on its own and short-circuits the way a real
+  // shell would, so `cd ~ && cat notes` behaves like the two commands typed
+  // separately and satisfies the same objectives.
+  const sequence = splitShellSequences(input);
+  if (!capturing && sequence.length > 1) {
+    let previousOk = true;
+    let ranAny = false;
+    for (const part of sequence) {
+      if (part.op === "&&" && !previousOk) continue;
+      if (part.op === "||" && previousOk) continue;
+      ranAny = true;
+      const lines = runCommandInner(t, part.cmd, { capture: true, stdin });
+      for (const line of lines) if (line.kind !== "in") out.push(line);
+      previousOk = !lines.some((line) => line.kind === "err") && t.lastExit === 0;
+    }
+    if (!ranAny) out.push({ kind: "out", text: "" });
+    t.lastExit = previousOk ? 0 : 1;
+    t.flags.add("sequence");
+    return out;
+  }
+
   const fixture = matchCommandFixture(t, input);
   if (fixture) {
     for (const line of String(fixture.output ?? "").split("\n")) out.push({ kind: "out", text: line });
@@ -812,7 +855,7 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
 
   if (!capturing && !input.includes("|") && /(^|[^&])&\s*$/.test(input)) {
     const command = input.slice(0, input.lastIndexOf("&")).trim();
-    const backgroundOutput = runCommand(t, command, { capture: true, stdin });
+    const backgroundOutput = runCommandInner(t, command, { capture: true, stdin });
     const jobNumber = t.jobs.length + 1;
     const pid = 7100 + t.jobs.length;
     t.jobs.push({ pid, cmd: command });
@@ -823,11 +866,14 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
     return out;
   }
 
-  if (!capturing && input.includes("|") && !input.includes("||")) {
-    const stages = splitPipes(input);
+  // Only a real pipeline: a quoted `|` (grep "a|b") leaves one stage, and
+  // re-entering this branch on it would recurse forever.
+  const pipeStages = input.includes("|") && !input.includes("||") ? splitPipes(input) : [];
+  if (pipeStages.length > 1) {
+    const stages = pipeStages;
     let stdin: string | null = null;
     for (const st of stages) {
-      const part = runCommand(t, st, { capture: true, stdin });
+      const part = runCommandInner(t, st, { capture: true, stdin });
       stdin = part
         .filter((l) => l.kind === "out" || l.kind === "ok" || l.kind === "sys")
         .map((l) => l.text)
@@ -850,7 +896,7 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
     const left = redir.left;
     const append = redir.operator === ">>";
     const dest = redir.destination;
-    const innerOut = runCommand(t, left, { capture: true });
+    const innerOut = runCommandInner(t, left, { capture: true });
     const text = innerOut
       .filter((l) => l.kind === "out" || l.kind === "ok")
       .map((l) => l.text)
@@ -886,7 +932,7 @@ export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean
       print,
       stdin,
       execute: (nested: string, nestedStdin: string | null = null) =>
-        runCommand(t, nested, { capture: true, stdin: nestedStdin }),
+        runCommandInner(t, nested, { capture: true, stdin: nestedStdin }),
     };
     const handled = t.scenario === "dfir" && handleDfirCommand(t, context)
       ? true
@@ -1604,7 +1650,7 @@ Nmap done: 256 IP addresses (4 hosts up) scanned in 2.14 seconds`);
           t.env.USER = "root";
           t.shellVars.USER = "root";
           t.isRoot = true;
-          const result = runCommand(t, rest.join(" "), { capture: true, stdin });
+          const result = runCommandInner(t, rest.join(" "), { capture: true, stdin });
           t.user = previousUser;
           t.env.USER = previousEnvUser;
           t.shellVars.USER = previousShellUser;
@@ -1805,8 +1851,103 @@ Table: users
   return out;
 }
 
+/**
+ * Split a shell line on `&&`, `||` and `;`, keeping the operator that joins each
+ * part to the one before it. Quote-aware, so an operator inside a quoted string
+ * is left alone.
+ */
+export function splitShellSequences(input: string): { cmd: string; op: "&&" | "||" | ";" | "" }[] {
+  const parts: { cmd: string; op: "&&" | "||" | ";" | "" }[] = [];
+  let cur = "";
+  let q: string | null = null;
+  let op: "&&" | "||" | ";" | "" = "";
+  for (let i = 0; i < input.length; i += 1) {
+    const ch = input[i];
+    if (q) {
+      cur += ch;
+      if (ch === q) q = null;
+      continue;
+    }
+    if (ch === "'" || ch === '"') {
+      q = ch;
+      cur += ch;
+      continue;
+    }
+    const two = input.slice(i, i + 2);
+    if (two === "&&" || two === "||") {
+      if (cur.trim()) parts.push({ cmd: cur.trim(), op });
+      op = two as "&&" | "||";
+      cur = "";
+      i += 1;
+      continue;
+    }
+    if (ch === ";") {
+      if (cur.trim()) parts.push({ cmd: cur.trim(), op });
+      op = ";";
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  if (cur.trim()) parts.push({ cmd: cur.trim(), op });
+  return parts;
+}
+
+/**
+ * Every distinct command a player has typed, with `&&`, `||`, `;` and `|`
+ * sequences broken out. `cd ~ && cat /cases/notes` counts for both `cd` and
+ * `cat`, exactly as running them one after the other would.
+ */
+export function commandsRun(t: Terminal): string[] {
+  const out: string[] = [];
+  for (const line of t.ran) {
+    out.push(line);
+    for (const part of splitShellSequences(line)) {
+      if (part.cmd && part.cmd !== line) out.push(part.cmd);
+      for (const stage of splitPipes(part.cmd)) if (stage && stage !== part.cmd) out.push(stage);
+    }
+  }
+  return out;
+}
+
+/**
+ * Run a command and keep the transcript on the Terminal. Recording it here
+ * rather than in the view means an output-based objective check sees exactly
+ * what the player saw, and a test that drives the terminal directly agrees with
+ * the app instead of silently diverging from it.
+ */
+export function runCommand(t: Terminal, raw: string, inner?: { capture?: boolean; stdin?: string | null }): TermLine[] {
+  const lines = runCommandInner(t, raw, inner);
+  if (!inner?.capture && lines.length) t.lines = [...t.lines, ...lines];
+  return lines;
+}
+
 export function usedCmd(t: Terminal, re: RegExp): boolean {
-  return t.ran.some((c) => re.test(c));
+  return commandsRun(t).some((c) => re.test(c));
+}
+
+/**
+ * Output-based check: did a command matching `cmd` actually print something
+ * matching `out`? This is the check to reach for when an objective depends on
+ * what the player *saw*, not merely on which command they typed - typing `ls`
+ * alone must not satisfy an objective that asked for a long listing.
+ */
+export function sawOutput(t: Terminal, cmd: RegExp, out: RegExp): boolean {
+  const ran = t.ran;
+  const lines = t.lines;
+  let inIndex = -1;
+  for (let i = 0; i < lines.length; i += 1) {
+    if (lines[i].kind !== "in") continue;
+    inIndex += 1;
+    const typed = ran[inIndex];
+    if (typed === undefined) continue;
+    const matched = cmd.test(typed) || commandsRun({ ...t, ran: [typed] } as Terminal).some((c) => cmd.test(c));
+    if (!matched) continue;
+    const tail: string[] = [];
+    for (let j = i + 1; j < lines.length && lines[j].kind !== "in"; j += 1) tail.push(lines[j].text);
+    if (out.test(tail.join("\n"))) return true;
+  }
+  return false;
 }
 
 export function prompt(t: Terminal): string {

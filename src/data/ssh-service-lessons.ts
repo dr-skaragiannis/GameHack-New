@@ -627,7 +627,7 @@ export const SSH_SERVICE_MODULES: Module[] = [
           "Why: The same authenticated session also moves files, so a stolen password opens more than a shell. How: The lab scp reports a completed transfer and never contacts a remote host.",
           "Γιατί: Η ίδια ταυτοποιημένη συνεδρία μεταφέρει και αρχεία, άρα ένας κλεμμένος κωδικός δεν ανοίγει μόνο shell. Πώς: Το scp του εργαστηρίου δηλώνει ολοκλήρωση μεταφοράς και δεν επικοινωνεί με απομακρυσμένο host.",
         ),
-        (term) => term.flags.has("scp"),
+        (term) => term.flags.has("scp") && usedCmd(term, /^\s*scp\s+\S+\s+\S+@\S+:/),
       ),
       task(
         "protect",
