@@ -194,7 +194,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "man",
-        instruction: { en: "Open the manual for ls: man ls", el: "man ls" },
+        instruction: { en: "Open the manual page for ls and read what each option does, then leave the manual with q.", el: "Άνοιξε τη σελίδα εγχειριδίου της ls και δες τι κάνει η κάθε επιλογή· βγες από το εγχειρίδιο με q." },
         hint: { en: "man ls", el: "man ls" },
         explain: { en: "Why: --help tells you a flag exists; the manual tells you what it actually changes, which is the difference between guessing and deciding. How: man renders the tool manual page through a pager. Sections are numbered, so man 5 passwd reads the file-format page while man 1 passwd reads the command page; the same name can point at two different documents.", el: "Γιατί: η --help σου λέει ότι μια παράμετρος υπάρχει· το εγχειρίδιο σου λέει τι ακριβώς αλλάζει, που είναι η διαφορά μεταξύ του να μαντεύεις και του να αποφασίζεις. Πώς: η man στοιχειοθετεί τη σελίδα εγχειριδίου του εργαλείου μέσα από σελιδοποιητή. Οι ενότητες είναι αριθμημένες, οπότε η man 5 passwd διαβάζει τη σελίδα μορφής αρχείου ενώ η man 1 passwd τη σελίδα εντολής· το ίδιο όνομα μπορεί να δείχνει σε δύο διαφορετικά έγγραφα." },
         material: { en: "Sections: 1 commands, 5 file formats, 8 system administration. man -k KEYWORD searches descriptions across all of them, like a local search engine.", el: "Ενότητες: 1 εντολές, 5 μορφές αρχείων, 8 διαχείριση συστήματος. Η man -k ΛΕΞΗ ψάχνει τις περιγραφές σε όλες τους, σαν τοπική μηχανή αναζήτησης." },
@@ -226,7 +226,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "type",
-        instruction: { en: "Ask the shell itself how it resolves a name: type ls", el: "Ρώτα το ίδιο το shell πώς επιλύει ένα όνομα: type ls" },
+        instruction: { en: "Ask the shell how it resolves the name ls, so you learn whether it is a builtin, an alias or a program on disk.", el: "Ρώτα το κέλυφος πώς επιλύει το όνομα ls, για να μάθεις αν είναι ενσωματωμένη εντολή, alias ή πρόγραμμα στον δίσκο." },
         hint: { en: "type ls", el: "type ls" },
         explain: { en: "Why: which only searches $PATH, so it cannot tell you that a name is really a shell builtin or an alias, and that distinction decides what actually runs. How: type asks the shell to report its own resolution for a name, so it answers for builtins, aliases and functions as well as for real files on disk. Reach for it when a command behaves unlike the binary you just inspected.", el: "Γιατί: η which ψάχνει μόνο στο $PATH, οπότε δεν μπορεί να σου πει ότι ένα όνομα είναι στην πραγματικότητα ενσωματωμένη εντολή του shell ή ψευδώνυμο, και αυτή η διάκριση κρίνει τι εκτελείται πραγματικά. Πώς: η type ζητά από το shell να αναφέρει τη δική του επίλυση για ένα όνομα, οπότε απαντά και για ενσωματωμένες εντολές, ψευδώνυμα και συναρτήσεις εκτός από πραγματικά αρχεία στον δίσκο. Χρησιμοποίησέ την όταν μια εντολή συμπεριφέρεται διαφορετικά από το binary που μόλις επιθεώρησες." },
         material: { en: "Compare the three side by side: which git, whereis git and type git. They disagree precisely when a name is a builtin or an alias rather than a file.", el: "Σύγκρινε τις τρεις δίπλα-δίπλα: which git, whereis git και type git. Διαφωνούν ακριβώς όταν ένα όνομα είναι ενσωματωμένη εντολή ή ψευδώνυμο και όχι αρχείο." },
@@ -443,7 +443,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "rm",
-        instruction: { en: "rm the leftover gamehack-2.txt (in Documents or home).", el: "rm το gamehack-2.txt" },
+        instruction: { en: "Delete the leftover gamehack-2.txt file, which sits either in Documents or in your home folder.", el: "Διέγραψε το gamehack-2.txt που έχει απομείνει και βρίσκεται είτε στο Documents είτε στον προσωπικό σου φάκελο." },
         hint: { en: "rm Documents/gamehack-2.txt", el: "rm Documents/gamehack-2.txt" },
         explain: { en: "Why: deletion on the command line is final, so the habit of confirming the target first is what stands between a typo and lost data. How: rm removes the directory entry and releases the data, with no recycle bin and no prompt by default. The shell expands wildcards before rm ever runs, so echo rm -r ./dir shows you exactly what the shell intends to hand over.", el: "Γιατί: η διαγραφή στη γραμμή εντολών είναι οριστική, οπότε η συνήθεια να επιβεβαιώνεις πρώτα τον στόχο είναι αυτό που στέκεται ανάμεσα σε ένα τυπογραφικό και σε χαμένα δεδομένα. Πώς: η rm αφαιρεί την εγγραφή καταλόγου και απελευθερώνει τα δεδομένα, χωρίς κάδο ανακύκλωσης και χωρίς ερώτηση από προεπιλογή. Το shell αναπτύσσει τους μπαλαντέρ πριν καν τρέξει η rm, οπότε η echo rm -r ./dir σου δείχνει ακριβώς τι σκοπεύει να παραδώσει." },
         material: { en: "There is no trash bin. rm -i prompts for every file, and putting echo in front of the command shows what the wildcards will expand into.", el: "Δεν υπάρχει κάδος ανακύκλωσης. Η rm -i ρωτά για κάθε αρχείο, και βάζοντας echo μπροστά από την εντολή βλέπεις σε τι θα αναπτυχθούν οι μπαλαντέρ." },
@@ -459,7 +459,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "tree",
-        instruction: { en: "See the whole shape of /etc at once, two levels deep: tree -L 2 /etc", el: "Δες ολόκληρη τη δομή του /etc με μία ματιά, δύο επίπεδα βαθιά: tree -L 2 /etc" },
+        instruction: { en: "Show the layout of /etc as a tree limited to two levels, so you can read the structure at a glance.", el: "Εμφάνισε τη δομή του /etc ως δέντρο περιορισμένο σε δύο επίπεδα, για να διαβάσεις τη διάρθρωση με μία ματιά." },
         hint: { en: "tree -L 2 /etc", el: "tree -L 2 /etc" },
         explain: { en: "Why: repeated ls calls show you one directory at a time, so the shape of a tree stays in your head, and that is exactly where it gets lost. How: tree walks a directory recursively and prints every entry indented under its parent, stopping N levels down when you pass -L N. The closing directory and file counts are a fast sanity check against what you expected to be there.", el: "Γιατί: οι επαναλαμβανόμενες ls σου δείχνουν έναν κατάλογο κάθε φορά, οπότε το σχήμα ενός δέντρου μένει στο μυαλό σου, και εκεί ακριβώς χάνεται. Πώς: η tree διασχίζει έναν κατάλογο αναδρομικά και εμφανίζει κάθε στοιχείο με εσοχή κάτω από τον γονέα του, σταματώντας N επίπεδα κάτω όταν περάσεις -L N. Τα καταληκτικά σύνολα καταλόγων και αρχείων είναι γρήγορος έλεγχος ορθότητας απέναντι σε ό,τι περίμενες να υπάρχει εκεί." },
         material: { en: "Without -L, tree prints the entire subtree, which on a real host can be thousands of lines. Depth-limit first, widen later.", el: "Χωρίς -L, η tree εμφανίζει ολόκληρο το υποδέντρο, που σε πραγματικό host μπορεί να είναι χιλιάδες γραμμές. Περιόρισε πρώτα το βάθος και διεύρυνε μετά." },
@@ -602,7 +602,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "wc-count",
-        instruction: { en: "Count the entries in the fixture: wc -l /etc/ettercap/etter.dns", el: "Μέτρα τις εγγραφές του fixture: wc -l /etc/ettercap/etter.dns" },
+        instruction: { en: "Count how many lines the etter.dns fixture holds, so you know the size of what you are reading.", el: "Μέτρα πόσες γραμμές έχει το αρχείο etter.dns, για να ξέρεις το μέγεθος αυτού που διαβάζεις." },
         hint: { en: "wc -l /etc/ettercap/etter.dns", el: "wc -l /etc/ettercap/etter.dns" },
         explain: { en: "Why: a count is comparable and a listing is not, and a report needs numbers someone else can reproduce. How: wc -l counts newline characters and prints one number, which is the size of whatever reached it. At the end of a pipe it counts what survived the filtering, so the same command answers two different questions depending on where it sits.", el: "Γιατί: ένα πλήθος είναι συγκρίσιμο ενώ μια λίστα όχι, και μια αναφορά χρειάζεται αριθμούς που κάποιος άλλος μπορεί να αναπαράγει. Πώς: η wc -l μετρά χαρακτήρες νέας γραμμής και εμφανίζει έναν αριθμό, που είναι το μέγεθος όσων την έφτασαν. Στο τέλος μιας διαδοχής μετρά ό,τι επέζησε από το φιλτράρισμα, οπότε η ίδια εντολή απαντά σε δύο διαφορετικά ερωτήματα ανάλογα με το πού κάθεται." },
         material: { en: "wc reports lines, words and bytes, and -l, -w or -c selects one of them. After a filter it measures what survived, not the original input.", el: "Η wc αναφέρει γραμμές, λέξεις και byte, και οι -l, -w ή -c επιλέγουν ένα από αυτά. Μετά από φίλτρο μετρά ό,τι επέζησε και όχι την αρχική είσοδο." },
@@ -610,7 +610,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "sort-uniq",
-        instruction: { en: "Order the local host table and collapse duplicates: sort /etc/hosts | uniq", el: "Ταξινόμησε τον τοπικό πίνακα host και σύμπτυξε τα διπλότυπα: sort /etc/hosts | uniq" },
+        instruction: { en: "Sort the local host table and then collapse the repeated lines, which is the standard way to get a clean list of unique entries.", el: "Ταξινόμησε τον τοπικό πίνακα host και μετά σύμπτυξε τις επαναλαμβανόμενες γραμμές· έτσι παίρνεις καθαρή λίστα μοναδικών εγγραφών." },
         hint: { en: "sort /etc/hosts | uniq", el: "sort /etc/hosts | uniq" },
         explain: { en: "Why: raw output repeats itself, and a summary that removes the repetition is what a reviewer can actually act on. How: sort puts lines in order and uniq then collapses adjacent duplicates into one. The order matters: uniq only ever compares neighbours, so running it on unsorted input leaves duplicates that happen not to sit next to each other.", el: "Γιατί: η ακατέργαστη έξοδος επαναλαμβάνεται, και μια σύνοψη που αφαιρεί την επανάληψη είναι αυτή πάνω στην οποία μπορεί να δράσει ένας αξιολογητής. Πώς: η sort βάζει τις γραμμές σε σειρά και η uniq στη συνέχεια συμπτύσσει τις γειτονικές διπλότυπες σε μία. Η σειρά έχει σημασία: η uniq συγκρίνει πάντα μόνο γειτονικές γραμμές, οπότε η εκτέλεσή της σε μη ταξινομημένη είσοδο αφήνει διπλότυπα που τυχαίνει να μην είναι δίπλα-δίπλα." },
         material: { en: "sort -n sorts numerically and sort -u removes duplicates in one pass, which is often simpler than piping into uniq.", el: "Η sort -n ταξινομεί αριθμητικά και η sort -u αφαιρεί τα διπλότυπα σε ένα πέρασμα, που συχνά είναι απλούστερο από το να διοχετεύσεις σε uniq." },
@@ -626,7 +626,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "tee-capture",
-        instruction: { en: "Keep the interface capture and print only the address lines: ifconfig | tee /tmp/net.txt | grep inet", el: "Κράτα την καταγραφή διεπαφών και τύπωσε μόνο τις γραμμές διευθύνσεων: ifconfig | tee /tmp/net.txt | grep inet" },
+        instruction: { en: "Save the full interface output to a file while passing it on, and print only the address lines.", el: "Αποθήκευσε όλη την έξοδο των διεπαφών σε αρχείο καθώς την προωθείς, και εμφάνισε μόνο τις γραμμές με διευθύνσεις." },
         hint: { en: "ifconfig | tee /tmp/net.txt | grep inet", el: "ifconfig | tee /tmp/net.txt | grep inet" },
         explain: { en: "Why: evidence is what the command printed, not what you remember it printing, so the full output has to be captured at the moment it happens. How: tee sits inside the pipe, writes everything it receives to the file you name, and forwards the same bytes to the next stage. So ifconfig | tee /tmp/net.txt | grep inet keeps the complete record while you look only at the addresses.", el: "Γιατί: τεκμήριο είναι ό,τι τύπωσε η εντολή και όχι ό,τι θυμάσαι ότι τύπωσε, οπότε η πλήρης έξοδος πρέπει να καταγραφεί τη στιγμή που συμβαίνει. Πώς: η tee κάθεται μέσα στη διαδοχή, γράφει ό,τι λαμβάνει στο αρχείο που ονομάζεις και προωθεί τα ίδια bytes στο επόμενο στάδιο. Έτσι η ifconfig | tee /tmp/net.txt | grep inet κρατά την πλήρη καταγραφή ενώ εσύ κοιτάζεις μόνο τις διευθύνσεις." },
         material: { en: "tee writes every file you name, so one command can keep an evidence copy while the pipeline continues to the next stage.", el: "Η tee γράφει σε κάθε αρχείο που ονομάζεις, οπότε μία εντολή μπορεί να κρατήσει αντίγραφο τεκμηρίου ενώ η διαδοχή συνεχίζει στο επόμενο στάδιο." },
