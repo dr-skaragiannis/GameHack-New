@@ -524,7 +524,7 @@ export const MODULES: Module[] = [
       },
       {
         id: "curl",
-        instruction: { en: "curl the web box: curl http://10.10.10.8/", el: "curl http://10.10.10.8/" },
+        instruction: { en: "Fetch the web box's home page from the terminal and read what it returns.", el: "Κατέβασε την αρχική σελίδα του web box από το τερματικό και δες τι επιστρέφει." },
         hint: { en: "curl http://10.10.10.8/", el: "curl http://10.10.10.8/" },
         explain: { en: "WHY: HTTP is often the loudest service.", el: "ΓΙΑΤΙ: Το HTTP είναι συχνά η υπηρεσία που αποκαλύπτει τα περισσότερα." },
         check: (t) => t.flags.has("curl-web") || t.flags.has("curl-raven") || usedCmd(t, /^\s*curl\b/),
@@ -740,14 +740,14 @@ export const MODULES: Module[] = [
     tasks: [
       {
         id: "scan",
-        instruction: { en: "nmap -sV 10.10.10.5", el: "nmap -sV 10.10.10.5" },
+        instruction: { en: "Find out which services the target is running, and what version each one reports.", el: "Βρες ποιες υπηρεσίες τρέχει ο στόχος και ποια έκδοση αναφέρει η καθεμία." },
         hint: { en: "nmap -sV 10.10.10.5", el: "nmap -sV 10.10.10.5" },
         explain: { en: "WHY: Raven speaks SSH and HTTP.", el: "ΓΙΑΤΙ: Ο Raven μιλά SSH και HTTP." },
         check: (t) => t.flags.has("nmap-raven") || t.flags.has("nmap-sv"),
       },
       {
         id: "http",
-        instruction: { en: "curl http://10.10.10.5/", el: "curl http://10.10.10.5/" },
+        instruction: { en: "Fetch the target's web page from the command line and read what it serves back.", el: "Κατέβασε τη σελίδα του στόχου από τη γραμμή εντολών και δες τι επιστρέφει." },
         hint: { en: "curl http://10.10.10.5/", el: "curl http://10.10.10.5/" },
         explain: { en: "WHY: Confirm Raven CMS.", el: "ΓΙΑΤΙ: Επιβεβαίωσε Raven CMS." },
         check: (t) => t.flags.has("curl-raven"),
@@ -794,14 +794,14 @@ export const MODULES: Module[] = [
     tasks: [
       {
         id: "hydra-r",
-        instruction: { en: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5", el: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5" },
+        instruction: { en: "Test whether the raven account accepts any password from the supplied wordlist.", el: "Έλεγξε αν ο λογαριασμός raven δέχεται κάποιον κωδικό από τη λίστα που δίνεται." },
         hint: { en: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5", el: "hydra -l raven -P tools/wordlist.txt ssh://10.10.10.5" },
         explain: { en: "WHY: A password that sits in the training list is already a finding. HOW: -l names the one account raven, -P names the sandbox wordlist, and the host must stay 10.10.10.5.", el: "ΓΙΑΤΙ: Κωδικός που κάθεται στο λεξικό εκπαίδευσης είναι ήδη εύρημα. ΠΩΣ: Το -l ονομάζει τον έναν λογαριασμό raven, το -P το λεξικό του sandbox, και ο host μένει το 10.10.10.5." },
         check: (t) => t.flags.has("hydra-raven") || t.flags.has("hydra"),
       },
       {
         id: "ssh-r",
-        instruction: { en: "ssh raven@10.10.10.5", el: "ssh raven@10.10.10.5" },
+        instruction: { en: "Open an interactive shell on the target, signed in as the raven user.", el: "Άνοιξε ένα διαδραστικό κέλυφος στον στόχο, συνδεδεμένος ως χρήστης raven." },
         hint: { en: "ssh raven@10.10.10.5", el: "ssh raven@10.10.10.5" },
         explain: { en: "WHY: Foothold is a shell.", el: "ΓΙΑΤΙ: Το foothold είναι ένα shell." },
         check: (t) => t.flags.has("ssh-raven"),
@@ -903,21 +903,21 @@ export const MODULES: Module[] = [
     tasks: [
       {
         id: "readsh",
-        instruction: { en: "cat /usr/local/bin/backup.sh", el: "cat /usr/local/bin/backup.sh" },
+        instruction: { en: "Read the backup script before running it, so you know what it is about to do.", el: "Διάβασε το σενάριο backup πριν το εκτελέσεις, για να ξέρεις τι πρόκειται να κάνει." },
         hint: { en: "cat /usr/local/bin/backup.sh", el: "cat /usr/local/bin/backup.sh" },
         explain: { en: "WHY: Always read before you write.", el: "ΓΙΑΤΙ: Διάβαζε πριν γράψεις." },
         check: (t) => t.flags.has("read-backup-script") || t.flags.has("ssh-raven"),
       },
       {
         id: "edit",
-        instruction: { en: "nano /usr/local/bin/backup.sh  (simulated edit)", el: "nano /usr/local/bin/backup.sh" },
+        instruction: { en: "Open the backup script in an editor and change it; the sandbox simulates the edit.", el: "Άνοιξε το σενάριο backup σε επεξεργαστή και άλλαξέ το· η άσκηση προσομοιώνει την επεξεργασία." },
         hint: { en: "nano /usr/local/bin/backup.sh", el: "nano /usr/local/bin/backup.sh" },
         explain: { en: "WHY: Planting a payload in a root cron is a classic privesc.", el: "ΓΙΑΤΙ: Κλασική ανύψωση." },
         check: (t) => t.flags.has("wrote-backup") || usedCmd(t, /nano\s+.*backup/),
       },
       {
         id: "run",
-        instruction: { en: "sudo /usr/local/bin/backup.sh", el: "sudo /usr/local/bin/backup.sh" },
+        instruction: { en: "Run the backup script with root privileges.", el: "Εκτέλεσε το σενάριο backup με δικαιώματα root." },
         hint: { en: "sudo /usr/local/bin/backup.sh", el: "sudo /usr/local/bin/backup.sh" },
         explain: { en: "WHY: Trigger the job.", el: "ΓΙΑΤΙ: Ενεργοποίησε την προγραμματισμένη εργασία." },
         check: (t) => t.flags.has("got-root") || t.flags.has("ran-backup-root"),
@@ -965,21 +965,21 @@ export const MODULES: Module[] = [
     tasks: [
       {
         id: "ls-ssh",
-        instruction: { en: "ls -la ~/.ssh  (or ls -la /home/operator/.ssh)", el: "ls -la ~/.ssh" },
+        instruction: { en: "List everything inside the .ssh folder, including the hidden entries.", el: "Εμφάνισε όσα περιέχει ο φάκελος .ssh, συμπεριλαμβανομένων των κρυφών." },
         hint: { en: "ls -la ~/.ssh", el: "ls -la ~/.ssh" },
         explain: { en: "WHY: Inventory identities first.", el: "ΓΙΑΤΙ: Πρώτα απογραφή ταυτοτήτων." },
         check: (t) => usedCmd(t, /ls\s+.*\.ssh/) || usedCmd(t, /ls\s+-la/),
       },
       {
         id: "cfg",
-        instruction: { en: "cat ~/.ssh/config", el: "cat ~/.ssh/config" },
+        instruction: { en: "Read your SSH client configuration file.", el: "Διάβασε το αρχείο ρυθμίσεων του πελάτη SSH." },
         hint: { en: "cat /home/operator/.ssh/config", el: "cat ~/.ssh/config" },
         explain: { en: "WHY: Host aliases hide ProxyJump complexity.", el: "ΓΙΑΤΙ: Τα alias κρύβουν πολυπλοκότητα." },
         check: (t) => t.filesRead.some((p) => p.includes(".ssh/config") || p.endsWith("/config")),
       },
       {
         id: "jump",
-        instruction: { en: "ssh jump   or   ssh operator@10.10.20.2", el: "ssh jump" },
+        instruction: { en: "Connect to the jump host.", el: "Συνδέσου στον ενδιάμεσο host." },
         hint: { en: "ssh jump", el: "ssh jump" },
         explain: { en: "WHY: Bastion first.", el: "ΓΙΑΤΙ: Πρώτα το bastion." },
         check: (t) => t.flags.has("ssh-jump"),
@@ -1026,7 +1026,7 @@ export const MODULES: Module[] = [
     tasks: [
       {
         id: "hop",
-        instruction: { en: "ssh -J jump dev@10.10.20.14   (or ssh with ProxyJump)", el: "ssh -J jump dev@10.10.20.14" },
+        instruction: { en: "Reach the internal host by hopping through the jump host in one connection.", el: "Φτάσε στον εσωτερικό host περνώντας από τον ενδιάμεσο, με μία μόνο σύνδεση." },
         hint: { en: "ssh -J jump dev@10.10.20.14", el: "ssh -J jump dev@10.10.20.14" },
         explain: { en: "WHY: -J is ProxyJump.", el: "ΓΙΑΤΙ: Η επιλογή -J ενεργοποιεί το ProxyJump." },
         check: (t) => t.flags.has("ssh-hop") || t.flags.has("ssh-dev"),

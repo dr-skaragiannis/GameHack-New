@@ -591,9 +591,35 @@ export default function ModuleView({
                                 <p className="text-sm text-cyan-200 leading-relaxed">
                                   {t("hintPenaltyApplied", lang).replace("{xp}", String(HINT_XP_PENALTY))}
                                 </p>
-                                <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-cyan-100">
-                                  {bi(task.hint, lang).trim()}
-                                </pre>
+                                {/* One command per row. A hint that lists several
+                                    commands in a single block reads as one long
+                                    thing to paste, and players cannot tell where
+                                    one command stops and the next begins. */}
+                                {(() => {
+                                  const hintLines = bi(task.hint, lang).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+                                  if (!hintLines.length) return null;
+                                  if (hintLines.length === 1) {
+                                    return (
+                                      <pre className="mt-2 whitespace-pre-wrap break-words rounded-md bg-black/30 px-2.5 py-1.5 font-mono text-sm leading-relaxed text-cyan-100">
+                                        {hintLines[0]}
+                                      </pre>
+                                    );
+                                  }
+                                  return (
+                                    <ol className="mt-2 space-y-1.5">
+                                      {hintLines.map((line, index) => (
+                                        <li key={`${task.id}-hint-${index}`} className="flex items-start gap-2">
+                                          <span aria-hidden="true" className="mt-1 shrink-0 font-mono text-xs text-cyan-400/70">
+                                            {index + 1}
+                                          </span>
+                                          <code className="min-w-0 flex-1 whitespace-pre-wrap break-words rounded-md bg-black/30 px-2.5 py-1.5 font-mono text-sm leading-relaxed text-cyan-100">
+                                            {line}
+                                          </code>
+                                        </li>
+                                      ))}
+                                    </ol>
+                                  );
+                                })()}
                               </div>
                             )}
                             {task.material && bi(task.material, lang).trim() && (

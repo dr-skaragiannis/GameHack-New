@@ -509,12 +509,16 @@ export function loadPlayerTerminal(userId: string): Terminal {
       history: Array.isArray(parsed.history)
         ? parsed.history.filter((value): value is string => typeof value === "string").map(replaceLegacyBrand).slice(-MAX_SAVED_HISTORY)
         : fresh.history,
-      ran: Array.isArray(parsed.ran)
-        ? parsed.ran.filter((value): value is string => typeof value === "string").map(replaceLegacyBrand).slice(-MAX_SAVED_COMMANDS)
-        : fresh.ran,
-      lines: Array.isArray(parsed.lines)
-        ? parsed.lines.slice(-MAX_SAVED_LINES).map((line) => ({ ...line, text: replaceLegacyBrand(line.text) }))
-        : fresh.lines,
+      ...(() => {
+        const ran = Array.isArray(parsed.ran)
+          ? parsed.ran.filter((value): value is string => typeof value === "string").map(replaceLegacyBrand)
+          : fresh.ran;
+        const lines = Array.isArray(parsed.lines)
+          ? parsed.lines.map((line) => ({ ...line, text: replaceLegacyBrand(line.text) }))
+          : fresh.lines;
+        const aligned = trimTranscript(lines, ran);
+        return { ran: aligned.ran.slice(-MAX_SAVED_COMMANDS), lines: aligned.lines };
+      })(),
       filesRead: Array.isArray(parsed.filesRead)
         ? parsed.filesRead.filter((value): value is string => typeof value === "string").map(replaceLegacyBrand).slice(-MAX_SAVED_READS)
         : fresh.filesRead,
@@ -541,13 +545,30 @@ export function resetPlayerTerminal(
   return fresh;
 }
 
+/**
+ * The transcript and the command log are read as a pair: sawOutput() walks the
+ * transcript and takes ran[i] for the i-th prompt line. Trimming the two
+ * independently shifts that pairing, so an objective ends up comparing a
+ * command against the output of a different one and silently stops completing -
+ * which looks exactly like a lab that needs its filesystem reverted. Whatever
+ * prompts the transcript loses from the front, the command log must lose the
+ * same ones from the front.
+ */
+function trimTranscript(lines: Terminal["lines"], ran: string[]): { lines: Terminal["lines"]; ran: string[] } {
+  if (lines.length <= MAX_SAVED_LINES) return { lines, ran };
+  const kept = lines.slice(-MAX_SAVED_LINES);
+  const droppedPrompts = lines.slice(0, lines.length - MAX_SAVED_LINES).filter((line) => line.kind === "in").length;
+  return { lines: kept, ran: ran.slice(droppedPrompts) };
+}
+
 export function savePlayerTerminal(userId: string, term: Terminal): void {
   const storage = localStorageOrNull();
   if (!storage) return;
 
   term.history = term.history.slice(-MAX_SAVED_HISTORY);
-  term.ran = term.ran.slice(-MAX_SAVED_COMMANDS);
-  term.lines = term.lines.slice(-MAX_SAVED_LINES);
+  const trimmed = trimTranscript(term.lines, term.ran);
+  term.lines = trimmed.lines;
+  term.ran = trimmed.ran.slice(-MAX_SAVED_COMMANDS);
   term.filesRead = term.filesRead.slice(-MAX_SAVED_READS);
 
   const snapshot: PersistedTerminal & { version: number } = {

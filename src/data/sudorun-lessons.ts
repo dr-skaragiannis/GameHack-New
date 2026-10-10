@@ -202,7 +202,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "locate",
-        instruction: { en: "locate CTF (optionally | more)", el: "locate CTF" },
+        instruction: { en: "Search the file index for anything named CTF.", el: "Ψάξε στο ευρετήριο αρχείων για οτιδήποτε ονομάζεται CTF." },
         hint: { en: "locate CTF | more", el: "locate CTF | more" },
         explain: { en: "Why: searching a whole filesystem by name with find is slow, and often a name is all you have to go on. How: locate matches your keyword against a prebuilt filename index and prints every path containing it. On a real host that index refreshes daily, so a file created minutes ago may be missing; here the lab walks the virtual tree directly.", el: "Γιατί: η αναζήτηση σε ολόκληρο το σύστημα αρχείων με όνομα μέσω find είναι αργή, και συχνά ένα όνομα είναι το μόνο που έχεις για να προχωρήσεις. Πώς: η locate ταιριάζει τη λέξη-κλειδί σου απέναντι σε ένα προκατασκευασμένο ευρετήριο ονομάτων και εμφανίζει κάθε διαδρομή που την περιέχει. Σε πραγματικό host το ευρετήριο ανανεώνεται καθημερινά, οπότε ένα αρχείο που δημιουργήθηκε πριν λίγα λεπτά μπορεί να λείπει· εδώ το εργαστήριο διασχίζει απευθείας το εικονικό δέντρο." },
         material: { en: "When locate returns nothing for a file you just created, run updatedb to rebuild the index, or fall back to find, which walks the live tree.", el: "Όταν η locate δεν επιστρέφει τίποτα για ένα αρχείο που μόλις δημιούργησες, τρέξε updatedb για να ξαναχτίσεις το ευρετήριο, ή χρησιμοποίησε την find που διασχίζει το ζωντανό δέντρο." },
@@ -210,7 +210,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "whereis",
-        instruction: { en: "whereis git", el: "whereis git" },
+        instruction: { en: "Ask the system where git's binary, its source and its manual page live.", el: "Ρώτα το σύστημα πού βρίσκονται το εκτελέσιμο του git, ο κώδικάς του και η σελίδα εγχειριδίου του." },
         hint: { en: "whereis git", el: "whereis git" },
         explain: { en: "Why: a tool you can invoke and a tool you can read about are two different facts, and troubleshooting starts by knowing which one is missing. How: whereis reports the binary path, the source path when present, and the manual page for a name in one line. An empty manual field means the package installed without documentation, which is common on minimal installs.", el: "Γιατί: ένα εργαλείο που μπορείς να καλέσεις και ένα εργαλείο για το οποίο μπορείς να διαβάσεις είναι δύο διαφορετικά γεγονότα, και η αντιμετώπιση προβλημάτων αρχίζει γνωρίζοντας ποιο από τα δύο λείπει. Πώς: η whereis αναφέρει σε μία γραμμή τη διαδρομή του binary, τη διαδρομή του πηγαίου κώδικα όταν υπάρχει, και τη σελίδα εγχειριδίου για ένα όνομα. Ένα κενό πεδίο εγχειριδίου σημαίνει ότι το πακέτο εγκαταστάθηκε χωρίς τεκμηρίωση, κάτι συνηθισμένο σε λιτές εγκαταστάσεις." },
         material: { en: "whereis answers which parts of a tool exist on this machine, which is the right question when a command works but its documentation does not.", el: "Η whereis απαντά στο ποια μέρη ενός εργαλείου υπάρχουν σε αυτό το μηχάνημα, που είναι η σωστή ερώτηση όταν μια εντολή δουλεύει αλλά η τεκμηρίωσή της όχι." },
@@ -218,7 +218,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "which",
-        instruction: { en: "which git", el: "which git" },
+        instruction: { en: "Find out which git binary your shell would actually run.", el: "Βρες ποιο εκτελέσιμο git θα έτρεχε πραγματικά το κέλυφός σου." },
         hint: { en: "which git", el: "which git" },
         explain: { en: "Why: when two copies of a tool exist, the one that runs is decided by search order, not by the one you meant. How: which walks $PATH from left to right and prints the first executable matching the name. That answer is exactly what your shell will run, so a surprising path here explains a surprising version there.", el: "Γιατί: όταν υπάρχουν δύο αντίγραφα ενός εργαλείου, αυτό που εκτελείται κρίνεται από τη σειρά αναζήτησης και όχι από αυτό που εννοούσες. Πώς: η which διασχίζει το $PATH από αριστερά προς τα δεξιά και εμφανίζει το πρώτο εκτελέσιμο που ταιριάζει στο όνομα. Αυτή η απάντηση είναι ακριβώς ό,τι θα εκτελέσει το shell σου, οπότε μια απροσδόκητη διαδρομή εδώ εξηγεί μια απροσδόκητη έκδοση εκεί." },
         material: { en: "which searches $PATH while type asks the shell directly and also reports builtins and aliases. When a version surprises you, run both.", el: "Η which ψάχνει στο $PATH ενώ η type ρωτά απευθείας το shell και αναφέρει επίσης ενσωματωμένες εντολές και ψευδώνυμα. Όταν μια έκδοση σε ξαφνιάζει, τρέξε και τις δύο." },
@@ -310,7 +310,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "grep-pipe",
-        instruction: { en: "ifconfig | grep inet", el: "ifconfig | grep inet" },
+        instruction: { en: "Show only the lines that carry an IP address, by filtering the interface output.", el: "Εμφάνισε μόνο τις γραμμές που έχουν διεύθυνση IP, φιλτράροντας την έξοδο των διεπαφών." },
         hint: { en: "ifconfig | grep inet", el: "ifconfig | grep inet" },
         explain: { en: "Why: the output you care about is usually a small part of a much larger stream, and reading all of it hides the signal. How: placing grep at the end of a pipe makes it filter standard input instead of a file, so command | grep PATTERN keeps only the matching lines of whatever the previous stage produced. The earlier command still runs in full.", el: "Γιατί: η έξοδος που σε ενδιαφέρει είναι συνήθως μικρό μέρος μιας πολύ μεγαλύτερης ροής, και η ανάγνωση ολόκληρης κρύβει το σήμα. Πώς: τοποθετώντας την grep στο τέλος μιας διαδοχής την κάνεις να φιλτράρει την standard input αντί για αρχείο, οπότε η εντολή | grep ΜΟΤΙΒΟ κρατά μόνο τις γραμμές που ταιριάζουν από ό,τι παρήγαγε το προηγούμενο στάδιο. Η προηγούμενη εντολή εκτελείται κανονικά στο σύνολό της." },
         material: { en: "A pipeline is not a loop: every stage runs at the same time and streams, which is why grep can start filtering before the producer finishes.", el: "Μια διαδοχή δεν είναι βρόχος: κάθε στάδιο τρέχει ταυτόχρονα και ρέει, γι' αυτό η grep μπορεί να αρχίσει το φιλτράρισμα πριν ο παραγωγός ολοκληρώσει." },
@@ -318,7 +318,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "find",
-        instruction: { en: "find / -type f -name gamehack", el: "find / -type f -name gamehack" },
+        instruction: { en: "Search the whole filesystem for regular files named gamehack.", el: "Ψάξε σε όλο το σύστημα αρχείων για κανονικά αρχεία με όνομα gamehack." },
         hint: { en: "find / -type f -name gamehack", el: "find / -type f -name gamehack" },
         explain: { en: "Why: you often know what you are looking for but not where it is, and guessing paths wastes the session. How: find walks a directory tree from the path you give it and tests each entry, so find / -type f -name PATTERN searches the whole filesystem for regular files matching that name. The starting path decides the scope, and it is the first thing worth narrowing.", el: "Γιατί: συχνά ξέρεις τι ψάχνεις αλλά όχι πού βρίσκεται, και το να μαντεύεις διαδρομές σπαταλά τη συνεδρία. Πώς: η find διασχίζει ένα δέντρο καταλόγων από τη διαδρομή που της δίνεις και ελέγχει κάθε στοιχείο, οπότε η find / -type f -name ΜΟΤΙΒΟ ψάχνει σε ολόκληρο το σύστημα αρχείων για κανονικά αρχεία που ταιριάζουν στο όνομα. Η αρχική διαδρομή καθορίζει το πεδίο και είναι το πρώτο πράγμα που αξίζει να στενέψεις." },
         material: { en: "Common tests: -name PATTERN, -type f or d, -size +10M, -newer FILE and -perm MODE. Combine them with -exec to act on every match.", el: "Συνηθισμένοι έλεγχοι: -name ΜΟΤΙΒΟ, -type f ή d, -size +10M, -newer ΑΡΧΕΙΟ και -perm ΚΑΤΑΣΤΑΣΗ. Συνδύασέ τους με -exec για να δράσεις σε κάθε ταίριασμα." },
@@ -403,7 +403,7 @@ export const SUDO_RUN_MODULES: Module[] = [
     tasks: [
       {
         id: "cat",
-        instruction: { en: "cat gamehack.txt", el: "cat gamehack.txt" },
+        instruction: { en: "Print the contents of gamehack.txt.", el: "Εμφάνισε τα περιεχόμενα του gamehack.txt." },
         hint: { en: "cat /root/gamehack.txt", el: "cat /root/gamehack.txt" },
         explain: { en: "Why: nearly every setting on Linux lives in a plain-text file, so reading one is the basic act of inspection. How: cat concatenates the files you name and writes them to standard output in order. It changes nothing, which makes it the safe first command; with no argument it simply copies your keyboard input back to the screen.", el: "Γιατί: σχεδόν κάθε ρύθμιση στο Linux βρίσκεται σε αρχείο απλού κειμένου, οπότε η ανάγνωση ενός τέτοιου αρχείου είναι η βασική πράξη επιθεώρησης. Πώς: η cat συνενώνει τα αρχεία που ονομάζεις και τα γράφει στην standard output με τη σειρά. Δεν αλλάζει τίποτα, κάτι που την κάνει την ασφαλή πρώτη εντολή· χωρίς όρισμα απλώς αντιγράφει ό,τι πληκτρολογείς πίσω στην οθόνη." },
         material: { en: "cat with several arguments concatenates them in order, which is a quick way to join small files into one.", el: "Η cat με πολλά ορίσματα τα συνενώνει με τη σειρά, που είναι γρήγορος τρόπος να ενώσεις μικρά αρχεία σε ένα." },
@@ -411,7 +411,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "touch",
-        instruction: { en: "touch gamehack-2.txt", el: "touch gamehack-2.txt" },
+        instruction: { en: "Create an empty file called gamehack-2.txt in the folder you are in.", el: "Δημιούργησε ένα κενό αρχείο gamehack-2.txt στον φάκελο όπου βρίσκεσαι." },
         hint: { en: "touch gamehack-2.txt", el: "touch gamehack-2.txt" },
         explain: { en: "Why: you need an empty file to exist before you can write into it, redirect into it, or hand it to another tool. How: touch creates each named file that does not exist and updates the timestamp of one that does. The new file arrives with the permissions your umask allows, normally -rw-r--r--, which is worth reading before you put anything sensitive inside.", el: "Γιατί: χρειάζεται ένα κενό αρχείο να υπάρχει πριν μπορέσεις να γράψεις μέσα του, να ανακατευθύνεις σε αυτό ή να το δώσεις σε άλλο εργαλείο. Πώς: η touch δημιουργεί κάθε αρχείο που ονομάζεις και δεν υπάρχει, και ενημερώνει τη χρονική σήμανση ενός που υπάρχει. Το νέο αρχείο έρχεται με τα δικαιώματα που επιτρέπει η umask σου, κανονικά -rw-r--r--, που αξίζει να διαβάσεις πριν βάλεις μέσα κάτι ευαίσθητο." },
         material: { en: "touch never truncates an existing file; it only updates timestamps, which makes it safe to run on a file you did not mean to create.", el: "Η touch ποτέ δεν μηδενίζει υπάρχον αρχείο· ενημερώνει μόνο τις χρονικές σημάνσεις, που την κάνει ασφαλή ακόμα και σε αρχείο που δεν σκόπευες να δημιουργήσεις." },
@@ -419,7 +419,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "mkdir",
-        instruction: { en: "mkdir Documents/ignite", el: "mkdir Documents/ignite" },
+        instruction: { en: "Create a folder named ignite inside Documents.", el: "Δημιούργησε έναν φάκελο με όνομα ignite μέσα στο Documents." },
         hint: { en: "mkdir Documents/ignite", el: "mkdir Documents/ignite" },
         explain: { en: "Why: structure is what keeps evidence, notes and tool output from colliding in one flat directory. How: mkdir creates the named directory inside the current one, or at the path you give. It refuses to overwrite anything that already exists, so an error here is information rather than damage; -p builds missing parents and stays silent when the directory is already there.", el: "Γιατί: η δομή είναι αυτή που εμποδίζει τεκμήρια, σημειώσεις και έξοδο εργαλείων να συγκρουστούν μέσα σε έναν επίπεδο κατάλογο. Πώς: η mkdir δημιουργεί τον κατάλογο που ονομάζεις μέσα στον τρέχοντα ή στη διαδρομή που δίνεις. Αρνείται να αντικαταστήσει οτιδήποτε υπάρχει ήδη, οπότε ένα σφάλμα εδώ είναι πληροφορία και όχι ζημιά· η -p χτίζει τους γονείς που λείπουν και παραμένει σιωπηλή όταν ο κατάλογος υπάρχει ήδη." },
         material: { en: "mkdir -p a/b/c builds the whole chain and stays silent when it already exists, which is what makes it safe inside scripts.", el: "Η mkdir -p a/b/c χτίζει ολόκληρη την αλυσίδα και παραμένει σιωπηλή όταν υπάρχει ήδη, που είναι αυτό που την κάνει ασφαλή μέσα σε scripts." },
@@ -427,7 +427,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "cp",
-        instruction: { en: "cp gamehack-2.txt Documents/ignite", el: "cp gamehack-2.txt Documents/ignite" },
+        instruction: { en: "Copy gamehack-2.txt into Documents/ignite, leaving the original where it is.", el: "Αντίγραψε το gamehack-2.txt μέσα στο Documents/ignite, αφήνοντας το πρωτότυπο στη θέση του." },
         hint: { en: "cp gamehack-2.txt Documents/ignite", el: "cp gamehack-2.txt Documents/ignite" },
         explain: { en: "Why: the original is often the only copy of something you are not allowed to lose, so the work happens on a duplicate. How: cp SOURCE DESTINATION reads the source and writes a new file at the destination, leaving the source byte for byte intact. If the destination names an existing file it is overwritten silently, which is why that argument deserves a second look.", el: "Γιατί: το πρωτότυπο είναι συχνά το μοναδικό αντίγραφο κάτι που δεν επιτρέπεται να χάσεις, οπότε η δουλειά γίνεται σε αντίγραφο. Πώς: η cp ΠΗΓΗ ΠΡΟΟΡΙΣΜΟΣ διαβάζει την πηγή και γράφει νέο αρχείο στον προορισμό, αφήνοντας την πηγή ανέπαφη byte προς byte. Αν ο προορισμός ονομάζει υπάρχον αρχείο, αυτό αντικαθίσταται σιωπηλά, γι' αυτό το όρισμα του προορισμού αξίζει μια δεύτερη ματιά." },
         material: { en: "cp -r copies directories recursively and cp -p preserves ownership, mode and timestamps, which matters when you are staging evidence.", el: "Η cp -r αντιγράφει καταλόγους αναδρομικά και η cp -p διατηρεί ιδιοκτησία, δικαιώματα και χρονικές σημάνσεις, που έχει σημασία όταν προετοιμάζεις τεκμήρια." },
@@ -451,7 +451,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "rmdir",
-        instruction: { en: "rmdir ignite_screenshots/", el: "rmdir ignite_screenshots/" },
+        instruction: { en: "Remove the empty ignite_screenshots folder.", el: "Αφαίρεσε τον κενό φάκελο ignite_screenshots." },
         hint: { en: "rmdir ignite_screenshots", el: "rmdir ignite_screenshots" },
         explain: { en: "Why: refusing to delete a non-empty directory is a safety property rather than a limitation, and it makes this the one deletion you can run without checking twice. How: rmdir removes a directory only if it holds nothing. When the directory has contents it errors out and changes nothing, which is why a recursive rm is a deliberate decision rather than a convenience.", el: "Γιατί: η άρνηση διαγραφής ενός μη κενού καταλόγου είναι ιδιότητα ασφαλείας και όχι περιορισμός, και κάνει αυτή τη διαγραφή τη μία που μπορείς να τρέξεις χωρίς δεύτερο έλεγχο. Πώς: η rmdir αφαιρεί έναν κατάλογο μόνο αν δεν περιέχει τίποτα. Όταν ο κατάλογος έχει περιεχόμενο, εμφανίζει σφάλμα και δεν αλλάζει τίποτα, γι' αυτό μια αναδρομική rm είναι σκόπιμη απόφαση και όχι ευκολία." },
         material: { en: "rmdir -p removes a chain of empty directories and stops at the first one that still has contents.", el: "Η rmdir -p αφαιρεί μια αλυσίδα κενών καταλόγων και σταματά στον πρώτο που έχει ακόμα περιεχόμενο." },
@@ -562,7 +562,7 @@ export const SUDO_RUN_MODULES: Module[] = [
     tasks: [
       {
         id: "head",
-        instruction: { en: "head /etc/ettercap/etter.dns", el: "head /etc/ettercap/etter.dns" },
+        instruction: { en: "Show the first lines of the etter.dns file.", el: "Εμφάνισε τις πρώτες γραμμές του αρχείου etter.dns." },
         hint: { en: "head /etc/ettercap/etter.dns", el: "head /etc/ettercap/etter.dns" },
         explain: { en: "Why: most configuration files state their decisive settings near the top, and reading all of a long file wastes attention. How: head prints the first ten lines of a file by default and -n N changes that count. Because it stops early it stays cheap on huge files, which makes it the right first look at a log you have never opened.", el: "Γιατί: τα περισσότερα αρχεία ρυθμίσεων δηλώνουν τις καθοριστικές τους ρυθμίσεις κοντά στην αρχή, και η ανάγνωση ολόκληρου ενός μεγάλου αρχείου σπαταλά την προσοχή. Πώς: η head εμφανίζει από προεπιλογή τις πρώτες δέκα γραμμές ενός αρχείου και η -n N αλλάζει αυτό το πλήθος. Επειδή σταματά νωρίς παραμένει φθηνή σε τεράστια αρχεία, που την κάνει τη σωστή πρώτη ματιά σε ένα αρχείο καταγραφής που δεν έχεις ξαναανοίξει." },
         material: { en: "head -c N counts bytes instead of lines, which is a quick way to grab a file signature without reading the whole file.", el: "Η head -c N μετρά byte αντί για γραμμές, που είναι γρήγορος τρόπος να πάρεις την υπογραφή ενός αρχείου χωρίς να το διαβάσεις ολόκληρο." },
@@ -570,7 +570,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "tail",
-        instruction: { en: "tail /etc/ettercap/etter.dns", el: "tail /etc/ettercap/etter.dns" },
+        instruction: { en: "Show the last lines of the etter.dns file.", el: "Εμφάνισε τις τελευταίες γραμμές του αρχείου etter.dns." },
         hint: { en: "tail /etc/ettercap/etter.dns", el: "tail /etc/ettercap/etter.dns" },
         explain: { en: "Why: the newest events sit at the end of a log, and scrolling to the bottom by hand is slow when the file keeps growing. How: tail prints the last ten lines by default and -n N changes the count. On a real host tail -f keeps following the file as new lines arrive, which is the standard way to watch a service react to what you just did.", el: "Γιατί: τα νεότερα γεγονότα κάθονται στο τέλος ενός αρχείου καταγραφής, και η κύλιση μέχρι κάτω με το χέρι είναι αργή όταν το αρχείο συνεχώς μεγαλώνει. Πώς: η tail εμφανίζει από προεπιλογή τις τελευταίες δέκα γραμμές και η -n N αλλάζει το πλήθος. Σε πραγματικό host η tail -f συνεχίζει να ακολουθεί το αρχείο καθώς φτάνουν νέες γραμμές, που είναι ο τυπικός τρόπος να παρακολουθείς μια υπηρεσία να αντιδρά σε αυτό που μόλις έκανες." },
         material: { en: "tail -n +N starts printing at line N instead of the end, which is how you skip a known header block.", el: "Η tail -n +N αρχίζει την εμφάνιση από τη γραμμή N αντί από το τέλος, που είναι ο τρόπος να προσπεράσεις ένα γνωστό μπλοκ κεφαλίδας." },
@@ -578,7 +578,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "nl",
-        instruction: { en: "nl /etc/ettercap/etter.dns", el: "nl /etc/ettercap/etter.dns" },
+        instruction: { en: "Show the etter.dns file with a line number in front of every line.", el: "Εμφάνισε το αρχείο etter.dns με αριθμό γραμμής μπροστά από κάθε γραμμή." },
         hint: { en: "nl /etc/ettercap/etter.dns", el: "nl /etc/ettercap/etter.dns" },
         explain: { en: "Why: citing a line by number is how you make a finding verifiable by someone else reading the same file. How: nl writes the file to standard output with a line number prefixed to each line, leaving the file itself unchanged. The numbers are display only, so a reference like line 14 points at content rather than at a stored field.", el: "Γιατί: η αναφορά μιας γραμμής με αριθμό είναι ο τρόπος να κάνεις ένα εύρημα επαληθεύσιμο από κάποιον άλλο που διαβάζει το ίδιο αρχείο. Πώς: η nl γράφει το αρχείο στην standard output με έναν αριθμό γραμμής προτεταγμένο σε κάθε γραμμή, αφήνοντας το ίδιο το αρχείο αμετάβλητο. Οι αριθμοί είναι μόνο οπτικοί, οπότε μια αναφορά όπως γραμμή 14 δείχνει σε περιεχόμενο και όχι σε αποθηκευμένο πεδίο." },
         material: { en: "nl numbers non-empty lines by default; nl -ba numbers every line including blanks, which is what you want when quoting exact positions.", el: "Η nl αριθμεί από προεπιλογή τις μη κενές γραμμές· η nl -ba αριθμεί κάθε γραμμή συμπεριλαμβανομένων των κενών, που είναι ό,τι χρειάζεσαι όταν παραθέτεις ακριβείς θέσεις." },
@@ -586,7 +586,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "sed",
-        instruction: { en: "sed s/WWW/www/g gamehack.in", el: "sed s/WWW/www/g gamehack.in" },
+        instruction: { en: "Replace every WWW with www in gamehack.in and print the result.", el: "Αντικατάστησε κάθε WWW με www στο gamehack.in και εμφάνισε το αποτέλεσμα." },
         hint: { en: "sed s/WWW/www/g /root/gamehack.in", el: "sed s/WWW/www/g /root/gamehack.in" },
         explain: { en: "Why: repeating one edit by hand across a file is slow and inconsistent, and inconsistency inside a configuration is a defect. How: sed with an s/OLD/NEW/g expression streams the file, substitutes on each line and writes the result to standard output without touching the original. The trailing g replaces every occurrence on a line; without it a second match survives.", el: "Γιατί: η επανάληψη μιας επεξεργασίας με το χέρι σε όλο ένα αρχείο είναι αργή και ασυνεπής, και η ασυνέπεια μέσα σε μια διαμόρφωση είναι ελάττωμα. Πώς: η sed με έκφραση s/ΠΑΛΙΟ/ΝΕΟ/g ρέει το αρχείο, αντικαθιστά σε κάθε γραμμή και γράφει το αποτέλεσμα στην standard output χωρίς να αγγίξει το πρωτότυπο. Το τελικό g αντικαθιστά κάθε εμφάνιση στη γραμμή· χωρίς αυτό μια δεύτερη εμφάνιση επιζεί." },
         material: { en: "The same s/// shape also deletes with d and prints with p, and -i edits in place, so test without -i first and redirect to a new file.", el: "Το ίδιο σχήμα s/// επίσης διαγράφει με d και εμφανίζει με p, και το -i επεξεργάζεται επί τόπου, οπότε δοκίμασε πρώτα χωρίς -i και ανακατεύθυνε σε νέο αρχείο." },
@@ -594,7 +594,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "more",
-        instruction: { en: "more /etc/ettercap/etter.dns", el: "more /etc/ettercap/etter.dns" },
+        instruction: { en: "Page through the etter.dns file one screen at a time.", el: "Δες το αρχείο etter.dns σελίδα προς σελίδα." },
         hint: { en: "more /etc/ettercap/etter.dns", el: "more /etc/ettercap/etter.dns" },
         explain: { en: "Why: a long file scrolled past in one burst cannot be read, and paging is what turns output into something you can actually study. How: more prints a file one screen at a time and waits for you to advance, so nothing disappears before you read it. It offers no search, which is exactly why less exists; here it prints the whole fixture because no real terminal is attached.", el: "Γιατί: ένα μεγάλο αρχείο που περνάει με μία ορμή δεν διαβάζεται, και η σελιδοποίηση είναι αυτή που μετατρέπει την έξοδο σε κάτι που μπορείς πραγματικά να μελετήσεις. Πώς: η more εμφανίζει ένα αρχείο μία οθόνη κάθε φορά και περιμένει να προχωρήσεις, οπότε τίποτα δεν χάνεται πριν το διαβάσεις. Δεν προσφέρει αναζήτηση, που είναι ακριβώς ο λόγος ύπαρξης της less· εδώ εμφανίζει ολόκληρο το αρχείο γιατί δεν υπάρχει συνδεδεμένο πραγματικό τερματικό." },
         material: { en: "Inside more, space advances a screen, Enter one line and q quits. It cannot scroll backwards, which is exactly why less replaced it.", el: "Μέσα στην more, το κενό προχωρά μία οθόνη, το Enter μία γραμμή και το q βγαίνει. Δεν μπορεί να κυλίσει προς τα πίσω, που είναι ακριβώς ο λόγος που την αντικατέστησε η less." },
@@ -634,7 +634,7 @@ export const SUDO_RUN_MODULES: Module[] = [
       },
       {
         id: "less",
-        instruction: { en: "less /etc/ettercap/etter.dns", el: "less /etc/ettercap/etter.dns" },
+        instruction: { en: "Open the etter.dns file in a pager you can scroll in both directions.", el: "Άνοιξε το αρχείο etter.dns σε προβολέα που μπορείς να κυλίσεις και προς τις δύο κατευθύνσεις." },
         hint: { en: "less /etc/ettercap/etter.dns", el: "less /etc/ettercap/etter.dns" },
         explain: { en: "Why: reading a long file means moving backwards as often as forwards, and a one-way pager cannot do that. How: less prints a file one screen at a time and lets you scroll in both directions and search with a leading slash. Unlike more it reads lazily, so it opens huge files instantly; q quits, which is the keystroke worth learning first.", el: "Γιατί: η ανάγνωση ενός μεγάλου αρχείου σημαίνει κίνηση προς τα πίσω εξίσου συχνά με προς τα μπρος, και ένας σελιδοποιητής μίας κατεύθυνσης δεν το κάνει. Πώς: η less εμφανίζει ένα αρχείο μία οθόνη κάθε φορά και σου επιτρέπει να κυλάς και προς τις δύο κατευθύνσεις και να αναζητάς με μια αρχική κάθετο. Σε αντίθεση με την more διαβάζει τεμπέλικα, οπότε ανοίγει τεράστια αρχεία ακαριαία· το q βγαίνει, που είναι το πλήκτρο που αξίζει να μάθεις πρώτο." },
         material: { en: "Inside less: /text searches forward, ?text backwards, n repeats, G jumps to the end and q quits. It reads lazily, so huge logs open instantly.", el: "Μέσα στην less: το /κείμενο ψάχνει προς τα εμπρός, το ?κείμενο προς τα πίσω, το n επαναλαμβάνει, το G πηγαίνει στο τέλος και το q βγαίνει. Διαβάζει τεμπέλικα, οπότε τεράστια αρχεία καταγραφής ανοίγουν ακαριαία." },
