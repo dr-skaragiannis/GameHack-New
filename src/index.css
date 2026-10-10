@@ -43,6 +43,15 @@ body,
 #root {
   height: 100%;
 }
+/* One wide descendant must never widen the whole page: on a phone that turns
+   into a horizontal scrollbar and content sliding under the sticky bars.
+   Two deliberate choices here. clip, not hidden, because hidden creates a
+   scroll container and that stops position: sticky from sticking. And #root,
+   not body, because an overflow value on body is propagated to the viewport and
+   this keeps that edge case out of it entirely. */
+#root {
+  overflow-x: clip;
+}
 
 body {
   background-color: #0a0a0b;
@@ -2934,7 +2943,9 @@ body.is-map-panning * {
   flex: 0 1 auto;
   display: flex;
   min-width: 0;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
 }
 .module-topbar__quiz,
@@ -3284,6 +3295,15 @@ button.player-quick-stats__item:hover {
   .module-topbar__lab {
     max-width: none;
     flex: 1 1 140px;
+  }
+  .module-topbar__lab-nav {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .module-topbar__quiz,
+  .module-topbar__step {
+    flex: 0 1 auto;
   }
   .module-topbar__meta-row {
     flex: 1 1 100%;

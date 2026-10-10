@@ -348,7 +348,7 @@ export default function ModuleView({
         </div>
 
         <div className="module-topbar__track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-          <div className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 bar-grow" style={{ width: `${progress}%` }} />
+          <div className="h-full min-w-0 bg-gradient-to-r from-cyan-600 to-cyan-400 bar-grow" style={{ width: `${progress}%` }} />
         </div>
       </div>
 

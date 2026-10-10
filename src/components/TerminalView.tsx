@@ -118,7 +118,7 @@ export default function TerminalView({
           </div>
         )}
       </div>
-      <div ref={scroller} className="terminal-window__scroll flex-1 px-3 py-3 space-y-0.5 leading-relaxed">
+      <div ref={scroller} className="terminal-window__scroll min-w-0 flex-1 px-3 py-3 space-y-0.5 leading-relaxed">
         {term.lines.map((l, i) => (
           <div key={i} className={cn("whitespace-pre-wrap break-all", color(l))}>
             {l.text}

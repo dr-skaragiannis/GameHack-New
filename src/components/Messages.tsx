@@ -140,7 +140,7 @@ export default function Messages({
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder={t("writeMessage", lang)}
-                className="flex-1 rounded-lg bg-gamehack-bg border border-gamehack-border px-3 py-2 text-sm"
+                className="min-w-0 flex-1 rounded-lg bg-gamehack-bg border border-gamehack-border px-3 py-2 text-sm"
               />
               <button type="submit" className="rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold">
                 {t("send", lang)}

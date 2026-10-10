@@ -769,7 +769,7 @@ export default function App() {
                       </span>
                       {!collapsed && (
                         <>
-                          <span className="flex-1 text-left">{n.label}</span>
+                          <span className="min-w-0 flex-1 truncate text-left">{n.label}</span>
                           {!!n.badge && n.badge > 0 && (
                             <span
                               className={cn(
@@ -836,7 +836,7 @@ export default function App() {
           </header>
         )}
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
           {view === "dashboard" && user.role === "player" && (
             <PlayerDashboard
               user={db.userById(user.id)!}
