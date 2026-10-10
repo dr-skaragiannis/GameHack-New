@@ -1,0 +1,27 @@
+services:
+  gamehack:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # Accounts and recovery keys live in this file. Point it at the volume.
+      AUTH_DATA_FILE: /var/data/accounts.json
+      # Set this to a long random value or every restart logs everyone out.
+      AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:?set AUTH_SESSION_SECRET in .env to a long random value}
+      # Optional: enables email password resets. Registration and recovery-key
+      # sign-in work without it.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000}
+    volumes:
+      # A named volume survives `docker compose down`, image rebuilds and
+      # redeploys. A bind mount or an anonymous volume would not.
+      - gamehack-accounts:/var/data
+    restart: unless-stopped
+
+volumes:
+  gamehack-accounts:

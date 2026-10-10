@@ -1,7 +1,11 @@
 import {
   dir,
+  displayPath,
   file,
   getNode,
+  liftPathDeleted,
+  markPathDeleted,
+  normalize,
   parentAndName,
   resolvePath,
   type FileNode,
@@ -9,21 +13,21 @@ import {
   type Terminal,
 } from "./terminal";
 
-const ETTER = `# etter.dns — HackForge lab copy of a DNS spoof config (educational)
+const ETTER = `# etter.dns — GameHack lab copy of a DNS spoof config (educational)
 # This file is a TEXT example. Never use spoofing outside a lab you own.
 
 microsoft.com A 10.10.10.8
 *.microsoft.com A 10.10.10.8
-WWW.HACKFORGE.LAB A 10.10.10.8
-hackforge.lab A 10.10.10.8
-*.hackforge.lab A 10.10.10.8
+WWW.gamehack.lab A 10.10.10.8
+gamehack.lab A 10.10.10.8
+*.gamehack.lab A 10.10.10.8
 
 # MX / NS playground
-hackforge.lab MX 10 mail.hackforge.lab
-mail.hackforge.lab A 10.10.10.9
+gamehack.lab MX 10 mail.gamehack.lab
+mail.gamehack.lab A 10.10.10.9
 
 # operator workstation
-192.168.1.13 ptr kali.hackforge.lab
+192.168.1.13 ptr kali.gamehack.lab
 `;
 
 const INDEX_HTML = `<!DOCTYPE html>
@@ -31,7 +35,7 @@ const INDEX_HTML = `<!DOCTYPE html>
 <head><title>Apache2 Debian Default Page</title></head>
 <body>
 <h1>Apache2 Debian Default Page</h1>
-<p>It works! This is the HackForge Sudo_Run web root at /var/www/html/index.html</p>
+<p>It works! This is the GameHack Sudo_Run web root at /var/www/html/index.html</p>
 </body>
 </html>
 `;
@@ -40,18 +44,23 @@ export function sudoRunFS(): FileNode {
   return dir("/", [
     dir("root", [
       file(
-        "hackforge.txt",
-        "Welcome to HackForge — Linux for Beginners (Sudo_Run).\nKeep notes here. Practice every command in the lab, not on the internet.\n"
+        "gamehack.txt",
+        "Welcome to GameHack — Linux for Beginners (Sudo_Run).\nKeep notes here. Practice every command in the lab, not on the internet.\n"
       ),
       file(
-        "hackforge.in",
-        "Visit WWW.HACKFORGE.LAB for the lab portal.\nWWW banners should be rewritten to www with sed.\nHackForge — not articles, a forge.\n"
+        "gamehack.in",
+        "Visit WWW.gamehack.lab for the lab portal.\nWWW banners should be rewritten to www with sed.\nLinux training portal (simulated).\n"
       ),
       file(
         "simple_bash.sh",
-        "#!/bin/bash\necho \"HackForge scanner starting\"\necho \"Sudo_Run lab — simulated only\"\n# echo is here so grep can find it\n"
+        "#!/bin/bash\necho \"GameHack scanner starting\"\necho \"Sudo_Run lab — simulated only\"\n# echo is here so grep can find it\n"
       ),
-      file("scanning_script.sh", "#!/bin/bash\necho \"scheduled scan at HackForge\"\n"),
+      file(
+        "scanner",
+        "#!/bin/bash\necho \"Enter the lab IP address (10.10.10.2)\"\nread ip\necho \"GameHack uses only its fixed fictional subnet.\"\n# Authorized real-world pattern: nmap -sn \"$ip\"/24 after read ip.\n# GameHack runs only the fixed fixture subnet below.\nnmap -sn 10.10.10.0/24 | grep scan | cut -d \" \" -f 5 | head -n -1\n",
+        "-rwxr-xr-x",
+      ),
+      file("scanning_script.sh", "#!/bin/bash\necho \"scheduled scan at GameHack\"\n"),
       file("first_script", "#!/bin/bash\necho \"Hello World\"\n"),
       file(
         "welcome.sh",
@@ -61,6 +70,76 @@ export function sudoRunFS(): FileNode {
         "scanner",
         "#!/bin/bash\necho \"Enter the ip address\"\n# nmap -sn $ip/24 | grep scan | cut -d \" \" -f 5\nnmap -sn 10.10.10.0/24\n"
       ),
+      file(
+        ".bashrc",
+        "# Virtual startup file for Linux for Beginners #2\n# Add session-specific exports below this line.\n"
+      ),
+      dir("linux-beginners-2", [
+        file(
+          "README.txt",
+          "Linux for Beginners #2 — sandbox notes\nAll network devices, processes, schedules, and variables in these exercises are simulated.\nUse only the reserved gamehack.lab names and the files inside this virtual filesystem.\n"
+        ),
+        dir("network", [
+          file(
+            "interfaces.txt",
+            "eth0  wired  10.10.10.2/24  MAC 08:00:27:12:34:56\nwlan0 wireless  simulated, not associated\nlo    loopback 127.0.0.1\n"
+          ),
+          file(
+            "dns-records.txt",
+            "gamehack.lab A 10.10.10.8\ngamehack.lab MX 10 mail.gamehack.lab\ngamehack.lab NS ns1.gamehack.lab\nmail.gamehack.lab A 10.10.10.9\n"
+          ),
+          file(
+            "hosts-plan.txt",
+            "# Local-only training mapping\n10.10.10.30 docs.gamehack.lab\n"
+          ),
+        ]),
+        dir("processes", [
+          file(
+            "roster.txt",
+            "PID 7440  training-worker --batch  (safe to renice or stop in this lab)\nPID 7441  training-reporter           (SIGHUP demonstration)\nPID 7442  training-cleanup             (SIGKILL demonstration)\n"
+          ),
+          file(
+            "schedule-notes.txt",
+            "Use at 21:30 /root/scanning_script.sh to record a one-time virtual job; the script is never run.\nUse echo '30 21 * * * /root/scanning_script.sh' | crontab - to record a recurring entry, then inspect it with crontab -l.\nCrontab fields are minute hour day-of-month month day-of-week followed by the command.\nAll schedule changes remain in this player's simulated workspace and never run on the host.\n"
+          ),
+          file("notes.txt", "Training editor fixture. No host process is started.\n"),
+        ]),
+        dir("environment", [
+          file(
+            "variable-notes.txt",
+            "HISTSIZE begins at 1000 in the virtual shell. Save its value before experimenting.\nA shell assignment lasts for the current shell; export passes it to child commands.\n"
+          ),
+          file("defaults.txt", "LAB_MODE is unset until the learner creates it.\n"),
+        ]),
+      ]),
+      dir("linux-beginners-3", [
+        file(
+          "README.txt",
+          "Linux for Beginners #3 fixtures\nAll Bash, cron, boot-service, Apache, SSH, and FTP behavior in this course is simulated in this player’s one persistent virtual filesystem.\nThe only scan target is the fictional 10.10.10.0/24 subnet. Public FTP hosts and real host services are blocked.\n"
+        ),
+        file("first_script", "#!/bin/bash\necho \"Hello World\"\n"),
+        file(
+          "welcome.sh",
+          "#!/bin/bash\necho \"What is your name?\"\nread name\necho \"Welcome, $name\"\n"
+        ),
+        file(
+          "scanner",
+          "#!/bin/bash\necho \"Enter the lab IP address (10.10.10.2)\"\nread ip\necho \"GameHack uses only its fixed fictional subnet.\"\n# Authorized real-world pattern: nmap -sn \"$ip\"/24 expands the value read above.\n# The simulator ignores user input and runs only the fixed fixture subnet below.\nnmap -sn 10.10.10.0/24 | grep scan | cut -d \" \" -f 5 | head -n -1\n"
+        ),
+        file(
+          "runlevels.txt",
+          "Traditional SysV runlevel reference (the exact meaning can vary by distribution):\n0  halt / stop the system\n1  single-user or rescue mode\n2  multi-user mode\n3  multi-user mode\n4  multi-user mode\n5  multi-user mode\n6  reboot\n\nThese are teaching notes only; GameHack never changes the host boot mode.\n"
+        ),
+        file(
+          "cron-reference.txt",
+          "Per-user crontab: minute hour day-of-month month day-of-week command\nExample: 55 23 * * * /root/scanner  (every day at 23:55; six parts total)\n/etc/crontab adds a username between the five time fields and the command (seven columns).\nThe simulator records rows per player but never executes scheduled commands.\n"
+        ),
+        file(
+          "service-reference.txt",
+          "Apache page: /var/www/html/index.html\nSSH fixture: ignite@192.168.0.11 (fictional ubuntu.lab)\nFTP fixture: ftp.gamehack.lab -> /ubuntu/release/favicon.ico\nPublic FTP hosts and telnet connections are blocked by the simulator.\n"
+        ),
+        file("head-fixture.txt", "first\nsecond\nlast\n"),
+      ]),
       dir("Desktop", [
         file("CTF-notes.txt", "CTF lab notes for Sudo_Run.\nFLAG{sudo_run_desktop}\n"),
         file("todo.txt", "1. Learn pwd/whoami/ls\n2. Never test systems you do not own\n"),
@@ -73,6 +152,18 @@ export function sudoRunFS(): FileNode {
       dir("ignite", [file("readme.txt", "ignite team home on the Sudo_Run box.\n")], "drwxr-xr-x", "ignite", "ignite"),
       dir("operator", [file("welcome.txt", "You can also work from /home/operator.\n")]),
     ]),
+    dir("srv", [
+      dir("ftp", [
+        file("welcome.txt", "GameHack FTP fixture. Files here are fictional text examples.\n"),
+        dir("ubuntu", [
+          file("readme.txt", "Browse into release for the training download.\n"),
+          dir("release", [
+            file("favicon.ico", "GameHack-FAKE-FAVICON\nBinary image data is not stored or served.\n"),
+            file("release-notes.txt", "Fictional FTP release fixture for Linux for Beginners #3.\n"),
+          ]),
+        ]),
+      ]),
+    ]),
     dir("etc", [
       file("hostname", "kali\n"),
       file(
@@ -80,26 +171,36 @@ export function sudoRunFS(): FileNode {
         "root:x:0:0:root:/root:/bin/bash\nRaj:x:1001:1001:Raj:/home/Raj:/bin/bash\nignite:x:1002:1002:Ignite:/home/ignite:/bin/bash\noperator:x:1000:1000:Operator:/home/operator:/bin/bash\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nmysql:x:27:27::/nonexistent:/bin/false\n"
       ),
       file("group", "root:x:0:\nignite:x:1002:Raj,ignite\nRaj:x:1001:\noperator:x:1000:\n"),
-      file("hosts", "127.0.0.1 localhost\n127.0.1.1 kali\n10.10.10.8 hackforge.lab www.hackforge.lab\n192.168.0.11 ubuntu.lab\n"),
-      file("resolv.conf", "nameserver 8.8.8.8\n"),
+      file("hosts", "127.0.0.1 localhost\n127.0.1.1 kali\n10.10.10.8 gamehack.lab www.gamehack.lab\n192.168.0.11 ubuntu.lab\n"),
+      file("resolv.conf", "nameserver 10.10.10.53\n"),
       file(
         "crontab",
-        "# /etc/crontab: system crontab (HackForge lab)\nSHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n# m h dom mon dow user command\n17 *    * * *   root    cd / && run-parts --report /etc/cron.hourly\n"
+        "# /etc/crontab: system crontab (GameHack lab)\nSHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n# m h dom mon dow user command\n17 *    * * *   root    cd / && run-parts --report /etc/cron.hourly\n"
       ),
       dir("ettercap", [file("etter.dns", ETTER)]),
       dir("Ettercap", [file("etter.dns", ETTER)]),
       dir("apt", [
         file(
           "sources.list",
-          "deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware\n# Add extra repos only when you understand the risk.\n# HackForge lab — do not add experimental repos.\n"
+          "deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware\n# Add extra repos only when you understand the risk.\n# GameHack lab — do not add experimental repos.\n"
         ),
       ]),
       dir("ssh", [file("sshd_config", "Port 22\nPermitRootLogin no\nPasswordAuthentication yes\n")]),
-      dir("init.d", [file("mysql", "#!/bin/sh\n# mysql init script (simulated)\n"), file("apache2", "#!/bin/sh\n")]),
+      dir("init.d", [
+        file("mysql", "#!/bin/sh\n# mysql init script (simulated; never executed on the host)\n"),
+        file("apache2", "#!/bin/sh\n# apache2 init script (simulated; never executed on the host)\n"),
+        file("cron", "#!/bin/sh\n# cron init script (simulated; never executed on the host)\n"),
+      ]),
+      dir("rc0.d", []),
+      dir("rc1.d", []),
       dir("rc2.d", []),
+      dir("rc3.d", []),
+      dir("rc4.d", []),
+      dir("rc5.d", []),
+      dir("rc6.d", []),
     ]),
     dir("opt", [
-      dir("labs", [file("hackforge", "HackForge marker file used by find / -type f -name hackforge\nFLAG{sudo_run_find}\n")]),
+      dir("labs", [file("gamehack", "GameHack marker file used by find / -type f -name gamehack\nFLAG{sudo_run_find}\n")]),
       dir("CTF", [file("readme", "CTF leftovers live here for the locate command.\n")]),
     ]),
     dir("usr", [
@@ -118,7 +219,7 @@ export function sudoRunFS(): FileNode {
     ]),
     dir("var", [
       dir("www", [dir("html", [file("index.html", INDEX_HTML)])]),
-      dir("log", [file("syslog", "Apr 12 08:00:01 kali systemd[1]: Started HackForge Sudo_Run services.\n")]),
+      dir("log", [file("syslog", "Apr 12 08:00:01 kali systemd[1]: Started GameHack Sudo_Run services.\n")]),
     ]),
     dir("tmp", []),
     dir("dev", [file("null", "")]),
@@ -175,12 +276,17 @@ function chmodMode(n: FileNode, spec: string) {
     let prefix = n.type === "dir" ? "d" : "-";
     let body = rwx;
     if (special === "4") {
-      body = body.slice(0, 2) + "s" + body.slice(3);
+      body = body.slice(0, 2) + (body[2] === "x" ? "s" : "S") + body.slice(3);
       n.mode = prefix + body;
       return;
     }
     if (special === "2") {
-      body = body.slice(0, 5) + "s" + body.slice(6);
+      body = body.slice(0, 5) + (body[5] === "x" ? "s" : "S") + body.slice(6);
+      n.mode = prefix + body;
+      return;
+    }
+    if (special === "1") {
+      body = body.slice(0, 8) + (body[8] === "x" ? "t" : "T");
       n.mode = prefix + body;
       return;
     }
@@ -190,6 +296,10 @@ function chmodMode(n: FileNode, spec: string) {
   if (spec === "+x" || spec === "u+x" || spec === "a+x") {
     const m = n.mode || "-rw-r--r--";
     n.mode = m.slice(0, 3) + "x" + m.slice(4);
+  }
+  if (spec === "+t" || spec === "a+t" || spec === "o+t") {
+    const m = n.mode || (n.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--");
+    n.mode = m.slice(0, 9) + (m[9] === "x" ? "t" : "T");
   }
 }
 
@@ -204,6 +314,42 @@ type Ctx = {
   stdin?: string | null;
 };
 
+function setVirtualServiceProcess(t: Terminal, service: string, running: boolean): void {
+  if (service !== "mysql") return;
+  let process = t.procs.find((candidate) => candidate.cmd.startsWith("mysqld "));
+  if (running) {
+    if (process) process.alive = true;
+    else {
+      process = { pid: 3410, user: "mysql", cpu: "0.1", mem: "1.2", cmd: "mysqld --defaults-file=/etc/mysql/my.cnf", nice: 0, alive: true };
+      t.procs.push(process);
+    }
+  } else if (process) {
+    process.alive = false;
+  }
+}
+
+function setVirtualRcLinks(t: Terminal, service: string, action: "defaults" | "enable" | "disable" | "remove"): void {
+  const startLevels = action === "defaults" || action === "enable" ? [2, 3, 4, 5] : [];
+  const stopLevels = action === "disable" ? [0, 1, 2, 3, 4, 5, 6] : [0, 1, 6];
+  for (let level = 0; level <= 6; level += 1) {
+    const directory = getNode(t.fs, `/etc/rc${level}.d`);
+    if (!directory || directory.type !== "dir" || !directory.children) continue;
+    for (const name of Object.keys(directory.children)) {
+      if (/^[SK]\d{2}/.test(name) && name.endsWith(service)) delete directory.children[name];
+    }
+    if (action === "remove") continue;
+    const startsHere = startLevels.includes(level);
+    const stopsHere = stopLevels.includes(level);
+    if (!startsHere && !stopsHere) continue;
+    const prefix = startsHere ? "S" : "K";
+    const linkName = `${prefix}01${service}`;
+    const link = file(linkName, `../init.d/${service}`, "lrwxrwxrwx", "root", "root");
+    link.linkTarget = `../init.d/${service}`;
+    link.linkDisplayTarget = `../init.d/${service}`;
+    directory.children[linkName] = link;
+  }
+}
+
 export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
   const { cmd, pos, rest, flags, input, print } = ctx;
   const stdin = ctx.stdin ?? null;
@@ -212,14 +358,20 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
     return handleFtp(t, input, print);
   }
 
+  if (t.smb) {
+    return handleSmbSession(t, input, print);
+  }
+
   switch (cmd) {
     case "locate": {
       const q = pos[0] || "";
       t.flags.add("locate");
+      const rootPath = resolvePath(t, "/");
+      const root = getNode(t.fs, rootPath);
       const acc: { path: string; node: FileNode }[] = [];
-      walk(t.fs, "/", acc);
+      if (root) walk(root, rootPath, acc);
       const hits = acc.filter((a) => a.path.toLowerCase().includes(q.toLowerCase()) || a.node.name.toLowerCase().includes(q.toLowerCase()));
-      print(hits.map((h) => h.path).join("\n") || "");
+      print(hits.map((h) => displayPath(t, h.path)).join("\n") || `locate: no matches for '${q}'`);
       if (/ctf/i.test(q)) t.flags.add("locate-ctf");
       return true;
     }
@@ -271,18 +423,33 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
       return true;
     }
     case "cut": {
+      const delimiterOption = rest.find((value) => value.startsWith("-d") && value !== "-d");
+      const delimiterIndex = rest.indexOf("-d");
+      const fieldOption = rest.find((value) => value.startsWith("-f") && value !== "-f");
+      const fieldIndex = rest.indexOf("-f");
+      const delimiter = (delimiterOption?.slice(2) || (delimiterIndex >= 0 ? rest[delimiterIndex + 1] : ":"))
+        .replace(/^["']|["']$/g, "") || ":";
+      const fieldSpec = fieldOption?.slice(2) || (fieldIndex >= 0 ? rest[fieldIndex + 1] : "1") || "1";
+      const field = Math.max(1, Number.parseInt(fieldSpec.split(",")[0], 10) || 1);
+      const path = pos.find((value) => !/^\d+$/.test(value) && value.trim() !== "");
+      let source = stdin;
+      if (source == null && path) {
+        const resolved = resolvePath(t, path);
+        const node = getNode(t.fs, resolved);
+        if (!node || node.type !== "file") {
+          print(`cut: ${path}: No such file or not a regular file`, "err");
+          return true;
+        }
+        source = node.content || "";
+        t.filesRead.push(resolved);
+      }
+      if (source == null) {
+        print("cut: missing input (provide a file or pipeline)", "err");
+        return true;
+      }
+      const selected = source.split(/\r?\n/).map((line) => line.split(delimiter)[field - 1] || "");
+      print(selected.join("\n"));
       t.flags.add("cut");
-      const dIdx = rest.indexOf("-d");
-      const fIdx = rest.indexOf("-f");
-      const delim = dIdx >= 0 ? rest[dIdx + 1].replace(/^["']|["']$/g, "") : " ";
-      const field = fIdx >= 0 ? parseInt(rest[fIdx + 1], 10) : 1;
-      const src = stdin || "";
-      print(
-        src
-          .split("\n")
-          .map((l) => l.split(delim)[field - 1] || "")
-          .join("\n")
-      );
       return true;
     }
     case "cp": {
@@ -298,13 +465,19 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
       }
       const { parent, name } = parentAndName(destPath);
       let dirn = getNode(t.fs, destPath);
+      let destinationName = name;
       if (dirn && dirn.type === "dir" && dirn.children) {
-        dirn.children[src.name] = copyNode(src);
+        destinationName = src.name;
       } else {
         dirn = getNode(t.fs, parent);
-        if (dirn && dirn.type === "dir" && dirn.children) dirn.children[name] = { ...copyNode(src), name };
       }
+      if (!dirn || dirn.type !== "dir" || !dirn.children || !destinationName) {
+        print(`cp: cannot create '${pos[1]}': No such directory`, "err");
+        return true;
+      }
+      dirn.children[destinationName] = { ...copyNode(src), name: destinationName };
       t.flags.add("cp");
+      print(`Copied ${pos[0]} to ${pos[1]} in the virtual filesystem.`);
       return true;
     }
     case "mv": {
@@ -322,15 +495,22 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
       const { parent: sp, name: sn } = parentAndName(srcP);
       const sdir = getNode(t.fs, sp);
       let destDir = getNode(t.fs, destP);
-      if (destDir && destDir.type === "dir" && destDir.children) {
-        destDir.children[src.name] = copyNode(src);
-      } else {
+      let destinationName = src.name;
+      if (!(destDir && destDir.type === "dir" && destDir.children)) {
         const { parent, name } = parentAndName(destP);
         destDir = getNode(t.fs, parent);
-        if (destDir && destDir.type === "dir" && destDir.children) destDir.children[name] = { ...copyNode(src), name };
+        destinationName = name;
       }
-      if (sdir && sdir.children) delete sdir.children[sn];
+      if (!sdir?.children || !destDir || destDir.type !== "dir" || !destDir.children || !destinationName) {
+        print(`mv: cannot move '${pos[0]}' to '${pos[1]}': No such directory`, "err");
+        return true;
+      }
+      destDir.children[destinationName] = { ...copyNode(src), name: destinationName };
+      delete sdir.children[sn];
+      markPathDeleted(t, srcP);
+      liftPathDeleted(t, destP);
       t.flags.add("mv");
+      print(`Moved ${pos[0]} to ${pos[1]} in the virtual filesystem.`);
       return true;
     }
     case "rm": {
@@ -348,7 +528,9 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
         return true;
       }
       delete dirn.children[name];
+      markPathDeleted(t, p);
       t.flags.add("rm");
+      print(`Removed virtual ${node.type}: ${pos[0]}`);
       return true;
     }
     case "rmdir": {
@@ -366,58 +548,63 @@ export function handleSudoRun(t: Terminal, ctx: Ctx): boolean {
         return true;
       }
       if (dirn?.children) delete dirn.children[name];
+      // Recorded for symmetry with rm. No shipped fixture is an empty
+      // directory today, so nothing can currently exercise this branch; it is
+      // here so an empty fixture added later behaves the same way.
+      markPathDeleted(t, p);
       t.flags.add("rmdir");
+      print(`Removed empty virtual directory: ${pos[0]}`);
       return true;
     }
     case "chown": {
       const who = pos[0];
-      const p = resolvePath(t, pos[1] || "");
+      const target = pos[1] || "";
+      const p = resolvePath(t, target);
       const n = getNode(t.fs, p);
-      if (!n || !who) {
-        print("chown: usage: chown USER FILE", "err");
+      if (!n || !who || !target) {
+        print("chown: usage: chown USER[:GROUP] FILE", "err");
         return true;
       }
-      n.owner = who;
+      const [owner, group] = who.split(":");
+      n.owner = owner;
+      if (group) n.group = group;
       t.flags.add("chown");
-      if (who === "Raj") t.flags.add("chown-raj");
+      if (owner === "Raj") t.flags.add("chown-raj");
+      print(`Changed ownership of ${target} to ${who}.`);
       return true;
     }
     case "chgrp": {
       const g = pos[0];
-      const p = resolvePath(t, pos[1] || "");
+      const target = pos[1] || "";
+      const p = resolvePath(t, target);
       const n = getNode(t.fs, p);
-      if (!n || !g) {
+      if (!n || !g || !target) {
         print("chgrp: usage: chgrp GROUP FILE", "err");
         return true;
       }
       n.group = g;
       t.flags.add("chgrp");
       if (g === "ignite") t.flags.add("chgrp-ignite");
+      print(`Changed group of ${target} to ${g}.`);
       return true;
     }
     case "chmod": {
-      const spec = pos[0] || rest.find((a) => a.startsWith("+") || /^\d/.test(a)) || "";
-      const p = resolvePath(t, pos[1] || pos[0] || "");
-      const n = getNode(t.fs, p);
-      if (!n) {
-        const n2 = getNode(t.fs, resolvePath(t, pos[pos.length - 1] || ""));
-        if (!n2) {
-          print("chmod: no such file", "err");
-          return true;
-        }
-        chmodMode(n2, spec.replace(/^\+/, "+") === spec && spec.startsWith("+") ? spec : spec);
-        t.flags.add("chmod");
-        if (spec.includes("4644") || spec.startsWith("4")) t.flags.add("suid");
-        if (spec.includes("2466") || spec.startsWith("2")) t.flags.add("sgid");
-        if (spec.includes("+x")) t.flags.add("chmod-x");
+      const modeIndex = pos.findIndex((value) => /^\d{3,4}$/.test(value) || /^[ugoa]*[+-=][rwxXstugo]+$/.test(value) || /^[+-][rwxXstugo]+$/.test(value));
+      const spec = modeIndex >= 0 ? pos[modeIndex] : rest.find((value) => value.startsWith("+") || /^\d/.test(value)) || "";
+      const target = pos.filter((_value, index) => index !== modeIndex).pop() || "";
+      const p = resolvePath(t, target);
+      const node = getNode(t.fs, p, false);
+      if (!node || !spec || !target) {
+        print("chmod: usage: chmod MODE FILE", "err");
         return true;
       }
-      const realSpec = /^\d|^[ugoa]*[-+=]/.test(pos[0] || "") || (pos[0] || "").startsWith("+") ? pos[0] : spec;
-      chmodMode(n, realSpec);
+      chmodMode(node, spec);
       t.flags.add("chmod");
-      if (/4644/.test(input)) t.flags.add("suid");
-      if (/2466/.test(input)) t.flags.add("sgid");
-      if (/\+x/.test(input)) t.flags.add("chmod-x");
+      if (/4644/.test(spec)) t.flags.add("suid");
+      if (/2466/.test(spec)) t.flags.add("sgid");
+      if (/\+x/.test(spec)) t.flags.add("chmod-x");
+      if (/^1\d{3}$/.test(spec) || /^\+t$/.test(spec)) t.flags.add("sticky");
+      print(`Mode of ${target} changed to ${node.mode || spec}.`);
       return true;
     }
     case "apt-cache":
@@ -432,23 +619,33 @@ libhydra - hydra library (lab)
 qhydra - qt frontend`);
         return true;
       }
+      if (cmd === "apt-cache" && sub === "show") {
+        const packageName = pos[1] || "";
+        if (!packageName) print("E: apt-cache show requires a package name", "err");
+        else print(`Package: ${packageName}\nVersion: 1.0-lab\nArchitecture: all\nDescription: Fictional GameHack training package ${packageName}.`);
+        return true;
+      }
       const action = pos[0];
-      const pkg = pos[1] || "";
+      const packages = pos.slice(1);
+      const pkg = packages[0] || "";
       if (action === "search") {
         t.flags.add("apt-search");
         print(`hydra - very fast network logon cracker`);
         return true;
       }
       if (action === "install") {
-        t.packages.add(pkg);
+        if (!packages.length) {
+          print("E: install requires at least one package name", "err");
+          return true;
+        }
+        packages.forEach((packageName) => t.packages.add(packageName));
         t.flags.add("apt-install");
         print(`Reading package lists... Done
 Building dependency tree... Done
 The following NEW packages will be installed:
-  ${pkg}
-0 upgraded, 1 newly installed.
-Unpacking ${pkg} ...
-Setting up ${pkg} (lab) ...`);
+  ${packages.join("  ")}
+0 upgraded, ${packages.length} newly installed.
+${packages.map((packageName) => `Unpacking ${packageName} ...\nSetting up ${packageName} (lab) ...`).join("\n")}`);
         return true;
       }
       if (action === "remove") {
@@ -499,11 +696,13 @@ wlan0     IEEE 802.11  ESSID:off/any
       if (pos[0] === "eth0" && pos[1] === "down") {
         t.net.up = false;
         t.flags.add("if-down");
+        print("eth0: interface is down (simulated)");
         return true;
       }
       if (pos[0] === "eth0" && pos[1] === "up") {
         t.net.up = true;
         t.flags.add("if-up");
+        print("eth0: interface is up (simulated)");
         return true;
       }
       if (pos[0] === "eth0" && pos[1] === "hw" && pos[2] === "ether") {
@@ -525,26 +724,79 @@ wlan0     IEEE 802.11  ESSID:off/any
       t.flags.add("dhclient");
       print(`Listening on LPF/eth0
 DHCPREQUEST of ${t.net.ip} on eth0
+DHCPACK of ${t.net.ip} from 10.10.10.1
 bound to ${t.net.ip} -- renewal in 1800 seconds.`);
+      return true;
+    }
+    case "getent": {
+      const database = (pos[0] || "").toLowerCase();
+      const name = (pos[1] || "").replace(/\.$/, "");
+      if (database !== "hosts" || !name) {
+        print("usage: getent hosts NAME (the simulator answers from the virtual /etc/hosts and the lab resolver)", "err");
+        return true;
+      }
+      t.flags.add("getent");
+      const hostsFile = getNode(t.fs, resolvePath(t, "/etc/hosts"));
+      const rows = (hostsFile?.type === "file" ? hostsFile.content || "" : "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith("#"));
+      const entry = rows
+        .map((line) => line.split(/\s+/))
+        .find((fields) => fields.slice(1).some((alias) => alias === name || alias === `${name}.lab`));
+      if (entry) {
+        t.flags.add("getent-hit");
+        print(`${entry[0]}       ${entry.slice(1).join(" ")}`);
+        print("# resolved through the simulated NSS order: /etc/hosts first, lab DNS second. dig bypasses this table.");
+        return true;
+      }
+      const host = t.hosts.find((item) => item.hostname === name || item.hostname === `${name}.lab`);
+      if (host) {
+        t.flags.add("getent-hit");
+        print(`${host.ip}       ${host.hostname}`);
+        print("# no /etc/hosts match; the lab resolver answered instead.");
+        return true;
+      }
+      print(`getent: '${name}': Unknown database entry`, "err");
       return true;
     }
     case "dig": {
       t.flags.add("dig");
-      const target = (pos[0] || "hackforge.lab").replace(/\/$/, "");
-      const rec = (pos[1] || "A").toLowerCase();
+      const reverse = rest.includes("-x");
+      const queryTarget = reverse ? pos[0] || "10.10.10.8" : (pos[0] || "gamehack.lab").replace(/\/$/, "");
+      const rec = reverse ? "ptr" : (pos[1] || "A").toLowerCase();
+      const qname = reverse ? `${queryTarget.split(".").reverse().join(".")}.in-addr.arpa.` : `${queryTarget}.`;
+      const qtype = rec.toUpperCase();
+      let answer: string;
       if (rec === "mx") {
         t.flags.add("dig-mx");
-        print(`;; ANSWER SECTION:
-${target}.    300 IN MX 10 mail.hackforge.lab.`);
+        answer = `${queryTarget}.    300 IN MX 10 mail.gamehack.lab.`;
       } else if (rec === "ns") {
         t.flags.add("dig-ns");
-        print(`;; ANSWER SECTION:
-${target}.    300 IN NS ns1.hackforge.lab.`);
+        answer = `${queryTarget}.    300 IN NS ns1.gamehack.lab.`;
+      } else if (rec === "ptr") {
+        t.flags.add("dig-ptr");
+        const ptrHosts: Record<string, string> = {
+          "10.10.10.1": "gateway.gamehack.lab.",
+          "10.10.10.8": "www.gamehack.lab.",
+          "10.10.10.53": "ns1.gamehack.lab.",
+        };
+        answer = `${qname}    300 IN PTR ${ptrHosts[queryTarget] || "unknown.gamehack.lab."}`;
       } else {
         t.flags.add("dig-a");
-        print(`;; ANSWER SECTION:
-${target}.    300 IN A 10.10.10.8`);
+        answer = `${queryTarget}.    300 IN A 10.10.10.8`;
       }
+      print(
+        `; <<>> DiG (simulated) <<>> ${reverse ? `-x ${queryTarget}` : `${queryTarget} ${qtype}`}\n` +
+          `;; QUESTION SECTION:\n` +
+          `;${qname}\t\t\tIN\t${qtype}\n` +
+          `;; ANSWER SECTION:\n` +
+          `${answer}\n` +
+          `;; Query time: 4 msec\n` +
+          `;; SERVER: 10.10.10.53#53\n` +
+          `;; WHEN: Wed Oct 07 09:00:00 UTC 2026\n` +
+          `;; MSG SIZE  rcvd: 78`,
+      );
       return true;
     }
     case "ps": {
@@ -553,142 +805,559 @@ ${target}.    300 IN A 10.10.10.8`);
       if (all) t.flags.add("ps-aux");
       const rows = t.procs.filter((p) => p.alive);
       if (!all) {
-        print("  PID TTY          TIME CMD\n" + rows.slice(0, 4).map((p) => ` ${p.pid} pts/0    00:00:00 ${p.cmd.split(" ").pop()}`).join("\n"));
+        print("  PID TTY          TIME CMD\n" + rows.slice(0, 4).map((p) => {
+          const bareTty = /init|sshd|cron|mysqld|agent|training|zombie/i.test(p.cmd) ? "?" : "pts/0";
+          return ` ${p.pid} ${bareTty.padEnd(5)}    00:00:00 ${p.cmd.split(" ").pop()}`;
+        }).join("\n"));
       } else {
-        print(
-          "USER       PID %CPU %MEM COMMAND\n" +
-            rows.map((p) => `${p.user.padEnd(8)} ${String(p.pid).padStart(5)} ${p.cpu}  ${p.mem}  ${p.cmd}`).join("\n")
-        );
+        const auxRow = (p: (typeof rows)[number]) => {
+          const zombie = /\[zombie/i.test(p.cmd);
+          const stat = zombie ? "Z" : `S${p.pid === 1 ? "s" : ""}${p.nice > 0 ? "N" : ""}${p.nice < 0 ? "<" : ""}`;
+          const rss = Math.max(512, Math.round(Number.parseFloat(p.mem) * 6144));
+          const vsz = rss * 6 + (p.pid % 97);
+          const tty = /init|sshd|cron|mysqld|agent|training|zombie/i.test(p.cmd) ? "?" : "pts/0";
+          const elapsed = `0:${String(Math.round(Number.parseFloat(p.cpu))).padStart(2, "0")}`;
+          return (
+            `${p.user.padEnd(8)} ${String(p.pid).padStart(5)} ${p.cpu.padStart(4)} ${p.mem.padStart(4)} ` +
+            `${String(vsz).padStart(7)} ${String(rss).padStart(5)} ${tty.padEnd(8)} ${stat.padEnd(4)} ` +
+            `09:00  ${elapsed} ${p.cmd}`
+          );
+        };
+        print("USER       PID %CPU %MEM    VSZ   RSS TTY      STAT  START   TIME COMMAND\n" + rows.map(auxRow).join("\n"));
       }
+      return true;
+    }
+    case "pgrep": {
+      t.flags.add("pgrep");
+      const pattern = pos[pos.length - 1] || "";
+      if (!pattern || /^-/.test(pattern)) {
+        print("usage: pgrep [-a] [-l] [-f] [-u USER] PATTERN", "err");
+        return true;
+      }
+      const fullLine = flags.has("f");
+      const wantedUser = (() => {
+        const index = rest.findIndex((argument) => argument === "-u");
+        return index >= 0 ? rest[index + 1] : "";
+      })();
+      const needle = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+      const matches = t.procs.filter((process) => {
+        if (!process.alive) return false;
+        if (wantedUser && process.user !== wantedUser) return false;
+        const haystack = fullLine ? process.cmd : process.cmd.split(" ")[0] || process.cmd;
+        return needle.test(haystack);
+      });
+      if (!matches.length) {
+        print(`pgrep: no virtual process matched '${pattern}' (exit status 1 in a real shell).`);
+        return true;
+      }
+      print(
+        matches
+          .map((process) => {
+            if (flags.has("a")) return `${process.pid} ${process.cmd}`;
+            if (flags.has("l")) return `${process.pid} ${(process.cmd.split(" ")[0] || process.cmd).slice(0, 15)}`;
+            return String(process.pid);
+          })
+          .join("\n"),
+      );
+      print("# pgrep answers with PIDs only, and never lists itself. Confirm before you signal anything.");
       return true;
     }
     case "top": {
       t.flags.add("top");
+      const processes = t.procs.filter((process) => process.alive);
+      const zombies = processes.filter((process) => /\[zombie/i.test(process.cmd)).length;
+      const running = processes.length > zombies ? 1 : 0;
+      const sleeping = Math.max(0, processes.length - running - zombies);
+      let markedRunning = false;
+      const rows = processes
+        .sort((a, b) => parseFloat(b.cpu) - parseFloat(a.cpu))
+        .map((process) => {
+          const isZombie = /\[zombie/i.test(process.cmd);
+          const state = isZombie ? "Z" : markedRunning ? "S" : "R";
+          if (!isZombie && !markedRunning) markedRunning = true;
+          const rssKb = Math.max(512, Math.round(Number.parseFloat(process.mem) * 6144));
+          const virtKb = rssKb * 6 + (process.pid % 97);
+          const shrKb = Math.round(rssKb / 3);
+          const memSize = (kb: number) => (kb >= 1024 ? `${Math.round(kb / 1024)}M` : `${kb}K`);
+          const centis = Math.round(Number.parseFloat(process.cpu) * 100) + (process.pid % 50);
+          const elapsedTop = `0:${String(Math.floor(centis / 100) % 60).padStart(2, "0")}.${String(centis % 100).padStart(2, "0")}`;
+          return `${String(process.pid).padStart(5)} ${process.user.padEnd(8)} 20 ${String(process.nice).padStart(2)} ${memSize(virtKb).padStart(5)} ${memSize(rssKb).padStart(4)} ${memSize(shrKb).padStart(3)} ${state} ${String(process.cpu).padStart(4)} ${String(process.mem).padStart(4)} ${elapsedTop} ${process.cmd}`;
+        });
       print(
-        `top - HackForge lab (refreshes conceptually)
-PID USER      %CPU %MEM COMMAND
-${t.procs
-  .filter((p) => p.alive)
-  .sort((a, b) => parseFloat(b.cpu) - parseFloat(a.cpu))
-  .map((p) => `${p.pid} ${p.user}  ${p.cpu}  ${p.mem}  ${p.cmd}`)
-  .join("\n")}`
+        `top - 09:00:00 up 2 days, 1 user, load average: 0.04, 0.08, 0.09 — GameHack virtual snapshot
+` +
+          `Tasks: ${processes.length} total, ${running} running, ${sleeping} sleeping, 0 stopped, ${zombies} zombie${zombies === 1 ? "" : "s"}
+` +
+          `%Cpu(s): 2.1 us, 0.7 sy, 0.0 ni, 97.2 id
+` +
+          `MiB Mem : 1024.0 total, 384.0 used, 512.0 free, 128.0 buff/cache
+` +
+          `MiB Swap: 0.0 total, 0.0 used, 0.0 free
+` +
+          `PID USER     PR NI VIRT RES SHR S %CPU %MEM TIME+ COMMAND
+` +
+          rows.join("\n"),
       );
       return true;
     }
     case "nice": {
       t.flags.add("nice");
-      print(`nice: launched ${pos[pos.length - 1] || "process"} with adjusted priority (simulated)`);
+      const priorityMatch = input.match(/(?:^|\s)-n\s+(-?\d+)/);
+      const requested = priorityMatch ? Number.parseInt(priorityMatch[1], 10) : 10;
+      const priority = Math.max(-20, Math.min(19, requested));
+      const command = input.trim().replace(/^nice\s+/, "").replace(/(?:^|\s)-n\s+-?\d+/, "").trim();
+      print(`would start ${command || "process"} with nice ${priority} (simulated; positive values lower scheduling priority)`);
       return true;
     }
     case "renice": {
       t.flags.add("renice");
-      const pid = parseInt(pos[1] || pos[0], 10);
-      const pr = t.procs.find((p) => p.pid === pid);
-      if (pr) pr.nice = parseInt(pos[0], 10);
-      print(`${pid}: old priority 0, new priority ${pos[0]}`);
+      const requested = Number.parseInt(pos[0] || "", 10);
+      const pid = Number.parseInt(pos[1] || "", 10);
+      if (!Number.isFinite(requested) || requested < -20 || requested > 19) {
+        print("renice: priority must be between -20 and 19", "err");
+        return true;
+      }
+      const pr = t.procs.find((process) => process.pid === pid && process.alive);
+      if (!pr) {
+        print(`renice: failed to get priority for ${pid}: no such process`, "err");
+        return true;
+      }
+      const previous = pr.nice;
+      pr.nice = requested;
+      print(`${pid} (process ID) old priority ${previous}, new priority ${requested}`);
       return true;
     }
     case "kill": {
       t.flags.add("kill");
-      const sig = rest.find((a) => a.startsWith("-")) || "-15";
-      const pid = parseInt(pos[pos.length - 1], 10);
-      const pr = t.procs.find((p) => p.pid === pid);
-      if (pr) pr.alive = false;
-      if (sig === "-9") t.flags.add("kill-9");
-      else t.flags.add("kill-1");
-      print(`killed ${pid} with ${sig}`);
+      const signalArg = rest.find((argument) => /^-(?:\d+|[A-Za-z]+)$/.test(argument)) || "-15";
+      const signalToken = signalArg.slice(1).toUpperCase();
+      const signalNames: Record<string, string> = {
+        "1": "SIGHUP", HUP: "SIGHUP", SIGHUP: "SIGHUP",
+        "2": "SIGINT", INT: "SIGINT", SIGINT: "SIGINT",
+        "9": "SIGKILL", KILL: "SIGKILL", SIGKILL: "SIGKILL",
+        "15": "SIGTERM", TERM: "SIGTERM", SIGTERM: "SIGTERM",
+      };
+      const signalName = signalNames[signalToken] || `SIG${signalToken}`;
+      const pid = Number.parseInt(pos[pos.length - 1] || "", 10);
+      const process = t.procs.find((entry) => entry.pid === pid && entry.alive);
+      if (!Number.isFinite(pid) || !process) {
+        print(`kill: (${Number.isFinite(pid) ? pid : "?"}) - No such process`, "err");
+        return true;
+      }
+      if (signalName === "SIGHUP") t.flags.add("kill-1");
+      if (signalName === "SIGTERM") {
+        t.flags.add("kill-term");
+        process.alive = false;
+      }
+      if (signalName === "SIGKILL") {
+        t.flags.add("kill-9");
+        process.alive = false;
+      }
+      if (signalName === "SIGINT") process.alive = false;
+      print(signalName === "SIGHUP"
+        ? `sent SIGHUP to ${pid}; outcome depends on the process (simulated).`
+        : `sent ${signalName} to ${pid}; process ${process.alive ? "remains running" : "stopped"} (simulated).`);
       return true;
     }
     case "jobs": {
       t.flags.add("jobs");
-      print(t.jobs.map((j, i) => `[${i + 1}]  Running  ${j.cmd} &`).join("\n") || "");
+      if (flags.has("l")) t.flags.add("jobs-l");
+      print(
+        t.jobs
+          .map((j, i) => {
+            const marker = i === t.jobs.length - 1 ? "+" : i === t.jobs.length - 2 ? "-" : " ";
+            const label = flags.has("l") ? `${j.pid} Running` : "Running";
+            return `[${i + 1}]${marker} ${label} ${j.cmd} &`;
+          })
+          .join("\n") || "No active simulated background jobs.",
+      );
+      if (flags.has("l")) print("# + marks the current job, - the previous one; fg/bg act on + unless you name a job.");
+      return true;
+    }
+    case "bg": {
+      t.flags.add("bg");
+      t.flags.add("bg-job");
+      const spec = pos[0] || "";
+      let index = t.jobs.length - 1;
+      if (/^%\d+$/.test(spec)) index = Number.parseInt(spec.slice(1), 10) - 1;
+      else if (spec === "%-") index = t.jobs.length - 2;
+      else if (spec !== "" && spec !== "%+" && spec !== "%%") index = -1;
+      const job = index >= 0 ? t.jobs[index] : undefined;
+      if (!job) {
+        print(t.jobs.length ? `bg: ${spec}: no such job` : "bg: no simulated background job to resume. Queue one with COMMAND & first.");
+        return true;
+      }
+      print(`[${index + 1}]+ ${job.cmd} &`);
+      print("# the virtual job continues in the background; a stopped editor keeps running without a terminal.");
+      return true;
+    }
+    case "disown": {
+      const spec = pos[0] || "";
+      let index = t.jobs.length - 1;
+      if (/^%\d+$/.test(spec)) index = Number.parseInt(spec.slice(1), 10) - 1;
+      const [job] = index >= 0 ? t.jobs.splice(index, 1) : [];
+      if (!job) {
+        print(t.jobs.length ? `disown: ${spec}: no such job` : "disown: the job table is empty; nothing to detach.");
+        return true;
+      }
+      t.flags.add("disown");
+      print(`${job.cmd} removed from the shell's job table; a closing shell no longer signals it (simulated).`);
+      return true;
+    }
+    case "nohup": {
+      const rawCommand = rest.join(" ").trim();
+      const redirect = rawCommand.match(/^(.*?)\s*>>?\s*(\S+)(?:\s*2>&1)?$/);
+      const target = redirect ? redirect[2] : "";
+      const command = (redirect ? redirect[1] : rawCommand).replace(/\s*2>&1\s*$/, "").trim();
+      if (!command) {
+        print("usage: nohup COMMAND [ARG]... (the virtual job is recorded, never executed on the host)", "err");
+        return true;
+      }
+      t.flags.add("nohup");
+      t.flags.add("nohup-immune");
+      const logName = target || "nohup.out";
+      writeFile(t, logName, `GameHack: simulated output of ${command} (SIGHUP is ignored)\n`, true);
+      print(
+        target
+          ? `nohup: ignoring input and redirecting output to '${target}'`
+          : "nohup: ignoring input and appending output to 'nohup.out'",
+      );
+      print(`The virtual job keeps its place after this shell closes: ${command} (recorded, not executed).`);
       return true;
     }
     case "fg": {
       t.flags.add("fg");
-      const j = t.jobs[0];
-      print(j ? j.cmd : "fg: current: no such job");
+      const spec = pos[0] || "";
+      let index = t.jobs.length - 1;
+      if (/^%\d+$/.test(spec)) index = Number.parseInt(spec.slice(1), 10) - 1;
+      else if (spec === "%-") index = t.jobs.length - 2;
+      else if (spec !== "" && spec !== "%+" && spec !== "%%") index = -1;
+      const [job] = index >= 0 ? t.jobs.splice(index, 1) : [];
+      print(job
+        ? `${job.cmd}\n[foreground job resumed in the simulator; no host process was started]`
+        : `fg: ${spec === "" ? "current" : spec}: no such job`);
       return true;
     }
     case "at": {
       t.flags.add("at");
-      print(`warning: commands will be executed using /bin/sh
-at> (type a command then Ctrl-D in a real shell)
-job 1 at ${pos.join(" ") || "now"}`);
+      const inspectIndex = rest.findIndex((argument) => argument === "-c" || argument === "-r");
+      if (rest.includes("-l")) {
+        t.flags.add("atq");
+        print(
+          t.atQueue
+            .map((job) => `${job.id}\t${job.time}\t${job.command}`)
+            .join("\n") || "No simulated jobs are queued.",
+        );
+        return true;
+      }
+      if (inspectIndex >= 0) {
+        const id = Number.parseInt(rest[inspectIndex + 1] || "", 10);
+        const job = t.atQueue.find((entry) => entry.id === id);
+        if (!job) {
+          print(`at: job ${Number.isFinite(id) ? id : "?"} not found in the virtual queue`, "err");
+          return true;
+        }
+        if (rest[inspectIndex] === "-r") {
+          t.atQueue = t.atQueue.filter((entry) => entry.id !== id);
+          t.flags.add("atrm");
+          print(`job ${id} removed from the virtual queue; nothing was executed.`);
+          return true;
+        }
+        t.flags.add("at-inspect");
+        print(
+          `#!/bin/sh\n# atrun uid=0 gid=0 (simulated; the environment below is what /bin/sh would inherit)\n` +
+            `HOME=${t.env.HOME || "/root"}\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n` +
+            `SHELL=/bin/sh\nPWD=${t.cwd}\n# the queued command:\n${job.command}`,
+        );
+        print("# at runs jobs through /bin/sh, not your interactive shell: use absolute paths and no aliases.");
+        return true;
+      }
+      const time = pos[0] || "";
+      const command = pos.slice(1).join(" ").trim();
+      if (!time) {
+        print("usage: at TIME COMMAND... | at -l | at -c JOB | at -r JOB (recorded, never run on the host)", "err");
+        return true;
+      }
+      if (!command) {
+        t.atPendingTime = time;
+        print(`at ${time}> enter one command on the next line; the simulator will queue it and return to the prompt without running it. Type Ctrl-D to cancel in a real interactive shell.`);
+        return true;
+      }
+      const id = t.atQueue.length + 1;
+      t.atQueue.push({ id, time, command });
+      print(`job ${id} queued for ${time}: ${command} (simulated; not executed)`);
       return true;
     }
-    case "set":
+    case "atq": {
+      t.flags.add("atq");
+      print(
+        t.atQueue
+          .map((job) => `${job.id}\t${job.time}\t${job.command}`)
+          .join("\n") || "No simulated jobs are queued.",
+      );
+      print("# atq lists the pending queue; atrm JOB removes an entry without running it.");
+      return true;
+    }
+    case "atrm": {
+      const id = Number.parseInt(pos[0] || "", 10);
+      const job = t.atQueue.find((entry) => entry.id === id);
+      if (!job) {
+        if (!t.atQueue.length) print(`atrm: the virtual queue is empty (a real system answers "Can't find job ${pos[0] || "?"}").`);
+        else print(`atrm: job ${Number.isFinite(id) ? id : "?"} not found in the virtual queue`, "err");
+        return true;
+      }
+      t.atQueue = t.atQueue.filter((entry) => entry.id !== id);
+      t.flags.add("atrm");
+      print(`job ${id} (${job.time}: ${job.command}) removed from the virtual queue; nothing was executed.`);
+      return true;
+    }
+    case "set": {
+      t.flags.add("set");
+      print(Object.entries(t.shellVars).map(([key, value]) => `${key}=${value}`).join("\n"));
+      return true;
+    }
     case "env": {
-      if (cmd === "set") t.flags.add("set");
-      print(Object.entries(t.env).map(([k, v]) => `${k}=${v}`).join("\n"));
+      print(Object.entries(t.env).map(([key, value]) => `${key}=${value}`).join("\n"));
       return true;
     }
     case "export": {
       t.flags.add("export");
-      const kv = pos[0] || "";
-      if (kv.includes("=")) {
-        const [k, v] = kv.split("=");
-        t.env[k] = v;
-      } else if (pos[0] && t.env[pos[0]] !== undefined) {
-        t.flags.add("export-hist");
+      const declaration = pos[0] || "";
+      if (declaration.includes("=")) {
+        const separator = declaration.indexOf("=");
+        const key = declaration.slice(0, separator);
+        const value = declaration.slice(separator + 1).replace(/^["']|["']$/g, "");
+        t.shellVars[key] = value;
+        t.env[key] = value;
+        if (key === "HISTSIZE") t.flags.add("export-hist");
+        print(`${key} exported for this virtual shell.`);
+      } else if (declaration && t.shellVars[declaration] !== undefined) {
+        t.env[declaration] = t.shellVars[declaration];
+        if (declaration === "HISTSIZE") t.flags.add("export-hist");
+        print(`${declaration}=${t.shellVars[declaration]} exported for this virtual shell.`);
+      } else if (declaration) {
+        print(`export: ${declaration} is not set`, "err");
+      } else {
+        print(Object.entries(t.env).map(([key, value]) => `declare -x ${key}="${value}"`).join("\n"));
       }
       return true;
     }
     case "unset": {
+      if (!pos[0]) {
+        print("unset: missing variable name", "err");
+        return true;
+      }
       t.flags.add("unset");
-      if (pos[0]) delete t.env[pos[0]];
+      const existed = Object.prototype.hasOwnProperty.call(t.shellVars, pos[0]) || Object.prototype.hasOwnProperty.call(t.env, pos[0]);
+      delete t.shellVars[pos[0]];
+      delete t.env[pos[0]];
+      print(existed ? `Removed ${pos[0]} from the virtual shell.` : `${pos[0]} was not set.`);
+      return true;
+    }
+    case "apache2ctl": {
+      const action = pos[0] || "-S";
+      t.flags.add("apache2ctl");
+      if (action === "configtest" || action === "-t") {
+        t.flags.add("apache2ctl-configtest");
+        print("Syntax OK");
+        print("# configtest only parses /etc/apache2; it never opens a port.");
+        return true;
+      }
+      if (action === "-S" || action === "status") {
+        const state = t.services.apache2 || "stopped";
+        print(
+          `VirtualHost configuration (simulated):\n*:80  ${t.host} (/var/www/html)\nServerRoot: \"/etc/apache2\"\n` +
+            `apache2 is ${state === "running" ? "active and listening on 0.0.0.0:80" : "stopped; nothing is listening on port 80"}.`,
+        );
+        return true;
+      }
+      if (action === "start" || action === "restart" || action === "graceful") {
+        t.services.apache2 = "running";
+        t.flags.add("apache2ctl-start");
+        print(`${action === "graceful" ? "Performing a graceful restart of" : action === "restart" ? "Restarting" : "Starting"} the virtual apache2 service.`);
+        print("# the simulated listener is recorded in the lab state; no host port is opened.");
+        return true;
+      }
+      if (action === "stop") {
+        t.services.apache2 = "stopped";
+        t.flags.add("apache2ctl-stop");
+        print("Stopping the virtual apache2 service; port 80 is closed again.");
+        return true;
+      }
+      print("usage: apache2ctl start|stop|restart|graceful|configtest|-S (simulated)", "err");
       return true;
     }
     case "service": {
       const name = pos[0];
       const act = pos[1];
-      if (!name || !act) {
+      if (!name || !act || !["start", "stop", "status", "restart"].includes(act)) {
         print("usage: service NAME start|stop|status|restart", "err");
         return true;
       }
       t.flags.add("service");
       t.flags.add("service-" + name + "-" + act);
-      if (act === "start" || act === "restart") t.services[name] = "running";
-      if (act === "stop") t.services[name] = "stopped";
+      if (act === "start" || act === "restart") {
+        t.services[name] = "running";
+        setVirtualServiceProcess(t, name, true);
+      }
+      if (act === "stop") {
+        t.services[name] = "stopped";
+        setVirtualServiceProcess(t, name, false);
+      }
       if (act === "status") {
         const st = t.services[name] || "inactive";
         print(`● ${name}.service — ${st}
    Active: ${st === "running" ? "active (running)" : st}`);
-      } else print(`${act}ing ${name} (simulated).`);
+      } else print(`${act === "restart" ? "restarting" : act === "stop" ? "stopping" : "starting"} ${name} (simulated).`);
       return true;
     }
     case "crontab": {
       t.flags.add("crontab");
+      if (rest.includes("-") && stdin !== null) {
+        const entries = stdin.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+        if (!entries.length) {
+          print("crontab: refusing to install an empty simulated table", "err");
+          return true;
+        }
+        t.crontab = ["# m h dom mon dow command", ...entries];
+        t.flags.add("crontab-install");
+        print(`installed ${entries.length} recurring entry${entries.length === 1 ? "" : "ies"} in the virtual crontab (not executed)`);
+        return true;
+      }
       if (rest.includes("-e") || flags.has("e")) {
         t.flags.add("crontab-e");
-        print(`# editing crontab with nano (simulated)
-# add a line like:
-# 55 23 * * * /root/scanner
-${t.crontab.join("\n")}`);
-        if (/55\s+23/.test(input) || true) {
-          /* student may type crontab then later echo */
-        }
+        t.crontabEditorPending = true;
+        print(`Select an editor:\n1. /bin/nano\n2. /usr/bin/vim.tiny\nChoose 1-2 [1]:`);
         return true;
       }
       if (rest.includes("-l")) {
         print(t.crontab.join("\n"));
         return true;
       }
-      print("usage: crontab -e | crontab -l");
+      print("usage: crontab -e | crontab -l | crontab - (read entries from a simulated pipe)");
       return true;
     }
     case "update-rc.d": {
+      const service = pos[0];
+      const action = pos[1] as "defaults" | "enable" | "disable" | "remove" | undefined;
+      if (!service || !action || !["defaults", "enable", "disable", "remove"].includes(action)) {
+        print("usage: update-rc.d SERVICE defaults|enable|disable|remove", "err");
+        return true;
+      }
+      const initScript = getNode(t.fs, `/etc/init.d/${service}`);
+      if (!initScript || initScript.type !== "file") {
+        print(`update-rc.d: unknown virtual init script '${service}'`, "err");
+        return true;
+      }
       t.flags.add("update-rc");
-      print(`update-rc.d: enabling ${pos[0]} defaults (simulated)`);
-      if (pos[0] === "mysql") t.flags.add("rc-mysql");
+      t.flags.add(`rc-${service}-${action}`);
+      if (action === "defaults" || action === "enable") {
+        t.bootServices[service] = "enabled";
+        t.flags.add(`rc-${service}`);
+        setVirtualRcLinks(t, service, action);
+        print(`update-rc.d: ${service} enabled for the simulated default runlevels 2, 3, 4 and 5.`);
+      } else if (action === "disable") {
+        t.bootServices[service] = "disabled";
+        setVirtualRcLinks(t, service, action);
+        print(`update-rc.d: ${service} disabled for future simulated boots.`);
+      } else {
+        delete t.bootServices[service];
+        setVirtualRcLinks(t, service, action);
+        print(`update-rc.d: removed virtual rc links for ${service}; the init script and installed service remain.`);
+      }
+      return true;
+    }
+    case "reboot": {
+      t.flags.add("reboot");
+      const started: string[] = [];
+      for (const [service, bootState] of Object.entries(t.bootServices)) {
+        const running = bootState === "enabled";
+        t.services[service] = running ? "running" : "stopped";
+        setVirtualServiceProcess(t, service, running);
+        if (running) started.push(service);
+      }
+      const syslog = getNode(t.fs, "/var/log/syslog");
+      if (syslog?.type === "file") {
+        syslog.content = `${syslog.content || ""}GameHack: simulated reboot; virtual services updated (${started.join(", ") || "none"}).\n`;
+      }
+      print(`GameHack reboot simulated; only virtual boot-enabled services were updated.\nStarted: ${started.join(", ") || "none"}. No host reboot occurred.`);
+      return true;
+    }
+    case "read": {
+      const variable = pos[0] || "REPLY";
+      const value = variable === "ip" ? "10.10.10.2" : "operator";
+      t.shellVars[variable] = value;
+      t.flags.add("read");
+      print(`${variable}=${value} (simulated input)`);
+      return true;
+    }
+    case "telnet": {
+      t.flags.add("telnet-blocked");
+      print("telnet is plaintext and disabled for connections; use the simulated SSH lesson instead.");
       return true;
     }
     case "ftp": {
-      t.ftp = { host: pos[0] || "ftp.forge.lab", user: null, cwd: "/" };
+      const host = (pos[0] || "ftp.gamehack.lab").toLowerCase();
+      const knownRoots: Record<string, { root: string; banner: string }> = {
+        "ftp.gamehack.lab": { root: "/srv/ftp", banner: "220 GameHack FTP server (simulated)" },
+        "192.168.1.9": { root: "/var/ftp", banner: "220 (vsFTPd 3.0.5)" },
+        "ubuntu-lab": { root: "/var/ftp", banner: "220 (vsFTPd 3.0.5)" },
+      };
+      const target = knownRoots[host];
+      if (!target) {
+        t.flags.add("ftp-external-blocked");
+        print(`ftp: external host '${host}' is blocked in this lab. Use ftp ftp.gamehack.lab or the file-share target ftp 192.168.1.9; no connection was attempted.`, "err");
+        return true;
+      }
+      if (target.root === "/var/ftp" && t.services.vsftpd !== "running" && t.services.ftp !== "running") {
+        print(`ftp: connect to address ${host}: Connection refused\n# the daemon is not listening: apply the configuration with service vsftpd restart before enumerating.`, "err");
+        return true;
+      }
+      t.ftp = { host, user: null, cwd: "/", authenticated: false, root: target.root };
       t.flags.add("ftp");
-      print(`Connected to ${t.ftp.host}.
-220 HackForge FTP server (simulated)
-Name (${t.ftp.host}:root):`);
+      print(`Connected to ${host}.\n${target.banner}\nName (${host}:root):`);
+      return true;
+    }
+    case "smbclient": {
+      const target = (pos.find((value) => value.startsWith("//")) || pos[0] || "").replace(/^\/\//, "");
+      const guestLogin = flags.has("N") || rest.some((value) => value === "-N");
+      const listing = flags.has("L") || rest.some((value) => value === "-L");
+      const shareName = target.includes("/") ? target.slice(target.indexOf("/") + 1).replace(/\/$/, "") : null;
+      const host = target.split("/")[0];
+      if (!host) {
+        print("usage: smbclient -N -L //HOST  |  smbclient //HOST/SHARE -N", "err");
+        return true;
+      }
+      if (t.services.smbd !== "running" && t.services.samba !== "running") {
+        print(`Connection to ${host} failed: NT_STATUS_CONNECTION_REFUSED\n# the SMB daemon is not listening in this lab yet: apply the configuration with systemctl restart smbd first.`);
+        return true;
+      }
+      if (listing || !shareName) {
+        print(
+          [
+            guestLogin ? "Anonymous login successful" : "Enter WORKGROUP\\user password:",
+            "",
+            "\tSharename       Type      Comment",
+            "\t---------       ----      -------",
+            "\tprint$          Disk      Printer Drivers",
+            "\tshares          Disk      Lab file share",
+            "\tIPC$            IPC       IPC Service (Samba 4.17.7-Ubuntu)",
+            "Reconnecting with SMB1 for workgroup listing.",
+            "smbXcli_negprot_smb1_done: No compatible protocol selected by client, err=NT_STATUS_INVALID_PARAMETER",
+            "Unable to connect with SMB1 -- no workgroup available",
+            "# the SMB1 fallback failure is the good outcome: modern clients should negotiate SMB2 or SMB3.",
+          ].join("\n"),
+        );
+        t.flags.add("smbclient-list");
+        return true;
+      }
+      if (!guestLogin) {
+        print(`Enter WORKGROUP\\user password: \nNT_STATUS_LOGON_FAILURE listing \\\\${host}\\${shareName}\n# this share is guest-accessible in the lab: pass -N so no password is sent.`, "err");
+        return true;
+      }
+      t.smb = { target: host, share: shareName, guest: true, cwd: "/" };
+      t.flags.add("smbclient-open");
+      print(`Try "help" to get a list of possible commands.\nsmb: \\>`);
       return true;
     }
     case "volatility": {
@@ -705,7 +1374,7 @@ Plugins: pslist, netscan, filescan (lab stub)`);
         print("bash: interactive shell not needed in this lab");
         return true;
       }
-      return runScript(t, resolvePath(t, script), print);
+      return runScript(t, resolvePath(t, script), print, true);
     }
     case "nano":
     case "vi":
@@ -744,8 +1413,17 @@ Plugins: pslist, netscan, filescan (lab stub)`);
       if (p) {
         t.flags.add("nano");
         const n = getNode(t.fs, p);
-        if (!n) writeFile(t, p, "");
-        print(`(simulated editor) opened ${p} — contents saved.`);
+        if (!n) {
+          writeFile(t, p, "");
+          print(`(simulated editor) created ${p} in the virtual filesystem.`);
+          return true;
+        }
+        if (n.type === "file") {
+          t.filesRead.push(p);
+          print(`(simulated editor preview) ${p}\n${n.content || ""}\nUse supported VFS redirection commands to save changes.`);
+        } else {
+          print(`nano: ${p}: Is a directory`, "err");
+        }
         return true;
       }
       return false;
@@ -755,12 +1433,14 @@ Plugins: pslist, netscan, filescan (lab stub)`);
   }
 
   if (cmd.startsWith("./") || cmd.startsWith("/")) {
-    return runScript(t, resolvePath(t, cmd), print);
+    return runScript(t, resolvePath(t, cmd), print, false);
   }
 
   if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(input.trim()) && !input.includes(" ")) {
     const [k, v] = input.trim().split("=");
-    t.env[k] = v.replace(/^["']|["']$/g, "");
+    const value = v.replace(/^["']|["']$/g, "");
+    t.shellVars[k] = value;
+    if (Object.prototype.hasOwnProperty.call(t.env, k)) t.env[k] = value;
     t.flags.add("assign");
     if (k === "HISTSIZE") t.flags.add("histsize");
     if (/url/i.test(k)) t.flags.add("url-var");
@@ -770,66 +1450,230 @@ Plugins: pslist, netscan, filescan (lab stub)`);
   return false;
 }
 
-function runScript(t: Terminal, p: string, print: Ctx["print"]): boolean {
+function runScript(t: Terminal, p: string, print: Ctx["print"], viaBash = false): boolean {
   const n = getNode(t.fs, p);
   if (!n || n.type !== "file") return false;
+  if (!viaBash && !/[xst]/i.test(n.mode || "")) {
+    print(`bash: ${p}: Permission denied (use chmod +x first)`, "err");
+    t.lastExit = 126;
+    return true;
+  }
+
   t.flags.add("run-script");
   const c = n.content || "";
-  if (/Hello World/i.test(c)) {
+  const executableText = c.split(/\r?\n/).filter((line) => !line.trim().startsWith("#")).join("\n");
+  if (/Hello World/i.test(executableText)) {
     print("Hello World");
     t.flags.add("hello-script");
   }
-  if (/What is your name/i.test(c) || /read name/.test(c)) {
+  if (/What is your name/i.test(executableText) || /read name/.test(executableText)) {
+    t.shellVars.name = "operator";
     print("What is your name?\nWelcome, operator");
     t.flags.add("read-script");
   }
-  if (/nmap|scanner| -s[nP] /i.test(c) || p.endsWith("scanner")) {
+  if (/nmap|scanner| -s[nP] /i.test(executableText) || p.endsWith("/scanner")) {
     t.flags.add("run-scanner");
-    print(`Starting Nmap 7.94 ( simulated ping scan )
-Nmap scan report for 10.10.10.1
-Nmap scan report for 10.10.10.5
-Nmap scan report for 10.10.10.8
-Nmap scan report for 10.10.10.12`);
+    t.flags.add("nmap");
+    t.flags.add("nmap-sn");
+    t.flags.add("nmap-sweep");
+    if (/echo\s+"Enter/i.test(executableText)) print("Enter the lab IP address (10.10.10.2)");
+    if (/read\s+ip/.test(executableText)) {
+      t.shellVars.ip = "10.10.10.2";
+      print("Simulated input: 10.10.10.2");
+    }
+    const hasPipeline = /grep\s+scan/.test(executableText) && /cut\s+-d/.test(executableText) && /head\s+-n\s+-1/.test(executableText);
+    if (hasPipeline) {
+      t.flags.add("grep");
+      t.flags.add("cut");
+      t.flags.add("head");
+      print("10.10.10.5\n10.10.10.8\n10.10.10.12\n10.10.10.21");
+    } else {
+      print(`Starting Nmap 7.94 ( simulated ping scan )
+Nmap scan report for 10.10.10.5 (raven.lab)
+Nmap scan report for 10.10.10.8 (web.lab)
+Nmap scan report for 10.10.10.12 (ssh.lab)
+Nmap scan report for 10.10.10.21 (db.lab)`);
+    }
   }
-  if (/echo /.test(c) && !t.flags.has("hello-script")) {
-    const m = c.match(/echo\s+"([^"]+)"/);
+  if (/echo /.test(executableText) && !t.flags.has("hello-script") && !/What is your name/i.test(executableText)) {
+    const m = executableText.match(/echo\s+"([^"]+)"/);
     if (m) print(m[1]);
   }
   return true;
 }
 
+
+function smbShareRoot(t: Terminal, share: string): string {
+  const config = getNode(t.fs, "/etc/samba/smb.conf");
+  const text = config?.content || "";
+  const sections = text.split(/\r?\n(?=\[)/);
+  const section = sections.find((block) => block.trimStart().toLowerCase().startsWith(`[${share.toLowerCase()}]`));
+  const pathMatch = section?.match(/^\s*path\s*=\s*(.+)$/im);
+  return pathMatch ? pathMatch[1].trim().replace(/\/$/, "") || "/var/www" : "/var/www";
+}
+
+function handleSmbSession(t: Terminal, input: string, print: Ctx["print"]): boolean {
+  const line = input.trim();
+  const session = t.smb;
+  if (!session || !session.share) return false;
+  const root = smbShareRoot(t, session.share);
+
+  if (line === "ls" || line === "dir") {
+    const remotePath = normalize(`${root}/${session.cwd}`);
+    const directory = getNode(t.fs, remotePath);
+    if (!directory || directory.type !== "dir") {
+      print("NT_STATUS_NO_SUCH_FILE listing the share", "err");
+      return true;
+    }
+    const rows = Object.values(directory.children || {})
+      .filter((node) => node.name !== ".keep")
+      .map((node) => `  ${node.name.padEnd(38)}${node.type === "dir" ? "D" : "A"}       ${String((node.content || "").length).padStart(4)}  Sat Oct 10 12:14:22 2026`);
+    print(rows.join("\n") || "  (the share is empty)");
+    print("\n\t\t26632192 blocks of size 1024. 18874368 blocks available");
+    print("# A marks a normal file and D a directory; both were readable without any credential.");
+    t.flags.add("smb-ls");
+    return true;
+  }
+  if (line.startsWith("cd ")) {
+    const requested = line.slice(3).trim();
+    const remotePath = normalize(`${root}/${session.cwd}/${requested}`);
+    if (remotePath !== root && !remotePath.startsWith(`${root}/`)) {
+      print("NT_STATUS_OBJECT_PATH_INVALID: the path leaves the share root.", "err");
+      return true;
+    }
+    const destination = getNode(t.fs, remotePath);
+    if (!destination || destination.type !== "dir") {
+      print("NT_STATUS_OBJECT_NAME_NOT_FOUND", "err");
+      return true;
+    }
+    session.cwd = remotePath.slice(root.length) || "/";
+    print(`smb: \\${session.cwd === "/" ? "" : session.cwd}>`);
+    return true;
+  }
+  if (line.startsWith("get ")) {
+    const requested = line.slice(4).trim();
+    const remotePath = normalize(`${root}/${session.cwd}/${requested}`);
+    if (!remotePath.startsWith(`${root}/`)) {
+      print("NT_STATUS_OBJECT_PATH_INVALID", "err");
+      return true;
+    }
+    const remoteFile = getNode(t.fs, remotePath);
+    if (!remoteFile || remoteFile.type !== "file") {
+      print(`NT_STATUS_NO_SUCH_FILE opening remote file \\${session.share}\\${requested}`, "err");
+      return true;
+    }
+    const localName = requested.split("/").filter(Boolean).at(-1) || "download";
+    const localPath = normalize(`${t.cwd}/${localName}`);
+    if (!writeFile(t, localPath, remoteFile.content || "")) {
+      print(`NT_STATUS_ACCESS_DENIED writing ${localName} into the virtual working directory.`, "err");
+      return true;
+    }
+    t.flags.add("smb-get");
+    print(`getting file \\${requested} of size ${(remoteFile.content || "").length} as ${localName} (1.2 KiloBytes/sec) (average 1.2 KiloBytes/sec)`);
+    return true;
+  }
+  if (line === "exit" || line === "quit" || line === "bye") {
+    t.smb = null;
+    t.flags.add("smb-exit");
+    print("# session closed; the retrieved file stays in your virtual working directory.");
+    return true;
+  }
+  if (line === "help" || line === "?") {
+    print("ls, cd DIR, get FILE, help, exit");
+    return true;
+  }
+  print(`smb: \\> (try ls, get file.txt, exit)`);
+  return true;
+}
+
 function handleFtp(t: Terminal, input: string, print: Ctx["print"]): boolean {
   const line = input.trim();
-  if (!t.ftp) return false;
-  if (!t.ftp.user) {
-    t.ftp.user = line || "anonymous";
+  const session = t.ftp;
+  if (!session) return false;
+
+  const root = session.root || "/srv/ftp";
+  if (!session.user) {
+    session.user = line || "anonymous";
+    if (session.user === "anonymous" && root === "/var/ftp") {
+      session.authenticated = true;
+      t.flags.add("ftp-user");
+      t.flags.add("ftp-anonymous");
+      t.flags.add("ftp-pass");
+      t.flags.add("ftp-login");
+      print("230 Login successful.\nRemote system type is UNIX.\nUsing binary mode to transfer files.\nftp>");
+      return true;
+    }
     print("331 Please specify the password.");
     t.flags.add("ftp-user");
     return true;
   }
-  if (!t.flags.has("ftp-pass")) {
+  if (!session.authenticated) {
+    if (session.user !== "anonymous" || line !== "anonymous") {
+      t.ftp = null;
+      print("530 Login incorrect. The fixture accepts only its anonymous training account.", "err");
+      return true;
+    }
+    session.authenticated = true;
     t.flags.add("ftp-pass");
+    t.flags.add("ftp-login");
     print("230 Login successful. Use ls, cd, get, bye.");
     return true;
   }
+
   if (line === "ls" || line === "dir") {
-    print(`drwxr-xr-x  ubuntu
--rw-r--r--  welcome.txt
-drwxr-xr-x  release`);
+    const remotePath = normalize(`${root}/${session.cwd}`);
+    const directory = getNode(t.fs, remotePath);
+    if (!directory || directory.type !== "dir") {
+      print("550 Failed to list directory.", "err");
+      return true;
+    }
+    const entries = Object.values(directory.children || {}).filter((node) => node.name !== "welcome.txt" && node.name !== ".keep");
+    const rows = root === "/var/ftp"
+      ? entries.map((node) => `${node.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--"}    2 ftp      ftp          ${String((node.content || "").length || 4096).padStart(4)} Feb 10 12:01 ${node.name}`)
+      : entries.map((node) => `${node.type === "dir" ? "drwxr-xr-x" : "-rw-r--r--"}  ${node.name}`);
+    print(`229 Entering Extended Passive Mode (|||40217|).\n150 Here comes the directory listing.`);
+    print(rows.join("\n") || "(empty directory)");
+    print("226 Directory send OK.");
+    if (root === "/var/ftp") print("# hide_ids=YES is why every row shows ftp:ftp, even for files created by root.");
     t.flags.add("ftp-ls");
     return true;
   }
   if (line.startsWith("cd ")) {
-    t.ftp.cwd += "/" + line.slice(3);
+    const requested = line.slice(3).trim();
+    const remotePath = normalize(`${root}/${session.cwd}/${requested}`);
+    if (remotePath !== root && !remotePath.startsWith(`${root}/`)) {
+      print("550 Directory is outside the FTP fixture root.", "err");
+      return true;
+    }
+    const destination = getNode(t.fs, remotePath);
+    if (!destination || destination.type !== "dir") {
+      print(`550 Failed to change directory.\n# ${requested} does not exist under the anonymous root ${root}; create it on the server side first.`, "err");
+      return true;
+    }
+    session.cwd = remotePath.slice(root.length) || "/";
     print("250 Directory successfully changed.");
     return true;
   }
   if (line.startsWith("get ")) {
-    const name = line.slice(4).trim();
-    writeFile(t, "/root/" + name.replace(/^.*\//, ""), "HackForge FTP souvenir\n");
+    const requested = line.slice(4).trim();
+    const remotePath = normalize(`${root}/${session.cwd}/${requested}`);
+    if (!remotePath.startsWith(`${root}/`)) {
+      print("550 File path is outside the FTP fixture root.", "err");
+      return true;
+    }
+    const remoteFile = getNode(t.fs, remotePath);
+    if (!remoteFile || remoteFile.type !== "file") {
+      print(`550 ${requested}: File not found in the FTP fixture.`, "err");
+      return true;
+    }
+    const localName = requested.split("/").filter(Boolean).at(-1) || "download";
+    const localPath = normalize(`${t.cwd}/${localName}`);
+    if (!writeFile(t, localPath, remoteFile.content || "")) {
+      print(`550 ${requested}: Could not write into the virtual working directory.`, "err");
+      return true;
+    }
     t.flags.add("ftp-get");
-    print(`local: ${name} remote: ${name}
-226 Transfer complete.`);
+    print(`local: ${localName} remote: ${requested}\n229 Entering Extended Passive Mode (|||40271|).\n150 Opening BINARY mode data connection for ${requested} (${(remoteFile.content || "").length} bytes).\n226 Transfer complete.\n# FTP carries the username, the commands and these bytes in cleartext unless TLS is configured.`);
     return true;
   }
   if (line === "bye" || line === "quit" || line === "exit") {
@@ -838,7 +1682,7 @@ drwxr-xr-x  release`);
     print("221 Goodbye.");
     return true;
   }
-  print("ftp> (try ls, cd ubuntu/release, get favicon.ico, bye)");
+  print(root === "/var/ftp" ? "ftp> (try ls, cd pub, get note.txt, bye)" : "ftp> (try ls, cd ubuntu, cd release, get favicon.ico, bye)");
   return true;
 }
 
@@ -846,7 +1690,7 @@ export function applyRedirect(t: Terminal, _left: string, dest: string, append: 
   writeFile(t, dest, text.endsWith("\n") ? text : text + "\n", append);
   t.flags.add("redir");
   if (dest.includes("resolv.conf")) t.flags.add("dns-set");
-  if (dest.includes("valueofHISTSIZE")) t.flags.add("hist-save");
+  if (dest.includes("valueofHISTSIZE") || dest.endsWith("/histsize-before-change.txt")) t.flags.add("hist-save");
   if (dest.includes("crontab") || /scanner/.test(text)) t.flags.add("cron-line");
 }
 

@@ -19,7 +19,7 @@ export default function MuteButton({ lang }: { lang: Lang }) {
         sound.toggle();
       }}
       title={muted ? t("muted", lang) : t("soundOn", lang)}
-      className="grid h-9 w-9 place-items-center rounded-lg border border-forge-border bg-forge-panel2 text-iron-400 hover:text-ember-400 hover:border-ember-600/40 transition"
+      className="grid h-9 w-9 place-items-center rounded-lg border border-gamehack-border bg-gamehack-panel2 text-iron-400 hover:text-cyan-400 hover:border-cyan-600/40 transition"
     >
       <Icon name={muted ? "mute" : "volume"} className="w-4 h-4" />
     </button>

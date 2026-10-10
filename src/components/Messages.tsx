@@ -9,7 +9,7 @@ import {
   sendMessage,
   type User,
 } from "../lib/db";
-import { t, type Lang } from "../i18n";
+import { t, uppercaseLabel, type Lang } from "../i18n";
 import Avatar from "./Avatar";
 import { cn } from "../utils/cn";
 
@@ -35,7 +35,7 @@ export default function Messages({
   const thread = peer ? getThread(user.id, peer.id) : null;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="w-full space-y-4">
       <h1 className="text-2xl font-bold">{t("messages", lang)}</h1>
       <div className="flex gap-2">
         {(["inbox", "chat"] as const).map((k) => (
@@ -45,7 +45,7 @@ export default function Messages({
             onClick={() => setTab(k)}
             className={cn(
               "rounded-lg px-3 py-1.5 text-sm font-semibold border",
-              tab === k ? "border-ember-500 bg-ember-500/15 text-ember-300" : "border-forge-border text-iron-400"
+              tab === k ? "border-cyan-500 bg-cyan-500/15 text-cyan-300" : "border-gamehack-border text-iron-400"
             )}
           >
             {k === "inbox" ? t("openInbox", lang) : t("chat", lang)}
@@ -64,16 +64,16 @@ export default function Messages({
                 setBroadcast("");
                 onChange();
               }}
-              className="glass rounded-2xl border border-forge-border p-4 space-y-2"
+              className="glass rounded-2xl border border-gamehack-border p-4 space-y-2"
             >
-              <div className="text-xs uppercase tracking-widest text-iron-400">{t("broadcast", lang)}</div>
+              <div className="text-sm uppercase tracking-widest text-iron-400">{uppercaseLabel(t("broadcast", lang), lang)}</div>
               <textarea
                 value={broadcast}
                 onChange={(e) => setBroadcast(e.target.value)}
-                className="w-full rounded-xl bg-forge-bg border border-forge-border p-3 text-sm"
+                className="w-full rounded-xl bg-gamehack-bg border border-gamehack-border p-3 text-sm"
                 rows={3}
               />
-              <button type="submit" className="rounded-lg bg-ember-600 px-3 py-1.5 text-sm font-semibold">
+              <button type="submit" className="rounded-lg bg-cyan-600 px-3 py-1.5 text-sm font-semibold">
                 {t("send", lang)}
               </button>
             </form>
@@ -84,7 +84,7 @@ export default function Messages({
               markMessagesRead(user.id);
               onChange();
             }}
-            className="text-xs text-iron-400 hover:text-ember-400"
+            className="text-sm text-iron-400 hover:text-cyan-400"
           >
             mark read
           </button>
@@ -92,10 +92,10 @@ export default function Messages({
           {inbox.map((m) => (
             <div
               key={m.id}
-              className={cn("glass rounded-xl border p-3 text-sm", m.read ? "border-forge-border" : "border-ember-600/40")}
+              className={cn("glass rounded-xl border p-3 text-sm", m.read ? "border-gamehack-border" : "border-cyan-600/40")}
             >
-              <div className="text-[11px] text-iron-400">
-                {m.fromName} {m.broadcast ? `· ${t("broadcast", lang)}` : ""} · {new Date(m.ts).toLocaleString()}
+              <div className="text-sm text-iron-400">
+                {m.fromName} {m.broadcast ? `, ${t("broadcast", lang)}` : ""}, {new Date(m.ts).toLocaleString()}
               </div>
               <div className="mt-1 text-zinc-200">{m.text}</div>
             </div>
@@ -104,14 +104,14 @@ export default function Messages({
       )}
 
       {tab === "chat" && (
-        <div className="glass rounded-2xl border border-forge-border overflow-hidden">
-          <div className="p-3 border-b border-forge-border flex gap-2 overflow-auto">
+        <div className="glass rounded-2xl border border-gamehack-border overflow-hidden">
+          <div className="p-3 border-b border-gamehack-border flex gap-2 overflow-auto">
             {peers.map((p) => (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => setTo(p.id)}
-                className={cn("flex items-center gap-2 rounded-full border px-2 py-1 text-xs", to === p.id ? "border-ember-500" : "border-forge-border")}
+                className={cn("flex items-center gap-2 rounded-full border px-2 py-1 text-sm", to === p.id ? "border-cyan-500" : "border-gamehack-border")}
               >
                 <Avatar src={p.avatar} name={p.displayName} size={18} />
                 {p.displayName.split(" ")[0]}
@@ -120,14 +120,14 @@ export default function Messages({
           </div>
           <div className="h-72 overflow-auto p-4 space-y-2">
             {thread?.messages.map((m) => (
-              <div key={m.id} className={cn("text-sm max-w-[80%] rounded-xl px-3 py-2", m.fromId === user.id ? "ml-auto bg-ember-600/30" : "bg-forge-bg")}>
+              <div key={m.id} className={cn("text-sm max-w-[80%] rounded-xl px-3 py-2", m.fromId === user.id ? "ml-auto bg-cyan-600/30" : "bg-gamehack-bg")}>
                 {m.text}
               </div>
             ))}
           </div>
           {peer && (
             <form
-              className="flex gap-2 p-3 border-t border-forge-border"
+              className="flex gap-2 p-3 border-t border-gamehack-border"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!text.trim()) return;
@@ -140,9 +140,9 @@ export default function Messages({
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder={t("writeMessage", lang)}
-                className="flex-1 rounded-lg bg-forge-bg border border-forge-border px-3 py-2 text-sm"
+                className="min-w-0 flex-1 rounded-lg bg-gamehack-bg border border-gamehack-border px-3 py-2 text-sm"
               />
-              <button type="submit" className="rounded-lg bg-ember-600 px-3 py-2 text-sm font-semibold">
+              <button type="submit" className="rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold">
                 {t("send", lang)}
               </button>
             </form>

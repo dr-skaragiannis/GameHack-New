@@ -1,0 +1,25 @@
+# Keep local credentials and hashes out of the build context entirely: baking
+# .data into an image would ship every password hash with the release.
+.data/
+.env
+.env.*
+!.env.example
+
+node_modules/
+dist/
+build/
+coverage/
+test-results/
+playwright-report/
+
+.git/
+.github/
+.vscode/
+.idea/
+*.log
+npm-debug.log*
+
+Dockerfile
+docker-compose.yml
+.dockerignore
+README.md

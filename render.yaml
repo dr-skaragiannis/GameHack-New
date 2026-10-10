@@ -1,0 +1,42 @@
+# Render Blueprint. Deploy with: Render dashboard -> New -> Blueprint, or
+#   render blueprint create
+#
+# Two constraints that matter here:
+#   1. Persistent disks require a paid plan. The free tier has no disk, so
+#      accounts would be lost on every deploy — exactly the bug this fixes.
+#   2. A disk can be mounted by one instance only, so numInstances stays 1.
+services:
+  - type: web
+    name: gamehack
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    numInstances: 1
+    healthCheckPath: /api/health
+    envVars:
+      # Accounts, password hashes and recovery keys live in this file.
+      - key: AUTH_DATA_FILE
+        value: /var/data/accounts.json
+      # Without this every restart invalidates all sessions.
+      - key: AUTH_SESSION_SECRET
+        sync: false
+      - key: APP_ORIGIN
+        sync: false
+      # Optional: email password resets. Registration and recovery-key sign-in
+      # work without them.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+    disk:
+      name: gamehack-accounts
+      mountPath: /var/data
+      sizeGB: 1

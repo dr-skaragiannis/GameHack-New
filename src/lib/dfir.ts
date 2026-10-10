@@ -16,51 +16,51 @@ function evidenceFile(name: string, content: string, mode = "-r--r-----"): FileN
 }
 
 const accessLog = `192.0.2.44 - - [12/Apr/2025:09:14:02 +0000] "GET / HTTP/1.1" 200 842 "-" "Firefox/124.0"
-192.0.2.44 - - [12/Apr/2025:09:14:11 +0000] "GET /images.php HTTP/1.1" 200 1114 "http://portal.forge.invalid/" "Firefox/124.0"
-192.0.2.44 - - [12/Apr/2025:09:14:16 +0000] "GET /view.php?image=starry_night.jpg HTTP/1.1" 200 613774 "http://portal.forge.invalid/images.php" "Firefox/124.0"
-192.0.2.44 - - [12/Apr/2025:09:15:08 +0000] "GET /view.php?image=..%2F..%2Fetc%2Fpasswd HTTP/1.1" 200 650 "http://portal.forge.invalid/images.php" "Firefox/124.0"
-192.0.2.44 - - [12/Apr/2025:09:16:25 +0000] "POST /command.php HTTP/1.1" 200 1052 "http://portal.forge.invalid/command.php" "Firefox/124.0"
-192.0.2.44 - - [12/Apr/2025:09:17:41 +0000] "POST /command.php HTTP/1.1" 200 1395 "http://portal.forge.invalid/command.php" "Firefox/124.0"
-192.0.2.44 - - [12/Apr/2025:09:19:14 +0000] "POST /users.php HTTP/1.1" 200 1944 "http://portal.forge.invalid/users.php" "Firefox/124.0"
-192.0.2.44 - - [12/Apr/2025:09:19:42 +0000] "POST /users.php HTTP/1.1" 200 2518 "http://portal.forge.invalid/users.php" "Firefox/124.0"
+192.0.2.44 - - [12/Apr/2025:09:14:11 +0000] "GET /images.php HTTP/1.1" 200 1114 "http://portal.gamehack.invalid/" "Firefox/124.0"
+192.0.2.44 - - [12/Apr/2025:09:14:16 +0000] "GET /view.php?image=starry_night.jpg HTTP/1.1" 200 613774 "http://portal.gamehack.invalid/images.php" "Firefox/124.0"
+192.0.2.44 - - [12/Apr/2025:09:15:08 +0000] "GET /view.php?image=..%2F..%2Fetc%2Fpasswd HTTP/1.1" 200 650 "http://portal.gamehack.invalid/images.php" "Firefox/124.0"
+192.0.2.44 - - [12/Apr/2025:09:16:25 +0000] "POST /command.php HTTP/1.1" 200 1052 "http://portal.gamehack.invalid/command.php" "Firefox/124.0"
+192.0.2.44 - - [12/Apr/2025:09:17:41 +0000] "POST /command.php HTTP/1.1" 200 1395 "http://portal.gamehack.invalid/command.php" "Firefox/124.0"
+192.0.2.44 - - [12/Apr/2025:09:19:14 +0000] "POST /users.php HTTP/1.1" 200 1944 "http://portal.gamehack.invalid/users.php" "Firefox/124.0"
+192.0.2.44 - - [12/Apr/2025:09:19:42 +0000] "POST /users.php HTTP/1.1" 200 2518 "http://portal.gamehack.invalid/users.php" "Firefox/124.0"
 `;
 
-const auditLog = `--HF-2404-A--
+const auditLog = `--GH-2404-A--
 [12/Apr/2025:09:15:08 +0000] 192.0.2.44 41022 198.51.100.20 80
---HF-2404-B--
+--GH-2404-B--
 GET /view.php?image=../../etc/passwd HTTP/1.1
 User-Agent: Firefox/124.0
---HF-2404-H--
+--GH-2404-H--
 Message: Path Traversal Attack (/../)
 Rule ID: 930100
 Severity: CRITICAL
 Matched Data: ../../etc/passwd
 Unique ID: DFIR-7F3A
---HF-2404-A--
+--GH-2404-A--
 [12/Apr/2025:09:17:41 +0000] 192.0.2.44 41044 198.51.100.20 80
---HF-2404-B--
+--GH-2404-B--
 POST /command.php HTTP/1.1
---HF-2404-H--
+--GH-2404-H--
 Message: OS File Access Attempt
 Rule ID: 930120
 Severity: CRITICAL
 Matched Data: /etc/shadow
 Unique ID: DFIR-8A11
---HF-2404-A--
+--GH-2404-A--
 [12/Apr/2025:09:19:42 +0000] 192.0.2.44 41102 198.51.100.20 80
---HF-2404-B--
+--GH-2404-B--
 POST /users.php HTTP/1.1
---HF-2404-H--
+--GH-2404-H--
 Message: SQL Injection Attack Detected
 Rule ID: 942100
 Severity: CRITICAL
 Matched Data: union select
 Unique ID: DFIR-9C22
---HF-2404-A--
+--GH-2404-A--
 [12/Apr/2025:09:17:41 +0000] 192.0.2.44 41044 198.51.100.20 80
---HF-2404-B--
+--GH-2404-B--
 POST /command.php HTTP/1.1
---HF-2404-H--
+--GH-2404-H--
 Message: Remote Command Execution pattern detected in request parameter
 Rule ID: 932160
 Severity: CRITICAL
@@ -72,8 +72,8 @@ export function dfirFS(): FileNode {
   return directory("/", [
     directory("cases", [
       directory("IR-2404", [
-        evidenceFile("README.txt", "HACKFORGE DFIR CASE HF-2404\nMission: build a reproducible, evidence-led incident timeline.\nAll names, IPs, logs, hashes, and artifacts are fictional training data.\nPreserve originals. Analyze copies. Record every action.\n"),
-        evidenceFile("case_notes.md", "CASE HF-2404 — suspected web-server compromise\nLead: Morgan Lee\nIncident window: 2025-04-12 09:14–09:22 UTC\nPortal: portal.forge.invalid (198.51.100.20)\nQuestion: what happened, what was accessed, and what should responders preserve next?\nAn IP address is a network observation, not a human attribution.\n"),
+        evidenceFile("README.txt", "GameHack DFIR CASE GH-2404\nMission: build a reproducible, evidence-led incident timeline.\nAll names, IPs, logs, hashes, and artifacts are fictional training data.\nPreserve originals. Analyze copies. Record every action.\n"),
+        evidenceFile("case_notes.md", "CASE GH-2404 — suspected web-server compromise\nLead: Morgan Lee\nIncident window: 2025-04-12 09:14–09:22 UTC\nPortal: portal.gamehack.invalid (198.51.100.20)\nQuestion: what happened, what was accessed, and what should responders preserve next?\nAn IP address is a network observation, not a human attribution.\n"),
         evidenceFile("chain_of_custody.csv", "evidence_id,ts_utc,handler,action,sha256,notes\nE-001,2025-04-12T10:04:00Z,analyst,received read-only training image,9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08,fixture source\nE-002,2025-04-12T10:07:00Z,analyst,created verified working copy,9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08,hash match\n"),
         directory("evidence", [
           directory("01-intake", [
@@ -87,11 +87,11 @@ export function dfirFS(): FileNode {
             evidenceFile("NTUSER.DAT", "SIMULATED REGISTRY HIVE EXPORT — read-only training view\n[HKCU\\Control Panel\\Mouse]\nDoubleClickSpeed=500\n[HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\TypedPaths]\nurl1=C:\\Users\\Morgan\\Downloads\\QuarterlyForecast.docm\n[HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run]\nOneDriveUpdate=C:\\Users\\Morgan\\AppData\\Local\\Temp\\invoice.exe\n"),
             evidenceFile("passwd.lnk", "SIMULATED LNK METADATA\nTarget: C:\\Users\\Morgan\\Desktop\\payroll_export.csv\nCreated: 2025-04-12 09:02:14Z\nModified: 2025-04-12 09:02:14Z\nAccessed: 2025-04-12 09:18:43Z\nMachine: WORKSTATION-7\nVolume serial: 02916957\n"),
             directory("Firefox", [
-              evidenceFile("places.sqlite", "SIMULATED SQLITE TABLE: moz_places\nid,url,title,last_visit_utc,visit_count\n1,https://portal.forge.invalid/,Forge Portal,2025-04-12T08:51:11Z,3\n2,https://cdn-updates.invalid/manual,Update Manual,2025-04-12T09:01:55Z,1\n3,https://mail.forge.invalid/attachment,Quarterly Forecast,2025-04-12T09:02:02Z,1\n"),
-              evidenceFile("logins.json", "{\"logins\":[{\"hostname\":\"https://portal.forge.invalid\",\"encryptedUsername\":\"[REDACTED]\",\"encryptedPassword\":\"[REDACTED]\"}],\"note\":\"Training fixture: credentials are intentionally redacted\"}\n"),
+              evidenceFile("places.sqlite", "SIMULATED SQLITE TABLE: moz_places\nid,url,title,last_visit_utc,visit_count\n1,https://portal.gamehack.invalid/,GameHack Portal,2025-04-12T08:51:11Z,3\n2,https://cdn-updates.invalid/manual,Update Manual,2025-04-12T09:01:55Z,1\n3,https://mail.gamehack.invalid/attachment,Quarterly Forecast,2025-04-12T09:02:02Z,1\n"),
+              evidenceFile("logins.json", "{\"logins\":[{\"hostname\":\"https://portal.gamehack.invalid\",\"encryptedUsername\":\"[REDACTED]\",\"encryptedPassword\":\"[REDACTED]\"}],\"note\":\"Training fixture: credentials are intentionally redacted\"}\n"),
             ]),
             directory("Chrome", [
-              evidenceFile("History.sqlite", "SIMULATED SQLITE TABLE: urls\nid,url,title,last_visit_time\n4,https://portal.forge.invalid/login,Forge Portal Login,2025-04-12T09:13:21Z\n5,https://cdn-updates.invalid/manual,Update Manual,2025-04-12T09:14:01Z\n"),
+              evidenceFile("History.sqlite", "SIMULATED SQLITE TABLE: urls\nid,url,title,last_visit_time\n4,https://portal.gamehack.invalid/login,GameHack Portal Login,2025-04-12T09:13:21Z\n5,https://cdn-updates.invalid/manual,Update Manual,2025-04-12T09:14:01Z\n"),
               evidenceFile("Local State.txt", "Chrome profile metadata. Encryption key material omitted from this teaching fixture.\n"),
             ]),
             directory("Recent", [evidenceFile("QuarterlyForecast.lnk", "Target: C:\\Users\\Morgan\\Downloads\\QuarterlyForecast.docm\nAccessed: 2025-04-12 09:02:14Z\n")]),
@@ -116,26 +116,26 @@ export function dfirFS(): FileNode {
             evidenceFile("case-summary.txt", "Observed sequence: normal page visit -> path traversal attempt -> command endpoint POST -> user-search SQLi probes. Source 192.0.2.44 is an evidence pivot, not a human attribution.\n"),
           ]),
           directory("05-network", [
-            evidenceFile("capture.pcapng", "HackForge PCAP-NG training fixture | capture id HF-0425-17\nPackets: 38 | Capture window: 2025-04-12 09:13:58Z - 09:20:02Z\nProtocols: DNS 5, TCP 21, HTTP 8, FTP 4\nFrame 8  192.0.2.44:51510 -> 198.51.100.20:80   GET /images.php\nFrame 13 192.0.2.44:51510 -> 198.51.100.20:80   GET /view.php?image=../../etc/passwd\nFrame 19 192.0.2.44:51544 -> 198.51.100.20:21  FTP USER analyst\nFrame 20 192.0.2.44:51544 -> 198.51.100.20:21  FTP PASS [REDACTED TRAINING SECRET]\nFrame 27 192.0.2.44:51510 -> 198.51.100.20:80   POST /command.php\nFrame 35 192.0.2.44:51602 -> 203.0.113.77:443  TLS SNI cdn-updates.invalid\n"),
+            evidenceFile("capture.pcapng", "GameHack PCAP-NG training fixture | capture id GH-0425-17\nPackets: 38 | Capture window: 2025-04-12 09:13:58Z - 09:20:02Z\nProtocols: DNS 5, TCP 21, HTTP 8, FTP 4\nFrame 8  192.0.2.44:51510 -> 198.51.100.20:80   GET /images.php\nFrame 13 192.0.2.44:51510 -> 198.51.100.20:80   GET /view.php?image=../../etc/passwd\nFrame 19 192.0.2.44:51544 -> 198.51.100.20:21  FTP USER analyst\nFrame 20 192.0.2.44:51544 -> 198.51.100.20:21  FTP PASS [REDACTED TRAINING SECRET]\nFrame 27 192.0.2.44:51510 -> 198.51.100.20:80   POST /command.php\nFrame 35 192.0.2.44:51602 -> 203.0.113.77:443  TLS SNI cdn-updates.invalid\n"),
             evidenceFile("protocol-hierarchy.txt", "Protocol       Packets   Share\nTCP            21        55.3%\nHTTP            8        21.1%\nDNS             5        13.2%\nFTP             4        10.5%\n"),
-            evidenceFile("tcp-stream-7.txt", "SIMULATED TCP STREAM #7\nClient 192.0.2.44 -> portal.forge.invalid\nGET /view.php?image=../../etc/passwd HTTP/1.1\nHTTP/1.1 200 OK\nResponse body includes simulated passwd artifact.\n"),
+            evidenceFile("tcp-stream-7.txt", "SIMULATED TCP STREAM #7\nClient 192.0.2.44 -> portal.gamehack.invalid\nGET /view.php?image=../../etc/passwd HTTP/1.1\nHTTP/1.1 200 OK\nResponse body includes simulated passwd artifact.\n"),
             evidenceFile("ftp-stream-2.txt", "SIMULATED FTP STREAM #2\nUSER analyst\nPASS [REDACTED]\n230 Login successful (fixture)\nRETR quarterly-export.csv\n226 Transfer complete\n"),
             evidenceFile("exported-objects.txt", "SIMULATED HTTP OBJECT EXPORT\nquarterly-export.csv | 2.1 KB | source stream 7 | hash fixture: 5d41402abc4b2a76b9719d911017c592\n"),
           ]),
           directory("06-disk", [
             evidenceFile("usb.dd", "SIMULATED RAW DISK IMAGE METADATA\nSource: USB training image\nImage format: raw/dd\nSector size: 512 bytes\nVolume serial (raw hexadecimal): 0x02916957\nAcquired read-only: yes\nImage size: 16 MiB\nEvidence ID: E-004\n"),
             evidenceFile("note.txt", "SIMULATED RECOVERED USB NOTE\nReview payroll.csv before sharing.\nMarker: FLAG{disk_artifact}\n"),
-            evidenceFile("meme.jpeg", "SIMULATED JPEG METADATA\nOriginal URL: https://social.forge.invalid/post/4815\n"),
+            evidenceFile("meme.jpeg", "SIMULATED JPEG METADATA\nOriginal URL: https://social.gamehack.invalid/post/4815\n"),
             evidenceFile("$MFT.csv", "Record,Parent,Name,CreatedUTC,ModifiedUTC,AccessedUTC,Deleted\n42,5,note.txt,2025-04-11T16:10:00Z,2025-04-12T08:55:00Z,2025-04-12T09:01:00Z,false\n57,5,$Txf,2025-04-11T16:20:00Z,2025-04-11T16:20:00Z,2025-04-12T09:05:54Z,true\n61,42,meme.jpeg,2025-04-11T16:30:00Z,2025-04-11T16:30:00Z,2025-04-12T09:00:00Z,false\n"),
             evidenceFile("$LogFile.csv", "LSN,Operation,Record,UTC\n1001,FILE_CREATE,42,2025-04-11T16:10:00Z\n1002,DATA_EXTEND,42,2025-04-11T16:10:02Z\n1019,FILE_DELETE,57,2025-04-12T09:05:54Z\n"),
             evidenceFile("$MFTMirr.txt", "SIMULATED NTFS METADATA MIRROR\nMirrors critical initial MFT records.\nCompare mirror state with $MFT.csv when investigating metadata damage.\n"),
             evidenceFile("acquisition-hash.txt", "E-004 source digest: documented training fixture value; this text is not a raw image hash.\nWorking copy verification: MATCH (simulated case record).\n"),
           ]),
           directory("07-malware", [
-            evidenceFile("sample.bin", "SAFE STATIC SAMPLE — TEXT REPRESENTATION ONLY\nFormat: ELF 64-bit, x86-64, not an executable binary\nSHA256: 84b3d3b9f01da8c7ef85d519b613f941b4d8217f71e4dfe3a715ef10e2349012\nStrings: /bin/sh | hxxps://telemetry.hackforge.invalid/collect | [REDACTED-SHELL-ARGUMENT]\nBehavior clue: process launch + outbound socket attempt (simulated)\n"),
-            evidenceFile("source-analysis.c", "/* Fictional code-analysis notes; not compilable malware */\n/* A decode routine transforms a marker string with ROT13. */\n/* Network and process APIs are listed as indicators only. */\n/* No payload, command, socket, or execution logic is provided. */\nchar *indicator = \"hxxps://telemetry.hackforge.invalid/collect\";\n"),
+            evidenceFile("sample.bin", "SAFE STATIC SAMPLE — TEXT REPRESENTATION ONLY\nFormat: ELF 64-bit, x86-64, not an executable binary\nSHA256: 84b3d3b9f01da8c7ef85d519b613f941b4d8217f71e4dfe3a715ef10e2349012\nStrings: /bin/sh | hxxps://telemetry.gamehack.invalid/collect | [REDACTED-SHELL-ARGUMENT]\nBehavior clue: process launch + outbound socket attempt (simulated)\n"),
+            evidenceFile("source-analysis.c", "/* Fictional code-analysis notes; not compilable malware */\n/* A decode routine transforms a marker string with ROT13. */\n/* Network and process APIs are listed as indicators only. */\n/* No payload, command, socket, or execution logic is provided. */\nchar *indicator = \"hxxps://telemetry.gamehack.invalid/collect\";\n"),
             evidenceFile("dynamic-observations.txt", "ISOLATED ANALYSIS SNAPSHOT\nProcess: invoice.exe (simulated)\nChild process: powershell.exe (simulated)\nNetwork: attempted 192.0.2.66:443 -> 203.0.113.77:443\nFile write: %TEMP%/cache-update.dat (simulated)\nHost changes: none; detonation is represented as a report only.\n"),
-            evidenceFile("strings.txt", "invoice.exe\nCreateProcessW [API indicator]\nRegSetValueExW [API indicator]\nhxxps://telemetry.hackforge.invalid/collect [DEFANGED IOC]\n[REDACTED-SHELL-ARGUMENT]\n"),
+            evidenceFile("strings.txt", "invoice.exe\nCreateProcessW [API indicator]\nRegSetValueExW [API indicator]\nhxxps://telemetry.gamehack.invalid/collect [DEFANGED IOC]\n[REDACTED-SHELL-ARGUMENT]\n"),
             evidenceFile("decode-notes.txt", "STATIC STRING TRANSFORM EXERCISE\nEncoded marker (ROT13): Synt{fgngvp_nanlyfvf}\nDecoded training marker: Flag{static_analysis}\nThis inert marker demonstrates string transformation; it is not executable code.\n"),
             evidenceFile("cutter-report.txt", "STATIC DISASSEMBLY SUMMARY — SYNTHETIC\nFunction: main -> decode_marker -> report_indicator\nObserved transform: ROT13, key 13\nProcess/network APIs: indicator references only\nNo executable instructions or payload included.\n"),
             evidenceFile("strace-report.txt", "DYNAMIC TRACE SUMMARY — SYNTHETIC, NOT EXECUTED\nexecve: sample process start (fixture event)\nopenat: reads local config (fixture event)\nconnect: attempted connection to 203.0.113.77:443 (fixture event)\nNo system call was made on the analyst host.\n"),
@@ -154,12 +154,12 @@ export function dfirFS(): FileNode {
             evidenceFile("mspaint-artifact.txt", "SIMULATED MSPAINT PIXEL-ART STRING\nCanvas: 96 x 32 px\nOCR marker: FLAG{paint_buffer_trace}\nRecovered from a fictional in-memory bitmap region; no real image pixels are stored.\n"),
           ]),
           directory("09-container", [
-            evidenceFile("container.inspect.json", "{\n  \"Id\": \"sha256:df1a7c40cafe0000\",\n  \"Image\": \"forge/web:1.4\",\n  \"Created\": \"2025-04-12T09:02:11Z\",\n  \"State\": { \"Status\": \"exited\", \"ExitCode\": 0, \"Pid\": 0 },\n  \"Config\": { \"User\": \"www-data\", \"Env\": [\"APP_ENV=production\", \"CASE=HF-2404\", \"TRAINING_MARKER=FLAG{container_config}\"] },\n  \"NetworkSettings\": { \"IPAddress\": \"172.18.0.7\", \"Ports\": { \"80/tcp\": [{\"HostPort\":\"9090\"}] } }\n}\n"),
+            evidenceFile("container.inspect.json", "{\n  \"Id\": \"sha256:df1a7c40cafe0000\",\n  \"Image\": \"gamehack/web:1.4\",\n  \"Created\": \"2025-04-12T09:02:11Z\",\n  \"State\": { \"Status\": \"exited\", \"ExitCode\": 0, \"Pid\": 0 },\n  \"Config\": { \"User\": \"www-data\", \"Env\": [\"APP_ENV=production\", \"CASE=GH-2404\", \"TRAINING_MARKER=FLAG{container_config}\"] },\n  \"NetworkSettings\": { \"IPAddress\": \"172.18.0.7\", \"Ports\": { \"80/tcp\": [{\"HostPort\":\"9090\"}] } }\n}\n"),
             evidenceFile("container.diff.txt", "C /root\nA /root/.ash_history\nA /tmp/cache-update.dat\nA /tmp/FLAG{container_diff}\nD /app/healthcheck.sh\n"),
             evidenceFile("container.log", "/ # ls\n/app # echo [REDACTED] > /tmp/cache-update.dat\n/app # printf 'FLAG{container_logs}' > /tmp/trace.txt [SIMULATED]\n/app # rm /app/healthcheck.sh\n/app # exit\n"),
             evidenceFile("image.history.txt", "IMAGE       CREATED BY                                  SIZE\nsha256:df1a  /bin/sh -c #(nop) CMD [\"node\",\"server.js\"] 0B\n<missing>    /bin/sh -c #(nop) COPY app/ /app/              1.8MB\n<missing>    /bin/sh -c echo FLAG{container_history} > /root/secret.txt 64B [SIMULATED BUILD METADATA]\n"),
             evidenceFile("layers.txt", "Layer 0: base alpine (read-only)\nLayer 1: app source (read-only)\nLayer 2: build-time secret artifact /root/secret.txt [REMOVED IN LATER LAYER]\nLayer 3: runtime config\nA later delete instruction does not remove bytes from an earlier immutable layer.\n"),
-            evidenceFile("memory-strings.txt", "SIMULATED CONTAINER MEMORY STRINGS\nNODE_ENV=production\nCASE=HF-2404\nFLAG{container_layer}\nFLAG{container_memory}\n"),
+            evidenceFile("memory-strings.txt", "SIMULATED CONTAINER MEMORY STRINGS\nNODE_ENV=production\nCASE=GH-2404\nFLAG{container_layer}\nFLAG{container_memory}\n"),
           ]),
           directory("10-passwords", [
             evidenceFile("hashes.txt", "# Fictional exercise hashes; never use real credential hashes without authorization\nMD5 098f6bcd4621d373cade4e832627b4f6 user=tester label=sample-known\nMD5 5f4dcc3b5aa765d61d8327deb882cf99 user=analyst label=weak-training-only\nSHA256 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08 user=sample label=integrity-demo\n"),
@@ -245,7 +245,54 @@ function digestFor(algorithm: string, content: string | undefined): string {
   return `fixture-only-${algorithm}-digest-not-computed`;
 }
 
+/**
+ * A shipped binary file carries real bytes, while the older fixtures are text
+ * that merely describes a file. Control bytes outside the text whitespace set
+ * are the tell: no simulated fixture begins with one.
+ */
+function isBinaryContent(content: string): boolean {
+  const head = content.slice(0, 64);
+  for (let i = 0; i < head.length; i += 1) {
+    const code = head.charCodeAt(i);
+    if (code < 32 && code !== 9 && code !== 10 && code !== 13) return true;
+    if (code > 126) return true;
+  }
+  return false;
+}
+
+/** Format real bytes the way xxd prints them: offset, hex pairs, printable form. */
+function realHexDump(content: string, limit = 256): string {
+  const bytes = Array.from(content.slice(0, limit)).map((c) => c.charCodeAt(0) & 0xff);
+  const rows: string[] = [];
+  for (let offset = 0; offset < bytes.length; offset += 16) {
+    const row = bytes.slice(offset, offset + 16);
+    const hex = row.map((b) => b.toString(16).padStart(2, "0")).join("");
+    const grouped = hex.replace(/(.{4})/g, "$1 ").trim().padEnd(39, " ");
+    const printable = row.map((b) => (b >= 32 && b <= 126 ? String.fromCharCode(b) : ".")).join("");
+    rows.push(`${offset.toString(16).padStart(8, "0")}: ${grouped} ${printable}`);
+  }
+  return rows.join("\n") || "(empty file)";
+}
+
+/** Name a file from its leading bytes, so real evidence is identified for real. */
+function magicType(content: string): string | null {
+  const b = (i: number) => content.charCodeAt(i) & 0xff;
+  if (content.length >= 8 && b(0) === 0x89 && b(1) === 0x50 && b(2) === 0x4e && b(3) === 0x47) {
+    return "PNG image data, valid signature at offset 0";
+  }
+  if (content.length >= 8 && b(2) === 0x4e && b(3) === 0x47 && b(4) === 0x0d && b(5) === 0x0a && b(6) === 0x1a && b(7) === 0x0a) {
+    return `PNG image data, corrupted signature; expected 89 50 at offset 0, found ${b(0).toString(16).padStart(2, "0")} ${b(1).toString(16).padStart(2, "0")}`;
+  }
+  if (content.length >= 2 && b(0) === 0xff && b(1) === 0xd8) return "JPEG image data";
+  if (content.length >= 4 && b(0) === 0x7f && b(1) === 0x45 && b(2) === 0x4c && b(3) === 0x46) {
+    return "ELF 64-bit LSB executable, dynamically linked";
+  }
+  return null;
+}
+
 function fileType(path: string, content: string, t: Terminal) {
+  const magic = isBinaryContent(content) ? magicType(content) : null;
+  if (magic) return magic;
   if (path.endsWith("/usr/bin/cat") && content.includes("ELF")) return "ELF 64-bit LSB pie executable, x86-64, dynamically linked (virtual command catalog)";
   if (path.endsWith("challenge-corrupt.png")) {
     return t.flags.has("dfir-magic-fixed")
@@ -265,7 +312,7 @@ function fileType(path: string, content: string, t: Terminal) {
   if (path.endsWith(".csv")) return "CSV text data";
   if (path.endsWith(".json")) return "JSON text data";
   if (path.endsWith(".txt") || path.endsWith(".log") || path.endsWith(".md") || path.endsWith(".xml") || path.endsWith(".c")) return "ASCII/UTF-8 text";
-  return content.includes("SIMULATED") ? "HackForge simulated evidence text" : "ASCII/UTF-8 text";
+  return content.includes("SIMULATED") ? "GameHack simulated evidence text" : "ASCII/UTF-8 text";
 }
 
 export function handleDfirCommand(t: Terminal, context: DfirContext): boolean {
@@ -350,17 +397,43 @@ export function handleDfirCommand(t: Terminal, context: DfirContext): boolean {
         return true;
       }
       mark(t, "dfir-xxd", "dfir-xxd:" + path);
-      if (path.endsWith("challenge-corrupt.png")) {
+      if (isBinaryContent(node.content ?? "")) {
+        print(realHexDump(node.content ?? ""));
+      } else if (path.endsWith("challenge-corrupt.png")) {
         print(t.flags.has("dfir-magic-fixed")
           ? "00000000: 8950 4e47 0d0a 1a0a 0000 0000 0000 0000  .PNG............"
           : "00000000: 0000 0000 504e 470d 0a1a 0a00 0000 0000  ....PNG.........");
       } else {
-        print(`00000000: 4861 636b 466f 7267 6520 4446 4952 2043  HackForge DFIR C\n00000010: 6173 6520 4846 2d32 3430 3420 5b73 696d  ase HF-2404 [sim`);
+        print(`00000000: 4761 6d65 4861 636b 2044 4649 5220 4361  GameHack DFIR Ca\n00000010: 7365 2047 482d 3234 3034 205b 7369 6d75  se GH-2404 [simu`);
       }
       return true;
     }
     case "hexedit": {
       const { path, node } = fileAt(t, pathArg);
+      const content = node?.content ?? "";
+      const writable = !!node && (path.includes("/working-copy/") || path.startsWith("/home/"));
+      // A real binary gets a real repair: the two damaged signature bytes are
+      // rewritten in place and nothing else in the file is touched.
+      if (writable && isBinaryContent(content)) {
+        const hex = (n: number) => n.toString(16).padStart(2, "0");
+        const b0 = content.charCodeAt(0) & 0xff;
+        const b1 = content.charCodeAt(1) & 0xff;
+        const pngTail = (content.charCodeAt(2) & 0xff) === 0x4e && (content.charCodeAt(3) & 0xff) === 0x47
+          && (content.charCodeAt(4) & 0xff) === 0x0d && (content.charCodeAt(5) & 0xff) === 0x0a;
+        if (b0 === 0x89 && b1 === 0x50) {
+          print("No change needed: the signature at offset 0 is already 89 50.", "ok");
+          mark(t, "dfir-hexedit", "dfir-magic-fixed");
+          return true;
+        }
+        if (pngTail) {
+          node.content = String.fromCharCode(0x89, 0x50) + content.slice(2);
+          mark(t, "dfir-hexedit", "dfir-magic-fixed");
+          print(`Wrote 89 50 at offset 0 (was ${hex(b0)} ${hex(b1)}). Bytes 2 onward are untouched.`, "ok");
+          return true;
+        }
+        print("hexedit: no recognisable signature to repair at offset 0.", "err");
+        return true;
+      }
       if (!node || !path.endsWith("challenge-corrupt.png") || !path.includes("/working-copy/")) {
         print("hexedit: source evidence is read-only; choose /cases/IR-2404/working-copy/challenge-corrupt.png", "err");
         return true;
@@ -377,7 +450,7 @@ export function handleDfirCommand(t: Terminal, context: DfirContext): boolean {
         return true;
       }
       mark(t, "dfir-exif");
-      print(`File Name                       : ${pathArg}\nFile Type                       : ${fileType(pathArg || "", node.content || "", t)}\nArtist                          : Unknown\nCase Metadata                   : fictional HF-2404 fixture`);
+      print(`File Name                       : ${pathArg}\nFile Type                       : ${fileType(pathArg || "", node.content || "", t)}\nArtist                          : Unknown\nCase Metadata                   : fictional GH-2404 fixture`);
       if (pathArg?.includes("meme")) mark(t, "dfir-image-meta");
       return true;
     }
@@ -533,7 +606,7 @@ export function handleDfirCommand(t: Terminal, context: DfirContext): boolean {
     case "ftkimager":
     case "memory-acquire": {
       mark(t, cmd === "memory-acquire" ? "dfir-memory-acquire" : "dfir-disk-acquire");
-      print(`${cmd} — SAFE SIMULATION\nEvidence source opened read-only.\nWorking copy recorded for case HF-2404.\nIntegrity verification: MATCH (fixture record).\nNo physical disk or host memory was accessed.`);
+      print(`${cmd} — SAFE SIMULATION\nEvidence source opened read-only.\nWorking copy recorded for case GH-2404.\nIntegrity verification: MATCH (fixture record).\nNo physical disk or host memory was accessed.`);
       return true;
     }
     case "mmls":
@@ -667,7 +740,7 @@ export function handleDfirCommand(t: Terminal, context: DfirContext): boolean {
     }
     case "docker": {
       const subcommand = rest.find((value) => !value.startsWith("-")) || "";
-      const subject = pos.find((value) => value !== subcommand && !value.startsWith("-")) || "HF-2404";
+      const subject = pos.find((value) => value !== subcommand && !value.startsWith("-")) || "GH-2404";
       if (subcommand === "diff") {
         mark(t, "dfir-docker-diff");
         const node = getNode(t.fs, resolvePath(t, "/cases/IR-2404/evidence/09-container/container.diff.txt"));
@@ -686,7 +759,7 @@ export function handleDfirCommand(t: Terminal, context: DfirContext): boolean {
         print(`IMAGE HISTORY — ${subject}\n${node?.content || "History fixture unavailable."}`);
       } else if (subcommand === "export") {
         mark(t, "dfir-docker-export");
-        writeDerivedFile(t, "/cases/IR-2404/derived/container-export.tar", "SIMULATED CONTAINER FILESYSTEM EXPORT\nContainer: HF-2404\nAcquired from fictional stopped container.\nImage-layer metadata is not included.\n");
+        writeDerivedFile(t, "/cases/IR-2404/derived/container-export.tar", "SIMULATED CONTAINER FILESYSTEM EXPORT\nContainer: GH-2404\nAcquired from fictional stopped container.\nImage-layer metadata is not included.\n");
         print(`Container export simulated: ${subject}\nFilesystem snapshot written to /cases/IR-2404/derived/container-export.tar\nImage history and layer metadata are not included.\nNo host container was accessed.`);
       } else {
         print("Docker forensics simulator\nSupported: docker diff | inspect | logs | history | export\nNo Docker daemon is connected.");

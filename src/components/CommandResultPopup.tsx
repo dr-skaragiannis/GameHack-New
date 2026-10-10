@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import type { CommandExplanation } from "../data/commandGuide";
-import { t, type Lang } from "../i18n";
+import { t, uppercaseLabel, type Lang } from "../i18n";
 import Icon from "./Icon";
 import { cn } from "../utils/cn";
 
@@ -46,7 +46,7 @@ export default function CommandResultPopup({
             </span>
             <span>
               <span className="command-explanation__eyebrow">
-                {hasError ? (lang === "en" ? "LAB RESULT · REVIEW" : "ΑΠΟΤΕΛΕΣΜΑ LAB · ΕΛΕΓΧΟΣ") : (lang === "en" ? "LAB RESULT · EXPLAINED" : "ΑΠΟΤΕΛΕΣΜΑ LAB · ΕΠΕΞΗΓΗΣΗ")}
+                {hasError ? (lang === "en" ? "LAB RESULT, REVIEW" : "ΑΠΟΤΕΛΕΣΜΑ LAB, ΕΛΕΓΧΟΣ") : (lang === "en" ? "LAB RESULT, EXPLAINED" : "ΑΠΟΤΕΛΕΣΜΑ LAB, ΕΠΕΞΗΓΗΣΗ")}
               </span>
               <h2 id="command-explanation-title">{title}</h2>
             </span>
@@ -90,7 +90,7 @@ export default function CommandResultPopup({
             <div className="command-explanation__output-heading">
               <div className="command-explanation__section-label">{lang === "en" ? "TERMINAL OUTPUT" : "ΕΞΟΔΟΣ ΤΕΡΜΑΤΙΚΟΥ"}</div>
               <span className={cn("command-explanation__exit", hasError && "has-error")}>
-                {hasError ? `exit ${result.exitCode || 1}` : (lang === "en" ? "completed" : "ολοκληρώθηκε")}
+                {hasError ? `exit ${result.exitCode || 1}` : (lang === "en" ? "completed" : uppercaseLabel("ολοκληρώθηκε", lang))}
               </span>
             </div>
             <pre className="command-explanation__output" aria-label={lang === "en" ? "Command output" : "Έξοδος εντολής"}>
@@ -122,9 +122,9 @@ export default function CommandResultPopup({
         </div>
 
         <footer className="command-explanation__footer">
-          <span>{lang === "en" ? "Output is from the isolated HackForge virtual lab." : "Η έξοδος προέρχεται από το απομονωμένο εικονικό lab του HackForge."}</span>
+          <span>{lang === "en" ? "Output is from the isolated GameHack virtual lab." : "Η έξοδος προέρχεται από το απομονωμένο εικονικό εργαστήριο του GameHack."}</span>
           <button type="button" onClick={onClose} autoFocus>
-            {lang === "en" ? "Back to terminal" : "Πίσω στο terminal"}
+            {lang === "en" ? "Back to terminal" : "Πίσω στο τερματικό"}
             <Icon name="chevron" className="h-4 w-4" />
           </button>
         </footer>

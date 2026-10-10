@@ -1,15 +1,18 @@
 import Icon from "./Icon";
+import { AVATAR_CATEGORIES, AVATAR_COLOR, AVATAR_COLORS, AVATAR_ICONS } from "../lib/avatarCatalog";
 import { cn } from "../utils/cn";
 
 const ICON_FALLBACK = "skull";
 
+export { AVATAR_CATEGORIES, AVATAR_COLORS, AVATAR_ICONS };
+
 export function parseAvatar(src: string): { kind: "icon"; name: string; color: string } | { kind: "img"; url: string } {
   if (src?.startsWith("ic:")) {
     const parts = src.split(":");
-    return { kind: "icon", name: parts[1] || ICON_FALLBACK, color: parts[2] || "#ff6a2b" };
+    return { kind: "icon", name: parts[1] || ICON_FALLBACK, color: parts[2] || AVATAR_COLOR };
   }
   if (src?.startsWith("data:") || src?.startsWith("http")) return { kind: "img", url: src };
-  return { kind: "icon", name: ICON_FALLBACK, color: "#ff6a2b" };
+  return { kind: "icon", name: ICON_FALLBACK, color: AVATAR_COLOR };
 }
 
 export default function Avatar({
@@ -29,7 +32,10 @@ export default function Avatar({
     .map((s) => s[0])
     .join("")
     .slice(0, 2)
-    .toUpperCase();
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/([\u0370-\u03ff\u1f00-\u1fff]\u0308?)[\u0301\u0341]/gu, "$1")
+    .normalize("NFC");
 
   if (a.kind === "img") {
     return (
@@ -46,40 +52,23 @@ export default function Avatar({
 
   return (
     <div
-      className={cn("rounded-full grid place-items-center ring-1 ring-white/10 shrink-0", className)}
-      style={{ width: size, height: size, background: `${a.color}22`, color: a.color }}
+      className={cn("rounded-full grid place-items-center ring-1 ring-white/15 shrink-0", className)}
+      style={{
+        width: size,
+        height: size,
+        background: `radial-gradient(circle at 34% 28%, ${a.color}66, ${a.color}1c 70%)`,
+        color: a.color,
+        boxShadow: `inset 0 0 0 1.5px ${a.color}80`,
+      }}
       title={name}
     >
       {src ? (
-        <Icon name={a.name} className="w-[58%] h-[58%]" />
+        <Icon name={a.name} variant="glyph" className="w-[64%] h-[64%]" />
       ) : (
-        <span className="text-[0.65em] font-bold tracking-wide">{initials}</span>
+        <span className="font-bold tracking-wide" style={{ fontSize: Math.max(14, Math.round(size * 0.32)) }}>{initials}</span>
       )}
     </div>
   );
 }
 
-export const AVATAR_ICONS = [
-  "skull",
-  "terminal",
-  "ghost",
-  "dragon",
-  "bug",
-  "shield",
-  "radar",
-  "wolf",
-  "owl",
-  "raven",
-  "phoenix",
-  "atom",
-  "cpu",
-  "qubit",
-  "cybereye",
-  "wyvern",
-  "crown",
-  "hammer",
-  "target",
-  "spark",
-];
 
-export const AVATAR_COLORS = ["#ff6a2b", "#22d3ee", "#3ddc84", "#a78bfa", "#fcd34d", "#f472b6", "#38bdf8", "#fb7185"];

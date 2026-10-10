@@ -17,6 +17,9 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
+# Server-side account store
+.data/
+
 # Editor / OS
 .vscode/
 .idea/

@@ -1,4 +1,45 @@
-type Props = { name: string; className?: string; size?: number };
+import { createElement, type ReactNode } from "react";
+import { AVATAR_GLYPHS } from "../lib/avatarGlyphs";
+
+type Props = { name: string; className?: string; size?: number; variant?: "line" | "glyph" };
+
+const SVG_ATTR: Record<string, string> = {
+  "fill-rule": "fillRule",
+  "stroke-width": "strokeWidth",
+  "stroke-linecap": "strokeLinecap",
+  "stroke-linejoin": "strokeLinejoin",
+};
+
+function glyphMarkup(glyph: string): string {
+  if (glyph.includes("<")) return glyph;
+  return glyph
+    .split("||")
+    .map((d) => `<path fill-rule="evenodd" d="${d}"/>`)
+    .join("");
+}
+
+const glyphCache = new Map<string, ReactNode>();
+
+function svgToReact(node: Element, key: number | string): ReactNode {
+  const props: Record<string, string | number> = { key };
+  for (const attr of node.attributes) props[SVG_ATTR[attr.name] ?? attr.name] = attr.value;
+  const children = [...node.children].map((child, index) => svgToReact(child, `${key}-${index}`));
+  return createElement(node.tagName, props, children.length ? children : undefined);
+}
+
+function glyphChildren(markup: string): ReactNode {
+  const cached = glyphCache.get(markup);
+  if (cached) return cached;
+  if (typeof DOMParser === "undefined") return null;
+  const doc = new DOMParser().parseFromString(
+    `<svg xmlns="http://www.w3.org/2000/svg">${markup}</svg>`,
+    "image/svg+xml",
+  );
+  if (doc.querySelector("parsererror")) return null;
+  const nodes = [...doc.documentElement.children].map((child, index) => svgToReact(child, index));
+  glyphCache.set(markup, nodes);
+  return nodes;
+}
 
 const paths: Record<string, string> = {
   terminal:
@@ -25,6 +66,9 @@ const paths: Record<string, string> = {
   ticket: "M4 8a2 2 0 0 1 0-4h16v4a2 2 0 0 0 0 4v4H4a2 2 0 0 1 0-4 2 2 0 0 0 0-4z",
   map: "M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z M9 3v15 M15 6v15",
   home: "M4 12 12 4l8 8 M6 10.5V20h12v-9.5",
+  grid: "M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z",
+  activity: "M3 12h4l2.5-6 4 12 2.5-6H21",
+  help: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M9.6 9.4a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1.1 1-1.1 1.8 M12 17h.01",
   logout: "M10 17l-5-5 5-5 M5 12h12 M16 5h3v14h-3",
   settings: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M12 2v2 M12 20v2 M4.9 4.9l1.4 1.4 M17.7 17.7l1.4 1.4 M2 12h2 M20 12h2 M4.9 19.1l1.4-1.4 M17.7 6.3l1.4-1.4",
   book: "M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z M8 7h8",
@@ -48,6 +92,9 @@ const paths: Record<string, string> = {
   mute: "M5 10v4h3l4 4V6L8 10H5z M17 9l5 6 M22 9l-5 6",
   chevron: "M9 6l6 6-6 6",
   close: "M6 6l12 12 M18 6 6 18",
+  maximize: "M8 3H3v5 M3 3l7 7 M16 3h5v5 M21 3l-7 7 M3 16v5h5 M3 21l7-7 M21 16v5h-5 M21 21l-7-7",
+  minimize: "M8 3v5H3 M3 3l7 7 M16 3v5h5 M21 3l-7 7 M3 16h5v5 M3 21l7-7 M21 16h-5v5 M21 21l-7-7",
+  revert: "M3 12a9 9 0 1 0 3-6.7 M3 4v5h5",
   plus: "M12 5v14 M5 12h14",
   spark: "M12 2v6 M12 16v6 M4 12h6 M14 12h6 M6 6l4 4 M14 14l4 4 M18 6l-4 4 M10 14l-4 4",
   target: "M12 12m-8 0a8 8 0 1 0 16 0 8 8 0 1 0-16 0 M12 12m-4 0a4 4 0 1 0 8 0 4 4 0 1 0-8 0 M12 12m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0",
@@ -56,6 +103,13 @@ const paths: Record<string, string> = {
   "file-text": "M6 3h8l4 4v14H6z M14 3v5h5 M9 12h6 M9 16h6",
   "hard-drive": "M4 6h16v12H4z M4 10h16 M8 15h.01 M12 15h.01 M16 15h.01",
   layers: "m12 3 9 5-9 5-9-5 9-5z M3 12l9 5 9-5 M3 16l9 5 9-5",
+  palette: "M12 3a9 9 0 1 0 0 18h1a2.5 2.5 0 0 0 0-5h-.5a1.5 1.5 0 0 1 0-3H15a6 6 0 0 0-3-10z M7.5 10h.01 M10 7h.01 M14 7h.01",
+  vampire: "M3 6h18v5a9 9 0 0 1-18 0z M9 11v4l1.5-1.5L12 15l1.5-1.5L15 15v-4",
+  rune: "M12 2l8 6-3 14H7L4 8z M10 9v7 M10 10.5l4-2 M10 13.5l4-2",
+  wand: "M4 20L14 10 M15 3l.9 2.1L18 6l-2.1.9L15 9l-.9-2.1L12 6l2.1-.9z M20 11l.6 1.4 1.4.6-1.4.6L20 15l-.6-1.4-1.4-.6 1.4-.6z M9 4h.01 M6 8h.01",
+  pumpkin: "M12 7c-5.5 0-9.5 3-9.5 7.5S6.5 21 12 21s9.5-2.5 9.5-6.5S17.5 7 12 7z M12 7c0-2 1-3.5 3-4 M9 12h.01 M15 12h.01 M9 15.5c1 1 2 1.5 3 1.5s2-.5 3-1.5",
+  bat: "M12 8c-1.5 3-4.5 5-9.5 5 2 0 3.5 1 4.5 2-1 0-2 .8-2.5 2 2.5-1 4.5-1 6.5 0l1 4 1-4c2-1 4-1 6.5 0-.5-1.2-1.5-2-2.5-2 1-1 2.5-2 4.5-2-5 0-8-2-9.5-5z",
+  cat: "M6 3l4.5 3.5 M18 3l-4.5 3.5 M12 21a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15z M9.5 11.5h.01 M14.5 11.5h.01 M10 14.5c.7.7 1.3 1 2 1s1.3-.3 2-1",
 };
 
 export const MODULE_ICON: Record<string, string> = {
@@ -65,7 +119,7 @@ export const MODULE_ICON: Record<string, string> = {
   networking: "wifi",
   recon: "radar",
   scanning: "scan",
-  bruteforce: "hammer",
+  bruteforce: "key",
   sqli: "database",
   privesc: "crown",
   "raven-recon": "radar",
@@ -98,9 +152,32 @@ export const MODULE_ICON: Record<string, string> = {
   "dfir-memory": "cpu",
   "dfir-container": "layers",
   "dfir-passwords": "key",
+  "ssh-svc-recon": "radar",
+  "ssh-svc-auth": "lock",
+  "ssh-svc-creds": "key",
+  "ssh-svc-harden": "shield",
+  "ssh-svc-lab": "layers",
 };
 
-export default function Icon({ name, className = "w-5 h-5", size }: Props) {
+export default function Icon({ name, className = "w-5 h-5", size, variant = "line" }: Props) {
+  if (variant === "glyph") {
+    const glyph = AVATAR_GLYPHS[name];
+    const children = glyph ? glyphChildren(glyphMarkup(glyph)) : null;
+    if (children) {
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          className={className}
+          width={size}
+          height={size}
+          aria-hidden
+        >
+          {children}
+        </svg>
+      );
+    }
+  }
   const d = paths[name] || paths.spark;
   return (
     <svg

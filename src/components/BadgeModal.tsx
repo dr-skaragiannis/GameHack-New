@@ -1,11 +1,12 @@
+import { useEffect, useState } from "react";
 import { BADGES } from "../lib/db";
 import Icon from "./Icon";
-import { t, type Lang } from "../i18n";
+import { bi, t, uppercaseLabel, type Lang } from "../i18n";
 
 const TIER: Record<string, string> = {
-  bronze: "from-amber-700 to-amber-500",
+  bronze: "from-cyan-700 to-cyan-500",
   silver: "from-zinc-400 to-slate-200",
-  gold: "from-yellow-500 to-amber-300",
+  gold: "from-yellow-500 to-cyan-300",
 };
 
 export default function BadgeModal({
@@ -17,35 +18,79 @@ export default function BadgeModal({
   lang: Lang;
   onClose: () => void;
 }) {
-  const b = BADGES[badgeId];
-  if (!b) return null;
+  const badge = BADGES[badgeId];
+  const [isClosing, setIsClosing] = useState(false);
+
+  useEffect(() => {
+    if (!badge) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsClosing(true);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [badge]);
+
+  useEffect(() => {
+    if (!isClosing) return;
+    const timer = window.setTimeout(onClose, 190);
+    return () => window.clearTimeout(timer);
+  }, [isClosing, onClose]);
+
+  if (!badge) return null;
+
+  const closeWithAnimation = () => setIsClosing(true);
+  const certificateTitle = badge.category === "certification"
+    ? t("badgeCategoryCertification", lang)
+    : (lang === "en" ? "Certificate of achievement" : "Πιστοποιητικό διάκρισης");
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={onClose}>
-      <div
-        className="w-full max-w-sm rounded-2xl border border-ember-600/40 bg-forge-panel p-6 text-center scale-in forge-glow"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="relative mx-auto mb-4 h-24 w-24">
-          <div
-            className="absolute inset-0 rounded-full opacity-40"
-            style={{ animation: "spin 8s linear infinite", background: "conic-gradient(from 0deg, #ff6a2b, transparent, #22d3ee, transparent, #ff6a2b)" }}
-          />
-          <div className={`absolute inset-2 rounded-full bg-gradient-to-br ${TIER[b.tier]} grid place-items-center text-forge-bg`}>
-            <Icon name={b.icon} className="w-10 h-10" />
-          </div>
-        </div>
-        <div className="text-[10px] uppercase tracking-[0.25em] text-ember-400 mb-1">{b.tier}</div>
-        <h3 className="text-xl font-bold text-shine mb-1">{b.name}</h3>
-        <p className="text-sm text-iron-400 mb-3">{b.desc}</p>
-        <p className="text-sm text-zinc-300 leading-relaxed">{b.blurb}</p>
+    <div
+      className={`dashboard-modal-backdrop badge-certificate-backdrop${isClosing ? " is-closing" : ""}`}
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) closeWithAnimation();
+      }}
+    >
+      <section className="badge-certificate dashboard-modal-surface" role="dialog" aria-modal="true" aria-labelledby="badge-certificate-title">
         <button
           type="button"
-          onClick={onClose}
-          className="mt-5 w-full rounded-xl bg-ember-600 hover:bg-ember-500 py-2.5 font-semibold text-white"
+          className="badge-certificate__close dashboard-action"
+          aria-label={t("close", lang)}
+          title={t("close", lang)}
+          onClick={closeWithAnimation}
         >
+          <Icon name="close" className="h-4 w-4" />
+        </button>
+
+        <div className="badge-certificate__seal" aria-hidden="true">
+          <span className="badge-certificate__orbit" />
+          <span className={`badge-certificate__medallion bg-gradient-to-br ${TIER[badge.tier] || TIER.bronze}`}>
+            <Icon name={badge.icon} className="h-10 w-10" />
+          </span>
+          <span className={`badge-certificate__tier is-${badge.tier}`}>{uppercaseLabel(badge.tier, lang)}</span>
+        </div>
+
+        <div className="badge-certificate__issuer">GameHack, {uppercaseLabel(certificateTitle, lang)}</div>
+        <h2 id="badge-certificate-title">{bi(badge.name, lang)}</h2>
+        <p className="badge-certificate__description">{bi(badge.desc, lang)}</p>
+        <div className="badge-certificate__divider"><span /><Icon name="spark" className="h-4 w-4" /><span /></div>
+        <p className="badge-certificate__blurb">{bi(badge.blurb, lang)}</p>
+        <div className="badge-certificate__signature">
+          <span className="badge-certificate__signature-mark"><Icon name="shield" className="h-4 w-4" /></span>
+          <span>
+            <strong>{lang === "en" ? "GameHack Learning Lab" : "Εργαστήριο μάθησης GameHack"}</strong>
+            <small>{lang === "en" ? "Verified achievement" : "Επιβεβαιωμένο επίτευγμα"}</small>
+          </span>
+          <span className="badge-certificate__seal-mark">GH</span>
+        </div>
+        <button type="button" onClick={closeWithAnimation} className="badge-certificate__action dashboard-action">
           {t("close", lang)}
         </button>
-      </div>
+      </section>
     </div>
   );
 }
